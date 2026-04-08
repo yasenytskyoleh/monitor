@@ -1,0 +1,13 @@
+node_modules
+.pnpm-store
+.turbo
+dist
+coverage
+.env
+.DS_Store
+__MACOSX/
+.idea
+
+# Generated config snapshots
+configs/agents/versions/snapshots/*
+!configs/agents/versions/snapshots/.gitkeep

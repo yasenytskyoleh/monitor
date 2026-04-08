@@ -1,0 +1,65 @@
+{
+  "$id": "https://monitor/schemas/escalation-envelope.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentRole": {
+      "type": "string",
+      "enum": ["PRODUCT", "ARCHITECT", "BACKEND", "QUANT_PATTERN", "DOCS_REVIEWER"]
+    },
+    "workflowState": {
+      "type": "string",
+      "minLength": 1
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "riskNotes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "requestedDecision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "blockingArtifacts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "recommendedNextAction": {
+      "type": "string",
+      "minLength": 1
+    },
+    "relatedApprovalType": {
+      "type": "string",
+      "enum": ["ARCHITECTURE", "SIGNAL_PUBLISH"]
+    },
+    "relatedContractRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  },
+  "required": ["taskId", "agentRole", "workflowState", "severity", "reason", "riskNotes", "requestedDecision"]
+}

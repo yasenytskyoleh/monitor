@@ -1,0 +1,57 @@
+version: 1
+schemaVersion: 1
+active:
+  configVersion: v1
+  promptSetVersion: v1
+  schemaVersion: 1
+records:
+- releaseId: agents-v1-local
+  environment: local
+  configVersion: v1
+  promptSetVersion: v1
+  schemaVersion: 1
+  createdBy: ChatGPT
+  notes: Updated v1 agent configs with ownership, approval rules, artifacts, and prompt
+    manifest.
+- releaseId: agents-v1-dev
+  environment: dev
+  configVersion: v1
+  promptSetVersion: v1
+  schemaVersion: 1
+  createdBy: ChatGPT
+  notes: Updated v1 agent configs with ownership, approval rules, artifacts, and prompt
+    manifest.
+- releaseId: agents-v1-staging
+  environment: staging
+  configVersion: v1
+  promptSetVersion: v1
+  schemaVersion: 1
+  createdBy: ChatGPT
+  notes: Updated v1 agent configs with ownership, approval rules, artifacts, and prompt
+    manifest.
+- releaseId: agents-v1-prod
+  environment: prod
+  configVersion: v1
+  promptSetVersion: v1
+  schemaVersion: 1
+  createdBy: ChatGPT
+  notes: Updated v1 agent configs with ownership, approval rules, artifacts, and prompt
+    manifest.
+prompts:
+  version: v1
+  entries:
+  - file: architect-agent.txt
+    sha256: ca84385653d9c0f80f914e2d4c54aed6e062ccd20b58966177807d81dc184274
+    version: v1
+  - file: backend-agent.txt
+    sha256: 7f1bc9d8453203b79f77e25176b5e290299239152f543827012abe2d1918d7ae
+    version: v1
+  - file: docs-reviewer-agent.txt
+    sha256: ce7bd1a461a2b9ae373c9a09253a3106563ee8587ca6047cfac3680135076df2
+    version: v1
+  - file: product-agent.txt
+    sha256: f058886b73c3f25b7ebcf4fc701e422449e1d11830fcab2bc5af24a16fc26f5e
+    version: v1
+  - file: quant-pattern-agent.txt
+    sha256: 5048f92f848badd21e8471d32a0a86590054542593dce9a42888cc49c70d675c
+    version: v1

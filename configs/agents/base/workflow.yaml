@@ -1,0 +1,88 @@
+version: 1
+schemaVersion: 1
+workflow:
+  states:
+  - INTAKE
+  - DESIGN
+  - FORMALIZE
+  - IMPLEMENT
+  - REVIEW
+  - APPROVAL
+  - PUBLISH_SIGNAL
+  - DONE
+  - REJECTED
+  initialState: INTAKE
+  terminalStates:
+  - DONE
+  - REJECTED
+  stateOwners:
+    INTAKE: PRODUCT
+    DESIGN: ARCHITECT
+    FORMALIZE: QUANT_PATTERN
+    IMPLEMENT: BACKEND
+    REVIEW: DOCS_REVIEWER
+    APPROVAL: HUMAN
+    PUBLISH_SIGNAL: SYSTEM
+    DONE: TERMINAL
+    REJECTED: TERMINAL
+  transitions:
+  - from: INTAKE
+    to: DESIGN
+  - from: DESIGN
+    to: FORMALIZE
+  - from: FORMALIZE
+    to: IMPLEMENT
+  - from: IMPLEMENT
+    to: REVIEW
+  - from: REVIEW
+    to: IMPLEMENT
+  - from: REVIEW
+    to: APPROVAL
+  - from: APPROVAL
+    to: PUBLISH_SIGNAL
+  - from: PUBLISH_SIGNAL
+    to: DONE
+  approvalRules:
+  - transition:
+      from: DESIGN
+      to: FORMALIZE
+    type: ARCHITECTURE
+    required: true
+    expiresInMinutes: 1440
+  - transition:
+      from: APPROVAL
+      to: PUBLISH_SIGNAL
+    type: SIGNAL_PUBLISH
+    required: true
+    expiresInMinutes: 1440
+  requiredArtifactsByState:
+    DESIGN:
+    - product-brief
+    FORMALIZE:
+    - adr-draft
+    - architecture-design
+    IMPLEMENT:
+    - pattern-definition
+    - metrics-plan
+    REVIEW:
+    - code-change
+    - implementation-notes
+    - tests
+    APPROVAL:
+    - review-report
+    - docs-update
+    PUBLISH_SIGNAL:
+    - publishable-signal-bundle
+  rejectionRules:
+    allowRejectFromAnyState: true
+    rejectionCodes:
+    - MISSING_APPROVAL
+    - INVALID_TRANSITION
+    - MISSING_ARTIFACTS
+    - OUT_OF_SCOPE
+    - CONTRACT_CONFLICT
+    - HUMAN_REJECTED
+  reentryRules:
+    REVIEW->IMPLEMENT:
+      invalidatesApproval: true
+      requiresNewReview: true

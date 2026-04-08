@@ -1,0 +1,21 @@
+version: 1
+schemaVersion: 1
+runtime:
+  jsonModeRequired: true
+  defaultProvider: openai
+  defaultModel: gpt-5.4
+  fallbackModel: gpt-5.4-mini
+  temperature: 0.2
+  maxTokens: 4000
+  maxArtifactsPerOutput: 10
+  retryPolicy:
+    maxRetries: 2
+    backoffMs: 1000
+    retryOn:
+    - timeout
+    - rate_limit
+    - transient_error
+  timeoutMs: 60000
+  concurrency:
+    maxParallelTasks: 3
+    maxParallelActionsPerTask: 1

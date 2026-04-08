@@ -1,0 +1,37 @@
+{
+  "$id": "https://monitor/schemas/workflow-transition.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "from": {
+      "type": "string",
+      "minLength": 1
+    },
+    "to": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requiresApproval": {
+      "type": "boolean"
+    },
+    "approvalType": {
+      "type": "string",
+      "enum": ["ARCHITECTURE", "SIGNAL_PUBLISH"]
+    }
+  },
+  "required": ["from", "to"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "requiresApproval": { "const": true }
+        },
+        "required": ["requiresApproval"]
+      },
+      "then": {
+        "required": ["approvalType"]
+      }
+    }
+  ]
+}

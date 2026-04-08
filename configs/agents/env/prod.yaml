@@ -1,0 +1,8 @@
+version: 1
+schemaVersion: 1
+environment: prod
+overrides:
+  runtime:
+    defaultModel: gpt-5.4
+  approvals:
+    allowMockApprovals: false

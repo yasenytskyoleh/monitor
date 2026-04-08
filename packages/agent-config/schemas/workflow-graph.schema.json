@@ -1,0 +1,166 @@
+{
+  "$id": "https://monitor/schemas/workflow-graph.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "states": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 2,
+          "uniqueItems": true
+        },
+        "initialState": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminalStates": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "stateOwners": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "PRODUCT",
+              "ARCHITECT",
+              "BACKEND",
+              "QUANT_PATTERN",
+              "DOCS_REVIEWER",
+              "HUMAN",
+              "SYSTEM",
+              "TERMINAL"
+            ]
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["from", "to"]
+          },
+          "minItems": 1
+        },
+        "approvalRules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "transition": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "to": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": ["from", "to"]
+              },
+              "type": {
+                "type": "string",
+                "enum": ["ARCHITECTURE", "SIGNAL_PUBLISH"]
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "expiresInMinutes": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": ["transition", "type", "required"]
+          }
+        },
+        "requiredArtifactsByState": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        },
+        "rejectionRules": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allowRejectFromAnyState": {
+              "type": "boolean"
+            },
+            "rejectionCodes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Z0-9_]+$"
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "reentryRules": {
+          "type": "object",
+          "patternProperties": {
+            "^[A-Z_]+->[A-Z_]+$": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "invalidatesApproval": {
+                  "type": "boolean"
+                },
+                "requiresNewReview": {
+                  "type": "boolean"
+                }
+              },
+              "required": ["invalidatesApproval", "requiresNewReview"]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["states", "initialState", "terminalStates", "stateOwners", "transitions"]
+    }
+  },
+  "required": ["version", "schemaVersion", "workflow"]
+}

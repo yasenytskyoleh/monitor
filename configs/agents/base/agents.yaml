@@ -1,0 +1,208 @@
+version: 1
+schemaVersion: 1
+agents:
+- id: product-agent
+  role: PRODUCT
+  ownsStates:
+  - INTAKE
+  allowedInputs:
+  - feature-request
+  - bug-report
+  - research-question
+  - change-request
+  - user-feedback
+  - business-constraint
+  requiredOutputs:
+  - problem-statement
+  - scope
+  - acceptance-criteria
+  - priority
+  - backlog-item
+  allowedNextActions:
+  - handoff_to_architect
+  - request_more_context
+  - close_task
+  - reject_task
+  permissions:
+    allowedActions:
+    - docs.read
+    - backlog.read
+    - backlog.write
+    - task.metadata.write
+    - workflow.escalate
+  requiredArtifacts:
+  - product-brief
+  outputContract:
+    schemaRef: agent-output-envelope.v1
+  escalation:
+    allowed: true
+    severities:
+    - low
+    - medium
+    - high
+    - critical
+  prompt:
+    version: v1
+    file: product-agent.txt
+- id: architect-agent
+  role: ARCHITECT
+  ownsStates:
+  - DESIGN
+  allowedInputs:
+  - approved-scope
+  - adr-context
+  - existing-contracts
+  - system-constraints
+  requiredOutputs:
+  - module-boundaries
+  - data-flow
+  - contract-definitions
+  - adr-draft
+  - risk-notes
+  allowedNextActions:
+  - handoff_to_quant
+  - await_approval
+  - request_more_context
+  - reject_task
+  permissions:
+    allowedActions:
+    - docs.read
+    - contracts.read
+    - architecture.draft
+    - workflow.escalate
+  requiredArtifacts:
+  - product-brief
+  - architecture-design
+  - adr-draft
+  outputContract:
+    schemaRef: agent-output-envelope.v1
+  escalation:
+    allowed: true
+    severities:
+    - low
+    - medium
+    - high
+    - critical
+  prompt:
+    version: v1
+    file: architect-agent.txt
+- id: quant-pattern-agent
+  role: QUANT_PATTERN
+  ownsStates:
+  - FORMALIZE
+  allowedInputs:
+  - setup-hypothesis
+  - indicator-constraints
+  - market-assumptions
+  - approved-architecture
+  requiredOutputs:
+  - pattern-definition
+  - measurable-conditions
+  - metrics-plan
+  - evaluation-horizon
+  allowedNextActions:
+  - handoff_to_backend
+  - request_more_context
+  - reject_task
+  permissions:
+    allowedActions:
+    - docs.read
+    - contracts.read
+    - patterns.write
+    - workflow.escalate
+  requiredArtifacts:
+  - pattern-definition
+  - metrics-plan
+  outputContract:
+    schemaRef: agent-output-envelope.v1
+  escalation:
+    allowed: true
+    severities:
+    - low
+    - medium
+    - high
+    - critical
+  prompt:
+    version: v1
+    file: quant-pattern-agent.txt
+- id: backend-agent
+  role: BACKEND
+  ownsStates:
+  - IMPLEMENT
+  allowedInputs:
+  - approved-task
+  - adrs
+  - contract-definitions
+  - pattern-spec
+  requiredOutputs:
+  - code-changes
+  - tests
+  - migration-notes
+  - implementation-notes
+  allowedNextActions:
+  - handoff_to_docs_reviewer
+  - request_architecture_clarification
+  - reject_task
+  permissions:
+    allowedActions:
+    - docs.read
+    - contracts.read
+    - code.write
+    - tests.write
+    - migrations.notes.write
+    - workflow.escalate
+  requiredArtifacts:
+  - code-change
+  - tests
+  - implementation-notes
+  outputContract:
+    schemaRef: agent-output-envelope.v1
+  escalation:
+    allowed: true
+    severities:
+    - low
+    - medium
+    - high
+    - critical
+  prompt:
+    version: v1
+    file: backend-agent.txt
+- id: docs-reviewer-agent
+  role: DOCS_REVIEWER
+  ownsStates:
+  - REVIEW
+  allowedInputs:
+  - merged-changes
+  - adrs
+  - implementation-notes
+  - schema-updates
+  requiredOutputs:
+  - docs-updates
+  - review-findings
+  - changelog-notes
+  - traceability-confirmation
+  allowedNextActions:
+  - await_approval
+  - return_to_implement
+  - reject_task
+  permissions:
+    allowedActions:
+    - docs.read
+    - docs.write
+    - changelog.write
+    - workflow.escalate
+  requiredArtifacts:
+  - docs-update
+  - review-report
+  outputContract:
+    schemaRef: agent-output-envelope.v1
+  escalation:
+    allowed: true
+    severities:
+    - low
+    - medium
+    - high
+    - critical
+  prompt:
+    version: v1
+    file: docs-reviewer-agent.txt

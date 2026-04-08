@@ -1,0 +1,89 @@
+{
+  "$id": "https://monitor/schemas/agent-output-envelope.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentRole": {
+      "type": "string",
+      "enum": ["PRODUCT", "ARCHITECT", "BACKEND", "QUANT_PATTERN", "DOCS_REVIEWER"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "blocked", "needs_escalation", "rejected"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "nextAction": {
+      "type": "string",
+      "enum": [
+        "handoff_to_architect",
+        "handoff_to_quant",
+        "handoff_to_backend",
+        "handoff_to_docs_reviewer",
+        "await_approval",
+        "request_more_context",
+        "close_task"
+      ]
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "escalation": {
+      "$ref": "https://monitor/schemas/escalation-envelope.schema.json"
+    },
+    "notes": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": ["taskId", "agentRole", "status", "summary", "artifacts", "nextAction"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "needs_escalation"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["escalation"]
+      }
+    }
+  ]
+}

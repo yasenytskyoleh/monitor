@@ -1,0 +1,72 @@
+{
+  "$id": "https://monitor/schemas/transition-record.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "from": {
+      "type": "string",
+      "minLength": 1
+    },
+    "to": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requestedBy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "executedBy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestampUtc": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+    },
+    "approvalRef": {
+      "$ref": "https://monitor/schemas/approval-reference.schema.json"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifactRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "configVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "configChecksum": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "transitionChecksum": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "taskId",
+    "from",
+    "to",
+    "requestedBy",
+    "executedBy",
+    "timestampUtc",
+    "reason",
+    "artifactRefs",
+    "configVersion",
+    "configChecksum",
+    "transitionChecksum"
+  ]
+}

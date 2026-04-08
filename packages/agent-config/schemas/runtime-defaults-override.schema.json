@@ -1,0 +1,79 @@
+{
+  "$id": "https://monitor/schemas/runtime-defaults-override.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "jsonModeRequired": {
+      "type": "boolean"
+    },
+    "defaultProvider": {
+      "type": "string",
+      "enum": ["openai"]
+    },
+    "defaultModel": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fallbackModel": {
+      "type": "string",
+      "minLength": 1
+    },
+    "temperature": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2
+    },
+    "maxTokens": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "maxArtifactsPerOutput": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1000
+    },
+    "retryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxRetries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "backoffMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retryOn": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "concurrency": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxParallelTasks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxParallelActionsPerTask": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "minProperties": 1
+    }
+  },
+  "minProperties": 1
+}

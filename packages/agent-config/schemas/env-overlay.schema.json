@@ -1,0 +1,39 @@
+{
+  "$id": "https://monitor/schemas/env-overlay.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "environment": {
+      "type": "string",
+      "enum": ["local", "dev", "staging", "prod"]
+    },
+    "overrides": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runtime": {
+          "$ref": "https://monitor/schemas/runtime-defaults-override.schema.json"
+        },
+        "approvals": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allowMockApprovals": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["version", "schemaVersion", "environment", "overrides"]
+}

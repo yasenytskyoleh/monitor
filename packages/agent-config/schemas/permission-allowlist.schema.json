@@ -1,0 +1,18 @@
+{
+  "$id": "https://monitor/schemas/permission-allowlist.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "allowedActions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z]+(\\.[a-z]+)+$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "required": ["allowedActions"]
+}

@@ -1,0 +1,111 @@
+{
+  "$id": "https://monitor/schemas/agent-config.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "role": {
+      "type": "string",
+      "enum": ["PRODUCT", "ARCHITECT", "BACKEND", "QUANT_PATTERN", "DOCS_REVIEWER"]
+    },
+    "ownsStates": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "allowedInputs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "requiredOutputs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "allowedNextActions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "permissions": {
+      "$ref": "https://monitor/schemas/permission-allowlist.schema.json"
+    },
+    "requiredArtifacts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "outputContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaRef": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": ["schemaRef"]
+    },
+    "escalation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {
+          "type": "boolean"
+        },
+        "severities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": ["allowed", "severities"]
+    },
+    "prompt": {
+      "$ref": "https://monitor/schemas/prompt-reference.schema.json"
+    }
+  },
+  "required": [
+    "id",
+    "role",
+    "ownsStates",
+    "allowedInputs",
+    "requiredOutputs",
+    "allowedNextActions",
+    "permissions",
+    "requiredArtifacts",
+    "outputContract",
+    "escalation",
+    "prompt"
+  ]
+}

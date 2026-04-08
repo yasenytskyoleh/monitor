@@ -1,0 +1,101 @@
+{
+  "$id": "https://monitor/schemas/version-manifest.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "active": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "configVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "promptSetVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": ["configVersion", "promptSetVersion", "schemaVersion"]
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "$ref": "https://monitor/schemas/config-version-record.schema.json"
+      }
+    },
+    "prompts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "file": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["file", "sha256", "version"]
+          }
+        }
+      },
+      "required": ["version", "entries"]
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "environment": {
+            "type": "string",
+            "enum": ["local", "dev", "staging", "prod"]
+          },
+          "configVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "activatedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+          },
+          "activatedBy": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["environment", "configVersion", "activatedAt", "activatedBy"]
+      }
+    }
+  },
+  "required": ["version", "schemaVersion", "active", "records", "prompts"]
+}
