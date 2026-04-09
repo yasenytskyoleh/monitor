@@ -10,6 +10,7 @@ export function formatRunnerOutput(result: RunnerOutput, format: OutputFormat = 
         outcome: result.outcome ?? outcomeFromState(result.taskState),
         reason: result.reason ?? null,
         artifactsPath: result.artifactsPath ?? null,
+        agentModes: result.agentModes ?? null,
         transitionLogPath: result.transitionLogPath,
         transitionsCount: result.transitions.length,
         scenarios:

@@ -1,12 +1,14 @@
 import { SUPPORTED_ENVIRONMENTS } from "@monitor/agent-config";
 import type { EnvironmentName } from "@monitor/agent-config";
 
+import { parseAgentModeOverrides } from "./handlers/agent-modes.js";
 import type { CliArgs } from "./types.js";
 
 export function parseArgs(argv: string[]): CliArgs {
   const args: CliArgs = {
     mode: "live",
     output: "text",
+    agentModeOverrides: {},
     environment: "local",
     targetState: "DESIGN",
     taskId: `task-${Date.now()}`,
@@ -62,6 +64,12 @@ export function parseArgs(argv: string[]): CliArgs {
         throw new Error(`Invalid --scenario '${scenario}'. Allowed: happy, missing-approval, both`);
       }
       args.scenario = scenario;
+      continue;
+    }
+
+    if (arg === "--agent-mode") {
+      const raw = requiredValue(argv, ++index, "--agent-mode");
+      args.agentModeOverrides = parseAgentModeOverrides(raw);
       continue;
     }
 
@@ -190,6 +198,7 @@ function printHelpAndExit(exitCode: number): never {
     "  --root <path>           Repository root (auto-detected if omitted)",
     "  --mode <live|mock>      Runner mode (default: live)",
     "  --output <text|json>    CLI output format (default: text)",
+    "  --agent-mode <spec>     Per-agent overrides, e.g. product=live,architect=mock",
     "  --scenario <happy|missing-approval|both> Mock mode scenario selector (default: both)",
     "  --env <local|dev|staging|prod>   Environment (default: local)",
     "  --version <id>          Config version for snapshot (default: active from manifest)",
@@ -210,7 +219,8 @@ function printHelpAndExit(exitCode: number): never {
     "  --help                  Show this help",
     "",
     "Notes:",
-    "  live mode runs Product Agent against OpenAI and keeps the other agents mocked."
+    "  live mode defaults product-agent to live and the rest to mock.",
+    "  use --agent-mode for per-agent overrides."
   ].join("\n");
 
   process.stdout.write(`${help}\n`);
