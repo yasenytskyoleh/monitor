@@ -25,6 +25,7 @@ import type { CliArgs, RunnerOutput } from "./types.js";
 
 export type RunnerDependencies = {
   liveProductFetchImpl?: typeof fetch;
+  runStore?: FileRunStore;
 };
 
 export async function runWithArgv(
@@ -34,9 +35,9 @@ export async function runWithArgv(
 ): Promise<RunnerOutput> {
   const args = parseArgs(argv);
   const rootDir = args.rootDir ? resolve(args.rootDir) : await findRepoRoot(startDir);
-  const runStore = new FileRunStore(rootDir);
+  const runStore = dependencies.runStore ?? new FileRunStore(rootDir);
   const runId = runStore.createRunId();
-  const startedAtUtc = new Date().toISOString();
+  const startedAtUtc = runStore.nowIsoUtc();
 
   let taskInput: Record<string, unknown> | undefined;
   let snapshotMeta: SnapshotMeta | undefined;
@@ -77,7 +78,7 @@ export async function runWithArgv(
     }
 
     assertSuccessfulResult(partialResult);
-    const finishedAtUtc = new Date().toISOString();
+    const finishedAtUtc = runStore.nowIsoUtc();
     const persistence = await persistSuccessRun({
       runStore,
       runId,
@@ -97,7 +98,7 @@ export async function runWithArgv(
       reason: persistence.reason
     };
   } catch (error) {
-    const finishedAtUtc = new Date().toISOString();
+    const finishedAtUtc = runStore.nowIsoUtc();
     let artifactsPath = "unavailable";
     try {
       const persistence = await persistFailureRun({
@@ -127,8 +128,9 @@ export async function runWithArgv(
 }
 
 export async function runCli(argv = process.argv.slice(2), startDir = process.cwd()): Promise<void> {
+  const args = parseArgs(argv);
   const result = await runWithArgv(argv, startDir);
-  process.stdout.write(`${formatRunnerOutput(result)}\n`);
+  process.stdout.write(`${formatRunnerOutput(result, args.output)}\n`);
 }
 
 type LiveRunModeOptions = {

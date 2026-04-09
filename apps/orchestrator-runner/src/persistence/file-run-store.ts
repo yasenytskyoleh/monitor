@@ -3,22 +3,37 @@ import { join, resolve } from "node:path";
 
 import type { PersistRunArtifactInput, PersistRunArtifactResult } from "./types.js";
 
+export type RunClock = {
+  now(): Date;
+};
+
+export type RunIdGenerator = (now: Date) => string;
+
+export type FileRunStoreOptions = {
+  clock?: RunClock;
+  runIdGenerator?: RunIdGenerator;
+};
+
 export class FileRunStore {
-  public constructor(private readonly rootDir: string) {}
+  private readonly clock: RunClock;
+  private readonly runIdGenerator: RunIdGenerator;
 
-  public createRunId(now = new Date()): string {
-    const year = now.getUTCFullYear();
-    const month = pad2(now.getUTCMonth() + 1);
-    const day = pad2(now.getUTCDate());
-    const hour = pad2(now.getUTCHours());
-    const minute = pad2(now.getUTCMinutes());
-    const second = pad2(now.getUTCSeconds());
-    const ms = String(now.getUTCMilliseconds()).padStart(3, "0");
-    const random = Math.floor(Math.random() * 10_000)
-      .toString()
-      .padStart(4, "0");
+  public constructor(
+    private readonly rootDir: string,
+    options: FileRunStoreOptions = {}
+  ) {
+    this.clock = options.clock ?? {
+      now: () => new Date()
+    };
+    this.runIdGenerator = options.runIdGenerator ?? defaultRunIdGenerator;
+  }
 
-    return `run_${year}${month}${day}_${hour}${minute}${second}_${ms}${random}`;
+  public nowIsoUtc(): string {
+    return this.clock.now().toISOString();
+  }
+
+  public createRunId(now = this.clock.now()): string {
+    return this.runIdGenerator(now);
   }
 
   public async persist(input: PersistRunArtifactInput): Promise<PersistRunArtifactResult> {
@@ -43,6 +58,21 @@ export class FileRunStore {
       relativeRunDir: toRelativeOrAbsolute(this.rootDir, runDir)
     };
   }
+}
+
+function defaultRunIdGenerator(now: Date): string {
+  const year = now.getUTCFullYear();
+  const month = pad2(now.getUTCMonth() + 1);
+  const day = pad2(now.getUTCDate());
+  const hour = pad2(now.getUTCHours());
+  const minute = pad2(now.getUTCMinutes());
+  const second = pad2(now.getUTCSeconds());
+  const ms = String(now.getUTCMilliseconds()).padStart(3, "0");
+  const random = Math.floor(Math.random() * 10_000)
+    .toString()
+    .padStart(4, "0");
+
+  return `run_${year}${month}${day}_${hour}${minute}${second}_${ms}${random}`;
 }
 
 async function writeJson(pathValue: string, value: unknown): Promise<void> {

@@ -73,6 +73,15 @@ Output is stable text by default:
 - rejection reason (when applicable)
 - run artifact folder path
 
+Use JSON output for automation:
+```bash
+pnpm runner run \
+  --mode mock \
+  --scenario happy \
+  --env local \
+  --output json
+```
+
 Outcome values:
 - `success`
 - `policy_rejection`

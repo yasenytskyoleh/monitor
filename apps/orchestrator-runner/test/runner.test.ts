@@ -77,6 +77,7 @@ test("parseArgs defaults to live mode", () => {
   const args = parseArgs([]);
 
   assert.equal(args.mode, "live");
+  assert.equal(args.output, "text");
   assert.equal(args.environment, "local");
   assert.equal(args.targetState, "DESIGN");
   assert.equal(args.scenario, undefined);
@@ -90,8 +91,12 @@ test("parseArgs validates mode and scenario values", () => {
   const mockHappy = parseArgs(["--mode", "mock", "--scenario", "happy"]);
   assert.equal(mockHappy.scenario, "happy");
 
+  const jsonOutput = parseArgs(["--output", "json"]);
+  assert.equal(jsonOutput.output, "json");
+
   assert.throws(() => parseArgs(["--mode", "invalid"]), /Invalid --mode/);
   assert.throws(() => parseArgs(["--scenario", "invalid"]), /Invalid --scenario/);
+  assert.throws(() => parseArgs(["--output", "yaml"]), /Invalid --output/);
 });
 
 test("mock happy scenario reaches DONE", async (context) => {
