@@ -89,3 +89,6 @@ Live Product Agent contract in this step:
 - OpenAI response must be JSON-only
 - output must pass `agent-output-envelope` schema validation
 - invalid model output fails the run (no silent repair fallback)
+- Product live has an intentional agent-specific extension: `metrics` must include
+  `problemStatement`, `scope`, `assumptions[]`, `acceptanceCriteria[]`, `backlogItem`
+  for bounded intake quality.
