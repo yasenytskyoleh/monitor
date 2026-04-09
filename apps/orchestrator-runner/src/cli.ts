@@ -10,7 +10,6 @@ export function parseArgs(argv: string[]): CliArgs {
     output: "text",
     agentModeOverrides: {},
     environment: "local",
-    targetState: "DESIGN",
     taskId: `task-${Date.now()}`,
     requestedBy: "orchestrator-runner",
     taskTitle: "Orchestration run"
@@ -86,15 +85,6 @@ export function parseArgs(argv: string[]): CliArgs {
 
     if (arg === "--version") {
       args.version = requiredValue(argv, ++index, "--version");
-      continue;
-    }
-
-    if (arg === "--target-state") {
-      const targetState = requiredValue(argv, ++index, "--target-state");
-      if (targetState !== "DESIGN" && targetState !== "FORMALIZE") {
-        throw new Error(`Invalid --target-state '${targetState}'. Allowed: DESIGN, FORMALIZE`);
-      }
-      args.targetState = targetState;
       continue;
     }
 
@@ -202,7 +192,6 @@ function printHelpAndExit(exitCode: number): never {
     "  --scenario <happy|missing-approval|both> Mock mode scenario selector (default: both)",
     "  --env <local|dev|staging|prod>   Environment (default: local)",
     "  --version <id>          Config version for snapshot (default: active from manifest)",
-    "  --target-state <DESIGN|FORMALIZE> Final workflow state to run to (default: DESIGN)",
     "  --task-id <id>          Task id (default: task-<timestamp>)",
     "  --requested-by <name>   Requested by (default: orchestrator-runner)",
     "  --task-title <text>     Default task title when no input JSON/file is provided",

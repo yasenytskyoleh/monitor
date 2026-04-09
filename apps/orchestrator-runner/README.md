@@ -20,7 +20,9 @@ cp .env.example .env
 Optional: if you prefer shell-level env vars, you can still `source .env` manually.
 
 ## Usage
-Default mode is `live`.
+Default mode is `live`:
+- `product-agent` resolves to `live`
+- other agents resolve to `mock` until their live adapters are implemented
 
 Execution mode precedence:
 1. Start from `--mode`.

@@ -80,7 +80,6 @@ test("parseArgs defaults to live mode", () => {
   assert.equal(args.output, "text");
   assert.deepEqual(args.agentModeOverrides, {});
   assert.equal(args.environment, "local");
-  assert.equal(args.targetState, "DESIGN");
   assert.equal(args.scenario, undefined);
 });
 
