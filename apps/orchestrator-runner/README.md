@@ -68,10 +68,22 @@ pnpm runner run \
 ```
 
 Output is stable text by default:
-- final state and outcome (`success` for `DONE`, `policy_rejection` for `REJECTED`)
-- number of transitions
-- transition log path
-- blocked transition and reason for `missing-approval`
+- run id
+- final state and outcome
+- rejection reason (when applicable)
+- run artifact folder path
+
+Outcome values:
+- `success`
+- `policy_rejection`
+- `runtime_failure`
+
+Persisted run artifacts are written to:
+- `runtime/runs/<runId>/run.json`
+- `runtime/runs/<runId>/transitions.json`
+- `runtime/runs/<runId>/terminal-outcome.json`
+- optional: `runtime/runs/<runId>/input-task.json`
+- optional: `runtime/runs/<runId>/compiled-snapshot-meta.json`
 
 Run hybrid live path (Product Agent live, remaining agents mocked):
 ```bash

@@ -1,5 +1,6 @@
 import type { EnvironmentName } from "@monitor/agent-config";
 import type { AgentOutputEnvelope, TransitionRecord } from "@monitor/orchestrator-core";
+import type { RunOutcome } from "./persistence/types.js";
 
 export type RunnerMode = "live" | "mock";
 export type TargetState = "DESIGN" | "FORMALIZE";
@@ -10,6 +11,7 @@ export type BlockedTransitionInfo = {
   from: string;
   to: string;
   error: string;
+  timestampUtc: string;
 };
 
 export type MockScenarioResult = {
@@ -24,6 +26,10 @@ export type MockScenarioResult = {
 
 export type RunnerOutput = {
   status: "ok";
+  runId?: string;
+  artifactsPath?: string;
+  outcome?: RunOutcome;
+  reason?: string;
   snapshot: Record<string, unknown>;
   transitionLogPath: string;
   taskState: string;

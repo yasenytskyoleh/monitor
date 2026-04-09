@@ -15,3 +15,7 @@ configs/agents/versions/snapshots/*
 # Generated runtime logs
 runtime/logs/*
 !runtime/logs/.gitkeep
+
+# Generated runner artifacts
+runtime/runs/*
+!runtime/runs/.gitkeep

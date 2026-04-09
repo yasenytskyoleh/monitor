@@ -228,7 +228,8 @@ async function runMockMissingApprovalScenario(
     blockedTransition = {
       from: "DESIGN",
       to: "FORMALIZE",
-      error: error.message
+      error: error.message,
+      timestampUtc: new Date().toISOString()
     };
   }
 
@@ -246,7 +247,8 @@ async function runMockMissingApprovalScenario(
     blockedTransition: blockedTransition ?? {
       from: "DESIGN",
       to: "FORMALIZE",
-      error: "Missing approval"
+      error: "Missing approval",
+      timestampUtc: new Date().toISOString()
     }
   };
 }
