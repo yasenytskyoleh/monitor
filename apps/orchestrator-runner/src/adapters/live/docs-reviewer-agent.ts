@@ -1,95 +1,26 @@
-import { OrchestratorExecutionError } from "@monitor/orchestrator-core";
-import type { AgentHandler, AgentHandlerContext, AgentOutputEnvelope } from "@monitor/orchestrator-core";
-
-import {
-  assertAgentOutputIdentity,
-  loadPromptTemplateCached,
-  parseOpenAiJsonOutput,
-  validateAgentEnvelopeOutput
-} from "./agent-output-helpers.js";
-import { LiveOpenAiClient } from "./client.js";
+import type { AgentHandlerContext } from "@monitor/orchestrator-core";
 import { assertDocsReviewerOutput } from "./docs-reviewer-output.js";
 import { DOCS_REVIEWER_RESPONSE_SCHEMA } from "./schemas/docs-reviewer-agent-response-schema.js";
+import { createStructuredLiveAgentHandler } from "./structured-live-handler.js";
+import type { LiveAdapterOptions } from "./structured-live-handler.js";
 
-export type LiveDocsReviewerAgentOptions = {
-  apiKey: string;
-  promptsRootDir: string;
-  model?: string;
-  temperature?: number;
-  timeoutMs?: number;
-  baseUrl?: string;
-  fetchImpl?: typeof fetch;
-};
+export type LiveDocsReviewerAgentOptions = LiveAdapterOptions;
 
-export function createLiveDocsReviewerAgentHandler(options: LiveDocsReviewerAgentOptions): AgentHandler {
-  const client = new LiveOpenAiClient({
-    apiKey: options.apiKey,
-    timeoutMs: options.timeoutMs,
-    baseUrl: options.baseUrl,
-    fetchImpl: options.fetchImpl
+export function createLiveDocsReviewerAgentHandler(options: LiveDocsReviewerAgentOptions) {
+  return createStructuredLiveAgentHandler(options, {
+    adapterLabel: "Live Docs Reviewer",
+    boundAgentId: "docs-reviewer-agent",
+    expectedRole: "DOCS_REVIEWER",
+    responseFormatName: "docs_reviewer_agent_output_v1",
+    responseSchema: DOCS_REVIEWER_RESPONSE_SCHEMA,
+    envelopeValidationContext: "live docs reviewer output",
+    nullableFields: ["risks", "notes", "metrics", "escalation"],
+    additionalSystemInstructions: [
+      "You are bounded to review semantics only. Do not invent architecture or implementation decisions."
+    ],
+    buildUserPrompt,
+    assertDomainOutput: assertDocsReviewerOutput
   });
-
-  return async (context: AgentHandlerContext): Promise<AgentOutputEnvelope> => {
-    if (context.agent.id !== "docs-reviewer-agent") {
-      throw new OrchestratorExecutionError(
-        `Live Docs Reviewer adapter is bound to 'docs-reviewer-agent', received '${context.agent.id}'`
-      );
-    }
-
-    const promptText = await loadPromptTemplateCached(
-      options.promptsRootDir,
-      context.agent.prompt.version,
-      context.agent.prompt.template
-    );
-
-    const model = options.model ?? process.env.OPENAI_MODEL ?? context.agent.runtime.model;
-    const temperature = options.temperature ?? context.agent.runtime.temperature;
-    const maxCompletionTokens = context.agent.runtime.maxTokens;
-
-    const rawJson = await client.completeJson({
-      model,
-      temperature,
-      maxCompletionTokens,
-      responseFormat: {
-        type: "json_schema",
-        jsonSchema: {
-          name: "docs_reviewer_agent_output_v1",
-          schema: DOCS_REVIEWER_RESPONSE_SCHEMA,
-          strict: true
-        }
-      },
-      messages: [
-        {
-          role: "system",
-          content: [
-            promptText,
-            "You are bounded to review semantics only. Do not invent architecture or implementation decisions.",
-            "Return JSON only.",
-            "No markdown, no code fences, no prose."
-          ].join("\n\n")
-        },
-        {
-          role: "user",
-          content: buildUserPrompt(context)
-        }
-      ]
-    });
-
-    const parsed = parseOpenAiJsonOutput(rawJson);
-    const output = await validateAgentEnvelopeOutput({
-      parsed,
-      context: "live docs reviewer output",
-      nullableFields: ["risks", "notes", "metrics", "escalation"]
-    });
-    assertAgentOutputIdentity(output, {
-      expectedTaskId: context.task.taskId,
-      expectedRole: "DOCS_REVIEWER",
-      adapterLabel: "Live Docs Reviewer"
-    });
-
-    assertDocsReviewerOutput(output);
-    return output;
-  };
 }
 
 function buildUserPrompt(context: AgentHandlerContext): string {
