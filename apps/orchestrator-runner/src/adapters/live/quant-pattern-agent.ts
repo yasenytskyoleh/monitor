@@ -1,13 +1,14 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-
-import { getSchemaValidator } from "@monitor/agent-config";
 import { OrchestratorExecutionError } from "@monitor/orchestrator-core";
 import type { AgentHandler, AgentHandlerContext, AgentOutputEnvelope } from "@monitor/orchestrator-core";
 
+import {
+  assertAgentOutputIdentity,
+  loadPromptTemplateCached,
+  parseOpenAiJsonOutput,
+  validateAgentEnvelopeOutput
+} from "./agent-output-helpers.js";
 import { LiveOpenAiClient } from "./client.js";
 import { assertQuantPatternOutput } from "./quant-pattern-output.js";
-import { normalizeNullableFields } from "./schemas/openai-strict-schema.js";
 import { QUANT_PATTERN_RESPONSE_SCHEMA } from "./schemas/quant-pattern-agent-response-schema.js";
 
 export type LiveQuantPatternAgentOptions = {
@@ -19,8 +20,6 @@ export type LiveQuantPatternAgentOptions = {
   baseUrl?: string;
   fetchImpl?: typeof fetch;
 };
-
-const PROMPT_CACHE = new Map<string, string>();
 
 export function createLiveQuantPatternAgentHandler(options: LiveQuantPatternAgentOptions): AgentHandler {
   const client = new LiveOpenAiClient({
@@ -37,7 +36,7 @@ export function createLiveQuantPatternAgentHandler(options: LiveQuantPatternAgen
       );
     }
 
-    const promptText = await loadPromptTemplate(
+    const promptText = await loadPromptTemplateCached(
       options.promptsRootDir,
       context.agent.prompt.version,
       context.agent.prompt.template
@@ -76,56 +75,21 @@ export function createLiveQuantPatternAgentHandler(options: LiveQuantPatternAgen
       ]
     });
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(rawJson);
-    } catch (error) {
-      throw new OrchestratorExecutionError(
-        `Failed to parse OpenAI JSON output: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-
-    normalizeNullableFields(parsed, ["risks", "notes", "metrics", "escalation"]);
-
-    await getSchemaValidator().validateOrThrow(
-      "https://monitor/schemas/agent-output-envelope.schema.json",
+    const parsed = parseOpenAiJsonOutput(rawJson);
+    const output = await validateAgentEnvelopeOutput({
       parsed,
-      "live quant pattern output"
-    );
-
-    const output = parsed as AgentOutputEnvelope;
-    if (output.taskId !== context.task.taskId) {
-      throw new OrchestratorExecutionError(
-        `Live Quant Pattern Agent taskId mismatch: '${output.taskId}' != '${context.task.taskId}'`
-      );
-    }
-
-    if (output.agentRole !== "QUANT_PATTERN") {
-      throw new OrchestratorExecutionError(
-        `Live Quant Pattern Agent role must be 'QUANT_PATTERN', received '${output.agentRole}'`
-      );
-    }
+      context: "live quant pattern output",
+      nullableFields: ["risks", "notes", "metrics", "escalation"]
+    });
+    assertAgentOutputIdentity(output, {
+      expectedTaskId: context.task.taskId,
+      expectedRole: "QUANT_PATTERN",
+      adapterLabel: "Live Quant Pattern"
+    });
 
     assertQuantPatternOutput(output);
     return output;
   };
-}
-
-async function loadPromptTemplate(
-  promptsRootDir: string,
-  promptVersion: string,
-  promptFile: string
-): Promise<string> {
-  const cacheKey = `${promptsRootDir}/${promptVersion}/${promptFile}`;
-  const cached = PROMPT_CACHE.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
-
-  const promptPath = join(promptsRootDir, promptVersion, promptFile);
-  const promptText = await readFile(promptPath, "utf8");
-  PROMPT_CACHE.set(cacheKey, promptText);
-  return promptText;
 }
 
 function buildUserPrompt(context: AgentHandlerContext): string {

@@ -33,7 +33,7 @@ test("resolveAgentExecutionMap mode=live defaults only implemented live agents t
   assert.equal(resolved["architect-agent"], "live");
   assert.equal(resolved["quant-pattern-agent"], "live");
   assert.equal(resolved["backend-agent"], "mock");
-  assert.equal(resolved["docs-reviewer-agent"], "mock");
+  assert.equal(resolved["docs-reviewer-agent"], "live");
 });
 
 test("resolveAgentExecutionMap rejects unsupported live override", () => {

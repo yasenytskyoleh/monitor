@@ -24,7 +24,8 @@ Default mode is `live`:
 - `product-agent` resolves to `live`
 - `architect-agent` resolves to `live`
 - `quant-pattern-agent` resolves to `live`
-- remaining agents resolve to `mock` until their live adapters are implemented
+- `docs-reviewer-agent` resolves to `live`
+- `backend-agent` resolves to `mock` until its live adapter is implemented
 
 Execution mode precedence:
 1. Start from `--mode`.
@@ -36,7 +37,8 @@ Current live adapter coverage:
 - `product-agent`: live supported
 - `architect-agent`: live supported
 - `quant-pattern-agent`: live supported
-- `backend-agent`, `docs-reviewer-agent`: mock only
+- `docs-reviewer-agent`: live supported
+- `backend-agent`: mock only
 
 Run mocked happy flow:
 ```bash
@@ -54,7 +56,7 @@ Run hybrid mode explicitly (recommended):
 ```bash
 pnpm runner run \
   --mode mock \
-  --agent-mode product=live,architect=live,quant-pattern=live \
+  --agent-mode product=live,architect=live,quant-pattern=live,docs-reviewer=live \
   --scenario happy \
   --env local \
   --version v1 \
@@ -142,7 +144,7 @@ Artifact enforcement is strict across workflow transitions:
 - required artifacts for the target state must exist before the transition is accepted
 - violations fail the run as contract/runtime errors (no silent fallback)
 
-Run default live path (Product + Architect + Quant Pattern live, remaining agents mocked):
+Run default live path (Product + Architect + Quant Pattern + Docs Reviewer live, Backend mocked):
 ```bash
 pnpm runner run \
   --mode live \
@@ -164,7 +166,8 @@ Examples:
 - `--agent-mode product=live`
 - `--agent-mode architect=live`
 - `--agent-mode quant-pattern=live`
-- `--agent-mode product=live,architect=live,quant-pattern=live`
+- `--agent-mode docs-reviewer=live`
+- `--agent-mode product=live,architect=live,quant-pattern=live,docs-reviewer=live`
 
 Invalid overrides fail fast:
 - unknown agent alias/id
@@ -196,3 +199,12 @@ Live Quant Pattern Agent contract:
   `invalidationAssumptions[]`, `edgeHypothesis`, `testScenarios[]`
 - Phase 1 constraints are enforced:
   spot-only scope, no leverage, no funding-rate dependency, no derivatives assumptions
+
+Live Docs Reviewer Agent contract:
+- OpenAI response must be JSON-only
+- output must pass `agent-output-envelope` and docs-reviewer-specific structured validation
+- invalid model output fails the run (no silent repair fallback)
+- Docs Reviewer completed outputs must include structured review fields in `metrics`:
+  `docsUpdates[]`, `reviewFindings[]`, `changelogNotes[]`,
+  `traceabilityConfirmation.{isTraceable,notes[]}`, `missingArtifactWarnings[]`, `driftWarnings[]`
+- reviewer stays bounded to review semantics and cannot bypass workflow artifact enforcement

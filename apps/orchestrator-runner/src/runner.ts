@@ -519,10 +519,10 @@ function buildPersistedAgentModes(
 
   const defaults: AgentExecutionMap = {
     "product-agent": args.mode === "live" ? "live" : "mock",
-    "architect-agent": "mock",
-    "quant-pattern-agent": "mock",
+    "architect-agent": args.mode === "live" ? "live" : "mock",
+    "quant-pattern-agent": args.mode === "live" ? "live" : "mock",
     "backend-agent": "mock",
-    "docs-reviewer-agent": "mock"
+    "docs-reviewer-agent": args.mode === "live" ? "live" : "mock"
   };
 
   for (const agentId of SUPPORTED_AGENT_IDS) {

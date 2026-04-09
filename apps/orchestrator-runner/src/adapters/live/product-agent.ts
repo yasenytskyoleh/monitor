@@ -1,14 +1,15 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-
-import { getSchemaValidator } from "@monitor/agent-config";
 import { OrchestratorExecutionError } from "@monitor/orchestrator-core";
 import type { AgentHandler, AgentHandlerContext, AgentOutputEnvelope } from "@monitor/orchestrator-core";
 
+import {
+  assertAgentOutputIdentity,
+  loadPromptTemplateCached,
+  parseOpenAiJsonOutput,
+  validateAgentEnvelopeOutput
+} from "./agent-output-helpers.js";
 import { LiveOpenAiClient } from "./client.js";
 import {
   ESCALATION_SCHEMA,
-  normalizeNullableFields,
   nullableSchema,
   strictObjectSchema
 } from "./schemas/openai-strict-schema.js";
@@ -22,8 +23,6 @@ export type LiveProductAgentOptions = {
   baseUrl?: string;
   fetchImpl?: typeof fetch;
 };
-
-const PROMPT_CACHE = new Map<string, string>();
 
 const AGENT_OUTPUT_RESPONSE_SCHEMA: Record<string, unknown> = strictObjectSchema({
   taskId: { type: "string", minLength: 1 },
@@ -85,7 +84,7 @@ export function createLiveProductAgentHandler(options: LiveProductAgentOptions):
       );
     }
 
-    const promptText = await loadPromptTemplate(
+    const promptText = await loadPromptTemplateCached(
       options.promptsRootDir,
       context.agent.prompt.version,
       context.agent.prompt.template
@@ -123,57 +122,21 @@ export function createLiveProductAgentHandler(options: LiveProductAgentOptions):
       ]
     });
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(rawJson);
-    } catch (error) {
-      throw new OrchestratorExecutionError(
-        `Failed to parse OpenAI JSON output: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-
-    normalizeNullableFields(parsed, ["risks", "notes", "escalation"]);
-
-    await getSchemaValidator().validateOrThrow(
-      "https://monitor/schemas/agent-output-envelope.schema.json",
+    const parsed = parseOpenAiJsonOutput(rawJson);
+    const output = await validateAgentEnvelopeOutput({
       parsed,
-      "live product agent output"
-    );
-
-    const output = parsed as AgentOutputEnvelope;
-
-    if (output.taskId !== context.task.taskId) {
-      throw new OrchestratorExecutionError(
-        `Live Product Agent taskId mismatch: '${output.taskId}' != '${context.task.taskId}'`
-      );
-    }
-
-    if (output.agentRole !== "PRODUCT") {
-      throw new OrchestratorExecutionError(
-        `Live Product Agent role must be 'PRODUCT', received '${output.agentRole}'`
-      );
-    }
+      context: "live product agent output",
+      nullableFields: ["risks", "notes", "escalation"]
+    });
+    assertAgentOutputIdentity(output, {
+      expectedTaskId: context.task.taskId,
+      expectedRole: "PRODUCT",
+      adapterLabel: "Live Product"
+    });
 
     assertProductPlanningFields(output);
     return output;
   };
-}
-
-async function loadPromptTemplate(
-  promptsRootDir: string,
-  promptVersion: string,
-  promptFile: string
-): Promise<string> {
-  const cacheKey = `${promptsRootDir}/${promptVersion}/${promptFile}`;
-  const cached = PROMPT_CACHE.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
-
-  const promptPath = join(promptsRootDir, promptVersion, promptFile);
-  const promptText = await readFile(promptPath, "utf8");
-  PROMPT_CACHE.set(cacheKey, promptText);
-  return promptText;
 }
 
 function buildUserPrompt(context: AgentHandlerContext): string {

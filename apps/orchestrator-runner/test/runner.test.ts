@@ -5,7 +5,10 @@ import { tmpdir } from "node:os";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { ConfigReleaseManager } from "@monitor/agent-config";
+import { OrchestratorCore } from "@monitor/orchestrator-core";
 import { parseArgs, runWithArgv } from "../src/index.js";
+import { resolveHandlers } from "../src/handlers/resolve-handlers.js";
 import type { RunnerOutput } from "../src/types.js";
 
 const TEST_DIR = dirname(fileURLToPath(import.meta.url));
@@ -89,6 +92,32 @@ function createLiveQuantPatternResponseContent(
         fundingRateDependency: "NOT_REQUIRED",
         derivatives: "NONE"
       }
+    },
+    ...overrides
+  });
+}
+
+function createLiveDocsReviewerResponseContent(
+  taskId: string,
+  overrides: Record<string, unknown> = {}
+): string {
+  return JSON.stringify({
+    taskId,
+    agentRole: "DOCS_REVIEWER",
+    status: "completed",
+    summary: "Review completed",
+    artifacts: ["docs-update", "review-report"],
+    nextAction: "await_approval",
+    metrics: {
+      docsUpdates: ["Update workflow artifact contract docs"],
+      reviewFindings: ["Artifact traceability is complete for current run."],
+      changelogNotes: ["Added strict artifact record enforcement."],
+      traceabilityConfirmation: {
+        isTraceable: true,
+        notes: ["All required artifacts have canonical refs."]
+      },
+      missingArtifactWarnings: [],
+      driftWarnings: []
     },
     ...overrides
   });
@@ -375,7 +404,7 @@ test("mock both scenario runs happy and rejection flows", async (context) => {
   assert.equal(result.scenarios?.[1]?.finalState, "REJECTED");
 });
 
-test("live mode runs Product, Architect, and Quant Pattern live and reaches DONE", async (context) => {
+test("live mode runs Product, Architect, Quant Pattern, and Docs Reviewer live and reaches DONE", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
 
@@ -388,7 +417,8 @@ test("live mode runs Product, Architect, and Quant Pattern live and reaches DONE
       [
         createLiveProductResponseContent("task-live-valid"),
         createLiveArchitectResponseContent("task-live-valid"),
-        createLiveQuantPatternResponseContent("task-live-valid")
+        createLiveQuantPatternResponseContent("task-live-valid"),
+        createLiveDocsReviewerResponseContent("task-live-valid")
       ],
       calls
     );
@@ -405,7 +435,7 @@ test("live mode runs Product, Architect, and Quant Pattern live and reaches DONE
         "--requested-by",
         "tester",
         "--task-title",
-        "Live Product + Architect + Quant test"
+        "Live Product + Architect + Quant + Docs Reviewer test"
       ],
       workspaceRoot,
       {
@@ -419,10 +449,11 @@ test("live mode runs Product, Architect, and Quant Pattern live and reaches DONE
     assert.equal(result.transitions.length, 7);
     assert.equal(result.transitions[0]?.from, "INTAKE");
     assert.equal(result.transitions[0]?.to, "DESIGN");
-    assert.equal(calls.length, 3);
+    assert.equal(calls.length, 4);
     assert.equal(calls[0]?.body?.response_format && typeof calls[0]?.body?.response_format, "object");
     assert.equal(calls[1]?.body?.response_format && typeof calls[1]?.body?.response_format, "object");
     assert.equal(calls[2]?.body?.response_format && typeof calls[2]?.body?.response_format, "object");
+    assert.equal(calls[3]?.body?.response_format && typeof calls[3]?.body?.response_format, "object");
 
     const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
     const runRecord = await readJsonFile<{
@@ -437,6 +468,7 @@ test("live mode runs Product, Architect, and Quant Pattern live and reaches DONE
     assert.equal(runRecord.agentModes["product-agent"], "live");
     assert.equal(runRecord.agentModes["architect-agent"], "live");
     assert.equal(runRecord.agentModes["quant-pattern-agent"], "live");
+    assert.equal(runRecord.agentModes["docs-reviewer-agent"], "live");
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -703,6 +735,64 @@ test("mode mock with product, architect, and quant-pattern live overrides runs h
   }
 });
 
+test("mode mock with product, architect, quant-pattern, and docs-reviewer live overrides runs happy flow", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const calls: Array<{ body?: Record<string, unknown> }> = [];
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "product=live,architect=live,quant-pattern=live,docs-reviewer=live",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-mock-product-architect-quant-docs-live",
+        "--requested-by",
+        "tester",
+        "--task-title",
+        "Mixed product+architect+quant+docs live"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionSequenceFetch(
+          [
+            createLiveProductResponseContent("task-mock-product-architect-quant-docs-live"),
+            createLiveArchitectResponseContent("task-mock-product-architect-quant-docs-live"),
+            createLiveQuantPatternResponseContent("task-mock-product-architect-quant-docs-live"),
+            createLiveDocsReviewerResponseContent("task-mock-product-architect-quant-docs-live")
+          ],
+          calls
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.agentModes?.["product-agent"], "live");
+    assert.equal(result.agentModes?.["architect-agent"], "live");
+    assert.equal(result.agentModes?.["quant-pattern-agent"], "live");
+    assert.equal(result.agentModes?.["docs-reviewer-agent"], "live");
+    assert.equal(calls.length, 4);
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
 test("mode mock with quant-pattern live override runs happy flow", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
@@ -746,6 +836,154 @@ test("mode mock with quant-pattern live override runs happy flow", async (contex
     assert.equal(result.agentModes?.["architect-agent"], "mock");
     assert.equal(result.agentModes?.["quant-pattern-agent"], "live");
     assert.equal(calls.length, 1);
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock with docs-reviewer live override runs happy flow", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const calls: Array<{ body?: Record<string, unknown> }> = [];
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "docs-reviewer=live",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-mock-docs-live",
+        "--requested-by",
+        "tester",
+        "--task-title",
+        "Docs reviewer live only"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionSequenceFetch(
+          [createLiveDocsReviewerResponseContent("task-mock-docs-live")],
+          calls
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.agentModes?.["product-agent"], "mock");
+    assert.equal(result.agentModes?.["architect-agent"], "mock");
+    assert.equal(result.agentModes?.["quant-pattern-agent"], "mock");
+    assert.equal(result.agentModes?.["docs-reviewer-agent"], "live");
+    assert.equal(calls.length, 1);
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("docs-reviewer live path preserves REVIEW -> IMPLEMENT reentry transition", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const manager = new ConfigReleaseManager(workspaceRoot);
+    const snapshot = await manager.compileSnapshot({
+      environment: "local",
+      version: "v1",
+      overwrite: true
+    });
+    const snapshotPath = join(workspaceRoot, snapshot.snapshotPath);
+
+    const resolvedHandlers = resolveHandlers({
+      rootDir: workspaceRoot,
+      agentModes: {
+        "product-agent": "mock",
+        "architect-agent": "mock",
+        "quant-pattern-agent": "mock",
+        "backend-agent": "mock",
+        "docs-reviewer-agent": "live"
+      },
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      fetchImpl: createChatCompletionSequenceFetch([
+        createLiveDocsReviewerResponseContent("task-review-reentry", {
+          nextAction: "return_to_implement"
+        })
+      ])
+    });
+
+    const orchestrator = await OrchestratorCore.fromSnapshotFile({
+      snapshotPath,
+      handlers: resolvedHandlers.handlers,
+      executedBy: "orchestrator-runner-test"
+    });
+
+    const initialTask = {
+      taskId: "task-review-reentry",
+      requestedBy: "tester",
+      workflowState: "INTAKE",
+      input: { title: "Reentry test" },
+      configVersion: "v1",
+      artifactRefs: []
+    };
+
+    let result = await orchestrator.transition({
+      task: initialTask,
+      to: "DESIGN",
+      reason: "INTAKE -> DESIGN"
+    });
+    result = await orchestrator.transition({
+      task: result.task,
+      to: "FORMALIZE",
+      reason: "DESIGN -> FORMALIZE",
+      approvalRef: {
+        approvalId: "appr-arch-review-reentry",
+        approvalType: "ARCHITECTURE",
+        approvedBy: "tester",
+        approvedAtUtc: new Date().toISOString(),
+        status: "approved"
+      }
+    });
+    result = await orchestrator.transition({
+      task: result.task,
+      to: "IMPLEMENT",
+      reason: "FORMALIZE -> IMPLEMENT"
+    });
+    result = await orchestrator.transition({
+      task: result.task,
+      to: "REVIEW",
+      reason: "IMPLEMENT -> REVIEW"
+    });
+    const reentryResult = await orchestrator.transition({
+      task: result.task,
+      to: "IMPLEMENT",
+      reason: "REVIEW -> IMPLEMENT reentry"
+    });
+
+    assert.equal(reentryResult.task.workflowState, "IMPLEMENT");
+    assert.equal(reentryResult.transition.from, "REVIEW");
+    assert.equal(reentryResult.transition.to, "IMPLEMENT");
+    assert.equal(reentryResult.output?.agentRole, "DOCS_REVIEWER");
+    assert.equal(reentryResult.output?.nextAction, "return_to_implement");
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -812,7 +1050,57 @@ test("mode mock rejects invalid live Quant Pattern output", async (context) => {
   }
 });
 
-test("mode mock with product, architect, and quant-pattern live supports scenario both", async (context) => {
+test("mode mock rejects invalid live Docs Reviewer output", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "docs-reviewer=live",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-docs-reviewer-invalid"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveDocsReviewerResponseContent("task-docs-reviewer-invalid", {
+              metrics: {
+                docsUpdates: ["x"],
+                reviewFindings: ["y"],
+                changelogNotes: ["z"],
+                missingArtifactWarnings: [],
+                driftWarnings: []
+              }
+            })
+          )
+        }
+      ),
+      /live docs reviewer output/
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock with product, architect, quant-pattern, and docs-reviewer live supports scenario both", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
 
@@ -826,7 +1114,7 @@ test("mode mock with product, architect, and quant-pattern live supports scenari
         "--mode",
         "mock",
         "--agent-mode",
-        "product=live,architect=live,quant-pattern=live",
+        "product=live,architect=live,quant-pattern=live,docs-reviewer=live",
         "--scenario",
         "both",
         "--env",
@@ -847,6 +1135,7 @@ test("mode mock with product, architect, and quant-pattern live supports scenari
             createLiveProductResponseContent("task-mock-both-all-live"),
             createLiveArchitectResponseContent("task-mock-both-all-live"),
             createLiveQuantPatternResponseContent("task-mock-both-all-live"),
+            createLiveDocsReviewerResponseContent("task-mock-both-all-live"),
             createLiveProductResponseContent("task-mock-both-all-live"),
             createLiveArchitectResponseContent("task-mock-both-all-live")
           ],
@@ -862,7 +1151,8 @@ test("mode mock with product, architect, and quant-pattern live supports scenari
     assert.equal(result.agentModes?.["product-agent"], "live");
     assert.equal(result.agentModes?.["architect-agent"], "live");
     assert.equal(result.agentModes?.["quant-pattern-agent"], "live");
-    assert.equal(calls.length, 5);
+    assert.equal(result.agentModes?.["docs-reviewer-agent"], "live");
+    assert.equal(calls.length, 6);
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1149,6 +1439,50 @@ test("fails when product agent emits forbidden artifact type", async (context) =
         }
       ),
       /not allowed for 'product-agent'/
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("fails when docs reviewer agent emits forbidden artifact type", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "docs-reviewer=live",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-docs-reviewer-forbidden-artifact"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveDocsReviewerResponseContent("task-docs-reviewer-forbidden-artifact", {
+              artifacts: ["docs-update", "review-report", "product-brief"]
+            })
+          )
+        }
+      ),
+      /not allowed for 'docs-reviewer-agent'/
     );
   } finally {
     if (oldKey === undefined) {

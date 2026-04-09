@@ -7,11 +7,11 @@ import {
   parseOpenAiJsonOutput,
   validateAgentEnvelopeOutput
 } from "./agent-output-helpers.js";
-import { assertArchitectDesignOutput } from "./architect-output.js";
 import { LiveOpenAiClient } from "./client.js";
-import { ARCHITECT_RESPONSE_SCHEMA } from "./schemas/architect-agent-response-schema.js";
+import { assertDocsReviewerOutput } from "./docs-reviewer-output.js";
+import { DOCS_REVIEWER_RESPONSE_SCHEMA } from "./schemas/docs-reviewer-agent-response-schema.js";
 
-export type LiveArchitectAgentOptions = {
+export type LiveDocsReviewerAgentOptions = {
   apiKey: string;
   promptsRootDir: string;
   model?: string;
@@ -21,7 +21,7 @@ export type LiveArchitectAgentOptions = {
   fetchImpl?: typeof fetch;
 };
 
-export function createLiveArchitectAgentHandler(options: LiveArchitectAgentOptions): AgentHandler {
+export function createLiveDocsReviewerAgentHandler(options: LiveDocsReviewerAgentOptions): AgentHandler {
   const client = new LiveOpenAiClient({
     apiKey: options.apiKey,
     timeoutMs: options.timeoutMs,
@@ -30,9 +30,9 @@ export function createLiveArchitectAgentHandler(options: LiveArchitectAgentOptio
   });
 
   return async (context: AgentHandlerContext): Promise<AgentOutputEnvelope> => {
-    if (context.agent.id !== "architect-agent") {
+    if (context.agent.id !== "docs-reviewer-agent") {
       throw new OrchestratorExecutionError(
-        `Live Architect adapter is bound to 'architect-agent', received '${context.agent.id}'`
+        `Live Docs Reviewer adapter is bound to 'docs-reviewer-agent', received '${context.agent.id}'`
       );
     }
 
@@ -53,8 +53,8 @@ export function createLiveArchitectAgentHandler(options: LiveArchitectAgentOptio
       responseFormat: {
         type: "json_schema",
         jsonSchema: {
-          name: "architect_agent_output_v1",
-          schema: ARCHITECT_RESPONSE_SCHEMA,
+          name: "docs_reviewer_agent_output_v1",
+          schema: DOCS_REVIEWER_RESPONSE_SCHEMA,
           strict: true
         }
       },
@@ -63,6 +63,7 @@ export function createLiveArchitectAgentHandler(options: LiveArchitectAgentOptio
           role: "system",
           content: [
             promptText,
+            "You are bounded to review semantics only. Do not invent architecture or implementation decisions.",
             "Return JSON only.",
             "No markdown, no code fences, no prose."
           ].join("\n\n")
@@ -77,16 +78,16 @@ export function createLiveArchitectAgentHandler(options: LiveArchitectAgentOptio
     const parsed = parseOpenAiJsonOutput(rawJson);
     const output = await validateAgentEnvelopeOutput({
       parsed,
-      context: "live architect agent output",
+      context: "live docs reviewer output",
       nullableFields: ["risks", "notes", "metrics", "escalation"]
     });
     assertAgentOutputIdentity(output, {
       expectedTaskId: context.task.taskId,
-      expectedRole: "ARCHITECT",
-      adapterLabel: "Live Architect"
+      expectedRole: "DOCS_REVIEWER",
+      adapterLabel: "Live Docs Reviewer"
     });
 
-    assertArchitectDesignOutput(output);
+    assertDocsReviewerOutput(output);
     return output;
   };
 }
@@ -98,20 +99,21 @@ function buildUserPrompt(context: AgentHandlerContext): string {
   const payload = {
     task: context.task,
     targetState: context.targetState,
+    artifactInventory: context.task.artifactRefs,
     outputRequirements: {
       status: "Use completed, blocked, needs_escalation, or rejected.",
       nextAction:
-        "Use one valid action from the schema. For DESIGN -> FORMALIZE handoff use handoff_to_quant or await_approval.",
+        "Use one valid action from the schema. Prefer await_approval when review evidence is complete.",
       artifacts:
-        "Return an array of non-empty string artifact refs. Include architecture artifacts and target-state required artifacts.",
-      architectDesignFields:
-        "When status=completed include metrics.moduleBoundaries[], metrics.dataFlow[], metrics.contractDefinitions[], metrics.adrDraft, metrics.riskNotes[].",
+        "Return an array of non-empty string artifact refs. Include docs-update and review-report when status is completed.",
+      docsReviewFields:
+        "When status=completed include metrics.docsUpdates[], metrics.reviewFindings[], metrics.changelogNotes[], metrics.traceabilityConfirmation.{isTraceable,notes[]}, metrics.missingArtifactWarnings[], metrics.driftWarnings[].",
       requiredArtifactsForTargetState
     }
   };
 
   return [
-    "Produce Architect Agent output for this task.",
+    "Produce Docs Reviewer Agent output for this task.",
     "Return exactly one JSON object following the provided schema.",
     JSON.stringify(payload, null, 2)
   ].join("\n\n");
