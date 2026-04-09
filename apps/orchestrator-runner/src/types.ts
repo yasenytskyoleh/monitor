@@ -42,6 +42,9 @@ export type CliArgs = {
   taskId: string;
   requestedBy: string;
   taskTitle: string;
+  model?: string;
+  temperature?: number;
+  timeoutMs?: number;
   inputFile?: string;
   inputJson?: string;
   logPath?: string;

@@ -1,19 +1,32 @@
-import { access, readFile } from "node:fs/promises";
+import { access, mkdir, readFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import process from "node:process";
 
 import { ConfigReleaseManager } from "@monitor/agent-config";
+import { OrchestratorCore } from "@monitor/orchestrator-core";
+import type { AgentHandlers } from "@monitor/orchestrator-core";
 
+import { createLiveProductAgentHandler } from "./adapters/live/product-agent.js";
 import { parseArgs } from "./cli.js";
-import { loadDotEnv } from "./env.js";
+import { loadDotEnv, requireOpenAiApiKey } from "./env.js";
+import { createMockHandlers } from "./mock-handlers.js";
 import { assertSuccessfulResult, formatRunnerOutput } from "./output.js";
-import { runMockMode } from "./scenario-runner.js";
+import { resolveLogPath, toRelativeOrAbsolute } from "./runtime-paths.js";
+import { createInitialTask, runHappyWorkflow, runMockMode } from "./scenario-runner.js";
 import type { CliArgs, RunnerOutput } from "./types.js";
 
-export async function runWithArgv(argv: string[], startDir = process.cwd()): Promise<RunnerOutput> {
+export type RunnerDependencies = {
+  liveProductFetchImpl?: typeof fetch;
+};
+
+export async function runWithArgv(
+  argv: string[],
+  startDir = process.cwd(),
+  dependencies: RunnerDependencies = {}
+): Promise<RunnerOutput> {
   const args = parseArgs(argv);
   const rootDir = args.rootDir ? resolve(args.rootDir) : await findRepoRoot(startDir);
-  await loadDotEnv(rootDir);
+  const envLoadResult = await loadDotEnv(rootDir);
 
   const manager = new ConfigReleaseManager(rootDir);
   const snapshotResult = await manager.compileSnapshot({
@@ -37,7 +50,15 @@ export async function runWithArgv(argv: string[], startDir = process.cwd()): Pro
     return result;
   }
 
-  const result = await runLiveMode();
+  const result = await runLiveMode({
+    args,
+    rootDir,
+    snapshotPath,
+    snapshotResult: snapshotResult as unknown as Record<string, unknown>,
+    taskInput,
+    openAiApiKey: requireOpenAiApiKey(envLoadResult.loadedFrom),
+    fetchImpl: dependencies.liveProductFetchImpl
+  });
   assertSuccessfulResult(result);
   return result;
 }
@@ -47,8 +68,65 @@ export async function runCli(argv = process.argv.slice(2), startDir = process.cw
   process.stdout.write(`${formatRunnerOutput(result)}\n`);
 }
 
-async function runLiveMode(): Promise<RunnerOutput> {
-  throw new Error("Mode 'live' is not implemented in this milestone. Use --mode mock.");
+type LiveRunModeOptions = {
+  args: CliArgs;
+  rootDir: string;
+  snapshotPath: string;
+  snapshotResult: Record<string, unknown>;
+  taskInput: Record<string, unknown>;
+  openAiApiKey: string;
+  fetchImpl?: typeof fetch;
+};
+
+async function runLiveMode(options: LiveRunModeOptions): Promise<RunnerOutput> {
+  const snapshotVersion = String(options.snapshotResult.version ?? options.args.version ?? "v1");
+  const transitionLogPath = resolveLogPath(options.rootDir, options.args, snapshotVersion);
+  await mkdir(dirname(transitionLogPath), { recursive: true });
+
+  const handlers: AgentHandlers = {
+    ...createMockHandlers(),
+    "product-agent": createLiveProductAgentHandler({
+      apiKey: options.openAiApiKey,
+      promptsRootDir: join(options.rootDir, "configs/agents/prompts"),
+      model: options.args.model,
+      temperature: options.args.temperature,
+      timeoutMs: options.args.timeoutMs,
+      fetchImpl: options.fetchImpl
+    })
+  };
+
+  const orchestrator = await OrchestratorCore.fromSnapshotFile({
+    snapshotPath: options.snapshotPath,
+    transitionLogPath,
+    handlers,
+    executedBy: "orchestrator-runner-live-hybrid"
+  });
+
+  const task = createInitialTask(
+    options.args,
+    snapshotVersion,
+    options.taskInput
+  );
+
+  const workflowResult = await runHappyWorkflow(orchestrator, task, options.args, {
+    designReason: "Live Product handoff",
+    formalizeReason: "Mock Architect handoff",
+    implementReason: "Mock Quant handoff",
+    reviewReason: "Mock Backend handoff",
+    approvalReason: "Mock Docs review complete",
+    publishReason: "Mock publish approval granted",
+    doneReason: "Hybrid live-mock completion",
+    architectureApprovalSuffix: "live"
+  });
+
+  return {
+    status: "ok",
+    snapshot: options.snapshotResult,
+    transitionLogPath: toRelativeOrAbsolute(options.rootDir, transitionLogPath),
+    taskState: workflowResult.task.workflowState,
+    output: workflowResult.output,
+    transitions: workflowResult.transitions
+  };
 }
 
 async function resolveTaskInput(rootDir: string, args: CliArgs): Promise<Record<string, unknown>> {

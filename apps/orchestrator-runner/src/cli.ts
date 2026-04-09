@@ -131,7 +131,22 @@ export function parseArgs(argv: string[]): CliArgs {
     }
 
     if (arg === "--model" || arg === "--temperature" || arg === "--timeout-ms") {
-      requiredValue(argv, ++index, arg);
+      const value = requiredValue(argv, ++index, arg);
+      if (arg === "--model") {
+        args.model = value;
+      } else if (arg === "--temperature") {
+        const parsed = Number.parseFloat(value);
+        if (Number.isNaN(parsed)) {
+          throw new Error(`Invalid numeric value for --temperature: ${value}`);
+        }
+        args.temperature = parsed;
+      } else {
+        const parsed = Number.parseInt(value, 10);
+        if (Number.isNaN(parsed)) {
+          throw new Error(`Invalid integer value for --timeout-ms: ${value}`);
+        }
+        args.timeoutMs = parsed;
+      }
       continue;
     }
 
@@ -178,13 +193,13 @@ function printHelpAndExit(exitCode: number): never {
     "  --approval-by <name>    Approval actor used for DESIGN -> FORMALIZE",
     "  --approval-at-utc <ts>  Approval UTC timestamp (ISO 8601) used for DESIGN -> FORMALIZE",
     "  --approval-expires-at-utc <ts> Approval expiry UTC timestamp (ISO 8601)",
-    "  --model <id>            Reserved for future live mode",
-    "  --temperature <n>       Reserved for future live mode",
-    "  --timeout-ms <n>        Reserved for future live mode",
+    "  --model <id>            OpenAI model override for live Product Agent",
+    "  --temperature <n>       OpenAI temperature override for live Product Agent",
+    "  --timeout-ms <n>        OpenAI timeout override (ms) for live Product Agent",
     "  --help                  Show this help",
     "",
     "Notes:",
-    "  live mode is a stub in this milestone; use --mode mock."
+    "  live mode runs Product Agent against OpenAI and keeps the other agents mocked."
   ].join("\n");
 
   process.stdout.write(`${help}\n`);

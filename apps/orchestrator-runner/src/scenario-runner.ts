@@ -62,7 +62,16 @@ export async function runMockMode(options: RunModeOptions): Promise<RunnerOutput
       blockedTransition?: BlockedTransitionInfo;
     } =
       scenario === "happy"
-        ? await runMockHappyScenario(orchestrator, task, options.args)
+        ? await runHappyWorkflow(orchestrator, task, options.args, {
+            designReason: "Mock Product handoff",
+            formalizeReason: "Mock Architect handoff",
+            implementReason: "Mock Quant handoff",
+            reviewReason: "Mock Backend handoff",
+            approvalReason: "Mock Docs review complete",
+            publishReason: "Mock publish approval granted",
+            doneReason: "Mock completion",
+            architectureApprovalSuffix: "happy"
+          })
         : await runMockMissingApprovalScenario(orchestrator, task, options.args);
 
     scenarioResults.push({
@@ -102,10 +111,22 @@ function resolveScenarioList(args: CliArgs): MockScenario[] {
   return ["happy", "missing-approval"];
 }
 
-async function runMockHappyScenario(
+export type HappyWorkflowStepReasons = {
+  designReason: string;
+  formalizeReason: string;
+  implementReason: string;
+  reviewReason: string;
+  approvalReason: string;
+  publishReason: string;
+  doneReason: string;
+  architectureApprovalSuffix: string;
+};
+
+export async function runHappyWorkflow(
   orchestrator: OrchestratorCore,
   initialTask: TaskEnvelope,
-  args: CliArgs
+  args: CliArgs,
+  reasons: HappyWorkflowStepReasons
 ): Promise<{
   task: TaskEnvelope;
   output?: AgentOutputEnvelope;
@@ -116,36 +137,36 @@ async function runMockHappyScenario(
   let current = await orchestrator.transition({
     task: initialTask,
     to: "DESIGN",
-    reason: "Mock Product handoff"
+    reason: reasons.designReason
   });
   results.push(current);
 
   current = await orchestrator.transition({
     task: current.task,
     to: "FORMALIZE",
-    approvalRef: buildArchitectureApprovalReference(args, "happy"),
-    reason: "Mock Architect handoff"
+    approvalRef: buildArchitectureApprovalReference(args, reasons.architectureApprovalSuffix),
+    reason: reasons.formalizeReason
   });
   results.push(current);
 
   current = await orchestrator.transition({
     task: current.task,
     to: "IMPLEMENT",
-    reason: "Mock Quant handoff"
+    reason: reasons.implementReason
   });
   results.push(current);
 
   current = await orchestrator.transition({
     task: current.task,
     to: "REVIEW",
-    reason: "Mock Backend handoff"
+    reason: reasons.reviewReason
   });
   results.push(current);
 
   current = await orchestrator.transition({
     task: current.task,
     to: "APPROVAL",
-    reason: "Mock Docs review complete"
+    reason: reasons.approvalReason
   });
   results.push(current);
 
@@ -154,14 +175,14 @@ async function runMockHappyScenario(
     to: "PUBLISH_SIGNAL",
     approvalRef: buildSignalPublishApprovalReference(args),
     additionalArtifacts: ["publishable-signal-bundle"],
-    reason: "Mock publish approval granted"
+    reason: reasons.publishReason
   });
   results.push(current);
 
   current = await orchestrator.transition({
     task: current.task,
     to: "DONE",
-    reason: "Mock completion"
+    reason: reasons.doneReason
   });
   results.push(current);
 
@@ -230,7 +251,7 @@ async function runMockMissingApprovalScenario(
   };
 }
 
-function createInitialTask(
+export function createInitialTask(
   args: CliArgs,
   configVersion: string,
   input: Record<string, unknown>
@@ -255,7 +276,7 @@ function lastDefinedOutput(results: TransitionResult[]): AgentOutputEnvelope | u
   return undefined;
 }
 
-function buildArchitectureApprovalReference(args: CliArgs, suffix = "live"): ApprovalReference {
+export function buildArchitectureApprovalReference(args: CliArgs, suffix = "live"): ApprovalReference {
   const nowUtc = new Date().toISOString();
 
   return {
@@ -268,7 +289,7 @@ function buildArchitectureApprovalReference(args: CliArgs, suffix = "live"): App
   };
 }
 
-function buildSignalPublishApprovalReference(args: CliArgs): ApprovalReference {
+export function buildSignalPublishApprovalReference(args: CliArgs): ApprovalReference {
   return {
     approvalId: `appr-signal-${args.taskId}-${Date.now()}`,
     approvalType: "SIGNAL_PUBLISH",

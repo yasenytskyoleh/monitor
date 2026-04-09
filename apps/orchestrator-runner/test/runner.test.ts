@@ -16,6 +16,49 @@ async function createRunnerWorkspace(): Promise<string> {
   return workspaceRoot;
 }
 
+function createLiveProductResponseContent(
+  taskId: string,
+  overrides: Record<string, unknown> = {}
+): string {
+  return JSON.stringify({
+    taskId,
+    agentRole: "PRODUCT",
+    status: "completed",
+    summary: "Product scope prepared",
+    artifacts: ["product-brief"],
+    nextAction: "handoff_to_architect",
+    metrics: {
+      problemStatement: "Need actionable BTC entry/exit signal detection.",
+      scope: "Define first signal intake for spot-only BTC strategy.",
+      assumptions: ["Initial release uses spot-only data."],
+      acceptanceCriteria: ["Intake scope is bounded and testable."],
+      backlogItem: "MON-101 Product intake definition"
+    },
+    ...overrides
+  });
+}
+
+function createChatCompletionFetch(content: string): typeof fetch {
+  return async () =>
+    new Response(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content
+            }
+          }
+        ]
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+}
+
 test("parseArgs defaults to live mode", () => {
   const args = parseArgs([]);
 
@@ -138,12 +181,16 @@ test("mock both scenario runs happy and rejection flows", async (context) => {
   assert.equal(result.scenarios?.[1]?.finalState, "REJECTED");
 });
 
-test("live mode is explicitly not implemented for this milestone", async (context) => {
+test("live mode runs Product Agent live with remaining agents mocked and reaches DONE", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
 
-  await assert.rejects(
-    runWithArgv(
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const calls: Array<{ body?: Record<string, unknown> }> = [];
+    const result = await runWithArgv(
       [
         "--mode",
         "live",
@@ -152,12 +199,210 @@ test("live mode is explicitly not implemented for this milestone", async (contex
         "--version",
         "v1",
         "--task-id",
-        "task-live-stub"
+        "task-live-valid",
+        "--requested-by",
+        "tester",
+        "--task-title",
+        "Live Product hybrid test"
       ],
-      workspaceRoot
-    ),
-    /Mode 'live' is not implemented/
-  );
+      workspaceRoot,
+      {
+        liveProductFetchImpl: async (_url, init) => {
+          calls.push({
+            body: init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : undefined
+          });
+
+          return new Response(
+            JSON.stringify({
+              choices: [
+                {
+                  message: {
+                    content: createLiveProductResponseContent("task-live-valid")
+                  }
+                }
+              ]
+            }),
+            {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json"
+              }
+            }
+          );
+        }
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.transitions.length, 7);
+    assert.equal(result.transitions[0]?.from, "INTAKE");
+    assert.equal(result.transitions[0]?.to, "DESIGN");
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0]?.body?.response_format && typeof calls[0]?.body?.response_format, "object");
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("live mode rejects invalid non-JSON Product output", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "live",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-live-invalid-json"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch("not-json")
+        }
+      ),
+      /Failed to parse OpenAI JSON output/
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("live mode rejects Product output missing required field", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "live",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-live-missing-summary"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveProductResponseContent("task-live-missing-summary", {
+              summary: undefined
+            })
+          )
+        }
+      ),
+      /Schema validation failed for live product agent output/
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("live mode rejects Product output with wrong agentRole", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "live",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-live-wrong-role"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveProductResponseContent("task-live-wrong-role", {
+              agentRole: "ARCHITECT"
+            })
+          )
+        }
+      ),
+      /Live Product Agent role must be 'PRODUCT'/
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("live mode rejects Product output with unsupported nextAction", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "live",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-live-bad-action"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveProductResponseContent("task-live-bad-action", {
+              nextAction: "handoff_to_unknown_agent"
+            })
+          )
+        }
+      ),
+      /Schema validation failed for live product agent output/
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
 });
 
 test("fails with system error when required transition is removed from workflow config", async (context) => {
