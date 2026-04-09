@@ -39,6 +39,28 @@ function createLiveProductResponseContent(
   });
 }
 
+function createLiveArchitectResponseContent(
+  taskId: string,
+  overrides: Record<string, unknown> = {}
+): string {
+  return JSON.stringify({
+    taskId,
+    agentRole: "ARCHITECT",
+    status: "completed",
+    summary: "Architecture design completed",
+    artifacts: ["architecture-design", "adr-draft"],
+    nextAction: "handoff_to_quant",
+    metrics: {
+      moduleBoundaries: ["SignalOrchestrator", "IndicatorEvaluator"],
+      dataFlow: ["market_tick -> features -> signal_decision"],
+      contractDefinitions: ["SignalRequest v1", "SignalDecision v1"],
+      adrDraft: "Adopt deterministic signal pipeline with explicit validation boundaries.",
+      riskNotes: ["False positives in high volatility regime."]
+    },
+    ...overrides
+  });
+}
+
 function createChatCompletionFetch(content: string): typeof fetch {
   return async () =>
     new Response(
@@ -58,6 +80,44 @@ function createChatCompletionFetch(content: string): typeof fetch {
         }
       }
     );
+}
+
+function createChatCompletionSequenceFetch(
+  contents: string[],
+  calls: Array<{ body?: Record<string, unknown> }> = []
+): typeof fetch {
+  let index = 0;
+
+  return async (_url, init) => {
+    calls.push({
+      body: init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : undefined
+    });
+
+    const content = contents[index];
+    index += 1;
+
+    if (!content) {
+      throw new Error(`Unexpected OpenAI call index ${index}`);
+    }
+
+    return new Response(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content
+            }
+          }
+        ]
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+  };
 }
 
 async function readJsonFile<T>(pathValue: string): Promise<T> {
@@ -276,7 +336,7 @@ test("mock both scenario runs happy and rejection flows", async (context) => {
   assert.equal(result.scenarios?.[1]?.finalState, "REJECTED");
 });
 
-test("live mode runs Product Agent live with remaining agents mocked and reaches DONE", async (context) => {
+test("live mode runs Product and Architect live and reaches DONE", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
 
@@ -285,6 +345,13 @@ test("live mode runs Product Agent live with remaining agents mocked and reaches
 
   try {
     const calls: Array<{ body?: Record<string, unknown> }> = [];
+    const fetchImpl = createChatCompletionSequenceFetch(
+      [
+        createLiveProductResponseContent("task-live-valid"),
+        createLiveArchitectResponseContent("task-live-valid")
+      ],
+      calls
+    );
     const result = await runWithArgv(
       [
         "--mode",
@@ -298,33 +365,11 @@ test("live mode runs Product Agent live with remaining agents mocked and reaches
         "--requested-by",
         "tester",
         "--task-title",
-        "Live Product hybrid test"
+        "Live Product + Architect test"
       ],
       workspaceRoot,
       {
-        liveProductFetchImpl: async (_url, init) => {
-          calls.push({
-            body: init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : undefined
-          });
-
-          return new Response(
-            JSON.stringify({
-              choices: [
-                {
-                  message: {
-                    content: createLiveProductResponseContent("task-live-valid")
-                  }
-                }
-              ]
-            }),
-            {
-              status: 200,
-              headers: {
-                "Content-Type": "application/json"
-              }
-            }
-          );
-        }
+        liveProductFetchImpl: fetchImpl
       }
     );
 
@@ -334,8 +379,9 @@ test("live mode runs Product Agent live with remaining agents mocked and reaches
     assert.equal(result.transitions.length, 7);
     assert.equal(result.transitions[0]?.from, "INTAKE");
     assert.equal(result.transitions[0]?.to, "DESIGN");
-    assert.equal(calls.length, 1);
+    assert.equal(calls.length, 2);
     assert.equal(calls[0]?.body?.response_format && typeof calls[0]?.body?.response_format, "object");
+    assert.equal(calls[1]?.body?.response_format && typeof calls[1]?.body?.response_format, "object");
 
     const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
     const runRecord = await readJsonFile<{
@@ -348,7 +394,7 @@ test("live mode runs Product Agent live with remaining agents mocked and reaches
     assert.equal(runRecord.mode, "live");
     assert.equal(runRecord.finalState, "DONE");
     assert.equal(runRecord.agentModes["product-agent"], "live");
-    assert.equal(runRecord.agentModes["architect-agent"], "mock");
+    assert.equal(runRecord.agentModes["architect-agent"], "live");
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -406,6 +452,158 @@ test("mode mock with product live override runs mixed flow", async (context) => 
   }
 });
 
+test("mode mock with product and architect live overrides runs happy flow", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const calls: Array<{ body?: Record<string, unknown> }> = [];
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "product=live,architect=live",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-mock-product-architect-live",
+        "--requested-by",
+        "tester",
+        "--task-title",
+        "Mixed product+architect live"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionSequenceFetch(
+          [
+            createLiveProductResponseContent("task-mock-product-architect-live"),
+            createLiveArchitectResponseContent("task-mock-product-architect-live")
+          ],
+          calls
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.agentModes?.["product-agent"], "live");
+    assert.equal(result.agentModes?.["architect-agent"], "live");
+    assert.equal(calls.length, 2);
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock rejects invalid live Architect output", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "architect=live",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-architect-invalid"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveArchitectResponseContent("task-architect-invalid", {
+              metrics: {
+                dataFlow: ["x"],
+                contractDefinitions: ["y"],
+                adrDraft: "z",
+                riskNotes: ["r"]
+              }
+            })
+          )
+        }
+      ),
+      /Schema validation failed for live architect agent output/
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("missing-approval scenario still rejects when architect is live", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "architect=live",
+        "--scenario",
+        "missing-approval",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-architect-live-missing-approval"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionFetch(
+          createLiveArchitectResponseContent("task-architect-live-missing-approval", {
+            status: "rejected",
+            summary: "Architecture approval missing",
+            artifacts: ["rejection-note"],
+            nextAction: "reject_task",
+            metrics: undefined
+          })
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "REJECTED");
+    assert.equal(result.outcome, "policy_rejection");
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
 test("fails early when unsupported live agent mode is requested", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
@@ -416,7 +614,7 @@ test("fails early when unsupported live agent mode is requested", async (context
         "--mode",
         "mock",
         "--agent-mode",
-        "architect=live",
+        "quant-pattern=live",
         "--scenario",
         "happy",
         "--env",

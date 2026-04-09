@@ -6,6 +6,12 @@ import { OrchestratorExecutionError } from "@monitor/orchestrator-core";
 import type { AgentHandler, AgentHandlerContext, AgentOutputEnvelope } from "@monitor/orchestrator-core";
 
 import { LiveOpenAiClient } from "./client.js";
+import {
+  ESCALATION_SCHEMA,
+  normalizeNullableFields,
+  nullableSchema,
+  strictObjectSchema
+} from "./schemas/openai-strict-schema.js";
 
 export type LiveProductAgentOptions = {
   apiKey: string;
@@ -19,88 +25,50 @@ export type LiveProductAgentOptions = {
 
 const PROMPT_CACHE = new Map<string, string>();
 
-const AGENT_OUTPUT_RESPONSE_SCHEMA: Record<string, unknown> = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    taskId: { type: "string", minLength: 1 },
-    agentRole: { type: "string", enum: ["PRODUCT"] },
-    status: { type: "string", enum: ["completed", "blocked", "needs_escalation", "rejected"] },
-    summary: { type: "string", minLength: 1 },
-    artifacts: {
+const AGENT_OUTPUT_RESPONSE_SCHEMA: Record<string, unknown> = strictObjectSchema({
+  taskId: { type: "string", minLength: 1 },
+  agentRole: { type: "string", enum: ["PRODUCT"] },
+  status: { type: "string", enum: ["completed", "blocked", "needs_escalation", "rejected"] },
+  summary: { type: "string", minLength: 1 },
+  artifacts: {
+    type: "array",
+    minItems: 1,
+    items: { type: "string", minLength: 1 }
+  },
+  nextAction: {
+    type: "string",
+    enum: ["handoff_to_architect", "request_more_context", "close_task", "reject_task", "await_approval"]
+  },
+  risks: nullableSchema({
+    type: "array",
+    items: { type: "string", minLength: 1 }
+  }),
+  notes: nullableSchema({
+    anyOf: [
+      { type: "string", minLength: 1 },
+      {
+        type: "array",
+        items: { type: "string", minLength: 1 }
+      }
+    ]
+  }),
+  metrics: strictObjectSchema({
+    problemStatement: { type: "string", minLength: 1 },
+    scope: { type: "string", minLength: 1 },
+    assumptions: {
       type: "array",
       minItems: 1,
-      uniqueItems: true,
       items: { type: "string", minLength: 1 }
     },
-    nextAction: {
-      type: "string",
-      enum: [
-        "handoff_to_architect",
-        "request_more_context",
-        "close_task",
-        "reject_task",
-        "await_approval"
-      ]
-    },
-    risks: {
+    acceptanceCriteria: {
       type: "array",
+      minItems: 1,
       items: { type: "string", minLength: 1 }
     },
-    notes: {
-      oneOf: [
-        { type: "string", minLength: 1 },
-        {
-          type: "array",
-          items: { type: "string", minLength: 1 }
-        }
-      ]
-    },
-    metrics: {
-      type: "object",
-      properties: {
-        problemStatement: { type: "string", minLength: 1 },
-        scope: { type: "string", minLength: 1 },
-        assumptions: {
-          type: "array",
-          minItems: 1,
-          items: { type: "string", minLength: 1 }
-        },
-        acceptanceCriteria: {
-          type: "array",
-          minItems: 1,
-          items: { type: "string", minLength: 1 }
-        },
-        backlogItem: { type: "string", minLength: 1 }
-      },
-      required: [
-        "problemStatement",
-        "scope",
-        "assumptions",
-        "acceptanceCriteria",
-        "backlogItem"
-      ],
-      additionalProperties: true
-    },
-    escalation: { type: "object", additionalProperties: true }
-  },
-  required: ["taskId", "agentRole", "status", "summary", "artifacts", "nextAction", "metrics"],
-  allOf: [
-    {
-      if: {
-        properties: {
-          status: {
-            const: "needs_escalation"
-          }
-        },
-        required: ["status"]
-      },
-      then: {
-        required: ["escalation"]
-      }
-    }
-  ]
-};
+    backlogItem: { type: "string", minLength: 1 }
+  }),
+  escalation: ESCALATION_SCHEMA
+});
 
 export function createLiveProductAgentHandler(options: LiveProductAgentOptions): AgentHandler {
   const client = new LiveOpenAiClient({
@@ -163,6 +131,8 @@ export function createLiveProductAgentHandler(options: LiveProductAgentOptions):
         `Failed to parse OpenAI JSON output: ${error instanceof Error ? error.message : String(error)}`
       );
     }
+
+    normalizeNullableFields(parsed, ["risks", "notes", "escalation"]);
 
     await getSchemaValidator().validateOrThrow(
       "https://monitor/schemas/agent-output-envelope.schema.json",
@@ -233,6 +203,15 @@ function buildUserPrompt(context: AgentHandlerContext): string {
 }
 
 function assertProductPlanningFields(output: AgentOutputEnvelope): void {
+  if (output.status === "needs_escalation") {
+    const escalation = output.escalation;
+    if (!escalation || typeof escalation !== "object" || Array.isArray(escalation)) {
+      throw new OrchestratorExecutionError(
+        "Live Product Agent output must include escalation for needs_escalation status"
+      );
+    }
+  }
+
   const metrics = output.metrics;
   if (!metrics || typeof metrics !== "object" || Array.isArray(metrics)) {
     throw new OrchestratorExecutionError(

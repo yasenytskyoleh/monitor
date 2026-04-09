@@ -208,7 +208,7 @@ function printHelpAndExit(exitCode: number): never {
     "  --help                  Show this help",
     "",
     "Notes:",
-    "  live mode defaults product-agent to live and the rest to mock.",
+    "  live mode defaults product-agent and architect-agent to live; others to mock.",
     "  use --agent-mode for per-agent overrides."
   ].join("\n");
 
