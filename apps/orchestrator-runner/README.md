@@ -131,6 +131,7 @@ Persisted run artifacts are written to:
 - `runtime/runs/<runId>/run.json`
 - `runtime/runs/<runId>/transitions.json`
 - `runtime/runs/<runId>/terminal-outcome.json`
+- `runtime/runs/<runId>/approvals.json`
 - `runtime/runs/<runId>/artifacts.json`
 - optional: `runtime/runs/<runId>/input-task.json`
 - optional: `runtime/runs/<runId>/compiled-snapshot-meta.json`
@@ -143,6 +144,15 @@ Artifact enforcement is strict across workflow transitions:
 - transition artifact references must resolve to artifacts produced earlier in the same run/scenario
 - required artifacts for the target state must exist before the transition is accepted
 - violations fail the run as contract/runtime errors (no silent fallback)
+
+Approval enforcement is strict for approval-gated transitions:
+- approval reference is required when a transition requires approval
+- approval type must match the workflow rule for the exact `from -> to` transition
+- approval status must be granted and non-revoked
+- approval expiry is enforced via `approvalRef.expiresAtUtc` or workflow `expiresInMinutes`
+- approval records are persisted in `approvals.json`
+- transition evidence in `transitions.json` includes `approvalType`, `validationStatus`, and `evidenceSummary`
+- approval violations are treated as `policy_rejection`; malformed approval/config states are treated as `runtime_failure`
 
 Run default live path (Product + Architect + Quant Pattern + Docs Reviewer live, Backend mocked):
 ```bash

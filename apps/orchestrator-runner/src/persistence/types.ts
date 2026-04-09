@@ -1,4 +1,5 @@
 import type { ApprovalReference } from "@monitor/agent-config";
+import type { ApprovalTransitionEvidence, WorkflowApproval } from "../approvals/types.js";
 import type { AgentExecutionMap } from "../types.js";
 import type { WorkflowArtifact } from "../artifacts/types.js";
 
@@ -30,6 +31,9 @@ export type PersistedTransitionRecord = {
   executedBy: string;
   timestampUtc: string;
   approvalRef?: ApprovalReference;
+  approvalType?: string;
+  validationStatus?: ApprovalTransitionEvidence["validationStatus"];
+  evidenceSummary?: string;
   reason: string;
   artifactRefs: string[];
   blocked?: boolean;
@@ -56,6 +60,7 @@ export type PersistRunArtifactInput = {
   runRecord: PersistedRunRecord;
   transitions: PersistedTransitionRecord[];
   terminalOutcome: PersistedTerminalOutcomeRecord;
+  approvals: WorkflowApproval[];
   artifacts: WorkflowArtifact[];
   inputTask?: Record<string, unknown>;
   compiledSnapshotMeta?: Record<string, unknown>;

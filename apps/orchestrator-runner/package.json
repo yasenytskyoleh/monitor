@@ -7,6 +7,7 @@
   "types": "./dist/src/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "pretypecheck": "pnpm --filter @monitor/agent-config build && pnpm --filter @monitor/orchestrator-core build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --import tsx --test ./test/**/*.test.ts",
     "prerun": "pnpm --filter @monitor/agent-config build && pnpm --filter @monitor/orchestrator-core build",

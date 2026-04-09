@@ -182,6 +182,7 @@ function normalizeWorkflow(workflowFile: WorkflowFile): WorkflowGraphConfig {
     workflow.transitions.map((transition) => transitionKey(transition.from, transition.to))
   );
   const approvalTypeByTransition = new Map<string, WorkflowTransition["approvalType"]>();
+  const approvalExpiryByTransition = new Map<string, number>();
 
   for (const approvalRule of workflow.approvalRules ?? []) {
     if (!approvalRule.required) {
@@ -199,6 +200,10 @@ function normalizeWorkflow(workflowFile: WorkflowFile): WorkflowGraphConfig {
       key,
       approvalRule.type
     );
+
+    if (approvalRule.expiresInMinutes !== undefined) {
+      approvalExpiryByTransition.set(key, approvalRule.expiresInMinutes);
+    }
   }
 
   const transitions = new Map<string, WorkflowTransition>();
@@ -211,7 +216,8 @@ function normalizeWorkflow(workflowFile: WorkflowFile): WorkflowGraphConfig {
       from: transition.from,
       to: transition.to,
       requiresApproval: approvalType !== undefined,
-      approvalType
+      approvalType,
+      approvalExpiresInMinutes: approvalExpiryByTransition.get(key)
     });
   }
 

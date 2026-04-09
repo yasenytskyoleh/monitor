@@ -2,9 +2,11 @@ import { access, readFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import process from "node:process";
 
+import { WorkflowTransitionError } from "@monitor/agent-config";
 import { ConfigReleaseManager } from "@monitor/agent-config";
 import type { TransitionRecord } from "@monitor/orchestrator-core";
 
+import { isPolicyApprovalError } from "./approvals/types.js";
 import { parseArgs } from "./cli.js";
 import { loadDotEnv, requireOpenAiApiKey } from "./env.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
@@ -220,6 +222,7 @@ async function persistSuccessRun(options: PersistSuccessOptions): Promise<Persis
     runRecord,
     transitions,
     terminalOutcome,
+    approvals: options.result.approvals,
     artifacts: options.result.artifacts,
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
@@ -243,15 +246,20 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     : [];
   const failureReason =
     options.error instanceof Error ? options.error.message : String(options.error);
-  const finalState = options.partialResult?.taskState ?? "FAILED";
+  const failureOutcome = classifyFailureOutcome(options.error);
+  const finalState =
+    options.partialResult?.taskState ?? (failureOutcome === "policy_rejection" ? "REJECTED" : "FAILED");
 
   const terminalOutcome: PersistedTerminalOutcomeRecord = {
     runId: options.runId,
     finalState,
-    outcome: "runtime_failure",
+    outcome: failureOutcome,
     transitionCount: transitions.length,
     artifactSummary: summarizeArtifactTypes(options.partialResult?.artifacts),
-    reason: failureReason
+    reason: failureReason,
+    ...(failureOutcome === "policy_rejection"
+      ? { rejectionCode: extractFailureRejectionCode(options.error) }
+      : {})
   };
 
   const runRecord: PersistedRunRecord = {
@@ -264,7 +272,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     startedAtUtc: options.startedAtUtc,
     finishedAtUtc: options.finishedAtUtc,
     finalState,
-    outcome: "runtime_failure",
+    outcome: failureOutcome,
     configVersion: options.snapshotMeta?.version ?? options.args.version ?? "unknown",
     promptSetVersion: options.snapshotMeta?.promptSetVersion ?? "unknown",
     schemaVersion: options.snapshotMeta?.schemaVersion ?? 1,
@@ -276,6 +284,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     runRecord,
     transitions,
     terminalOutcome,
+    approvals: options.partialResult?.approvals ?? [],
     artifacts: options.partialResult?.artifacts ?? [],
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
@@ -283,7 +292,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
 
   return {
     artifactsPath: persisted.relativeRunDir,
-    outcome: "runtime_failure",
+    outcome: failureOutcome,
     reason: failureReason
   };
 }
@@ -302,7 +311,15 @@ function buildPersistedTransitions(
       let blockedInserted = false;
 
       for (const transition of scenario.transitions) {
-        records.push(mapTransitionRecord(runId, index, transition, scenario.scenario));
+        records.push(
+          mapTransitionRecord(
+            runId,
+            index,
+            transition,
+            scenario.scenario,
+            scenario.approvalEvidenceByTransitionChecksum[transition.transitionChecksum]
+          )
+        );
         index += 1;
 
         if (!blockedInserted && scenario.blockedTransition && transition.to === "DESIGN") {
@@ -314,6 +331,8 @@ function buildPersistedTransitions(
             requestedBy: args.requestedBy,
             executedBy: "orchestrator-runner",
             timestampUtc: scenario.blockedTransition.timestampUtc,
+            validationStatus: "blocked",
+            evidenceSummary: scenario.blockedTransition.error,
             reason: scenario.blockedTransition.error,
             artifactRefs: [],
             blocked: true,
@@ -333,6 +352,8 @@ function buildPersistedTransitions(
           requestedBy: args.requestedBy,
           executedBy: "orchestrator-runner",
           timestampUtc: scenario.blockedTransition.timestampUtc || fallbackTimestampUtc,
+          validationStatus: "blocked",
+          evidenceSummary: scenario.blockedTransition.error,
           reason: scenario.blockedTransition.error,
           artifactRefs: [],
           blocked: true,
@@ -345,7 +366,15 @@ function buildPersistedTransitions(
   }
 
   for (const transition of result.transitions) {
-    records.push(mapTransitionRecord(runId, index, transition));
+    records.push(
+      mapTransitionRecord(
+        runId,
+        index,
+        transition,
+        undefined,
+        result.approvalEvidenceByTransitionChecksum[transition.transitionChecksum]
+      )
+    );
     index += 1;
   }
 
@@ -356,7 +385,8 @@ function mapTransitionRecord(
   runId: string,
   index: number,
   transition: TransitionRecord,
-  scenario?: string
+  scenario?: string,
+  approvalEvidence?: RunnerOutput["approvalEvidenceByTransitionChecksum"][string]
 ): PersistedTransitionRecord {
   return {
     runId,
@@ -367,6 +397,13 @@ function mapTransitionRecord(
     executedBy: transition.executedBy,
     timestampUtc: transition.timestampUtc,
     ...(transition.approvalRef ? { approvalRef: transition.approvalRef } : {}),
+    ...(approvalEvidence?.approvalType
+      ? { approvalType: approvalEvidence.approvalType }
+      : transition.approvalRef?.approvalType
+        ? { approvalType: transition.approvalRef.approvalType }
+        : {}),
+    ...(approvalEvidence?.validationStatus ? { validationStatus: approvalEvidence.validationStatus } : {}),
+    ...(approvalEvidence?.evidenceSummary ? { evidenceSummary: approvalEvidence.evidenceSummary } : {}),
     reason: transition.reason,
     artifactRefs: transition.artifactRefs,
     ...(scenario ? { scenario } : {})
@@ -437,6 +474,31 @@ function summarizeArtifactTypes(artifacts: WorkflowArtifact[] | undefined): stri
     return [];
   }
   return uniqueStrings(artifacts.map((artifact) => artifact.artifactType));
+}
+
+function classifyFailureOutcome(error: unknown): RunOutcome {
+  if (error instanceof WorkflowTransitionError || isPolicyApprovalError(error)) {
+    return "policy_rejection";
+  }
+  return "runtime_failure";
+}
+
+function extractFailureRejectionCode(error: unknown): string | undefined {
+  if (isPolicyApprovalError(error)) {
+    return error.code;
+  }
+
+  if (error instanceof WorkflowTransitionError) {
+    const normalized = error.message.toLowerCase();
+    if (normalized.includes("approval")) {
+      return "MISSING_APPROVAL";
+    }
+    if (normalized.includes("not allowed")) {
+      return "INVALID_TRANSITION";
+    }
+  }
+
+  return undefined;
 }
 
 function extractRejectionCode(

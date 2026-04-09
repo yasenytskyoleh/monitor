@@ -158,6 +158,7 @@ export type WorkflowTransition = {
   to: string;
   requiresApproval?: boolean;
   approvalType?: ApprovalType;
+  approvalExpiresInMinutes?: number;
 };
 
 export type WorkflowApprovalRule = {

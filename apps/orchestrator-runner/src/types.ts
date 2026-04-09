@@ -1,5 +1,6 @@
 import type { EnvironmentName } from "@monitor/agent-config";
 import type { AgentOutputEnvelope, TransitionRecord } from "@monitor/orchestrator-core";
+import type { ApprovalTransitionEvidence, WorkflowApproval } from "./approvals/types.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
 import type { RunOutcome } from "./persistence/types.js";
 
@@ -30,6 +31,8 @@ export type MockScenarioResult = {
   status: "ok";
   finalState: string;
   output?: AgentOutputEnvelope;
+  approvals: WorkflowApproval[];
+  approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   transitionLogPath: string;
@@ -47,6 +50,8 @@ export type RunnerOutput = {
   transitionLogPath: string;
   taskState: string;
   output?: AgentOutputEnvelope;
+  approvals: WorkflowApproval[];
+  approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   scenarios?: MockScenarioResult[];

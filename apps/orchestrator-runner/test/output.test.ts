@@ -22,6 +22,8 @@ function createBaseResult(): RunnerOutput {
     },
     transitionLogPath: "runtime/logs/local-v1.jsonl",
     taskState: "DONE",
+    approvals: [],
+    approvalEvidenceByTransitionChecksum: {},
     artifacts: [],
     transitions: []
   };

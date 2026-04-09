@@ -9,6 +9,7 @@ import { ConfigReleaseManager } from "@monitor/agent-config";
 import { OrchestratorCore } from "@monitor/orchestrator-core";
 import { parseArgs, runWithArgv } from "../src/index.js";
 import { resolveHandlers } from "../src/handlers/resolve-handlers.js";
+import { FileRunStore } from "../src/persistence/file-run-store.js";
 import type { RunnerOutput } from "../src/types.js";
 
 const TEST_DIR = dirname(fileURLToPath(import.meta.url));
@@ -272,9 +273,19 @@ test("mock happy scenario reaches DONE", async (context) => {
     taskId: string;
     agentModes: Record<string, string>;
   }>(join(artifactsDir, "run.json"));
-  const transitions = await readJsonFile<Array<{ index: number; from: string; to: string }>>(
-    join(artifactsDir, "transitions.json")
-  );
+  const transitions = await readJsonFile<
+    Array<{
+      index: number;
+      from: string;
+      to: string;
+      approvalType?: string;
+      validationStatus?: string;
+      evidenceSummary?: string;
+    }>
+  >(join(artifactsDir, "transitions.json"));
+  const approvals = await readJsonFile<
+    Array<{ approvalRef: string; approvalType: string; issuedFor: { from: string; to: string } }>
+  >(join(artifactsDir, "approvals.json"));
   const terminalOutcome = await readJsonFile<{
     finalState: string;
     outcome: string;
@@ -302,6 +313,28 @@ test("mock happy scenario reaches DONE", async (context) => {
   assert.ok(artifactsInventory.length > 0);
   assert.ok(artifactsInventory.some((artifact) => artifact.artifactType === "product-brief"));
   assert.ok(artifactsInventory.every((artifact) => artifact.artifactRef.length > 0));
+  assert.equal(approvals.length, 2);
+  assert.ok(approvals.some((approval) => approval.approvalType === "ARCHITECTURE"));
+  assert.ok(
+    approvals.some(
+      (approval) =>
+        approval.approvalType === "SIGNAL_PUBLISH" &&
+        approval.issuedFor.from === "APPROVAL" &&
+        approval.issuedFor.to === "PUBLISH_SIGNAL"
+      )
+  );
+  const architectureTransition = transitions.find(
+    (transition) => transition.from === "DESIGN" && transition.to === "FORMALIZE"
+  );
+  assert.equal(architectureTransition?.approvalType, "ARCHITECTURE");
+  assert.equal(architectureTransition?.validationStatus, "approved");
+  assert.match(architectureTransition?.evidenceSummary ?? "", /validated/i);
+  const publishTransition = transitions.find(
+    (transition) => transition.from === "APPROVAL" && transition.to === "PUBLISH_SIGNAL"
+  );
+  assert.equal(publishTransition?.approvalType, "SIGNAL_PUBLISH");
+  assert.equal(publishTransition?.validationStatus, "approved");
+  assert.match(publishTransition?.evidenceSummary ?? "", /validated/i);
 });
 
 test("mock missing-approval scenario reaches REJECTED and captures blocked transition", async (context) => {
@@ -338,7 +371,7 @@ test("mock missing-approval scenario reaches REJECTED and captures blocked trans
   assert.match(scenario?.transitionLogPath ?? "", /-missing-approval/);
   assert.equal(scenario?.blockedTransition?.from, "DESIGN");
   assert.equal(scenario?.blockedTransition?.to, "FORMALIZE");
-  assert.match(scenario?.blockedTransition?.error ?? "", /requires an approval reference/);
+  assert.match(scenario?.blockedTransition?.error ?? "", /missing required approval/i);
   assert.equal(result.outcome, "policy_rejection");
 
   const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
@@ -349,7 +382,9 @@ test("mock missing-approval scenario reaches REJECTED and captures blocked trans
   }>(
     join(artifactsDir, "run.json")
   );
-  const transitions = await readJsonFile<Array<{ blocked?: boolean; from: string; to: string }>>(
+  const transitions = await readJsonFile<
+    Array<{ blocked?: boolean; from: string; to: string; validationStatus?: string; evidenceSummary?: string }>
+  >(
     join(artifactsDir, "transitions.json")
   );
   const terminalOutcome = await readJsonFile<{
@@ -365,11 +400,13 @@ test("mock missing-approval scenario reaches REJECTED and captures blocked trans
   assert.equal(terminalOutcome.finalState, "REJECTED");
   assert.equal(terminalOutcome.outcome, "policy_rejection");
   assert.equal(terminalOutcome.rejectionCode, "MISSING_APPROVAL");
-  assert.match(terminalOutcome.reason ?? "", /approval reference/);
+  assert.match(terminalOutcome.reason ?? "", /missing required approval/i);
   assert.ok(transitions.some((item) => item.blocked === true));
   const blocked = transitions.find((item) => item.blocked === true);
   assert.equal(blocked?.from, "DESIGN");
   assert.equal(blocked?.to, "FORMALIZE");
+  assert.equal(blocked?.validationStatus, "blocked");
+  assert.match(blocked?.evidenceSummary ?? "", /approval/i);
 });
 
 test("mock both scenario runs happy and rejection flows", async (context) => {
@@ -1520,4 +1557,62 @@ test("fails when state owner has no configured matching agent role", async (cont
     ),
     /Schema validation failed for base workflow config/
   );
+});
+
+test("persists runtime_failure outcome for invalid live output errors", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  const runStore = new FileRunStore(workspaceRoot, {
+    runIdGenerator: () => "run_runtime_failure_001"
+  });
+
+  try {
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "live",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-runtime-failure"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch("not-json"),
+          runStore
+        }
+      ),
+      /Failed to parse OpenAI JSON output/
+    );
+
+    const artifactsDir = join(workspaceRoot, "runtime", "runs", "run_runtime_failure_001");
+    const runRecord = await readJsonFile<{
+      finalState: string;
+      outcome: string;
+    }>(join(artifactsDir, "run.json"));
+    const terminalOutcome = await readJsonFile<{
+      finalState: string;
+      outcome: string;
+      reason?: string;
+    }>(join(artifactsDir, "terminal-outcome.json"));
+
+    assert.equal(runRecord.finalState, "FAILED");
+    assert.equal(runRecord.outcome, "runtime_failure");
+    assert.equal(terminalOutcome.finalState, "FAILED");
+    assert.equal(terminalOutcome.outcome, "runtime_failure");
+    assert.match(terminalOutcome.reason ?? "", /Failed to parse OpenAI JSON output/);
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
 });
