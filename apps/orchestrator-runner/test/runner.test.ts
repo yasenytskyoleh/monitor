@@ -252,6 +252,9 @@ test("mock happy scenario reaches DONE", async (context) => {
     transitionCount: number;
     artifactSummary: string[];
   }>(join(artifactsDir, "terminal-outcome.json"));
+  const artifactsInventory = await readJsonFile<
+    Array<{ artifactType: string; producedBy: string; artifactRef: string }>
+  >(join(artifactsDir, "artifacts.json"));
 
   assert.equal(runRecord.taskId, "task-mock-happy");
   assert.equal(runRecord.finalState, "DONE");
@@ -267,6 +270,9 @@ test("mock happy scenario reaches DONE", async (context) => {
   }
   assert.equal(transitions[0]?.from, "INTAKE");
   assert.equal(transitions[0]?.to, "DESIGN");
+  assert.ok(artifactsInventory.length > 0);
+  assert.ok(artifactsInventory.some((artifact) => artifact.artifactType === "product-brief"));
+  assert.ok(artifactsInventory.every((artifact) => artifact.artifactRef.length > 0));
 });
 
 test("mock missing-approval scenario reaches REJECTED and captures blocked transition", async (context) => {
@@ -621,7 +627,7 @@ test("missing-approval scenario still rejects when architect is live", async (co
           createLiveArchitectResponseContent("task-architect-live-missing-approval", {
             status: "rejected",
             summary: "Architecture approval missing",
-            artifacts: ["rejection-note"],
+            artifacts: ["adr-draft"],
             nextAction: "reject_task",
             metrics: undefined
           })
@@ -1075,6 +1081,82 @@ test("fails with system error when required transition is removed from workflow 
     ),
     /Semantic validation failed/
   );
+});
+
+test("fails when required artifact contract is not satisfied", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const workflowPath = join(workspaceRoot, "configs", "agents", "base", "workflow.yaml");
+  const originalWorkflow = await readFile(workflowPath, "utf8");
+  const brokenWorkflow = originalWorkflow.replace(
+    "    - product-brief",
+    "    - product-brief\n    - architecture-design"
+  );
+  await writeFile(workflowPath, brokenWorkflow, "utf8");
+
+  await assert.rejects(
+    runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-mock-missing-required-artifact"
+      ],
+      workspaceRoot
+    ),
+    /Missing required artifacts for state 'DESIGN': architecture-design/
+  );
+});
+
+test("fails when product agent emits forbidden artifact type", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "product=live",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-product-forbidden-artifact"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveProductResponseContent("task-product-forbidden-artifact", {
+              artifacts: ["product-brief", "architecture-design"]
+            })
+          )
+        }
+      ),
+      /not allowed for 'product-agent'/
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
 });
 
 test("fails when state owner has no configured matching agent role", async (context) => {

@@ -22,6 +22,7 @@ function createBaseResult(): RunnerOutput {
     },
     transitionLogPath: "runtime/logs/local-v1.jsonl",
     taskState: "DONE",
+    artifacts: [],
     transitions: []
   };
 }

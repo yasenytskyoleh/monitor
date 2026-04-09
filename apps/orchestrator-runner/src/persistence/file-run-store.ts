@@ -43,6 +43,7 @@ export class FileRunStore {
     await writeJson(join(runDir, "run.json"), input.runRecord);
     await writeJson(join(runDir, "transitions.json"), input.transitions);
     await writeJson(join(runDir, "terminal-outcome.json"), input.terminalOutcome);
+    await writeJson(join(runDir, "artifacts.json"), input.artifacts);
 
     if (input.inputTask) {
       await writeJson(join(runDir, "input-task.json"), input.inputTask);

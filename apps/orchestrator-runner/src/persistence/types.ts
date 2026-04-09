@@ -1,5 +1,6 @@
 import type { ApprovalReference } from "@monitor/agent-config";
 import type { AgentExecutionMap } from "../types.js";
+import type { WorkflowArtifact } from "../artifacts/types.js";
 
 export type RunOutcome = "success" | "policy_rejection" | "runtime_failure";
 
@@ -55,6 +56,7 @@ export type PersistRunArtifactInput = {
   runRecord: PersistedRunRecord;
   transitions: PersistedTransitionRecord[];
   terminalOutcome: PersistedTerminalOutcomeRecord;
+  artifacts: WorkflowArtifact[];
   inputTask?: Record<string, unknown>;
   compiledSnapshotMeta?: Record<string, unknown>;
 };
