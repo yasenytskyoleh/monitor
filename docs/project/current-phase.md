@@ -12,6 +12,37 @@ Phase 1 is focused on proving that the project can:
 - persist workflow artifacts,
 - maintain safety and traceability.
 
+## Implemented in this phase (current baseline)
+- config-driven orchestration foundation (`docs/agents`, `configs/agents`, `packages/agent-config`)
+- compiled immutable runtime snapshots with checksum and version metadata
+- runner execution modes:
+  - `mock` (deterministic scenarios)
+  - `live` (OpenAI-backed where implemented)
+  - per-agent overrides via `--agent-mode`
+- live-capable non-implementation chain:
+  - Product Agent
+  - Architect Agent
+  - Quant Pattern Agent
+  - Docs Reviewer Agent
+- Backend Agent remains mocked
+- strict transition guardrails:
+  - allowlisted transitions only
+  - approval-gated edges enforced
+  - missing/invalid/expired/revoked approvals blocked
+  - transition-to-approval binding validated
+- strict artifact enforcement:
+  - explicit artifact registry per run
+  - role-to-artifact allowlists
+  - required artifact checks before advancement
+  - reference continuity checks
+- persisted run evidence:
+  - `run.json`
+  - `transitions.json`
+  - `terminal-outcome.json`
+  - `artifacts.json`
+  - `approvals.json`
+- standardized shared live-adapter pipeline for all current live agents
+
 ## What this phase is not
 Phase 1 is **not** about building a full crypto trading platform.
 

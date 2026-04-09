@@ -24,6 +24,26 @@ It is **not yet**:
 - a market data platform,
 - or an autonomous trading bot.
 
+## Current implementation status
+The orchestration foundation is already functional and test-backed.
+
+Implemented today:
+- config + schema + semantic-validation platform (`packages/agent-config`)
+- compiled immutable runtime snapshots with version/checksum
+- workflow runner with `mock` and `live` modes
+- per-agent execution control (`--agent-mode`)
+- strict transition guardrails with approval-gated edges
+- artifact/reference enforcement with role allowlists
+- run persistence for transitions, artifacts, approvals, and terminal outcomes
+- live-capable non-implementation chain:
+  - Product
+  - Architect
+  - Quant Pattern
+  - Docs Reviewer
+
+Current limitation:
+- Backend remains mocked and is the next planned live role.
+
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
 

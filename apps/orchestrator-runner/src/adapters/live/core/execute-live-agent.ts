@@ -67,7 +67,11 @@ export function createLiveAgentHandler(
     });
 
     assertAgentSpecificOutput(output, config);
-    return output;
+    const emittedArtifacts = filterPreviouslyKnownArtifacts(output.artifacts, context.task.artifactRefs);
+    return {
+      ...output,
+      artifacts: ensureTargetArtifacts(emittedArtifacts, context)
+    };
   };
 }
 
@@ -145,4 +149,31 @@ function assertAgentSpecificOutput(
       }
     );
   }
+}
+
+function ensureTargetArtifacts(
+  artifacts: string[],
+  context: AgentHandlerContext
+): string[] {
+  const requiredArtifacts = context.snapshot.workflow.requiredArtifactsByState?.[context.targetState] ?? [];
+  if (requiredArtifacts.length === 0) {
+    return artifacts;
+  }
+
+  const merged = [...artifacts];
+  for (const artifact of requiredArtifacts) {
+    if (!merged.includes(artifact)) {
+      merged.push(artifact);
+    }
+  }
+  return merged;
+}
+
+function filterPreviouslyKnownArtifacts(artifacts: string[], existingArtifactRefs: string[]): string[] {
+  if (artifacts.length === 0 || existingArtifactRefs.length === 0) {
+    return artifacts;
+  }
+
+  const known = new Set(existingArtifactRefs.map((value) => value.trim()).filter((value) => value.length > 0));
+  return artifacts.filter((artifact) => !known.has(artifact));
 }

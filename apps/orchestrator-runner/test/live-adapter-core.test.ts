@@ -157,6 +157,134 @@ test("createLiveAgentHandler wraps domain assertions as AgentSpecificValidationE
   );
 });
 
+test("createLiveAgentHandler appends required target-state artifacts", async (context) => {
+  const promptsRootDir = await mkdtemp(join(tmpdir(), "live-adapter-prompts-"));
+  context.after(async () => rm(promptsRootDir, { recursive: true, force: true }));
+
+  await writePromptFile(promptsRootDir, "v1", "test.prompt.txt", "System prompt");
+
+  const validEnvelopeMissingRequiredArtifact = JSON.stringify({
+    taskId: "task-required-artifacts",
+    agentRole: "PRODUCT",
+    status: "completed",
+    summary: "ok",
+    artifacts: ["other-artifact"],
+    nextAction: "handoff_to_architect"
+  });
+
+  const handler = createLiveAgentHandler(
+    {
+      apiKey: "test-key",
+      promptsRootDir,
+      fetchImpl: async () =>
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: validEnvelopeMissingRequiredArtifact
+                }
+              }
+            ]
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }
+        )
+    },
+    {
+      adapterLabel: "Live Product",
+      boundAgentId: "product-agent",
+      expectedRole: "PRODUCT",
+      responseFormatName: "test_response",
+      responseSchema: strictObjectSchema({
+        taskId: { type: "string" },
+        agentRole: { type: "string" },
+        status: { type: "string" },
+        summary: { type: "string" },
+        artifacts: { type: "array", items: { type: "string" } },
+        nextAction: { type: "string" }
+      }),
+      envelopeValidationContext: "live product agent output",
+      nullableFields: ["risks", "notes", "metrics", "escalation"],
+      buildUserPrompt: () => "Run test",
+      assertSpecificOutput: () => undefined
+    }
+  );
+
+  const result = await handler(createContext("task-required-artifacts"));
+  assert.ok(result.artifacts.includes("other-artifact"));
+  assert.ok(result.artifacts.includes("product-brief"));
+});
+
+test("createLiveAgentHandler drops artifacts already present on task", async (context) => {
+  const promptsRootDir = await mkdtemp(join(tmpdir(), "live-adapter-prompts-"));
+  context.after(async () => rm(promptsRootDir, { recursive: true, force: true }));
+
+  await writePromptFile(promptsRootDir, "v1", "test.prompt.txt", "System prompt");
+
+  const envelopeEchoingHistory = JSON.stringify({
+    taskId: "task-drop-known-artifacts",
+    agentRole: "PRODUCT",
+    status: "completed",
+    summary: "ok",
+    artifacts: ["product-brief", "new-product-note"],
+    nextAction: "handoff_to_architect"
+  });
+
+  const handler = createLiveAgentHandler(
+    {
+      apiKey: "test-key",
+      promptsRootDir,
+      fetchImpl: async () =>
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: envelopeEchoingHistory
+                }
+              }
+            ]
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }
+        )
+    },
+    {
+      adapterLabel: "Live Product",
+      boundAgentId: "product-agent",
+      expectedRole: "PRODUCT",
+      responseFormatName: "test_response",
+      responseSchema: strictObjectSchema({
+        taskId: { type: "string" },
+        agentRole: { type: "string" },
+        status: { type: "string" },
+        summary: { type: "string" },
+        artifacts: { type: "array", items: { type: "string" } },
+        nextAction: { type: "string" }
+      }),
+      envelopeValidationContext: "live product agent output",
+      nullableFields: ["risks", "notes", "metrics", "escalation"],
+      buildUserPrompt: () => "Run test",
+      assertSpecificOutput: () => undefined
+    }
+  );
+
+  const result = await handler(
+    createContext("task-drop-known-artifacts", ["product-brief"], [])
+  );
+  assert.ok(!result.artifacts.includes("product-brief"));
+  assert.ok(result.artifacts.includes("new-product-note"));
+});
+
 async function writePromptFile(
   promptsRootDir: string,
   version: string,
@@ -168,7 +296,11 @@ async function writePromptFile(
   await writeFile(join(promptVersionDir, filename), content, "utf8");
 }
 
-function createContext(taskId: string): AgentHandlerContext {
+function createContext(
+  taskId: string,
+  artifactRefs: string[] = [],
+  requiredArtifactsForDesign: string[] = ["product-brief"]
+): AgentHandlerContext {
   const snapshot: RuntimeConfigSnapshot = {
     version: "v1",
     environment: "local",
@@ -201,6 +333,12 @@ function createContext(taskId: string): AgentHandlerContext {
       initialState: "INTAKE",
       terminalStates: ["DESIGN"],
       transitions: [{ from: "INTAKE", to: "DESIGN" }],
+      requiredArtifactsByState:
+        requiredArtifactsForDesign.length > 0
+          ? {
+              DESIGN: requiredArtifactsForDesign
+            }
+          : undefined,
       stateOwners: {
         INTAKE: "PRODUCT",
         DESIGN: "ARCHITECT"
@@ -260,7 +398,7 @@ function createContext(taskId: string): AgentHandlerContext {
       workflowState: "INTAKE",
       input: { title: "test" },
       configVersion: "v1",
-      artifactRefs: []
+      artifactRefs
     },
     targetState: "DESIGN",
     snapshot,
