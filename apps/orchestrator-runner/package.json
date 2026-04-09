@@ -9,8 +9,10 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --import tsx --test ./test/**/*.test.ts",
+    "prerun": "pnpm --filter @monitor/agent-config build && pnpm --filter @monitor/orchestrator-core build",
     "prestart": "pnpm --filter @monitor/agent-config build && pnpm --filter @monitor/orchestrator-core build",
-    "start": "tsx src/index.ts",
+    "run": "node --import tsx src/index.ts",
+    "start": "node --import tsx src/index.ts",
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

@@ -1,23 +1,61 @@
 #!/usr/bin/env node
 import { access, mkdir, readFile } from "node:fs/promises";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, parse as parsePath, resolve } from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-import { ConfigReleaseManager, SUPPORTED_ENVIRONMENTS } from "@monitor/agent-config";
+import {
+  ConfigReleaseManager,
+  SUPPORTED_ENVIRONMENTS,
+  WorkflowTransitionError
+} from "@monitor/agent-config";
 import type { ApprovalReference } from "@monitor/agent-config";
 import type { EnvironmentName } from "@monitor/agent-config";
-import {
-  OrchestratorCore,
-  createOpenAiArchitectAgentHandler,
-  createOpenAiProductAgentHandler
+import { OrchestratorCore } from "@monitor/orchestrator-core";
+import type {
+  AgentHandlers,
+  AgentOutputEnvelope,
+  TaskEnvelope,
+  TransitionRecord,
+  TransitionResult
 } from "@monitor/orchestrator-core";
-import type { TaskEnvelope } from "@monitor/orchestrator-core";
-import { loadDotEnv, requireOpenAiApiKey } from "./env.js";
+import { loadDotEnv } from "./env.js";
 
+type RunnerMode = "live" | "mock";
 type TargetState = "DESIGN" | "FORMALIZE";
+type MockScenario = "happy" | "missing-approval";
+type MockScenarioSelection = MockScenario | "both";
 
-type CliArgs = {
+type BlockedTransitionInfo = {
+  from: string;
+  to: string;
+  error: string;
+};
+
+type MockScenarioResult = {
+  scenario: MockScenario;
+  status: "ok";
+  finalState: string;
+  output?: AgentOutputEnvelope;
+  transitions: TransitionRecord[];
+  transitionLogPath: string;
+  blockedTransition?: BlockedTransitionInfo;
+};
+
+export type RunnerOutput = {
+  status: "ok";
+  snapshot: Record<string, unknown>;
+  transitionLogPath: string;
+  taskState: string;
+  output?: AgentOutputEnvelope;
+  transitions: TransitionRecord[];
+  scenarios?: MockScenarioResult[];
+};
+
+export type CliArgs = {
   rootDir?: string;
+  mode: RunnerMode;
+  scenario?: MockScenarioSelection;
   environment: EnvironmentName;
   version?: string;
   targetState: TargetState;
@@ -31,16 +69,12 @@ type CliArgs = {
   approvalBy?: string;
   approvalAtUtc?: string;
   approvalExpiresAtUtc?: string;
-  model?: string;
-  temperature?: number;
-  timeoutMs?: number;
 };
 
-async function main(): Promise<void> {
-  const args = parseArgs(process.argv.slice(2));
-  const rootDir = args.rootDir ? resolve(args.rootDir) : await findRepoRoot(process.cwd());
-  const envLoadResult = await loadDotEnv(rootDir);
-  const openAiApiKey = requireOpenAiApiKey(envLoadResult.loadedFrom);
+export async function runWithArgv(argv: string[], startDir = process.cwd()): Promise<RunnerOutput> {
+  const args = parseArgs(argv);
+  const rootDir = args.rootDir ? resolve(args.rootDir) : await findRepoRoot(startDir);
+  await loadDotEnv(rootDir);
 
   const manager = new ConfigReleaseManager(rootDir);
   const snapshotResult = await manager.compileSnapshot({
@@ -50,86 +84,340 @@ async function main(): Promise<void> {
   });
 
   const snapshotPath = join(rootDir, snapshotResult.snapshotPath);
-  const transitionLogPath = resolveLogPath(rootDir, args, snapshotResult.version);
-  await mkdir(dirname(transitionLogPath), { recursive: true });
-
   const taskInput = await resolveTaskInput(rootDir, args);
-  const task: TaskEnvelope = {
+
+  if (args.mode === "mock") {
+    const result = await runMockMode({
+      args,
+      rootDir,
+      snapshotPath,
+      snapshotResult: snapshotResult as unknown as Record<string, unknown>,
+      taskInput
+    });
+    assertSuccessfulResult(result);
+    return result;
+  }
+
+  const result = await runLiveMode({
+    args,
+    rootDir,
+    snapshotPath,
+    snapshotResult: snapshotResult as unknown as Record<string, unknown>,
+    taskInput
+  });
+  assertSuccessfulResult(result);
+  return result;
+}
+
+export async function runCli(argv = process.argv.slice(2), startDir = process.cwd()): Promise<void> {
+  const result = await runWithArgv(argv, startDir);
+  process.stdout.write(`${formatRunnerOutput(result)}\n`);
+}
+
+type RunModeOptions = {
+  args: CliArgs;
+  rootDir: string;
+  snapshotPath: string;
+  snapshotResult: Record<string, unknown>;
+  taskInput: Record<string, unknown>;
+};
+async function runLiveMode(_options: RunModeOptions): Promise<RunnerOutput> {
+  throw new Error("Mode 'live' is not implemented in this milestone. Use --mode mock.");
+}
+
+async function runMockMode(options: RunModeOptions): Promise<RunnerOutput> {
+  const scenarios = resolveScenarioList(options.args);
+  const scenarioResults: MockScenarioResult[] = [];
+
+  for (const scenario of scenarios) {
+    const transitionLogPath = resolveScenarioLogPath(
+      options.rootDir,
+      options.args,
+      String(options.snapshotResult.version ?? options.args.version ?? "v1"),
+      scenario
+    );
+    await mkdir(dirname(transitionLogPath), { recursive: true });
+
+    const orchestrator = await OrchestratorCore.fromSnapshotFile({
+      snapshotPath: options.snapshotPath,
+      transitionLogPath,
+      handlers: createMockHandlers(),
+      executedBy: "orchestrator-runner-mock"
+    });
+
+    const task = createInitialTask(
+      options.args,
+      String(options.snapshotResult.version ?? "v1"),
+      options.taskInput
+    );
+
+    const scenarioResult: {
+      task: TaskEnvelope;
+      output?: AgentOutputEnvelope;
+      transitions: TransitionRecord[];
+      blockedTransition?: BlockedTransitionInfo;
+    } =
+      scenario === "happy"
+        ? await runMockHappyScenario(orchestrator, task, options.args)
+        : await runMockMissingApprovalScenario(orchestrator, task, options.args);
+
+    scenarioResults.push({
+      scenario,
+      status: "ok",
+      finalState: scenarioResult.task.workflowState,
+      output: scenarioResult.output,
+      transitions: scenarioResult.transitions,
+      transitionLogPath: toRelativeOrAbsolute(options.rootDir, transitionLogPath),
+      ...(scenarioResult.blockedTransition ? { blockedTransition: scenarioResult.blockedTransition } : {})
+    });
+  }
+
+  const lastScenario = scenarioResults[scenarioResults.length - 1];
+  if (!lastScenario) {
+    throw new Error("No mock scenario result produced");
+  }
+
+  return {
+    status: "ok",
+    snapshot: options.snapshotResult,
+    transitionLogPath: lastScenario.transitionLogPath,
+    taskState: lastScenario.finalState,
+    output: lastScenario.output,
+    transitions: lastScenario.transitions,
+    scenarios: scenarioResults
+  };
+}
+
+async function runMockHappyScenario(
+  orchestrator: OrchestratorCore,
+  initialTask: TaskEnvelope,
+  args: CliArgs
+): Promise<{
+  task: TaskEnvelope;
+  output?: AgentOutputEnvelope;
+  transitions: TransitionRecord[];
+}> {
+  const results: TransitionResult[] = [];
+
+  let current = await orchestrator.transition({
+    task: initialTask,
+    to: "DESIGN",
+    reason: "Mock Product handoff"
+  });
+  results.push(current);
+
+  current = await orchestrator.transition({
+    task: current.task,
+    to: "FORMALIZE",
+    approvalRef: buildArchitectureApprovalReference(args, "happy"),
+    reason: "Mock Architect handoff"
+  });
+  results.push(current);
+
+  current = await orchestrator.transition({
+    task: current.task,
+    to: "IMPLEMENT",
+    reason: "Mock Quant handoff"
+  });
+  results.push(current);
+
+  current = await orchestrator.transition({
+    task: current.task,
+    to: "REVIEW",
+    reason: "Mock Backend handoff"
+  });
+  results.push(current);
+
+  current = await orchestrator.transition({
+    task: current.task,
+    to: "APPROVAL",
+    reason: "Mock Docs review complete"
+  });
+  results.push(current);
+
+  current = await orchestrator.transition({
+    task: current.task,
+    to: "PUBLISH_SIGNAL",
+    approvalRef: buildSignalPublishApprovalReference(args),
+    additionalArtifacts: ["publishable-signal-bundle"],
+    reason: "Mock publish approval granted"
+  });
+  results.push(current);
+
+  current = await orchestrator.transition({
+    task: current.task,
+    to: "DONE",
+    reason: "Mock completion"
+  });
+  results.push(current);
+
+  return {
+    task: current.task,
+    output: lastDefinedOutput(results),
+    transitions: results.map((result) => result.transition)
+  };
+}
+
+async function runMockMissingApprovalScenario(
+  orchestrator: OrchestratorCore,
+  initialTask: TaskEnvelope,
+  args: CliArgs
+): Promise<{
+  task: TaskEnvelope;
+  output?: AgentOutputEnvelope;
+  transitions: TransitionRecord[];
+  blockedTransition: BlockedTransitionInfo;
+}> {
+  const results: TransitionResult[] = [];
+
+  const designResult = await orchestrator.transition({
+    task: initialTask,
+    to: "DESIGN",
+    reason: "Mock Product handoff"
+  });
+  results.push(designResult);
+
+  let blockedTransition: BlockedTransitionInfo | undefined;
+  try {
+    await orchestrator.transition({
+      task: designResult.task,
+      to: "FORMALIZE",
+      reason: "Probe missing architecture approval"
+    });
+    throw new Error("Expected missing-approval transition to fail");
+  } catch (error) {
+    if (!(error instanceof WorkflowTransitionError)) {
+      throw error;
+    }
+
+    blockedTransition = {
+      from: "DESIGN",
+      to: "FORMALIZE",
+      error: error.message
+    };
+  }
+
+  const rejectedResult = await orchestrator.transition({
+    task: designResult.task,
+    to: "REJECTED",
+    reason: `MISSING_APPROVAL: ${blockedTransition?.error ?? "DESIGN -> FORMALIZE approval missing"}`
+  });
+  results.push(rejectedResult);
+
+  return {
+    task: rejectedResult.task,
+    output: lastDefinedOutput(results),
+    transitions: results.map((result) => result.transition),
+    blockedTransition: blockedTransition ?? {
+      from: "DESIGN",
+      to: "FORMALIZE",
+      error: "Missing approval"
+    }
+  };
+}
+
+function createMockHandlers(): AgentHandlers {
+  return {
+    "product-agent": async (context) => ({
+      taskId: context.task.taskId,
+      agentRole: "PRODUCT",
+      status: "completed",
+      summary: "Mock product scope prepared",
+      artifacts: ["product-brief"],
+      nextAction: "handoff_to_architect"
+    }),
+    "architect-agent": async (context) => {
+      if (context.targetState === "REJECTED") {
+        return {
+          taskId: context.task.taskId,
+          agentRole: "ARCHITECT",
+          status: "rejected",
+          summary: "Mock rejection due to missing architecture approval",
+          artifacts: ["rejection-note"],
+          nextAction: "reject_task"
+        };
+      }
+
+      return {
+        taskId: context.task.taskId,
+        agentRole: "ARCHITECT",
+        status: "completed",
+        summary: "Mock architecture prepared",
+        artifacts: ["adr-draft", "architecture-design"],
+        nextAction: "handoff_to_quant"
+      };
+    },
+    "quant-pattern-agent": async (context) => ({
+      taskId: context.task.taskId,
+      agentRole: "QUANT_PATTERN",
+      status: "completed",
+      summary: "Mock pattern formalized",
+      artifacts: ["pattern-definition", "metrics-plan"],
+      nextAction: "handoff_to_backend"
+    }),
+    "backend-agent": async (context) => ({
+      taskId: context.task.taskId,
+      agentRole: "BACKEND",
+      status: "completed",
+      summary: "Mock implementation complete",
+      artifacts: ["code-change", "implementation-notes", "tests"],
+      nextAction: "handoff_to_docs_reviewer"
+    }),
+    "docs-reviewer-agent": async (context) => ({
+      taskId: context.task.taskId,
+      agentRole: "DOCS_REVIEWER",
+      status: "completed",
+      summary: "Mock review complete",
+      artifacts: ["review-report", "docs-update"],
+      nextAction: "await_approval"
+    })
+  };
+}
+
+function lastDefinedOutput(results: TransitionResult[]): AgentOutputEnvelope | undefined {
+  for (let index = results.length - 1; index >= 0; index -= 1) {
+    const output = results[index]?.output;
+    if (output) {
+      return output;
+    }
+  }
+  return undefined;
+}
+
+function createInitialTask(
+  args: CliArgs,
+  configVersion: string,
+  input: Record<string, unknown>
+): TaskEnvelope {
+  return {
     taskId: args.taskId,
     requestedBy: args.requestedBy,
     workflowState: "INTAKE",
-    input: taskInput,
-    configVersion: snapshotResult.version,
+    input,
+    configVersion,
     artifactRefs: []
   };
-
-  const orchestrator = await OrchestratorCore.fromSnapshotFile({
-    snapshotPath,
-    transitionLogPath,
-    handlers: {
-      "product-agent": createOpenAiProductAgentHandler({
-        apiKey: openAiApiKey,
-        promptsRootDir: join(rootDir, "configs/agents/prompts"),
-        model: args.model,
-        temperature: args.temperature,
-        timeoutMs: args.timeoutMs
-      }),
-      "architect-agent": createOpenAiArchitectAgentHandler({
-        apiKey: openAiApiKey,
-        promptsRootDir: join(rootDir, "configs/agents/prompts"),
-        model: args.model,
-        temperature: args.temperature,
-        timeoutMs: args.timeoutMs
-      })
-    },
-    executedBy: "orchestrator-runner"
-  });
-
-  const transitionResults = [];
-  const designResult = await orchestrator.transition({
-    task,
-    to: "DESIGN",
-    reason: "Live Product Agent handoff"
-  });
-  transitionResults.push(designResult.transition);
-
-  let finalResult = designResult;
-  if (args.targetState === "FORMALIZE") {
-    const approvalRef = buildArchitectureApprovalReference(args);
-    const formalizeResult = await orchestrator.transition({
-      task: designResult.task,
-      to: "FORMALIZE",
-      approvalRef,
-      reason: "Live Architect Agent handoff"
-    });
-    transitionResults.push(formalizeResult.transition);
-    finalResult = formalizeResult;
-  }
-
-  process.stdout.write(
-    `${JSON.stringify(
-      {
-        status: "ok",
-        snapshot: snapshotResult,
-        transitionLogPath: toRelativeOrAbsolute(rootDir, transitionLogPath),
-        taskState: finalResult.task.workflowState,
-        output: finalResult.output,
-        transitions: transitionResults
-      },
-      null,
-      2
-    )}\n`
-  );
 }
 
-function parseArgs(argv: string[]): CliArgs {
+function resolveScenarioList(args: CliArgs): MockScenario[] {
+  if (args.scenario === "happy") {
+    return ["happy"];
+  }
+  if (args.scenario === "missing-approval") {
+    return ["missing-approval"];
+  }
+  return ["happy", "missing-approval"];
+}
+
+export function parseArgs(argv: string[]): CliArgs {
   const defaultEnvironment: EnvironmentName = "local";
   const args: CliArgs = {
+    mode: "live",
     environment: defaultEnvironment,
     targetState: "DESIGN",
     taskId: `task-${Date.now()}`,
     requestedBy: "orchestrator-runner",
-    taskTitle: "Live Product Agent run"
+    taskTitle: "Orchestration run"
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -140,8 +428,14 @@ function parseArgs(argv: string[]): CliArgs {
       continue;
     }
 
-    // pnpm may forward a standalone "--" separator into script argv.
     if (arg === "--") {
+      continue;
+    }
+
+    if (
+      (arg === "run" || arg === "start") &&
+      (index === 0 || (index > 0 && argv[index - 1] === "--"))
+    ) {
       continue;
     }
 
@@ -151,6 +445,24 @@ function parseArgs(argv: string[]): CliArgs {
 
     if (arg === "--root") {
       args.rootDir = requiredValue(argv, ++index, "--root");
+      continue;
+    }
+
+    if (arg === "--mode") {
+      const mode = requiredValue(argv, ++index, "--mode");
+      if (mode !== "live" && mode !== "mock") {
+        throw new Error(`Invalid --mode '${mode}'. Allowed: live, mock`);
+      }
+      args.mode = mode;
+      continue;
+    }
+
+    if (arg === "--scenario") {
+      const scenario = requiredValue(argv, ++index, "--scenario");
+      if (scenario !== "happy" && scenario !== "missing-approval" && scenario !== "both") {
+        throw new Error(`Invalid --scenario '${scenario}'. Allowed: happy, missing-approval, both`);
+      }
+      args.scenario = scenario;
       continue;
     }
 
@@ -229,18 +541,8 @@ function parseArgs(argv: string[]): CliArgs {
       continue;
     }
 
-    if (arg === "--model") {
-      args.model = requiredValue(argv, ++index, "--model");
-      continue;
-    }
-
-    if (arg === "--temperature") {
-      args.temperature = parseFloatArg(requiredValue(argv, ++index, "--temperature"), "--temperature");
-      continue;
-    }
-
-    if (arg === "--timeout-ms") {
-      args.timeoutMs = parseIntArg(requiredValue(argv, ++index, "--timeout-ms"), "--timeout-ms");
+    if (arg === "--model" || arg === "--temperature" || arg === "--timeout-ms") {
+      requiredValue(argv, ++index, arg);
       continue;
     }
 
@@ -249,6 +551,10 @@ function parseArgs(argv: string[]): CliArgs {
 
   if (args.inputFile && args.inputJson) {
     throw new Error("Use either --input-file or --input-json, not both");
+  }
+
+  if (args.mode === "mock" && !args.scenario) {
+    args.scenario = "both";
   }
 
   return args;
@@ -262,30 +568,25 @@ function requiredValue(argv: string[], index: number, flag: string): string {
   return value;
 }
 
-function parseFloatArg(value: string, flag: string): number {
-  const parsed = Number.parseFloat(value);
-  if (Number.isNaN(parsed)) {
-    throw new Error(`Invalid numeric value for ${flag}: ${value}`);
-  }
-  return parsed;
-}
-
-function parseIntArg(value: string, flag: string): number {
-  const parsed = Number.parseInt(value, 10);
-  if (Number.isNaN(parsed)) {
-    throw new Error(`Invalid integer value for ${flag}: ${value}`);
-  }
-  return parsed;
-}
-
-function buildArchitectureApprovalReference(args: CliArgs): ApprovalReference {
+function buildArchitectureApprovalReference(args: CliArgs, suffix = "live"): ApprovalReference {
   const nowUtc = new Date().toISOString();
 
   return {
-    approvalId: args.approvalId ?? `appr-arch-${args.taskId}-${Date.now()}`,
+    approvalId: args.approvalId ?? `appr-arch-${args.taskId}-${suffix}-${Date.now()}`,
     approvalType: "ARCHITECTURE",
     approvedBy: args.approvalBy ?? args.requestedBy,
     approvedAtUtc: args.approvalAtUtc ?? nowUtc,
+    status: "approved",
+    ...(args.approvalExpiresAtUtc ? { expiresAtUtc: args.approvalExpiresAtUtc } : {})
+  };
+}
+
+function buildSignalPublishApprovalReference(args: CliArgs): ApprovalReference {
+  return {
+    approvalId: `appr-signal-${args.taskId}-${Date.now()}`,
+    approvalType: "SIGNAL_PUBLISH",
+    approvedBy: args.approvalBy ?? args.requestedBy,
+    approvedAtUtc: args.approvalAtUtc ?? new Date().toISOString(),
     status: "approved",
     ...(args.approvalExpiresAtUtc ? { expiresAtUtc: args.approvalExpiresAtUtc } : {})
   };
@@ -337,6 +638,25 @@ function resolveLogPath(rootDir: string, args: CliArgs, snapshotVersion: string)
   );
 }
 
+function resolveScenarioLogPath(
+  rootDir: string,
+  args: CliArgs,
+  snapshotVersion: string,
+  scenario: MockScenario
+): string {
+  const basePath = resolveLogPath(rootDir, args, snapshotVersion);
+  return appendPathSuffix(basePath, scenario);
+}
+
+function appendPathSuffix(pathValue: string, suffix: string): string {
+  const parsed = parsePath(pathValue);
+  if (parsed.ext.length > 0) {
+    return join(parsed.dir, `${parsed.name}-${suffix}${parsed.ext}`);
+  }
+
+  return join(parsed.dir, `${parsed.base}-${suffix}.jsonl`);
+}
+
 function toRelativeOrAbsolute(rootDir: string, pathValue: string): string {
   const normalizedRoot = resolve(rootDir);
   const normalizedPath = resolve(pathValue);
@@ -376,10 +696,12 @@ async function exists(pathValue: string): Promise<boolean> {
 
 function printHelpAndExit(exitCode: number): never {
   const help = [
-    "Usage: pnpm --filter @monitor/orchestrator-runner start -- [options]",
+    "Usage: pnpm runner run [options]",
     "",
     "Options:",
     "  --root <path>           Repository root (auto-detected if omitted)",
+    "  --mode <live|mock>      Runner mode (default: live)",
+    "  --scenario <happy|missing-approval|both> Mock mode scenario selector (default: both)",
     "  --env <local|dev|staging|prod>   Environment (default: local)",
     "  --version <id>          Config version for snapshot (default: active from manifest)",
     "  --target-state <DESIGN|FORMALIZE> Final workflow state to run to (default: DESIGN)",
@@ -393,33 +715,77 @@ function printHelpAndExit(exitCode: number): never {
     "  --approval-by <name>    Approval actor used for DESIGN -> FORMALIZE",
     "  --approval-at-utc <ts>  Approval UTC timestamp (ISO 8601) used for DESIGN -> FORMALIZE",
     "  --approval-expires-at-utc <ts> Approval expiry UTC timestamp (ISO 8601)",
-    "  --model <id>            OpenAI model override",
-    "  --temperature <n>       OpenAI temperature override",
-    "  --timeout-ms <n>        OpenAI request timeout override",
+    "  --model <id>            Reserved for future live mode",
+    "  --temperature <n>       Reserved for future live mode",
+    "  --timeout-ms <n>        Reserved for future live mode",
     "  --help                  Show this help",
     "",
-    "Required environment:",
-    "  OPENAI_API_KEY (shell env or <repo>/.env)"
+    "Notes:",
+    "  live mode is a stub in this milestone; use --mode mock."
   ].join("\n");
 
   process.stdout.write(`${help}\n`);
   process.exit(exitCode);
 }
 
-main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`${message}\n`);
+function formatRunnerOutput(result: RunnerOutput): string {
+  const lines: string[] = [];
+  lines.push("Run completed");
 
-  const details = getErrorDetails(error);
-  if (details.length > 0) {
-    process.stderr.write(`Details:\n`);
-    for (const detail of details) {
-      process.stderr.write(`- ${detail}\n`);
+  if (Array.isArray(result.scenarios) && result.scenarios.length > 0) {
+    for (const scenario of result.scenarios) {
+      lines.push(`Scenario: ${scenario.scenario}`);
+      lines.push(`Final state: ${scenario.finalState}`);
+      lines.push(`Outcome: ${outcomeFromState(scenario.finalState)}`);
+      lines.push(`Transitions: ${scenario.transitions.length}`);
+      lines.push(`Transition log: ${scenario.transitionLogPath}`);
+      if (scenario.blockedTransition) {
+        lines.push(
+          `Blocked transition: ${scenario.blockedTransition.from} -> ${scenario.blockedTransition.to}`
+        );
+        lines.push(`Reason: ${scenario.blockedTransition.error}`);
+      }
     }
+  } else {
+    lines.push(`Final state: ${result.taskState}`);
+    lines.push(`Outcome: ${outcomeFromState(result.taskState)}`);
+    lines.push(`Transitions: ${result.transitions.length}`);
+    lines.push(`Transition log: ${result.transitionLogPath}`);
   }
 
-  process.exitCode = 1;
-});
+  return lines.join("\n");
+}
+
+function outcomeFromState(state: string): "success" | "policy_rejection" | "incomplete" {
+  if (state === "DONE") {
+    return "success";
+  }
+  if (state === "REJECTED") {
+    return "policy_rejection";
+  }
+  return "incomplete";
+}
+
+function isSuccessTerminalState(state: string): boolean {
+  return state === "DONE" || state === "REJECTED";
+}
+
+function assertSuccessfulResult(result: RunnerOutput): void {
+  if (Array.isArray(result.scenarios) && result.scenarios.length > 0) {
+    for (const scenario of result.scenarios) {
+      if (!isSuccessTerminalState(scenario.finalState)) {
+        throw new Error(
+          `Scenario '${scenario.scenario}' ended in non-terminal state '${scenario.finalState}'`
+        );
+      }
+    }
+    return;
+  }
+
+  if (!isSuccessTerminalState(result.taskState)) {
+    throw new Error(`Run ended in non-terminal state '${result.taskState}'`);
+  }
+}
 
 function getErrorDetails(error: unknown): string[] {
   if (!error || typeof error !== "object") {
@@ -432,4 +798,26 @@ function getErrorDetails(error: unknown): string[] {
   }
 
   return maybeDetails.filter((detail): detail is string => typeof detail === "string" && detail.trim().length > 0);
+}
+
+function handleCliError(error: unknown): void {
+  const message = error instanceof Error ? error.message : String(error);
+  process.stderr.write(`${message}\n`);
+
+  const details = getErrorDetails(error);
+  if (details.length > 0) {
+    process.stderr.write("Details:\n");
+    for (const detail of details) {
+      process.stderr.write(`- ${detail}\n`);
+    }
+  }
+
+  process.exitCode = 1;
+}
+
+const isMainModule =
+  process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
+  runCli().catch(handleCliError);
 }
