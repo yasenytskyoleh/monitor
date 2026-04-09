@@ -4,9 +4,18 @@ import type { RunOutcome } from "./persistence/types.js";
 
 export type RunnerMode = "live" | "mock";
 export type OutputFormat = "text" | "json";
-export type TargetState = "DESIGN" | "FORMALIZE";
 export type MockScenario = "happy" | "missing-approval";
 export type MockScenarioSelection = MockScenario | "both";
+export type ExecutionMode = "mock" | "live";
+
+export type AgentExecutionMap = Record<
+  | "product-agent"
+  | "architect-agent"
+  | "quant-pattern-agent"
+  | "backend-agent"
+  | "docs-reviewer-agent",
+  ExecutionMode
+>;
 
 export type BlockedTransitionInfo = {
   from: string;
@@ -31,6 +40,7 @@ export type RunnerOutput = {
   artifactsPath?: string;
   outcome?: RunOutcome;
   reason?: string;
+  agentModes?: AgentExecutionMap;
   snapshot: Record<string, unknown>;
   transitionLogPath: string;
   taskState: string;
@@ -43,10 +53,10 @@ export type CliArgs = {
   rootDir?: string;
   mode: RunnerMode;
   output: OutputFormat;
+  agentModeOverrides: Partial<AgentExecutionMap>;
   scenario?: MockScenarioSelection;
   environment: EnvironmentName;
   version?: string;
-  targetState: TargetState;
   taskId: string;
   requestedBy: string;
   taskTitle: string;

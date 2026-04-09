@@ -1,16 +1,18 @@
-import { access, mkdir, readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import process from "node:process";
 
 import { ConfigReleaseManager } from "@monitor/agent-config";
-import { OrchestratorCore } from "@monitor/orchestrator-core";
-import type { AgentHandlers } from "@monitor/orchestrator-core";
 import type { TransitionRecord } from "@monitor/orchestrator-core";
 
-import { createLiveProductAgentHandler } from "./adapters/live/product-agent.js";
 import { parseArgs } from "./cli.js";
 import { loadDotEnv, requireOpenAiApiKey } from "./env.js";
-import { createMockHandlers } from "./mock-handlers.js";
+import {
+  hasLiveAgents,
+  resolveAgentExecutionMap,
+  SUPPORTED_AGENT_IDS
+} from "./handlers/agent-modes.js";
+import { resolveHandlers } from "./handlers/resolve-handlers.js";
 import { assertSuccessfulResult, formatRunnerOutput } from "./output.js";
 import { FileRunStore } from "./persistence/file-run-store.js";
 import type {
@@ -19,9 +21,8 @@ import type {
   PersistedTransitionRecord,
   RunOutcome
 } from "./persistence/types.js";
-import { resolveLogPath, toRelativeOrAbsolute } from "./runtime-paths.js";
-import { createInitialTask, runHappyWorkflow, runMockMode } from "./scenario-runner.js";
-import type { CliArgs, RunnerOutput } from "./types.js";
+import { runScenarioMode } from "./scenario-runner.js";
+import type { AgentExecutionMap, CliArgs, RunnerOutput } from "./types.js";
 
 export type RunnerDependencies = {
   liveProductFetchImpl?: typeof fetch;
@@ -41,6 +42,7 @@ export async function runWithArgv(
 
   let taskInput: Record<string, unknown> | undefined;
   let snapshotMeta: SnapshotMeta | undefined;
+  let agentModes: AgentExecutionMap | undefined;
   let partialResult: RunnerOutput | undefined;
 
   try {
@@ -56,26 +58,29 @@ export async function runWithArgv(
     const snapshotPath = join(rootDir, snapshotResult.snapshotPath);
     snapshotMeta = await resolveSnapshotMeta(snapshotPath, snapshotResult.version);
     taskInput = await resolveTaskInput(rootDir, args);
+    agentModes = resolveAgentExecutionMap(args.mode, args.agentModeOverrides);
+    const openAiApiKey = hasLiveAgents(agentModes)
+      ? requireOpenAiApiKey(envLoadResult.loadedFrom)
+      : undefined;
+    const resolvedHandlers = resolveHandlers({
+      rootDir,
+      agentModes,
+      openAiApiKey,
+      model: args.model,
+      temperature: args.temperature,
+      timeoutMs: args.timeoutMs,
+      fetchImpl: dependencies.liveProductFetchImpl
+    });
 
-    if (args.mode === "mock") {
-      partialResult = await runMockMode({
-        args,
-        rootDir,
-        snapshotPath,
-        snapshotResult: snapshotResult as unknown as Record<string, unknown>,
-        taskInput
-      });
-    } else {
-      partialResult = await runLiveMode({
-        args,
-        rootDir,
-        snapshotPath,
-        snapshotResult: snapshotResult as unknown as Record<string, unknown>,
-        taskInput,
-        openAiApiKey: requireOpenAiApiKey(envLoadResult.loadedFrom),
-        fetchImpl: dependencies.liveProductFetchImpl
-      });
-    }
+    partialResult = await runScenarioMode({
+      args,
+      rootDir,
+      snapshotPath,
+      snapshotResult: snapshotResult as unknown as Record<string, unknown>,
+      taskInput,
+      handlers: resolvedHandlers.handlers,
+      executedBy: resolvedHandlers.executedBy
+    });
 
     assertSuccessfulResult(partialResult);
     const finishedAtUtc = runStore.nowIsoUtc();
@@ -87,7 +92,8 @@ export async function runWithArgv(
       finishedAtUtc,
       result: partialResult,
       snapshotMeta,
-      taskInput
+      taskInput,
+      agentModes
     });
 
     return {
@@ -95,7 +101,8 @@ export async function runWithArgv(
       runId,
       artifactsPath: persistence.artifactsPath,
       outcome: persistence.outcome,
-      reason: persistence.reason
+      reason: persistence.reason,
+      agentModes
     };
   } catch (error) {
     const finishedAtUtc = runStore.nowIsoUtc();
@@ -110,7 +117,8 @@ export async function runWithArgv(
         error,
         partialResult,
         snapshotMeta,
-        taskInput
+        taskInput,
+        agentModes
       });
       artifactsPath = persistence.artifactsPath;
     } catch (persistenceError) {
@@ -133,67 +141,6 @@ export async function runCli(argv = process.argv.slice(2), startDir = process.cw
   process.stdout.write(`${formatRunnerOutput(result, args.output)}\n`);
 }
 
-type LiveRunModeOptions = {
-  args: CliArgs;
-  rootDir: string;
-  snapshotPath: string;
-  snapshotResult: Record<string, unknown>;
-  taskInput: Record<string, unknown>;
-  openAiApiKey: string;
-  fetchImpl?: typeof fetch;
-};
-
-async function runLiveMode(options: LiveRunModeOptions): Promise<RunnerOutput> {
-  const snapshotVersion = String(options.snapshotResult.version ?? options.args.version ?? "v1");
-  const transitionLogPath = resolveLogPath(options.rootDir, options.args, snapshotVersion);
-  await mkdir(dirname(transitionLogPath), { recursive: true });
-
-  const handlers: AgentHandlers = {
-    ...createMockHandlers(),
-    "product-agent": createLiveProductAgentHandler({
-      apiKey: options.openAiApiKey,
-      promptsRootDir: join(options.rootDir, "configs/agents/prompts"),
-      model: options.args.model,
-      temperature: options.args.temperature,
-      timeoutMs: options.args.timeoutMs,
-      fetchImpl: options.fetchImpl
-    })
-  };
-
-  const orchestrator = await OrchestratorCore.fromSnapshotFile({
-    snapshotPath: options.snapshotPath,
-    transitionLogPath,
-    handlers,
-    executedBy: "orchestrator-runner-live-hybrid"
-  });
-
-  const task = createInitialTask(
-    options.args,
-    snapshotVersion,
-    options.taskInput
-  );
-
-  const workflowResult = await runHappyWorkflow(orchestrator, task, options.args, {
-    designReason: "Live Product handoff",
-    formalizeReason: "Mock Architect handoff",
-    implementReason: "Mock Quant handoff",
-    reviewReason: "Mock Backend handoff",
-    approvalReason: "Mock Docs review complete",
-    publishReason: "Mock publish approval granted",
-    doneReason: "Hybrid live-mock completion",
-    architectureApprovalSuffix: "live"
-  });
-
-  return {
-    status: "ok",
-    snapshot: options.snapshotResult,
-    transitionLogPath: toRelativeOrAbsolute(options.rootDir, transitionLogPath),
-    taskState: workflowResult.task.workflowState,
-    output: workflowResult.output,
-    transitions: workflowResult.transitions
-  };
-}
-
 type PersistSuccessOptions = {
   runStore: FileRunStore;
   runId: string;
@@ -203,6 +150,7 @@ type PersistSuccessOptions = {
   result: RunnerOutput;
   snapshotMeta: SnapshotMeta | undefined;
   taskInput: Record<string, unknown> | undefined;
+  agentModes: AgentExecutionMap | undefined;
 };
 
 type PersistFailureOptions = {
@@ -215,6 +163,7 @@ type PersistFailureOptions = {
   partialResult: RunnerOutput | undefined;
   snapshotMeta: SnapshotMeta | undefined;
   taskInput: Record<string, unknown> | undefined;
+  agentModes: AgentExecutionMap | undefined;
 };
 
 type PersistedRunSummary = {
@@ -252,6 +201,7 @@ async function persistSuccessRun(options: PersistSuccessOptions): Promise<Persis
     taskId: options.args.taskId,
     env: options.args.environment,
     mode: options.args.mode,
+    agentModes: buildPersistedAgentModes(options.args, options.agentModes),
     ...(options.args.scenario ? { scenario: options.args.scenario } : {}),
     startedAtUtc: options.startedAtUtc,
     finishedAtUtc: options.finishedAtUtc,
@@ -306,6 +256,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     taskId: options.args.taskId,
     env: options.args.environment,
     mode: options.args.mode,
+    agentModes: buildPersistedAgentModes(options.args, options.agentModes),
     ...(options.args.scenario ? { scenario: options.args.scenario } : {}),
     startedAtUtc: options.startedAtUtc,
     finishedAtUtc: options.finishedAtUtc,
@@ -545,6 +496,32 @@ function getNumberOrFallback(value: unknown, fallback: number): number {
 
 function uniqueStrings(values: string[]): string[] {
   return Array.from(new Set(values.filter((value) => value.trim().length > 0)));
+}
+
+function buildPersistedAgentModes(
+  args: CliArgs,
+  resolved: AgentExecutionMap | undefined
+): AgentExecutionMap {
+  if (resolved) {
+    return resolved;
+  }
+
+  const defaults: AgentExecutionMap = {
+    "product-agent": args.mode === "live" ? "live" : "mock",
+    "architect-agent": "mock",
+    "quant-pattern-agent": "mock",
+    "backend-agent": "mock",
+    "docs-reviewer-agent": "mock"
+  };
+
+  for (const agentId of SUPPORTED_AGENT_IDS) {
+    const override = args.agentModeOverrides[agentId];
+    if (override === "mock" || override === "live") {
+      defaults[agentId] = override;
+    }
+  }
+
+  return defaults;
 }
 
 async function resolveTaskInput(rootDir: string, args: CliArgs): Promise<Record<string, unknown>> {

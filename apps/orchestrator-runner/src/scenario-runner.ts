@@ -6,12 +6,12 @@ import type { ApprovalReference } from "@monitor/agent-config";
 import { OrchestratorCore } from "@monitor/orchestrator-core";
 import type {
   AgentOutputEnvelope,
+  AgentHandlers,
   TaskEnvelope,
   TransitionRecord,
   TransitionResult
 } from "@monitor/orchestrator-core";
 
-import { createMockHandlers } from "./mock-handlers.js";
 import { resolveScenarioLogPath, toRelativeOrAbsolute } from "./runtime-paths.js";
 import type {
   BlockedTransitionInfo,
@@ -27,9 +27,11 @@ export type RunModeOptions = {
   snapshotPath: string;
   snapshotResult: Record<string, unknown>;
   taskInput: Record<string, unknown>;
+  handlers: AgentHandlers;
+  executedBy: string;
 };
 
-export async function runMockMode(options: RunModeOptions): Promise<RunnerOutput> {
+export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOutput> {
   const scenarios = resolveScenarioList(options.args);
   const scenarioResults: MockScenarioResult[] = [];
 
@@ -45,8 +47,8 @@ export async function runMockMode(options: RunModeOptions): Promise<RunnerOutput
     const orchestrator = await OrchestratorCore.fromSnapshotFile({
       snapshotPath: options.snapshotPath,
       transitionLogPath,
-      handlers: createMockHandlers(),
-      executedBy: "orchestrator-runner-mock"
+      handlers: options.handlers,
+      executedBy: options.executedBy
     });
 
     const task = createInitialTask(
@@ -107,6 +109,12 @@ function resolveScenarioList(args: CliArgs): MockScenario[] {
   }
   if (args.scenario === "missing-approval") {
     return ["missing-approval"];
+  }
+  if (args.scenario === "both") {
+    return ["happy", "missing-approval"];
+  }
+  if (args.mode === "live") {
+    return ["happy"];
   }
   return ["happy", "missing-approval"];
 }

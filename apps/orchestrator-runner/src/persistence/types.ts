@@ -1,4 +1,5 @@
 import type { ApprovalReference } from "@monitor/agent-config";
+import type { AgentExecutionMap } from "../types.js";
 
 export type RunOutcome = "success" | "policy_rejection" | "runtime_failure";
 
@@ -7,6 +8,7 @@ export type PersistedRunRecord = {
   taskId: string;
   env: string;
   mode: "mock" | "live";
+  agentModes: AgentExecutionMap;
   scenario?: string;
   startedAtUtc: string;
   finishedAtUtc: string;

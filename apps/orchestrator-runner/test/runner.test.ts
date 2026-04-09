@@ -78,8 +78,8 @@ test("parseArgs defaults to live mode", () => {
 
   assert.equal(args.mode, "live");
   assert.equal(args.output, "text");
+  assert.deepEqual(args.agentModeOverrides, {});
   assert.equal(args.environment, "local");
-  assert.equal(args.targetState, "DESIGN");
   assert.equal(args.scenario, undefined);
 });
 
@@ -94,9 +94,20 @@ test("parseArgs validates mode and scenario values", () => {
   const jsonOutput = parseArgs(["--output", "json"]);
   assert.equal(jsonOutput.output, "json");
 
+  const overrides = parseArgs(["--agent-mode", "product=live,architect=mock"]);
+  assert.equal(overrides.agentModeOverrides["product-agent"], "live");
+  assert.equal(overrides.agentModeOverrides["architect-agent"], "mock");
+
   assert.throws(() => parseArgs(["--mode", "invalid"]), /Invalid --mode/);
   assert.throws(() => parseArgs(["--scenario", "invalid"]), /Invalid --scenario/);
   assert.throws(() => parseArgs(["--output", "yaml"]), /Invalid --output/);
+  assert.throws(() => parseArgs(["--agent-mode", "foo=live"]), /Invalid --agent-mode agent/);
+  assert.throws(() => parseArgs(["--agent-mode", "product=weird"]), /Invalid --agent-mode value/);
+  assert.throws(
+    () => parseArgs(["--agent-mode", "product=live,product=mock"]),
+    /Duplicate --agent-mode override/
+  );
+  assert.throws(() => parseArgs(["--agent-mode", "product"]), /Expected <agent>=<mock\|live>/);
 });
 
 test("mock happy scenario reaches DONE", async (context) => {
@@ -137,6 +148,7 @@ test("mock happy scenario reaches DONE", async (context) => {
     finalState: string;
     outcome: string;
     taskId: string;
+    agentModes: Record<string, string>;
   }>(join(artifactsDir, "run.json"));
   const transitions = await readJsonFile<Array<{ index: number; from: string; to: string }>>(
     join(artifactsDir, "transitions.json")
@@ -151,6 +163,8 @@ test("mock happy scenario reaches DONE", async (context) => {
   assert.equal(runRecord.taskId, "task-mock-happy");
   assert.equal(runRecord.finalState, "DONE");
   assert.equal(runRecord.outcome, "success");
+  assert.equal(runRecord.agentModes["product-agent"], "mock");
+  assert.equal(runRecord.agentModes["architect-agent"], "mock");
   assert.equal(terminalOutcome.finalState, "DONE");
   assert.equal(terminalOutcome.outcome, "success");
   assert.equal(terminalOutcome.transitionCount, transitions.length);
@@ -200,7 +214,11 @@ test("mock missing-approval scenario reaches REJECTED and captures blocked trans
   assert.equal(result.outcome, "policy_rejection");
 
   const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
-  const runRecord = await readJsonFile<{ finalState: string; outcome: string }>(
+  const runRecord = await readJsonFile<{
+    finalState: string;
+    outcome: string;
+    agentModes: Record<string, string>;
+  }>(
     join(artifactsDir, "run.json")
   );
   const transitions = await readJsonFile<Array<{ blocked?: boolean; from: string; to: string }>>(
@@ -215,6 +233,7 @@ test("mock missing-approval scenario reaches REJECTED and captures blocked trans
 
   assert.equal(runRecord.finalState, "REJECTED");
   assert.equal(runRecord.outcome, "policy_rejection");
+  assert.equal(runRecord.agentModes["product-agent"], "mock");
   assert.equal(terminalOutcome.finalState, "REJECTED");
   assert.equal(terminalOutcome.outcome, "policy_rejection");
   assert.equal(terminalOutcome.rejectionCode, "MISSING_APPROVAL");
@@ -319,11 +338,17 @@ test("live mode runs Product Agent live with remaining agents mocked and reaches
     assert.equal(calls[0]?.body?.response_format && typeof calls[0]?.body?.response_format, "object");
 
     const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
-    const runRecord = await readJsonFile<{ mode: string; finalState: string }>(
+    const runRecord = await readJsonFile<{
+      mode: string;
+      finalState: string;
+      agentModes: Record<string, string>;
+    }>(
       join(artifactsDir, "run.json")
     );
     assert.equal(runRecord.mode, "live");
     assert.equal(runRecord.finalState, "DONE");
+    assert.equal(runRecord.agentModes["product-agent"], "live");
+    assert.equal(runRecord.agentModes["architect-agent"], "mock");
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -331,6 +356,80 @@ test("live mode runs Product Agent live with remaining agents mocked and reaches
       process.env.OPENAI_API_KEY = oldKey;
     }
   }
+});
+
+test("mode mock with product live override runs mixed flow", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "product=live",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-mock-product-live",
+        "--requested-by",
+        "tester",
+        "--task-title",
+        "Mixed mode test"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionFetch(
+          createLiveProductResponseContent("task-mock-product-live")
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.agentModes?.["product-agent"], "live");
+    assert.equal(result.agentModes?.["architect-agent"], "mock");
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("fails early when unsupported live agent mode is requested", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  await assert.rejects(
+    runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "architect=live",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-unsupported-live"
+      ],
+      workspaceRoot
+    ),
+    /no live handler is implemented/
+  );
 });
 
 test("live mode rejects invalid non-JSON Product output", async (context) => {

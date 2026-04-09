@@ -1,14 +1,15 @@
 import { SUPPORTED_ENVIRONMENTS } from "@monitor/agent-config";
 import type { EnvironmentName } from "@monitor/agent-config";
 
+import { parseAgentModeOverrides } from "./handlers/agent-modes.js";
 import type { CliArgs } from "./types.js";
 
 export function parseArgs(argv: string[]): CliArgs {
   const args: CliArgs = {
     mode: "live",
     output: "text",
+    agentModeOverrides: {},
     environment: "local",
-    targetState: "DESIGN",
     taskId: `task-${Date.now()}`,
     requestedBy: "orchestrator-runner",
     taskTitle: "Orchestration run"
@@ -65,6 +66,12 @@ export function parseArgs(argv: string[]): CliArgs {
       continue;
     }
 
+    if (arg === "--agent-mode") {
+      const raw = requiredValue(argv, ++index, "--agent-mode");
+      args.agentModeOverrides = parseAgentModeOverrides(raw);
+      continue;
+    }
+
     if (arg === "--env") {
       const environmentValue = requiredValue(argv, ++index, "--env");
       if (!SUPPORTED_ENVIRONMENTS.includes(environmentValue as EnvironmentName)) {
@@ -78,15 +85,6 @@ export function parseArgs(argv: string[]): CliArgs {
 
     if (arg === "--version") {
       args.version = requiredValue(argv, ++index, "--version");
-      continue;
-    }
-
-    if (arg === "--target-state") {
-      const targetState = requiredValue(argv, ++index, "--target-state");
-      if (targetState !== "DESIGN" && targetState !== "FORMALIZE") {
-        throw new Error(`Invalid --target-state '${targetState}'. Allowed: DESIGN, FORMALIZE`);
-      }
-      args.targetState = targetState;
       continue;
     }
 
@@ -190,10 +188,10 @@ function printHelpAndExit(exitCode: number): never {
     "  --root <path>           Repository root (auto-detected if omitted)",
     "  --mode <live|mock>      Runner mode (default: live)",
     "  --output <text|json>    CLI output format (default: text)",
+    "  --agent-mode <spec>     Per-agent overrides, e.g. product=live,architect=mock",
     "  --scenario <happy|missing-approval|both> Mock mode scenario selector (default: both)",
     "  --env <local|dev|staging|prod>   Environment (default: local)",
     "  --version <id>          Config version for snapshot (default: active from manifest)",
-    "  --target-state <DESIGN|FORMALIZE> Final workflow state to run to (default: DESIGN)",
     "  --task-id <id>          Task id (default: task-<timestamp>)",
     "  --requested-by <name>   Requested by (default: orchestrator-runner)",
     "  --task-title <text>     Default task title when no input JSON/file is provided",
@@ -210,7 +208,8 @@ function printHelpAndExit(exitCode: number): never {
     "  --help                  Show this help",
     "",
     "Notes:",
-    "  live mode runs Product Agent against OpenAI and keeps the other agents mocked."
+    "  live mode defaults product-agent to live and the rest to mock.",
+    "  use --agent-mode for per-agent overrides."
   ].join("\n");
 
   process.stdout.write(`${help}\n`);

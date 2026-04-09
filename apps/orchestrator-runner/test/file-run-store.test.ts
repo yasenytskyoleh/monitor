@@ -31,6 +31,13 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
     taskId: "task-001",
     env: "local",
     mode: "mock",
+    agentModes: {
+      "product-agent": "mock",
+      "architect-agent": "mock",
+      "quant-pattern-agent": "mock",
+      "backend-agent": "mock",
+      "docs-reviewer-agent": "mock"
+    },
     scenario: "happy",
     startedAtUtc: "2026-04-09T10:00:00.000Z",
     finishedAtUtc: "2026-04-09T10:00:02.000Z",

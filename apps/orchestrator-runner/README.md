@@ -4,7 +4,7 @@ Run workflow transitions using:
 - compiled config snapshot
 - `OrchestratorCore`
 - deterministic mocked handlers (`--mode mock`)
-- hybrid live mode (`--mode live`): Product Agent live via OpenAI, other agents mocked
+- per-agent execution mode selection (`--agent-mode ...`)
 
 ## Requirements
 - repository configs present under `configs/agents`
@@ -20,7 +20,19 @@ cp .env.example .env
 Optional: if you prefer shell-level env vars, you can still `source .env` manually.
 
 ## Usage
-Default mode is `live`.
+Default mode is `live`:
+- `product-agent` resolves to `live`
+- other agents resolve to `mock` until their live adapters are implemented
+
+Execution mode precedence:
+1. Start from `--mode`.
+2. Resolve defaults for all agents.
+3. Apply `--agent-mode` overrides.
+4. Validate final map before execution.
+
+Current live adapter coverage:
+- `product-agent`: live supported
+- `architect-agent`, `quant-pattern-agent`, `backend-agent`, `docs-reviewer-agent`: mock only
 
 Run mocked happy flow:
 ```bash
@@ -32,6 +44,17 @@ pnpm runner run \
   --task-id task-mock-001 \
   --requested-by oleh \
   --task-title "Mock happy flow"
+```
+
+Run hybrid mode explicitly (recommended):
+```bash
+pnpm runner run \
+  --mode mock \
+  --agent-mode product=live \
+  --scenario happy \
+  --env local \
+  --version v1 \
+  --task-id task-hybrid-001
 ```
 
 Run missing-approval rejection flow:
@@ -94,6 +117,8 @@ Persisted run artifacts are written to:
 - optional: `runtime/runs/<runId>/input-task.json`
 - optional: `runtime/runs/<runId>/compiled-snapshot-meta.json`
 
+`run.json` includes resolved `agentModes` so each run is fully traceable.
+
 Run hybrid live path (Product Agent live, remaining agents mocked):
 ```bash
 pnpm runner run \
@@ -105,6 +130,22 @@ pnpm runner run \
   --task-title "Detect BTC entry points" \
   --model gpt-5.4-mini
 ```
+
+`--agent-mode` format:
+- comma-separated `<agent>=<mode>` pairs
+- supported aliases: `product`, `architect`, `quant-pattern`, `backend`, `docs-reviewer`
+- canonical ids also supported: `product-agent`, `architect-agent`, `quant-pattern-agent`, `backend-agent`, `docs-reviewer-agent`
+- valid modes: `mock`, `live`
+
+Examples:
+- `--agent-mode product=live`
+- `--agent-mode product=live,architect=mock`
+
+Invalid overrides fail fast:
+- unknown agent alias/id
+- duplicate agent entries
+- invalid mode values
+- requesting `live` for agents without a live adapter
 
 Live Product Agent contract in this step:
 - OpenAI response must be JSON-only
