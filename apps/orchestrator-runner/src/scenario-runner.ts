@@ -15,6 +15,13 @@ import type {
 import { ArtifactRegistry } from "./artifacts/registry.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
 import { validateTransitionArtifacts } from "./artifacts/validate-artifacts.js";
+import { ApprovalRegistry } from "./approvals/registry.js";
+import { approvalEvidenceByTransitionChecksum } from "./approvals/validate-approval.js";
+import {
+  ApprovalValidationError,
+  type ApprovalTransitionEvidence,
+  type WorkflowApproval
+} from "./approvals/types.js";
 import { resolveScenarioLogPath, toRelativeOrAbsolute } from "./runtime-paths.js";
 import type {
   BlockedTransitionInfo,
@@ -69,6 +76,8 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       orchestrator,
       snapshot: orchestrator.getSnapshot(),
       registry: artifactRegistry,
+      approvals: new ApprovalRegistry(orchestrator.getSnapshot(), options.runId),
+      approvalEvidenceByTransitionChecksum: {},
       transitions: [],
       results: []
     };
@@ -76,6 +85,8 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
     const scenarioResult: {
       task: TaskEnvelope;
       output?: AgentOutputEnvelope;
+      approvals: WorkflowApproval[];
+      approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
       artifacts: WorkflowArtifact[];
       transitions: TransitionRecord[];
       blockedTransition?: BlockedTransitionInfo;
@@ -98,6 +109,8 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       status: "ok",
       finalState: scenarioResult.task.workflowState,
       output: scenarioResult.output,
+      approvals: scenarioResult.approvals,
+      approvalEvidenceByTransitionChecksum: scenarioResult.approvalEvidenceByTransitionChecksum,
       artifacts: scenarioResult.artifacts,
       transitions: scenarioResult.transitions,
       transitionLogPath: toRelativeOrAbsolute(options.rootDir, transitionLogPath),
@@ -116,6 +129,11 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
     transitionLogPath: lastScenario.transitionLogPath,
     taskState: lastScenario.finalState,
     output: lastScenario.output,
+    approvals: scenarioResults.flatMap((scenarioResult) => scenarioResult.approvals),
+    approvalEvidenceByTransitionChecksum: Object.assign(
+      {},
+      ...scenarioResults.map((scenarioResult) => scenarioResult.approvalEvidenceByTransitionChecksum)
+    ),
     artifacts: scenarioResults.flatMap((scenarioResult) => scenarioResult.artifacts),
     transitions: lastScenario.transitions,
     scenarios: scenarioResults
@@ -157,6 +175,8 @@ export async function runHappyWorkflow(
 ): Promise<{
   task: TaskEnvelope;
   output?: AgentOutputEnvelope;
+  approvals: WorkflowApproval[];
+  approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
 }> {
@@ -208,6 +228,8 @@ export async function runHappyWorkflow(
   return {
     task: current.task,
     output: lastDefinedOutput(scenarioContext.results),
+    approvals: scenarioContext.approvals.listApprovals(),
+    approvalEvidenceByTransitionChecksum: scenarioContext.approvalEvidenceByTransitionChecksum,
     artifacts: scenarioContext.registry.listArtifacts(),
     transitions: scenarioContext.transitions
   };
@@ -220,6 +242,8 @@ async function runMockMissingApprovalScenario(
 ): Promise<{
   task: TaskEnvelope;
   output?: AgentOutputEnvelope;
+  approvals: WorkflowApproval[];
+  approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   blockedTransition: BlockedTransitionInfo;
@@ -232,14 +256,14 @@ async function runMockMissingApprovalScenario(
 
   let blockedTransition: BlockedTransitionInfo | undefined;
   try {
-    await scenarioContext.orchestrator.transition({
+    await executeAndCollectTransition(scenarioContext, {
       task: designResult.task,
       to: "FORMALIZE",
       reason: "Probe missing architecture approval"
     });
     throw new Error("Expected missing-approval transition to fail");
   } catch (error) {
-    if (!(error instanceof WorkflowTransitionError)) {
+    if (!(error instanceof WorkflowTransitionError) && !(error instanceof ApprovalValidationError)) {
       throw error;
     }
 
@@ -260,6 +284,8 @@ async function runMockMissingApprovalScenario(
   return {
     task: rejectedResult.task,
     output: lastDefinedOutput(scenarioContext.results),
+    approvals: scenarioContext.approvals.listApprovals(),
+    approvalEvidenceByTransitionChecksum: scenarioContext.approvalEvidenceByTransitionChecksum,
     artifacts: scenarioContext.registry.listArtifacts(),
     transitions: scenarioContext.transitions,
     blockedTransition: blockedTransition ?? {
@@ -300,6 +326,8 @@ type ScenarioExecutionContext = {
   orchestrator: OrchestratorCore;
   snapshot: RuntimeConfigSnapshot;
   registry: ArtifactRegistry;
+  approvals: ApprovalRegistry;
+  approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   transitions: TransitionRecord[];
   results: TransitionResult[];
 };
@@ -314,11 +342,21 @@ async function executeAndCollectTransition(
     reason: string;
   }
 ): Promise<TransitionResult> {
+  const nowUtc = new Date().toISOString();
+  const approvalValidation = context.approvals.validateForTransition({
+    taskId: input.task.taskId,
+    from: input.task.workflowState,
+    to: input.to,
+    approvalRef: input.approvalRef,
+    nowUtc
+  });
+
   const result = await context.orchestrator.transition({
     task: input.task,
     to: input.to,
     ...(input.approvalRef ? { approvalRef: input.approvalRef } : {}),
     ...(input.additionalArtifacts ? { additionalArtifacts: input.additionalArtifacts } : {}),
+    nowUtc,
     reason: input.reason
   });
 
@@ -333,6 +371,11 @@ async function executeAndCollectTransition(
     ...result.transition,
     artifactRefs: artifactValidation.transitionArtifactRefs
   };
+
+  Object.assign(
+    context.approvalEvidenceByTransitionChecksum,
+    approvalEvidenceByTransitionChecksum(result, approvalValidation.evidence)
+  );
 
   context.results.push(result);
   context.transitions.push(normalizedTransition);

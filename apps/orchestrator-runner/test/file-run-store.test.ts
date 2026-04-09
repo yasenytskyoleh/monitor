@@ -76,6 +76,21 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
     runRecord,
     transitions,
     terminalOutcome,
+    approvals: [
+      {
+        approvalRef: "approval_001",
+        approvalType: "ARCHITECTURE",
+        taskId: "task-001",
+        runId: "run_fixed_001",
+        issuedFor: {
+          from: "DESIGN",
+          to: "FORMALIZE"
+        },
+        grantedBy: "approver",
+        grantedAtUtc: "2026-04-09T10:00:00.000Z",
+        status: "granted"
+      }
+    ],
     artifacts: [
       {
         artifactRef: "happy:product-brief:v1",
@@ -104,4 +119,10 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
   ) as Array<Record<string, unknown>>;
   assert.equal(artifactsJson.length, 1);
   assert.equal(artifactsJson[0]?.artifactType, "product-brief");
+
+  const approvalsJson = JSON.parse(
+    await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/approvals.json"), "utf8")
+  ) as Array<Record<string, unknown>>;
+  assert.equal(approvalsJson.length, 1);
+  assert.equal(approvalsJson[0]?.approvalRef, "approval_001");
 });
