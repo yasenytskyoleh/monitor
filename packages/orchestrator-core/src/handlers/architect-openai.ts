@@ -12,7 +12,7 @@ type OpenAiChatCompletionResponse = {
   }>;
 };
 
-export type OpenAiProductAgentHandlerOptions = {
+export type OpenAiArchitectAgentHandlerOptions = {
   apiKey?: string;
   baseUrl?: string;
   promptsRootDir?: string;
@@ -24,26 +24,26 @@ export type OpenAiProductAgentHandlerOptions = {
 
 const PROMPT_CACHE = new Map<string, string>();
 
-export function createOpenAiProductAgentHandler(
-  options: OpenAiProductAgentHandlerOptions = {}
+export function createOpenAiArchitectAgentHandler(
+  options: OpenAiArchitectAgentHandlerOptions = {}
 ): AgentHandler {
   const fetchImpl = options.fetchImpl ?? fetch;
   if (!fetchImpl) {
-    throw new OrchestratorExecutionError("Global fetch is not available for OpenAI product handler");
+    throw new OrchestratorExecutionError("Global fetch is not available for OpenAI architect handler");
   }
 
   const apiKey = options.apiKey ?? process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    throw new OrchestratorExecutionError("OPENAI_API_KEY is required for OpenAI product handler");
+    throw new OrchestratorExecutionError("OPENAI_API_KEY is required for OpenAI architect handler");
   }
 
   const baseUrl = (options.baseUrl ?? process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/+$/, "");
   const promptsRootDir = options.promptsRootDir ?? join(process.cwd(), "configs/agents/prompts");
 
   return async (context: AgentHandlerContext): Promise<AgentOutputEnvelope> => {
-    if (context.agent.id !== "product-agent") {
+    if (context.agent.id !== "architect-agent") {
       throw new OrchestratorExecutionError(
-        `OpenAI product handler is bound to 'product-agent', received '${context.agent.id}'`
+        `OpenAI architect handler is bound to 'architect-agent', received '${context.agent.id}'`
       );
     }
 
@@ -138,10 +138,7 @@ function buildUserPrompt(context: AgentHandlerContext): string {
       requiredFields: ["taskId", "agentRole", "status", "summary", "artifacts", "nextAction"],
       allowedStatus: ["completed", "blocked", "needs_escalation", "rejected"],
       allowedNextActions: [
-        "handoff_to_architect",
         "handoff_to_quant",
-        "handoff_to_backend",
-        "handoff_to_docs_reviewer",
         "await_approval",
         "request_more_context",
         "close_task",
@@ -152,11 +149,20 @@ function buildUserPrompt(context: AgentHandlerContext): string {
       escalationRequirement:
         "If status is 'needs_escalation', include full escalation object with taskId, agentRole, workflowState, severity, reason, riskNotes, requestedDecision.",
       requiredArtifactsForTargetState
+    },
+    outputFocus: {
+      include: [
+        "module_boundaries",
+        "data_flow",
+        "contract_definitions",
+        "adr_draft",
+        "risk_notes"
+      ]
     }
   };
 
   return [
-    "Produce Product Agent output for the provided task envelope.",
+    "Produce Architect Agent output for the provided task envelope.",
     "Return JSON only.",
     JSON.stringify(payload, null, 2)
   ].join("\n\n");

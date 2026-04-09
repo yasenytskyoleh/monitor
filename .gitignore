@@ -11,3 +11,7 @@ __MACOSX/
 # Generated config snapshots
 configs/agents/versions/snapshots/*
 !configs/agents/versions/snapshots/.gitkeep
+
+# Generated runtime logs
+runtime/logs/*
+!runtime/logs/.gitkeep

@@ -30,7 +30,10 @@ export type AgentOutputEnvelope = {
     | "handoff_to_docs_reviewer"
     | "await_approval"
     | "request_more_context"
-    | "close_task";
+    | "close_task"
+    | "reject_task"
+    | "request_architecture_clarification"
+    | "return_to_implement";
   risks?: string[];
   escalation?: Record<string, unknown>;
   notes?: string | string[];
