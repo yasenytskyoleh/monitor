@@ -12,7 +12,8 @@ export type SupportedAgentId = (typeof SUPPORTED_AGENT_IDS)[number];
 
 const LIVE_IMPLEMENTED_AGENTS: ReadonlySet<SupportedAgentId> = new Set([
   "product-agent",
-  "architect-agent"
+  "architect-agent",
+  "quant-pattern-agent"
 ]);
 
 const AGENT_ALIAS_TO_ID: Record<string, SupportedAgentId> = {

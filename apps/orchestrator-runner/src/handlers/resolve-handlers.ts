@@ -4,6 +4,7 @@ import type { AgentHandlers } from "@monitor/orchestrator-core";
 
 import { createLiveArchitectAgentHandler } from "../adapters/live/architect-agent.js";
 import { createLiveProductAgentHandler } from "../adapters/live/product-agent.js";
+import { createLiveQuantPatternAgentHandler } from "../adapters/live/quant-pattern-agent.js";
 import { createMockHandlers } from "../mock-handlers.js";
 import { hasLiveAgents, SUPPORTED_AGENT_IDS } from "./agent-modes.js";
 import type { AgentExecutionMap } from "../types.js";
@@ -54,6 +55,22 @@ export function resolveHandlers(options: ResolveHandlersOptions): ResolvedHandle
       }
 
       handlers[agentId] = createLiveArchitectAgentHandler({
+        apiKey: options.openAiApiKey,
+        promptsRootDir: join(options.rootDir, "configs/agents/prompts"),
+        model: options.model,
+        temperature: options.temperature,
+        timeoutMs: options.timeoutMs,
+        fetchImpl: options.fetchImpl
+      });
+      continue;
+    }
+
+    if (agentId === "quant-pattern-agent") {
+      if (!options.openAiApiKey) {
+        throw new Error("OPENAI_API_KEY is required for quant-pattern-agent live handler");
+      }
+
+      handlers[agentId] = createLiveQuantPatternAgentHandler({
         apiKey: options.openAiApiKey,
         promptsRootDir: join(options.rootDir, "configs/agents/prompts"),
         model: options.model,

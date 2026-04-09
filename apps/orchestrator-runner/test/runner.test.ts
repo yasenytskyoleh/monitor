@@ -61,6 +61,39 @@ function createLiveArchitectResponseContent(
   });
 }
 
+function createLiveQuantPatternResponseContent(
+  taskId: string,
+  overrides: Record<string, unknown> = {}
+): string {
+  return JSON.stringify({
+    taskId,
+    agentRole: "QUANT_PATTERN",
+    status: "completed",
+    summary: "Pattern formalization completed",
+    artifacts: ["pattern-definition", "metrics-plan"],
+    nextAction: "handoff_to_backend",
+    metrics: {
+      patternDefinition: "Confirm trend continuation after pullback reclaim above 20 EMA.",
+      measurableConditions: [
+        "Price closes above 20 EMA on 15m chart for 3 consecutive candles.",
+        "Volume exceeds 20-period average by 1.2x."
+      ],
+      metricsPlan: ["Win rate", "Profit factor", "Max drawdown"],
+      evaluationHorizon: "30 trading days",
+      invalidationAssumptions: ["Volatility regime shift above threshold invalidates edge."],
+      edgeHypothesis: "Momentum continuation in spot BTC after reclaim yields positive expectancy.",
+      testScenarios: ["Low volatility trend day", "High volatility breakout day"],
+      phaseScope: {
+        marketType: "SPOT_ONLY",
+        leverage: "NONE",
+        fundingRateDependency: "NOT_REQUIRED",
+        derivatives: "NONE"
+      }
+    },
+    ...overrides
+  });
+}
+
 function createChatCompletionFetch(content: string): typeof fetch {
   return async () =>
     new Response(
@@ -336,7 +369,7 @@ test("mock both scenario runs happy and rejection flows", async (context) => {
   assert.equal(result.scenarios?.[1]?.finalState, "REJECTED");
 });
 
-test("live mode runs Product and Architect live and reaches DONE", async (context) => {
+test("live mode runs Product, Architect, and Quant Pattern live and reaches DONE", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
 
@@ -348,7 +381,8 @@ test("live mode runs Product and Architect live and reaches DONE", async (contex
     const fetchImpl = createChatCompletionSequenceFetch(
       [
         createLiveProductResponseContent("task-live-valid"),
-        createLiveArchitectResponseContent("task-live-valid")
+        createLiveArchitectResponseContent("task-live-valid"),
+        createLiveQuantPatternResponseContent("task-live-valid")
       ],
       calls
     );
@@ -365,7 +399,7 @@ test("live mode runs Product and Architect live and reaches DONE", async (contex
         "--requested-by",
         "tester",
         "--task-title",
-        "Live Product + Architect test"
+        "Live Product + Architect + Quant test"
       ],
       workspaceRoot,
       {
@@ -379,9 +413,10 @@ test("live mode runs Product and Architect live and reaches DONE", async (contex
     assert.equal(result.transitions.length, 7);
     assert.equal(result.transitions[0]?.from, "INTAKE");
     assert.equal(result.transitions[0]?.to, "DESIGN");
-    assert.equal(calls.length, 2);
+    assert.equal(calls.length, 3);
     assert.equal(calls[0]?.body?.response_format && typeof calls[0]?.body?.response_format, "object");
     assert.equal(calls[1]?.body?.response_format && typeof calls[1]?.body?.response_format, "object");
+    assert.equal(calls[2]?.body?.response_format && typeof calls[2]?.body?.response_format, "object");
 
     const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
     const runRecord = await readJsonFile<{
@@ -395,6 +430,7 @@ test("live mode runs Product and Architect live and reaches DONE", async (contex
     assert.equal(runRecord.finalState, "DONE");
     assert.equal(runRecord.agentModes["product-agent"], "live");
     assert.equal(runRecord.agentModes["architect-agent"], "live");
+    assert.equal(runRecord.agentModes["quant-pattern-agent"], "live");
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -496,6 +532,7 @@ test("mode mock with product and architect live overrides runs happy flow", asyn
     assert.equal(result.taskState, "DONE");
     assert.equal(result.agentModes?.["product-agent"], "live");
     assert.equal(result.agentModes?.["architect-agent"], "live");
+    assert.equal(result.agentModes?.["quant-pattern-agent"], "mock");
     assert.equal(calls.length, 2);
   } finally {
     if (oldKey === undefined) {
@@ -604,6 +641,231 @@ test("missing-approval scenario still rejects when architect is live", async (co
   }
 });
 
+test("mode mock with product, architect, and quant-pattern live overrides runs happy flow", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const calls: Array<{ body?: Record<string, unknown> }> = [];
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "product=live,architect=live,quant-pattern=live",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-mock-product-architect-quant-live",
+        "--requested-by",
+        "tester",
+        "--task-title",
+        "Mixed product+architect+quant live"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionSequenceFetch(
+          [
+            createLiveProductResponseContent("task-mock-product-architect-quant-live"),
+            createLiveArchitectResponseContent("task-mock-product-architect-quant-live"),
+            createLiveQuantPatternResponseContent("task-mock-product-architect-quant-live")
+          ],
+          calls
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.agentModes?.["product-agent"], "live");
+    assert.equal(result.agentModes?.["architect-agent"], "live");
+    assert.equal(result.agentModes?.["quant-pattern-agent"], "live");
+    assert.equal(calls.length, 3);
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock with quant-pattern live override runs happy flow", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const calls: Array<{ body?: Record<string, unknown> }> = [];
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "quant-pattern=live",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-mock-quant-live",
+        "--requested-by",
+        "tester",
+        "--task-title",
+        "Quant live only"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionSequenceFetch(
+          [createLiveQuantPatternResponseContent("task-mock-quant-live")],
+          calls
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.agentModes?.["product-agent"], "mock");
+    assert.equal(result.agentModes?.["architect-agent"], "mock");
+    assert.equal(result.agentModes?.["quant-pattern-agent"], "live");
+    assert.equal(calls.length, 1);
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock rejects invalid live Quant Pattern output", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "quant-pattern=live",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-quant-invalid"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveQuantPatternResponseContent("task-quant-invalid", {
+              metrics: {
+                measurableConditions: ["x"],
+                metricsPlan: ["y"],
+                evaluationHorizon: "7d",
+                invalidationAssumptions: ["z"],
+                edgeHypothesis: "h",
+                testScenarios: ["t"],
+                phaseScope: {
+                  marketType: "SPOT_ONLY",
+                  leverage: "NONE",
+                  fundingRateDependency: "NOT_REQUIRED",
+                  derivatives: "NONE"
+                }
+              }
+            })
+          )
+        }
+      ),
+      /live quant pattern output/
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock with product, architect, and quant-pattern live supports scenario both", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const calls: Array<{ body?: Record<string, unknown> }> = [];
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "product=live,architect=live,quant-pattern=live",
+        "--scenario",
+        "both",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-mock-both-all-live",
+        "--requested-by",
+        "tester",
+        "--task-title",
+        "All live both scenario"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionSequenceFetch(
+          [
+            createLiveProductResponseContent("task-mock-both-all-live"),
+            createLiveArchitectResponseContent("task-mock-both-all-live"),
+            createLiveQuantPatternResponseContent("task-mock-both-all-live"),
+            createLiveProductResponseContent("task-mock-both-all-live"),
+            createLiveArchitectResponseContent("task-mock-both-all-live")
+          ],
+          calls
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.scenarios?.length, 2);
+    assert.equal(result.scenarios?.[0]?.finalState, "DONE");
+    assert.equal(result.scenarios?.[1]?.finalState, "REJECTED");
+    assert.equal(result.agentModes?.["product-agent"], "live");
+    assert.equal(result.agentModes?.["architect-agent"], "live");
+    assert.equal(result.agentModes?.["quant-pattern-agent"], "live");
+    assert.equal(calls.length, 5);
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
 test("fails early when unsupported live agent mode is requested", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
@@ -614,7 +876,7 @@ test("fails early when unsupported live agent mode is requested", async (context
         "--mode",
         "mock",
         "--agent-mode",
-        "quant-pattern=live",
+        "backend=live",
         "--scenario",
         "happy",
         "--env",

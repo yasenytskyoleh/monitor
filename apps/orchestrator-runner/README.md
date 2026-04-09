@@ -23,6 +23,7 @@ Optional: if you prefer shell-level env vars, you can still `source .env` manual
 Default mode is `live`:
 - `product-agent` resolves to `live`
 - `architect-agent` resolves to `live`
+- `quant-pattern-agent` resolves to `live`
 - remaining agents resolve to `mock` until their live adapters are implemented
 
 Execution mode precedence:
@@ -34,7 +35,8 @@ Execution mode precedence:
 Current live adapter coverage:
 - `product-agent`: live supported
 - `architect-agent`: live supported
-- `quant-pattern-agent`, `backend-agent`, `docs-reviewer-agent`: mock only
+- `quant-pattern-agent`: live supported
+- `backend-agent`, `docs-reviewer-agent`: mock only
 
 Run mocked happy flow:
 ```bash
@@ -52,7 +54,7 @@ Run hybrid mode explicitly (recommended):
 ```bash
 pnpm runner run \
   --mode mock \
-  --agent-mode product=live,architect=live \
+  --agent-mode product=live,architect=live,quant-pattern=live \
   --scenario happy \
   --env local \
   --version v1 \
@@ -132,7 +134,7 @@ Persisted run artifacts are written to:
 
 `run.json` includes resolved `agentModes` so each run is fully traceable.
 
-Run default live path (Product + Architect live, remaining agents mocked):
+Run default live path (Product + Architect + Quant Pattern live, remaining agents mocked):
 ```bash
 pnpm runner run \
   --mode live \
@@ -153,7 +155,8 @@ pnpm runner run \
 Examples:
 - `--agent-mode product=live`
 - `--agent-mode architect=live`
-- `--agent-mode product=live,architect=live`
+- `--agent-mode quant-pattern=live`
+- `--agent-mode product=live,architect=live,quant-pattern=live`
 
 Invalid overrides fail fast:
 - unknown agent alias/id
@@ -171,7 +174,17 @@ Live Product Agent contract:
 
 Live Architect Agent contract:
 - OpenAI response must be JSON-only
-- output must pass `agent-output-envelope` and `live-architect-agent-output` schema validation
+- output must pass `agent-output-envelope` and architect-specific structured validation
 - invalid model output fails the run (no silent repair fallback)
 - Architect completed outputs must include structured design fields in `metrics`:
   `moduleBoundaries[]`, `dataFlow[]`, `contractDefinitions[]`, `adrDraft`, `riskNotes[]`
+
+Live Quant Pattern Agent contract:
+- OpenAI response must be JSON-only
+- output must pass `agent-output-envelope` and quant-specific structured validation
+- invalid model output fails the run (no silent repair fallback)
+- Quant completed outputs must include structured fields in `metrics`:
+  `patternDefinition`, `measurableConditions[]`, `metricsPlan[]`, `evaluationHorizon`,
+  `invalidationAssumptions[]`, `edgeHypothesis`, `testScenarios[]`
+- Phase 1 constraints are enforced:
+  spot-only scope, no leverage, no funding-rate dependency, no derivatives assumptions
