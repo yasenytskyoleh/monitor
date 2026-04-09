@@ -75,7 +75,20 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
     runId: "run_fixed_001",
     runRecord,
     transitions,
-    terminalOutcome
+    terminalOutcome,
+    artifacts: [
+      {
+        artifactRef: "happy:product-brief:v1",
+        artifactType: "product-brief",
+        producedBy: "product-agent",
+        taskId: "task-001",
+        runId: "run_fixed_001",
+        state: "INTAKE",
+        createdAtUtc: "2026-04-09T10:00:01.000Z",
+        version: 1,
+        scenario: "happy"
+      }
+    ]
   });
 
   assert.equal(persisted.relativeRunDir, "runtime/runs/run_fixed_001");
@@ -85,4 +98,10 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
   ) as Record<string, unknown>;
   assert.equal(runJson.runId, "run_fixed_001");
   assert.equal(runJson.finalState, "DONE");
+
+  const artifactsJson = JSON.parse(
+    await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/artifacts.json"), "utf8")
+  ) as Array<Record<string, unknown>>;
+  assert.equal(artifactsJson.length, 1);
+  assert.equal(artifactsJson[0]?.artifactType, "product-brief");
 });

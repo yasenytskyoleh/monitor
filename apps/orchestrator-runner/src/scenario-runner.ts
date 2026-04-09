@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 
 import { WorkflowTransitionError } from "@monitor/agent-config";
-import type { ApprovalReference } from "@monitor/agent-config";
+import type { ApprovalReference, RuntimeConfigSnapshot } from "@monitor/agent-config";
 import { OrchestratorCore } from "@monitor/orchestrator-core";
 import type {
   AgentOutputEnvelope,
@@ -12,6 +12,9 @@ import type {
   TransitionResult
 } from "@monitor/orchestrator-core";
 
+import { ArtifactRegistry } from "./artifacts/registry.js";
+import type { WorkflowArtifact } from "./artifacts/types.js";
+import { validateTransitionArtifacts } from "./artifacts/validate-artifacts.js";
 import { resolveScenarioLogPath, toRelativeOrAbsolute } from "./runtime-paths.js";
 import type {
   BlockedTransitionInfo,
@@ -29,6 +32,7 @@ export type RunModeOptions = {
   taskInput: Record<string, unknown>;
   handlers: AgentHandlers;
   executedBy: string;
+  runId: string;
 };
 
 export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOutput> {
@@ -56,15 +60,28 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       String(options.snapshotResult.version ?? "v1"),
       options.taskInput
     );
+    const artifactRegistry = new ArtifactRegistry({
+      runId: options.runId,
+      taskId: task.taskId,
+      scenario
+    });
+    const scenarioContext: ScenarioExecutionContext = {
+      orchestrator,
+      snapshot: orchestrator.getSnapshot(),
+      registry: artifactRegistry,
+      transitions: [],
+      results: []
+    };
 
     const scenarioResult: {
       task: TaskEnvelope;
       output?: AgentOutputEnvelope;
+      artifacts: WorkflowArtifact[];
       transitions: TransitionRecord[];
       blockedTransition?: BlockedTransitionInfo;
     } =
       scenario === "happy"
-        ? await runHappyWorkflow(orchestrator, task, options.args, {
+        ? await runHappyWorkflow(scenarioContext, task, options.args, {
             designReason: "Mock Product handoff",
             formalizeReason: "Mock Architect handoff",
             implementReason: "Mock Quant handoff",
@@ -74,13 +91,14 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
             doneReason: "Mock completion",
             architectureApprovalSuffix: "happy"
           })
-        : await runMockMissingApprovalScenario(orchestrator, task, options.args);
+        : await runMockMissingApprovalScenario(scenarioContext, task, options.args);
 
     scenarioResults.push({
       scenario,
       status: "ok",
       finalState: scenarioResult.task.workflowState,
       output: scenarioResult.output,
+      artifacts: scenarioResult.artifacts,
       transitions: scenarioResult.transitions,
       transitionLogPath: toRelativeOrAbsolute(options.rootDir, transitionLogPath),
       ...(scenarioResult.blockedTransition ? { blockedTransition: scenarioResult.blockedTransition } : {})
@@ -98,6 +116,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
     transitionLogPath: lastScenario.transitionLogPath,
     taskState: lastScenario.finalState,
     output: lastScenario.output,
+    artifacts: scenarioResults.flatMap((scenarioResult) => scenarioResult.artifacts),
     transitions: lastScenario.transitions,
     scenarios: scenarioResults
   };
@@ -131,98 +150,89 @@ export type HappyWorkflowStepReasons = {
 };
 
 export async function runHappyWorkflow(
-  orchestrator: OrchestratorCore,
+  scenarioContext: ScenarioExecutionContext,
   initialTask: TaskEnvelope,
   args: CliArgs,
   reasons: HappyWorkflowStepReasons
 ): Promise<{
   task: TaskEnvelope;
   output?: AgentOutputEnvelope;
+  artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
 }> {
-  const results: TransitionResult[] = [];
-
-  let current = await orchestrator.transition({
+  let current = await executeAndCollectTransition(scenarioContext, {
     task: initialTask,
     to: "DESIGN",
     reason: reasons.designReason
   });
-  results.push(current);
 
-  current = await orchestrator.transition({
+  current = await executeAndCollectTransition(scenarioContext, {
     task: current.task,
     to: "FORMALIZE",
     approvalRef: buildArchitectureApprovalReference(args, reasons.architectureApprovalSuffix),
     reason: reasons.formalizeReason
   });
-  results.push(current);
 
-  current = await orchestrator.transition({
+  current = await executeAndCollectTransition(scenarioContext, {
     task: current.task,
     to: "IMPLEMENT",
     reason: reasons.implementReason
   });
-  results.push(current);
 
-  current = await orchestrator.transition({
+  current = await executeAndCollectTransition(scenarioContext, {
     task: current.task,
     to: "REVIEW",
     reason: reasons.reviewReason
   });
-  results.push(current);
 
-  current = await orchestrator.transition({
+  current = await executeAndCollectTransition(scenarioContext, {
     task: current.task,
     to: "APPROVAL",
     reason: reasons.approvalReason
   });
-  results.push(current);
 
-  current = await orchestrator.transition({
+  current = await executeAndCollectTransition(scenarioContext, {
     task: current.task,
     to: "PUBLISH_SIGNAL",
     approvalRef: buildSignalPublishApprovalReference(args),
     additionalArtifacts: ["publishable-signal-bundle"],
     reason: reasons.publishReason
   });
-  results.push(current);
 
-  current = await orchestrator.transition({
+  current = await executeAndCollectTransition(scenarioContext, {
     task: current.task,
     to: "DONE",
     reason: reasons.doneReason
   });
-  results.push(current);
 
   return {
     task: current.task,
-    output: lastDefinedOutput(results),
-    transitions: results.map((result) => result.transition)
+    output: lastDefinedOutput(scenarioContext.results),
+    artifacts: scenarioContext.registry.listArtifacts(),
+    transitions: scenarioContext.transitions
   };
 }
 
 async function runMockMissingApprovalScenario(
-  orchestrator: OrchestratorCore,
+  scenarioContext: ScenarioExecutionContext,
   initialTask: TaskEnvelope,
   args: CliArgs
 ): Promise<{
   task: TaskEnvelope;
   output?: AgentOutputEnvelope;
+  artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   blockedTransition: BlockedTransitionInfo;
 }> {
-  const results: TransitionResult[] = [];
-
-  const designResult = await orchestrator.transition({
+  const designResult = await executeAndCollectTransition(scenarioContext, {
     task: initialTask,
     to: "DESIGN",
     reason: "Mock Product handoff"
   });
-  results.push(designResult);
 
   let blockedTransition: BlockedTransitionInfo | undefined;
   try {
-    await orchestrator.transition({
+    await scenarioContext.orchestrator.transition({
       task: designResult.task,
       to: "FORMALIZE",
       reason: "Probe missing architecture approval"
@@ -241,17 +251,17 @@ async function runMockMissingApprovalScenario(
     };
   }
 
-  const rejectedResult = await orchestrator.transition({
+  const rejectedResult = await executeAndCollectTransition(scenarioContext, {
     task: designResult.task,
     to: "REJECTED",
     reason: `MISSING_APPROVAL: ${blockedTransition?.error ?? "DESIGN -> FORMALIZE approval missing"}`
   });
-  results.push(rejectedResult);
 
   return {
     task: rejectedResult.task,
-    output: lastDefinedOutput(results),
-    transitions: results.map((result) => result.transition),
+    output: lastDefinedOutput(scenarioContext.results),
+    artifacts: scenarioContext.registry.listArtifacts(),
+    transitions: scenarioContext.transitions,
     blockedTransition: blockedTransition ?? {
       from: "DESIGN",
       to: "FORMALIZE",
@@ -284,6 +294,49 @@ function lastDefinedOutput(results: TransitionResult[]): AgentOutputEnvelope | u
     }
   }
   return undefined;
+}
+
+type ScenarioExecutionContext = {
+  orchestrator: OrchestratorCore;
+  snapshot: RuntimeConfigSnapshot;
+  registry: ArtifactRegistry;
+  transitions: TransitionRecord[];
+  results: TransitionResult[];
+};
+
+async function executeAndCollectTransition(
+  context: ScenarioExecutionContext,
+  input: {
+    task: TaskEnvelope;
+    to: string;
+    approvalRef?: ApprovalReference;
+    additionalArtifacts?: string[];
+    reason: string;
+  }
+): Promise<TransitionResult> {
+  const result = await context.orchestrator.transition({
+    task: input.task,
+    to: input.to,
+    ...(input.approvalRef ? { approvalRef: input.approvalRef } : {}),
+    ...(input.additionalArtifacts ? { additionalArtifacts: input.additionalArtifacts } : {}),
+    reason: input.reason
+  });
+
+  const artifactValidation = validateTransitionArtifacts({
+    snapshot: context.snapshot,
+    registry: context.registry,
+    transitionResult: result,
+    additionalArtifactTypes: input.additionalArtifacts
+  });
+
+  const normalizedTransition: TransitionRecord = {
+    ...result.transition,
+    artifactRefs: artifactValidation.transitionArtifactRefs
+  };
+
+  context.results.push(result);
+  context.transitions.push(normalizedTransition);
+  return result;
 }
 
 export function buildArchitectureApprovalReference(args: CliArgs, suffix = "live"): ApprovalReference {

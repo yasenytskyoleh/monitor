@@ -129,10 +129,18 @@ Persisted run artifacts are written to:
 - `runtime/runs/<runId>/run.json`
 - `runtime/runs/<runId>/transitions.json`
 - `runtime/runs/<runId>/terminal-outcome.json`
+- `runtime/runs/<runId>/artifacts.json`
 - optional: `runtime/runs/<runId>/input-task.json`
 - optional: `runtime/runs/<runId>/compiled-snapshot-meta.json`
 
 `run.json` includes resolved `agentModes` so each run is fully traceable.
+
+Artifact enforcement is strict across workflow transitions:
+- emitted artifacts are normalized into explicit records (`artifactRef`, `artifactType`, `producedBy`, `state`, `runId`, `taskId`, `version`, `createdAtUtc`)
+- each agent role can emit only allowlisted artifact types
+- transition artifact references must resolve to artifacts produced earlier in the same run/scenario
+- required artifacts for the target state must exist before the transition is accepted
+- violations fail the run as contract/runtime errors (no silent fallback)
 
 Run default live path (Product + Architect + Quant Pattern live, remaining agents mocked):
 ```bash

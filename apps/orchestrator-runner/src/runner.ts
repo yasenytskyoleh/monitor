@@ -7,6 +7,7 @@ import type { TransitionRecord } from "@monitor/orchestrator-core";
 
 import { parseArgs } from "./cli.js";
 import { loadDotEnv, requireOpenAiApiKey } from "./env.js";
+import type { WorkflowArtifact } from "./artifacts/types.js";
 import {
   hasLiveAgents,
   resolveAgentExecutionMap,
@@ -79,7 +80,8 @@ export async function runWithArgv(
       snapshotResult: snapshotResult as unknown as Record<string, unknown>,
       taskInput,
       handlers: resolvedHandlers.handlers,
-      executedBy: resolvedHandlers.executedBy
+      executedBy: resolvedHandlers.executedBy,
+      runId
     });
 
     assertSuccessfulResult(partialResult);
@@ -218,6 +220,7 @@ async function persistSuccessRun(options: PersistSuccessOptions): Promise<Persis
     runRecord,
     transitions,
     terminalOutcome,
+    artifacts: options.result.artifacts,
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
   });
@@ -247,7 +250,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     finalState,
     outcome: "runtime_failure",
     transitionCount: transitions.length,
-    artifactSummary: uniqueStrings(transitions.flatMap((item) => item.artifactRefs)),
+    artifactSummary: summarizeArtifactTypes(options.partialResult?.artifacts),
     reason: failureReason
   };
 
@@ -273,6 +276,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     runRecord,
     transitions,
     terminalOutcome,
+    artifacts: options.partialResult?.artifacts ?? [],
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
   });
@@ -386,7 +390,7 @@ function buildTerminalOutcome(options: {
   transitions: PersistedTransitionRecord[];
   result: RunnerOutput;
 }): PersistedTerminalOutcomeRecord {
-  const artifactSummary = uniqueStrings(options.transitions.flatMap((item) => item.artifactRefs));
+  const artifactSummary = summarizeArtifactTypes(options.result.artifacts);
   const transitionCount = options.transitions.length;
 
   if (options.outcome !== "policy_rejection") {
@@ -426,6 +430,13 @@ function buildTerminalOutcome(options: {
         }
       : {})
   };
+}
+
+function summarizeArtifactTypes(artifacts: WorkflowArtifact[] | undefined): string[] {
+  if (!artifacts || artifacts.length === 0) {
+    return [];
+  }
+  return uniqueStrings(artifacts.map((artifact) => artifact.artifactType));
 }
 
 function extractRejectionCode(

@@ -17,7 +17,7 @@ export function createMockHandlers(): AgentHandlers {
           agentRole: "ARCHITECT",
           status: "rejected",
           summary: "Mock rejection due to missing architecture approval",
-          artifacts: ["rejection-note"],
+          artifacts: ["adr-draft"],
           nextAction: "reject_task"
         };
       }
