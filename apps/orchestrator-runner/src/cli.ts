@@ -202,13 +202,13 @@ function printHelpAndExit(exitCode: number): never {
     "  --approval-by <name>    Approval actor used for DESIGN -> FORMALIZE",
     "  --approval-at-utc <ts>  Approval UTC timestamp (ISO 8601) used for DESIGN -> FORMALIZE",
     "  --approval-expires-at-utc <ts> Approval expiry UTC timestamp (ISO 8601)",
-    "  --model <id>            OpenAI model override for live Product Agent",
-    "  --temperature <n>       OpenAI temperature override for live Product Agent",
+    "  --model <id>            OpenAI model override for live agents",
+    "  --temperature <n>       OpenAI temperature override for live agents",
     "  --timeout-ms <n>        OpenAI timeout override (ms) for live Product Agent",
     "  --help                  Show this help",
     "",
     "Notes:",
-    "  live mode defaults product-agent, architect-agent, and quant-pattern-agent to live; others to mock.",
+    "  live mode defaults product-agent, architect-agent, quant-pattern-agent, and docs-reviewer-agent to live; backend-agent stays mock.",
     "  use --agent-mode for per-agent overrides."
   ].join("\n");
 

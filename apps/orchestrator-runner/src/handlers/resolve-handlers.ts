@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { AgentHandlers } from "@monitor/orchestrator-core";
 
 import { createLiveArchitectAgentHandler } from "../adapters/live/architect-agent.js";
+import { createLiveDocsReviewerAgentHandler } from "../adapters/live/docs-reviewer-agent.js";
 import { createLiveProductAgentHandler } from "../adapters/live/product-agent.js";
 import { createLiveQuantPatternAgentHandler } from "../adapters/live/quant-pattern-agent.js";
 import { createMockHandlers } from "../mock-handlers.js";
@@ -71,6 +72,22 @@ export function resolveHandlers(options: ResolveHandlersOptions): ResolvedHandle
       }
 
       handlers[agentId] = createLiveQuantPatternAgentHandler({
+        apiKey: options.openAiApiKey,
+        promptsRootDir: join(options.rootDir, "configs/agents/prompts"),
+        model: options.model,
+        temperature: options.temperature,
+        timeoutMs: options.timeoutMs,
+        fetchImpl: options.fetchImpl
+      });
+      continue;
+    }
+
+    if (agentId === "docs-reviewer-agent") {
+      if (!options.openAiApiKey) {
+        throw new Error("OPENAI_API_KEY is required for docs-reviewer-agent live handler");
+      }
+
+      handlers[agentId] = createLiveDocsReviewerAgentHandler({
         apiKey: options.openAiApiKey,
         promptsRootDir: join(options.rootDir, "configs/agents/prompts"),
         model: options.model,
