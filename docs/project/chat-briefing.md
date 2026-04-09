@@ -29,12 +29,17 @@ The current workflow uses states:
 - `REJECTED`
 
 Current status:
-- Product Agent is already live-capable
+- Product Agent is live-capable
+- Architect Agent is live-capable
+- Quant Pattern Agent is live-capable
+- Docs Reviewer Agent is live-capable
 - per-agent execution mode selection exists
 - persisted workflow artifacts exist
+- approval and artifact/reference enforcement is active in runtime
+- shared live-adapter execution pipeline exists
 
 The next likely step is:
-- **live Architect Agent**
+- **first controlled live Backend Agent path**
 
 Please preserve this project direction and avoid broad redesign unless clearly justified.
 

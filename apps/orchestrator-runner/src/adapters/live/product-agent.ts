@@ -1,12 +1,12 @@
-import { OrchestratorExecutionError } from "@monitor/orchestrator-core";
-import type { AgentHandlerContext, AgentOutputEnvelope } from "@monitor/orchestrator-core";
+import type { AgentHandlerContext } from "@monitor/orchestrator-core";
 import {
   ESCALATION_SCHEMA,
   nullableSchema,
   strictObjectSchema
 } from "./schemas/openai-strict-schema.js";
-import { createStructuredLiveAgentHandler } from "./structured-live-handler.js";
-import type { LiveAdapterOptions } from "./structured-live-handler.js";
+import { createLiveAgentHandler } from "./core/execute-live-agent.js";
+import type { LiveAdapterOptions } from "./core/types.js";
+import { assertProductOutput } from "./validators/assert-product-output.js";
 
 export type LiveProductAgentOptions = LiveAdapterOptions;
 
@@ -56,7 +56,7 @@ const AGENT_OUTPUT_RESPONSE_SCHEMA: Record<string, unknown> = strictObjectSchema
 });
 
 export function createLiveProductAgentHandler(options: LiveProductAgentOptions) {
-  return createStructuredLiveAgentHandler(options, {
+  return createLiveAgentHandler(options, {
     adapterLabel: "Live Product",
     boundAgentId: "product-agent",
     expectedRole: "PRODUCT",
@@ -65,7 +65,7 @@ export function createLiveProductAgentHandler(options: LiveProductAgentOptions) 
     envelopeValidationContext: "live product agent output",
     nullableFields: ["risks", "notes", "escalation"],
     buildUserPrompt,
-    assertDomainOutput: assertProductPlanningFields
+    assertSpecificOutput: assertProductOutput
   });
 }
 
@@ -93,46 +93,4 @@ function buildUserPrompt(context: AgentHandlerContext): string {
     "Return exactly one JSON object following Agent Output Envelope v1.",
     JSON.stringify(payload, null, 2)
   ].join("\n\n");
-}
-
-function assertProductPlanningFields(output: AgentOutputEnvelope): void {
-  if (output.status === "needs_escalation") {
-    const escalation = output.escalation;
-    if (!escalation || typeof escalation !== "object" || Array.isArray(escalation)) {
-      throw new OrchestratorExecutionError(
-        "Live Product Agent output must include escalation for needs_escalation status"
-      );
-    }
-  }
-
-  const metrics = output.metrics;
-  if (!metrics || typeof metrics !== "object" || Array.isArray(metrics)) {
-    throw new OrchestratorExecutionError(
-      "Live Product Agent output must include metrics object with planning fields"
-    );
-  }
-
-  assertRequiredString(metrics.problemStatement, "metrics.problemStatement");
-  assertRequiredString(metrics.scope, "metrics.scope");
-  assertRequiredString(metrics.backlogItem, "metrics.backlogItem");
-  assertStringArray(metrics.assumptions, "metrics.assumptions");
-  assertStringArray(metrics.acceptanceCriteria, "metrics.acceptanceCriteria");
-}
-
-function assertRequiredString(value: unknown, fieldName: string): void {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    throw new OrchestratorExecutionError(`Live Product Agent output missing required ${fieldName}`);
-  }
-}
-
-function assertStringArray(value: unknown, fieldName: string): void {
-  if (!Array.isArray(value) || value.length === 0) {
-    throw new OrchestratorExecutionError(`Live Product Agent output missing required ${fieldName}`);
-  }
-
-  for (const item of value) {
-    if (typeof item !== "string" || item.trim().length === 0) {
-      throw new OrchestratorExecutionError(`${fieldName} must contain only non-empty strings`);
-    }
-  }
 }

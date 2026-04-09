@@ -1514,7 +1514,7 @@ test("fails when docs reviewer agent emits forbidden artifact type", async (cont
         {
           liveProductFetchImpl: createChatCompletionFetch(
             createLiveDocsReviewerResponseContent("task-docs-reviewer-forbidden-artifact", {
-              artifacts: ["docs-update", "review-report", "product-brief"]
+              artifacts: ["docs-update", "review-report", "invalid-review-artifact"]
             })
           )
         }
