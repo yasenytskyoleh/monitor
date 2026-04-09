@@ -100,6 +100,11 @@ export function hasLiveAgents(agentModes: AgentExecutionMap): boolean {
 
 export function assertLiveModeSupported(agentId: SupportedAgentId, mode: ExecutionMode): void {
   if (mode === "live" && !LIVE_IMPLEMENTED_AGENTS.has(agentId)) {
+    if (agentId === "backend-agent") {
+      throw new Error(
+        "Live mode requested for 'backend-agent', but no live handler is implemented yet (backend live safety contract is defined; execution remains disabled)"
+      );
+    }
     throw new Error(
       `Live mode requested for '${agentId}', but no live handler is implemented`
     );

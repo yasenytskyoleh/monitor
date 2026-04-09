@@ -250,6 +250,14 @@ The system must preserve enough evidence to explain:
 - Machine-readable contract artifacts must remain synchronized with human-readable docs.
 - Missing artifact traceability must block promotion to later workflow states.
 
+### Backend Live Safety Precondition
+- live backend execution must not be enabled before backend safety contract validation exists and is enforced
+- contract source: `docs/agents/backend-live-safety.md`
+- machine-readable contract sources:
+  - `apps/orchestrator-runner/src/adapters/live/schemas/backend-agent-response-schema.ts`
+  - `apps/orchestrator-runner/src/adapters/live/validators/backend-safety-rules.ts`
+  - `apps/orchestrator-runner/src/adapters/live/validators/assert-backend-output.ts`
+
 ---
 
 ## Phase 1 Scope Guardrails

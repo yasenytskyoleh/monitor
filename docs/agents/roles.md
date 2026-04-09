@@ -245,6 +245,10 @@ Implement approved backend work within defined boundaries.
 - changes are traceable to approved task and ADR context
 - docs reviewer has enough information to verify drift
 
+### Future Live Backend Note
+Before enabling live backend execution, backend outputs must satisfy the formal safety contract in:
+- `docs/agents/backend-live-safety.md`
+
 ---
 
 ## Quant Pattern Agent

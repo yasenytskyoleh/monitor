@@ -40,6 +40,15 @@ Current live adapter coverage:
 - `docs-reviewer-agent`: live supported
 - `backend-agent`: mock only
 
+Backend live status:
+- live backend adapter execution is intentionally disabled
+- backend live safety contract is defined for future activation
+- contract docs: `docs/agents/backend-live-safety.md`
+- contract schema/validators:
+  - `src/adapters/live/schemas/backend-agent-response-schema.ts`
+  - `src/adapters/live/validators/backend-safety-rules.ts`
+  - `src/adapters/live/validators/assert-backend-output.ts`
+
 Run mocked happy flow:
 ```bash
 pnpm runner run \
@@ -185,6 +194,10 @@ Invalid overrides fail fast:
 - invalid mode values
 - requesting `live` for agents without a live adapter
 
+For `backend-agent=live`, runner fails early with a safety message:
+- backend live contract exists
+- backend live execution remains disabled until dedicated adapter enablement
+
 Live Product Agent contract:
 - OpenAI response must be JSON-only
 - output must pass `agent-output-envelope` schema validation
@@ -218,3 +231,12 @@ Live Docs Reviewer Agent contract:
   `docsUpdates[]`, `reviewFindings[]`, `changelogNotes[]`,
   `traceabilityConfirmation.{isTraceable,notes[]}`, `missingArtifactWarnings[]`, `driftWarnings[]`
 - reviewer stays bounded to review semantics and cannot bypass workflow artifact enforcement
+
+Future Live Backend Agent safety contract (pre-activation):
+- output must remain structured and include backend change-planning metrics:
+  `changePlan[]`, `targetFiles[]`, `changeType`, `requiresSchemaChange`,
+  `requiresArchitectureChange`, `requiresMigration`, `proposedDiffs[]`, `testsPlan[]`, `knownLimitations[]`
+- strict file-path allowlists apply (no unrestricted writes)
+- schema/architecture/migration changes are forbidden in default safety policy and must escalate
+- forbidden paths (configs/core packages/lockfiles/env files) are rejected
+- backend live adapter is not enabled yet; this contract exists to avoid unsafe activation later
