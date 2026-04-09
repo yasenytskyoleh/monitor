@@ -8,7 +8,8 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "runner": "pnpm --filter @monitor/orchestrator-runner run run --"
   },
   "devDependencies": {
     "turbo": "^2.5.8",

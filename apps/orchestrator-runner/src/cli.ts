@@ -1,0 +1,192 @@
+import { SUPPORTED_ENVIRONMENTS } from "@monitor/agent-config";
+import type { EnvironmentName } from "@monitor/agent-config";
+
+import type { CliArgs } from "./types.js";
+
+export function parseArgs(argv: string[]): CliArgs {
+  const args: CliArgs = {
+    mode: "live",
+    environment: "local",
+    targetState: "DESIGN",
+    taskId: `task-${Date.now()}`,
+    requestedBy: "orchestrator-runner",
+    taskTitle: "Orchestration run"
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const rawArg = argv[index];
+    const arg = rawArg?.trim();
+
+    if (!arg || arg === "--") {
+      continue;
+    }
+
+    if (
+      (arg === "run" || arg === "start") &&
+      (index === 0 || (index > 0 && argv[index - 1] === "--"))
+    ) {
+      continue;
+    }
+
+    if (arg === "--help" || arg === "-h") {
+      printHelpAndExit(0);
+    }
+
+    if (arg === "--root") {
+      args.rootDir = requiredValue(argv, ++index, "--root");
+      continue;
+    }
+
+    if (arg === "--mode") {
+      const mode = requiredValue(argv, ++index, "--mode");
+      if (mode !== "live" && mode !== "mock") {
+        throw new Error(`Invalid --mode '${mode}'. Allowed: live, mock`);
+      }
+      args.mode = mode;
+      continue;
+    }
+
+    if (arg === "--scenario") {
+      const scenario = requiredValue(argv, ++index, "--scenario");
+      if (scenario !== "happy" && scenario !== "missing-approval" && scenario !== "both") {
+        throw new Error(`Invalid --scenario '${scenario}'. Allowed: happy, missing-approval, both`);
+      }
+      args.scenario = scenario;
+      continue;
+    }
+
+    if (arg === "--env") {
+      const environmentValue = requiredValue(argv, ++index, "--env");
+      if (!SUPPORTED_ENVIRONMENTS.includes(environmentValue as EnvironmentName)) {
+        throw new Error(
+          `Invalid --env '${environmentValue}'. Allowed: ${SUPPORTED_ENVIRONMENTS.join(", ")}`
+        );
+      }
+      args.environment = environmentValue as EnvironmentName;
+      continue;
+    }
+
+    if (arg === "--version") {
+      args.version = requiredValue(argv, ++index, "--version");
+      continue;
+    }
+
+    if (arg === "--target-state") {
+      const targetState = requiredValue(argv, ++index, "--target-state");
+      if (targetState !== "DESIGN" && targetState !== "FORMALIZE") {
+        throw new Error(`Invalid --target-state '${targetState}'. Allowed: DESIGN, FORMALIZE`);
+      }
+      args.targetState = targetState;
+      continue;
+    }
+
+    if (arg === "--task-id") {
+      args.taskId = requiredValue(argv, ++index, "--task-id");
+      continue;
+    }
+
+    if (arg === "--requested-by") {
+      args.requestedBy = requiredValue(argv, ++index, "--requested-by");
+      continue;
+    }
+
+    if (arg === "--task-title") {
+      args.taskTitle = requiredValue(argv, ++index, "--task-title");
+      continue;
+    }
+
+    if (arg === "--input-file") {
+      args.inputFile = requiredValue(argv, ++index, "--input-file");
+      continue;
+    }
+
+    if (arg === "--input-json") {
+      args.inputJson = requiredValue(argv, ++index, "--input-json");
+      continue;
+    }
+
+    if (arg === "--log-path") {
+      args.logPath = requiredValue(argv, ++index, "--log-path");
+      continue;
+    }
+
+    if (arg === "--approval-id") {
+      args.approvalId = requiredValue(argv, ++index, "--approval-id");
+      continue;
+    }
+
+    if (arg === "--approval-by") {
+      args.approvalBy = requiredValue(argv, ++index, "--approval-by");
+      continue;
+    }
+
+    if (arg === "--approval-at-utc") {
+      args.approvalAtUtc = requiredValue(argv, ++index, "--approval-at-utc");
+      continue;
+    }
+
+    if (arg === "--approval-expires-at-utc") {
+      args.approvalExpiresAtUtc = requiredValue(argv, ++index, "--approval-expires-at-utc");
+      continue;
+    }
+
+    if (arg === "--model" || arg === "--temperature" || arg === "--timeout-ms") {
+      requiredValue(argv, ++index, arg);
+      continue;
+    }
+
+    throw new Error(`Unknown argument: ${rawArg}`);
+  }
+
+  if (args.inputFile && args.inputJson) {
+    throw new Error("Use either --input-file or --input-json, not both");
+  }
+
+  if (args.mode === "mock" && !args.scenario) {
+    args.scenario = "both";
+  }
+
+  return args;
+}
+
+function requiredValue(argv: string[], index: number, flag: string): string {
+  const value = argv[index];
+  if (!value) {
+    throw new Error(`Missing value for ${flag}`);
+  }
+  return value;
+}
+
+function printHelpAndExit(exitCode: number): never {
+  const help = [
+    "Usage: pnpm runner run [options]",
+    "",
+    "Options:",
+    "  --root <path>           Repository root (auto-detected if omitted)",
+    "  --mode <live|mock>      Runner mode (default: live)",
+    "  --scenario <happy|missing-approval|both> Mock mode scenario selector (default: both)",
+    "  --env <local|dev|staging|prod>   Environment (default: local)",
+    "  --version <id>          Config version for snapshot (default: active from manifest)",
+    "  --target-state <DESIGN|FORMALIZE> Final workflow state to run to (default: DESIGN)",
+    "  --task-id <id>          Task id (default: task-<timestamp>)",
+    "  --requested-by <name>   Requested by (default: orchestrator-runner)",
+    "  --task-title <text>     Default task title when no input JSON/file is provided",
+    "  --input-file <path>     JSON object file for task input",
+    "  --input-json <json>     Inline JSON object for task input",
+    "  --log-path <path>       Transition JSONL output path",
+    "  --approval-id <id>      Approval id used for DESIGN -> FORMALIZE",
+    "  --approval-by <name>    Approval actor used for DESIGN -> FORMALIZE",
+    "  --approval-at-utc <ts>  Approval UTC timestamp (ISO 8601) used for DESIGN -> FORMALIZE",
+    "  --approval-expires-at-utc <ts> Approval expiry UTC timestamp (ISO 8601)",
+    "  --model <id>            Reserved for future live mode",
+    "  --temperature <n>       Reserved for future live mode",
+    "  --timeout-ms <n>        Reserved for future live mode",
+    "  --help                  Show this help",
+    "",
+    "Notes:",
+    "  live mode is a stub in this milestone; use --mode mock."
+  ].join("\n");
+
+  process.stdout.write(`${help}\n`);
+  process.exit(exitCode);
+}
