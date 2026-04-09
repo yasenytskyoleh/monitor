@@ -98,6 +98,12 @@ export function resolveHandlers(options: ResolveHandlersOptions): ResolvedHandle
       continue;
     }
 
+    if (agentId === "backend-agent") {
+      throw new Error(
+        "Live mode requested for 'backend-agent', but no live handler is implemented yet (backend live safety contract is defined; execution remains disabled)"
+      );
+    }
+
     throw new Error(`Live mode requested for '${agentId}', but no live handler is implemented`);
   }
 
