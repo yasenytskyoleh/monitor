@@ -1,13 +1,13 @@
 import type { AgentHandlerContext } from "@monitor/orchestrator-core";
-import { assertArchitectDesignOutput } from "./architect-output.js";
+import { createLiveAgentHandler } from "./core/execute-live-agent.js";
+import type { LiveAdapterOptions } from "./core/types.js";
 import { ARCHITECT_RESPONSE_SCHEMA } from "./schemas/architect-agent-response-schema.js";
-import { createStructuredLiveAgentHandler } from "./structured-live-handler.js";
-import type { LiveAdapterOptions } from "./structured-live-handler.js";
+import { assertArchitectOutput } from "./validators/assert-architect-output.js";
 
 export type LiveArchitectAgentOptions = LiveAdapterOptions;
 
 export function createLiveArchitectAgentHandler(options: LiveArchitectAgentOptions) {
-  return createStructuredLiveAgentHandler(options, {
+  return createLiveAgentHandler(options, {
     adapterLabel: "Live Architect",
     boundAgentId: "architect-agent",
     expectedRole: "ARCHITECT",
@@ -16,7 +16,7 @@ export function createLiveArchitectAgentHandler(options: LiveArchitectAgentOptio
     envelopeValidationContext: "live architect agent output",
     nullableFields: ["risks", "notes", "metrics", "escalation"],
     buildUserPrompt,
-    assertDomainOutput: assertArchitectDesignOutput
+    assertSpecificOutput: assertArchitectOutput
   });
 }
 

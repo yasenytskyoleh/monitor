@@ -1,13 +1,13 @@
 import type { AgentHandlerContext } from "@monitor/orchestrator-core";
-import { assertQuantPatternOutput } from "./quant-pattern-output.js";
+import { createLiveAgentHandler } from "./core/execute-live-agent.js";
+import type { LiveAdapterOptions } from "./core/types.js";
 import { QUANT_PATTERN_RESPONSE_SCHEMA } from "./schemas/quant-pattern-agent-response-schema.js";
-import { createStructuredLiveAgentHandler } from "./structured-live-handler.js";
-import type { LiveAdapterOptions } from "./structured-live-handler.js";
+import { assertQuantPatternOutput } from "./validators/assert-quant-pattern-output.js";
 
 export type LiveQuantPatternAgentOptions = LiveAdapterOptions;
 
 export function createLiveQuantPatternAgentHandler(options: LiveQuantPatternAgentOptions) {
-  return createStructuredLiveAgentHandler(options, {
+  return createLiveAgentHandler(options, {
     adapterLabel: "Live Quant Pattern",
     boundAgentId: "quant-pattern-agent",
     expectedRole: "QUANT_PATTERN",
@@ -19,7 +19,7 @@ export function createLiveQuantPatternAgentHandler(options: LiveQuantPatternAgen
       "Phase 1 boundaries are strict: spot-only, no leverage, no futures/perpetual assumptions, no funding-rate dependency."
     ],
     buildUserPrompt,
-    assertDomainOutput: assertQuantPatternOutput
+    assertSpecificOutput: assertQuantPatternOutput
   });
 }
 

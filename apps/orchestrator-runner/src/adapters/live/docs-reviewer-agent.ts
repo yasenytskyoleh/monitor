@@ -1,13 +1,13 @@
 import type { AgentHandlerContext } from "@monitor/orchestrator-core";
-import { assertDocsReviewerOutput } from "./docs-reviewer-output.js";
+import { createLiveAgentHandler } from "./core/execute-live-agent.js";
+import type { LiveAdapterOptions } from "./core/types.js";
 import { DOCS_REVIEWER_RESPONSE_SCHEMA } from "./schemas/docs-reviewer-agent-response-schema.js";
-import { createStructuredLiveAgentHandler } from "./structured-live-handler.js";
-import type { LiveAdapterOptions } from "./structured-live-handler.js";
+import { assertDocsReviewerOutput } from "./validators/assert-docs-reviewer-output.js";
 
 export type LiveDocsReviewerAgentOptions = LiveAdapterOptions;
 
 export function createLiveDocsReviewerAgentHandler(options: LiveDocsReviewerAgentOptions) {
-  return createStructuredLiveAgentHandler(options, {
+  return createLiveAgentHandler(options, {
     adapterLabel: "Live Docs Reviewer",
     boundAgentId: "docs-reviewer-agent",
     expectedRole: "DOCS_REVIEWER",
@@ -19,7 +19,7 @@ export function createLiveDocsReviewerAgentHandler(options: LiveDocsReviewerAgen
       "You are bounded to review semantics only. Do not invent architecture or implementation decisions."
     ],
     buildUserPrompt,
-    assertDomainOutput: assertDocsReviewerOutput
+    assertSpecificOutput: assertDocsReviewerOutput
   });
 }
 
