@@ -6,6 +6,7 @@ import type { CliArgs } from "./types.js";
 export function parseArgs(argv: string[]): CliArgs {
   const args: CliArgs = {
     mode: "live",
+    output: "text",
     environment: "local",
     targetState: "DESIGN",
     taskId: `task-${Date.now()}`,
@@ -43,6 +44,15 @@ export function parseArgs(argv: string[]): CliArgs {
         throw new Error(`Invalid --mode '${mode}'. Allowed: live, mock`);
       }
       args.mode = mode;
+      continue;
+    }
+
+    if (arg === "--output") {
+      const output = requiredValue(argv, ++index, "--output");
+      if (output !== "text" && output !== "json") {
+        throw new Error(`Invalid --output '${output}'. Allowed: text, json`);
+      }
+      args.output = output;
       continue;
     }
 
@@ -179,6 +189,7 @@ function printHelpAndExit(exitCode: number): never {
     "Options:",
     "  --root <path>           Repository root (auto-detected if omitted)",
     "  --mode <live|mock>      Runner mode (default: live)",
+    "  --output <text|json>    CLI output format (default: text)",
     "  --scenario <happy|missing-approval|both> Mock mode scenario selector (default: both)",
     "  --env <local|dev|staging|prod>   Environment (default: local)",
     "  --version <id>          Config version for snapshot (default: active from manifest)",

@@ -6,6 +6,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { parseArgs, runWithArgv } from "../src/index.js";
+import type { RunnerOutput } from "../src/types.js";
 
 const TEST_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(TEST_DIR, "../../..");
@@ -59,10 +60,24 @@ function createChatCompletionFetch(content: string): typeof fetch {
     );
 }
 
+async function readJsonFile<T>(pathValue: string): Promise<T> {
+  const raw = await readFile(pathValue, "utf8");
+  return JSON.parse(raw) as T;
+}
+
+function resolveArtifactsDir(workspaceRoot: string, result: RunnerOutput): string {
+  const relative = result.artifactsPath;
+  if (!relative) {
+    throw new Error("Expected artifactsPath on runner output");
+  }
+  return join(workspaceRoot, relative);
+}
+
 test("parseArgs defaults to live mode", () => {
   const args = parseArgs([]);
 
   assert.equal(args.mode, "live");
+  assert.equal(args.output, "text");
   assert.equal(args.environment, "local");
   assert.equal(args.targetState, "DESIGN");
   assert.equal(args.scenario, undefined);
@@ -76,8 +91,12 @@ test("parseArgs validates mode and scenario values", () => {
   const mockHappy = parseArgs(["--mode", "mock", "--scenario", "happy"]);
   assert.equal(mockHappy.scenario, "happy");
 
+  const jsonOutput = parseArgs(["--output", "json"]);
+  assert.equal(jsonOutput.output, "json");
+
   assert.throws(() => parseArgs(["--mode", "invalid"]), /Invalid --mode/);
   assert.throws(() => parseArgs(["--scenario", "invalid"]), /Invalid --scenario/);
+  assert.throws(() => parseArgs(["--output", "yaml"]), /Invalid --output/);
 });
 
 test("mock happy scenario reaches DONE", async (context) => {
@@ -110,6 +129,37 @@ test("mock happy scenario reaches DONE", async (context) => {
   assert.equal(result.scenarios?.[0]?.scenario, "happy");
   assert.equal(result.scenarios?.[0]?.finalState, "DONE");
   assert.match(result.scenarios?.[0]?.transitionLogPath ?? "", /-happy/);
+  assert.equal(result.outcome, "success");
+  assert.equal(typeof result.runId, "string");
+
+  const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
+  const runRecord = await readJsonFile<{
+    finalState: string;
+    outcome: string;
+    taskId: string;
+  }>(join(artifactsDir, "run.json"));
+  const transitions = await readJsonFile<Array<{ index: number; from: string; to: string }>>(
+    join(artifactsDir, "transitions.json")
+  );
+  const terminalOutcome = await readJsonFile<{
+    finalState: string;
+    outcome: string;
+    transitionCount: number;
+    artifactSummary: string[];
+  }>(join(artifactsDir, "terminal-outcome.json"));
+
+  assert.equal(runRecord.taskId, "task-mock-happy");
+  assert.equal(runRecord.finalState, "DONE");
+  assert.equal(runRecord.outcome, "success");
+  assert.equal(terminalOutcome.finalState, "DONE");
+  assert.equal(terminalOutcome.outcome, "success");
+  assert.equal(terminalOutcome.transitionCount, transitions.length);
+  assert.ok(Array.isArray(terminalOutcome.artifactSummary));
+  for (let index = 0; index < transitions.length; index += 1) {
+    assert.equal(transitions[index]?.index, index + 1);
+  }
+  assert.equal(transitions[0]?.from, "INTAKE");
+  assert.equal(transitions[0]?.to, "DESIGN");
 });
 
 test("mock missing-approval scenario reaches REJECTED and captures blocked transition", async (context) => {
@@ -147,6 +197,32 @@ test("mock missing-approval scenario reaches REJECTED and captures blocked trans
   assert.equal(scenario?.blockedTransition?.from, "DESIGN");
   assert.equal(scenario?.blockedTransition?.to, "FORMALIZE");
   assert.match(scenario?.blockedTransition?.error ?? "", /requires an approval reference/);
+  assert.equal(result.outcome, "policy_rejection");
+
+  const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
+  const runRecord = await readJsonFile<{ finalState: string; outcome: string }>(
+    join(artifactsDir, "run.json")
+  );
+  const transitions = await readJsonFile<Array<{ blocked?: boolean; from: string; to: string }>>(
+    join(artifactsDir, "transitions.json")
+  );
+  const terminalOutcome = await readJsonFile<{
+    finalState: string;
+    outcome: string;
+    rejectionCode?: string;
+    reason?: string;
+  }>(join(artifactsDir, "terminal-outcome.json"));
+
+  assert.equal(runRecord.finalState, "REJECTED");
+  assert.equal(runRecord.outcome, "policy_rejection");
+  assert.equal(terminalOutcome.finalState, "REJECTED");
+  assert.equal(terminalOutcome.outcome, "policy_rejection");
+  assert.equal(terminalOutcome.rejectionCode, "MISSING_APPROVAL");
+  assert.match(terminalOutcome.reason ?? "", /approval reference/);
+  assert.ok(transitions.some((item) => item.blocked === true));
+  const blocked = transitions.find((item) => item.blocked === true);
+  assert.equal(blocked?.from, "DESIGN");
+  assert.equal(blocked?.to, "FORMALIZE");
 });
 
 test("mock both scenario runs happy and rejection flows", async (context) => {
@@ -235,11 +311,19 @@ test("live mode runs Product Agent live with remaining agents mocked and reaches
 
     assert.equal(result.status, "ok");
     assert.equal(result.taskState, "DONE");
+    assert.equal(result.outcome, "success");
     assert.equal(result.transitions.length, 7);
     assert.equal(result.transitions[0]?.from, "INTAKE");
     assert.equal(result.transitions[0]?.to, "DESIGN");
     assert.equal(calls.length, 1);
     assert.equal(calls[0]?.body?.response_format && typeof calls[0]?.body?.response_format, "object");
+
+    const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
+    const runRecord = await readJsonFile<{ mode: string; finalState: string }>(
+      join(artifactsDir, "run.json")
+    );
+    assert.equal(runRecord.mode, "live");
+    assert.equal(runRecord.finalState, "DONE");
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;

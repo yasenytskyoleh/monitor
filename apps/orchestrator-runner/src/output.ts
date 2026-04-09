@@ -1,28 +1,43 @@
-import type { RunnerOutput } from "./types.js";
+import type { OutputFormat, RunnerOutput } from "./types.js";
 
-export function formatRunnerOutput(result: RunnerOutput): string {
+export function formatRunnerOutput(result: RunnerOutput, format: OutputFormat = "text"): string {
+  if (format === "json") {
+    return JSON.stringify(
+      {
+        status: result.status,
+        runId: result.runId ?? null,
+        finalState: result.taskState,
+        outcome: result.outcome ?? outcomeFromState(result.taskState),
+        reason: result.reason ?? null,
+        artifactsPath: result.artifactsPath ?? null,
+        transitionLogPath: result.transitionLogPath,
+        transitionsCount: result.transitions.length,
+        scenarios:
+          result.scenarios?.map((scenario) => ({
+            scenario: scenario.scenario,
+            finalState: scenario.finalState,
+            transitionLogPath: scenario.transitionLogPath,
+            blockedTransition: scenario.blockedTransition ?? null,
+            transitionsCount: scenario.transitions.length
+          })) ?? []
+      },
+      null,
+      2
+    );
+  }
+
   const lines: string[] = [];
   lines.push("Run completed");
-
-  if (Array.isArray(result.scenarios) && result.scenarios.length > 0) {
-    for (const scenario of result.scenarios) {
-      lines.push(`Scenario: ${scenario.scenario}`);
-      lines.push(`Final state: ${scenario.finalState}`);
-      lines.push(`Outcome: ${outcomeFromState(scenario.finalState)}`);
-      lines.push(`Transitions: ${scenario.transitions.length}`);
-      lines.push(`Transition log: ${scenario.transitionLogPath}`);
-      if (scenario.blockedTransition) {
-        lines.push(
-          `Blocked transition: ${scenario.blockedTransition.from} -> ${scenario.blockedTransition.to}`
-        );
-        lines.push(`Reason: ${scenario.blockedTransition.error}`);
-      }
-    }
-  } else {
-    lines.push(`Final state: ${result.taskState}`);
-    lines.push(`Outcome: ${outcomeFromState(result.taskState)}`);
-    lines.push(`Transitions: ${result.transitions.length}`);
-    lines.push(`Transition log: ${result.transitionLogPath}`);
+  if (result.runId) {
+    lines.push(`Run ID: ${result.runId}`);
+  }
+  lines.push(`Final state: ${result.taskState}`);
+  lines.push(`Outcome: ${result.outcome ?? outcomeFromState(result.taskState)}`);
+  if (result.reason) {
+    lines.push(`Reason: ${result.reason}`);
+  }
+  if (result.artifactsPath) {
+    lines.push(`Artifacts: ${result.artifactsPath}`);
   }
 
   return lines.join("\n");
