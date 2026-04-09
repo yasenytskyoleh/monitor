@@ -8,7 +8,7 @@ Run workflow transitions using:
 
 ## Requirements
 - repository configs present under `configs/agents`
-- `OPENAI_API_KEY` in environment or `.env` for `--mode live`
+- `OPENAI_API_KEY` in environment or `.env` whenever any agent is configured as `live`
 
 ## Environment setup
 Create `.env` in repo root from the template. Runner auto-loads it on start:
@@ -22,7 +22,8 @@ Optional: if you prefer shell-level env vars, you can still `source .env` manual
 ## Usage
 Default mode is `live`:
 - `product-agent` resolves to `live`
-- other agents resolve to `mock` until their live adapters are implemented
+- `architect-agent` resolves to `live`
+- remaining agents resolve to `mock` until their live adapters are implemented
 
 Execution mode precedence:
 1. Start from `--mode`.
@@ -32,7 +33,8 @@ Execution mode precedence:
 
 Current live adapter coverage:
 - `product-agent`: live supported
-- `architect-agent`, `quant-pattern-agent`, `backend-agent`, `docs-reviewer-agent`: mock only
+- `architect-agent`: live supported
+- `quant-pattern-agent`, `backend-agent`, `docs-reviewer-agent`: mock only
 
 Run mocked happy flow:
 ```bash
@@ -50,7 +52,7 @@ Run hybrid mode explicitly (recommended):
 ```bash
 pnpm runner run \
   --mode mock \
-  --agent-mode product=live \
+  --agent-mode product=live,architect=live \
   --scenario happy \
   --env local \
   --version v1 \
@@ -67,6 +69,17 @@ pnpm runner run \
   --task-id task-mock-002 \
   --requested-by oleh \
   --task-title "Mock rejection flow"
+```
+
+Run missing-approval with live Architect (approval gate remains enforced):
+```bash
+pnpm runner run \
+  --mode mock \
+  --agent-mode architect=live \
+  --scenario missing-approval \
+  --env local \
+  --version v1 \
+  --task-id task-mock-arch-live-rejection
 ```
 
 Run both scenarios in one command:
@@ -119,7 +132,7 @@ Persisted run artifacts are written to:
 
 `run.json` includes resolved `agentModes` so each run is fully traceable.
 
-Run hybrid live path (Product Agent live, remaining agents mocked):
+Run default live path (Product + Architect live, remaining agents mocked):
 ```bash
 pnpm runner run \
   --mode live \
@@ -139,7 +152,8 @@ pnpm runner run \
 
 Examples:
 - `--agent-mode product=live`
-- `--agent-mode product=live,architect=mock`
+- `--agent-mode architect=live`
+- `--agent-mode product=live,architect=live`
 
 Invalid overrides fail fast:
 - unknown agent alias/id
@@ -147,10 +161,17 @@ Invalid overrides fail fast:
 - invalid mode values
 - requesting `live` for agents without a live adapter
 
-Live Product Agent contract in this step:
+Live Product Agent contract:
 - OpenAI response must be JSON-only
 - output must pass `agent-output-envelope` schema validation
 - invalid model output fails the run (no silent repair fallback)
 - Product live has an intentional agent-specific extension: `metrics` must include
   `problemStatement`, `scope`, `assumptions[]`, `acceptanceCriteria[]`, `backlogItem`
   for bounded intake quality.
+
+Live Architect Agent contract:
+- OpenAI response must be JSON-only
+- output must pass `agent-output-envelope` and `live-architect-agent-output` schema validation
+- invalid model output fails the run (no silent repair fallback)
+- Architect completed outputs must include structured design fields in `metrics`:
+  `moduleBoundaries[]`, `dataFlow[]`, `contractDefinitions[]`, `adrDraft`, `riskNotes[]`

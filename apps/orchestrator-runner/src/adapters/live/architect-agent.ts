@@ -6,14 +6,10 @@ import { OrchestratorExecutionError } from "@monitor/orchestrator-core";
 import type { AgentHandler, AgentHandlerContext, AgentOutputEnvelope } from "@monitor/orchestrator-core";
 
 import { LiveOpenAiClient } from "./client.js";
-import {
-  ESCALATION_SCHEMA,
-  normalizeNullableFields,
-  nullableSchema,
-  strictObjectSchema
-} from "./schemas/openai-strict-schema.js";
+import { ARCHITECT_RESPONSE_SCHEMA } from "./schemas/architect-agent-response-schema.js";
+import { normalizeNullableFields } from "./schemas/openai-strict-schema.js";
 
-export type LiveProductAgentOptions = {
+export type LiveArchitectAgentOptions = {
   apiKey: string;
   promptsRootDir: string;
   model?: string;
@@ -25,52 +21,7 @@ export type LiveProductAgentOptions = {
 
 const PROMPT_CACHE = new Map<string, string>();
 
-const AGENT_OUTPUT_RESPONSE_SCHEMA: Record<string, unknown> = strictObjectSchema({
-  taskId: { type: "string", minLength: 1 },
-  agentRole: { type: "string", enum: ["PRODUCT"] },
-  status: { type: "string", enum: ["completed", "blocked", "needs_escalation", "rejected"] },
-  summary: { type: "string", minLength: 1 },
-  artifacts: {
-    type: "array",
-    minItems: 1,
-    items: { type: "string", minLength: 1 }
-  },
-  nextAction: {
-    type: "string",
-    enum: ["handoff_to_architect", "request_more_context", "close_task", "reject_task", "await_approval"]
-  },
-  risks: nullableSchema({
-    type: "array",
-    items: { type: "string", minLength: 1 }
-  }),
-  notes: nullableSchema({
-    anyOf: [
-      { type: "string", minLength: 1 },
-      {
-        type: "array",
-        items: { type: "string", minLength: 1 }
-      }
-    ]
-  }),
-  metrics: strictObjectSchema({
-    problemStatement: { type: "string", minLength: 1 },
-    scope: { type: "string", minLength: 1 },
-    assumptions: {
-      type: "array",
-      minItems: 1,
-      items: { type: "string", minLength: 1 }
-    },
-    acceptanceCriteria: {
-      type: "array",
-      minItems: 1,
-      items: { type: "string", minLength: 1 }
-    },
-    backlogItem: { type: "string", minLength: 1 }
-  }),
-  escalation: ESCALATION_SCHEMA
-});
-
-export function createLiveProductAgentHandler(options: LiveProductAgentOptions): AgentHandler {
+export function createLiveArchitectAgentHandler(options: LiveArchitectAgentOptions): AgentHandler {
   const client = new LiveOpenAiClient({
     apiKey: options.apiKey,
     timeoutMs: options.timeoutMs,
@@ -79,9 +30,9 @@ export function createLiveProductAgentHandler(options: LiveProductAgentOptions):
   });
 
   return async (context: AgentHandlerContext): Promise<AgentOutputEnvelope> => {
-    if (context.agent.id !== "product-agent") {
+    if (context.agent.id !== "architect-agent") {
       throw new OrchestratorExecutionError(
-        `Live Product adapter is bound to 'product-agent', received '${context.agent.id}'`
+        `Live Architect adapter is bound to 'architect-agent', received '${context.agent.id}'`
       );
     }
 
@@ -102,8 +53,8 @@ export function createLiveProductAgentHandler(options: LiveProductAgentOptions):
       responseFormat: {
         type: "json_schema",
         jsonSchema: {
-          name: "agent_output_envelope_v1",
-          schema: AGENT_OUTPUT_RESPONSE_SCHEMA,
+          name: "architect_agent_output_v1",
+          schema: ARCHITECT_RESPONSE_SCHEMA,
           strict: true
         }
       },
@@ -132,29 +83,29 @@ export function createLiveProductAgentHandler(options: LiveProductAgentOptions):
       );
     }
 
-    normalizeNullableFields(parsed, ["risks", "notes", "escalation"]);
+    normalizeNullableFields(parsed, ["risks", "notes", "metrics", "escalation"]);
 
-    await getSchemaValidator().validateOrThrow(
+    const validator = getSchemaValidator();
+    await validator.validateOrThrow(
       "https://monitor/schemas/agent-output-envelope.schema.json",
       parsed,
-      "live product agent output"
+      "live architect agent output"
     );
 
     const output = parsed as AgentOutputEnvelope;
-
     if (output.taskId !== context.task.taskId) {
       throw new OrchestratorExecutionError(
-        `Live Product Agent taskId mismatch: '${output.taskId}' != '${context.task.taskId}'`
+        `Live Architect Agent taskId mismatch: '${output.taskId}' != '${context.task.taskId}'`
       );
     }
 
-    if (output.agentRole !== "PRODUCT") {
+    if (output.agentRole !== "ARCHITECT") {
       throw new OrchestratorExecutionError(
-        `Live Product Agent role must be 'PRODUCT', received '${output.agentRole}'`
+        `Live Architect Agent role must be 'ARCHITECT', received '${output.agentRole}'`
       );
     }
 
-    assertProductPlanningFields(output);
+    assertArchitectDesignFields(output);
     return output;
   };
 }
@@ -186,60 +137,70 @@ function buildUserPrompt(context: AgentHandlerContext): string {
     outputRequirements: {
       status: "Use completed, blocked, needs_escalation, or rejected.",
       nextAction:
-        "Use one valid action from Agent Output Envelope schema. For successful intake handoff use handoff_to_architect.",
+        "Use one valid action from the schema. For DESIGN -> FORMALIZE handoff use handoff_to_quant or await_approval.",
       artifacts:
-        "Return an array of non-empty string artifact refs. Include all artifacts required by target state.",
-      productPlanningFields:
-        "Populate metrics.problemStatement, metrics.scope, metrics.assumptions[], metrics.acceptanceCriteria[], metrics.backlogItem.",
+        "Return an array of non-empty string artifact refs. Include architecture artifacts and target-state required artifacts.",
+      architectDesignFields:
+        "When status=completed include metrics.moduleBoundaries[], metrics.dataFlow[], metrics.contractDefinitions[], metrics.adrDraft, metrics.riskNotes[].",
       requiredArtifactsForTargetState
     }
   };
 
   return [
-    "Produce Product Agent output for this task.",
-    "Return exactly one JSON object following Agent Output Envelope v1.",
+    "Produce Architect Agent output for this task.",
+    "Return exactly one JSON object following the provided schema.",
     JSON.stringify(payload, null, 2)
   ].join("\n\n");
 }
 
-function assertProductPlanningFields(output: AgentOutputEnvelope): void {
+function assertArchitectDesignFields(output: AgentOutputEnvelope): void {
   if (output.status === "needs_escalation") {
     const escalation = output.escalation;
     if (!escalation || typeof escalation !== "object" || Array.isArray(escalation)) {
       throw new OrchestratorExecutionError(
-        "Live Product Agent output must include escalation for needs_escalation status"
+        "Schema validation failed for live architect agent output: escalation is required for needs_escalation status"
       );
     }
+  }
+
+  if (output.status !== "completed") {
+    return;
   }
 
   const metrics = output.metrics;
   if (!metrics || typeof metrics !== "object" || Array.isArray(metrics)) {
     throw new OrchestratorExecutionError(
-      "Live Product Agent output must include metrics object with planning fields"
+      "Schema validation failed for live architect agent output: metrics must be an object for completed status"
     );
   }
 
-  assertRequiredString(metrics.problemStatement, "metrics.problemStatement");
-  assertRequiredString(metrics.scope, "metrics.scope");
-  assertRequiredString(metrics.backlogItem, "metrics.backlogItem");
-  assertStringArray(metrics.assumptions, "metrics.assumptions");
-  assertStringArray(metrics.acceptanceCriteria, "metrics.acceptanceCriteria");
+  assertStringArray(metrics.moduleBoundaries, "metrics.moduleBoundaries");
+  assertStringArray(metrics.dataFlow, "metrics.dataFlow");
+  assertStringArray(metrics.contractDefinitions, "metrics.contractDefinitions");
+  assertRequiredString(metrics.adrDraft, "metrics.adrDraft");
+  assertStringArray(metrics.riskNotes, "metrics.riskNotes");
 }
 
 function assertRequiredString(value: unknown, fieldName: string): void {
   if (typeof value !== "string" || value.trim().length === 0) {
-    throw new OrchestratorExecutionError(`Live Product Agent output missing required ${fieldName}`);
+    throw new OrchestratorExecutionError(
+      `Schema validation failed for live architect agent output: ${fieldName} is required`
+    );
   }
 }
 
 function assertStringArray(value: unknown, fieldName: string): void {
   if (!Array.isArray(value) || value.length === 0) {
-    throw new OrchestratorExecutionError(`Live Product Agent output missing required ${fieldName}`);
+    throw new OrchestratorExecutionError(
+      `Schema validation failed for live architect agent output: ${fieldName} must be a non-empty string array`
+    );
   }
 
   for (const item of value) {
     if (typeof item !== "string" || item.trim().length === 0) {
-      throw new OrchestratorExecutionError(`${fieldName} must contain only non-empty strings`);
+      throw new OrchestratorExecutionError(
+        `Schema validation failed for live architect agent output: ${fieldName} must contain only non-empty strings`
+      );
     }
   }
 }

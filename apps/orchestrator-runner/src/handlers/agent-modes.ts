@@ -10,7 +10,10 @@ export const SUPPORTED_AGENT_IDS = [
 
 export type SupportedAgentId = (typeof SUPPORTED_AGENT_IDS)[number];
 
-const LIVE_IMPLEMENTED_AGENTS: ReadonlySet<SupportedAgentId> = new Set(["product-agent"]);
+const LIVE_IMPLEMENTED_AGENTS: ReadonlySet<SupportedAgentId> = new Set([
+  "product-agent",
+  "architect-agent"
+]);
 
 const AGENT_ALIAS_TO_ID: Record<string, SupportedAgentId> = {
   product: "product-agent",
