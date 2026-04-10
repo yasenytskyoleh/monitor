@@ -13,6 +13,7 @@ export function formatRunnerOutput(result: RunnerOutput, format: OutputFormat = 
         agentModes: result.agentModes ?? null,
         transitionLogPath: result.transitionLogPath,
         transitionsCount: result.transitions.length,
+        patchPlansCount: result.patchPlans.length,
         scenarios:
           result.scenarios?.map((scenario) => ({
             scenario: scenario.scenario,

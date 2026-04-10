@@ -24,6 +24,7 @@ function createBaseResult(): RunnerOutput {
     taskState: "DONE",
     approvals: [],
     approvalEvidenceByTransitionChecksum: {},
+    patchPlans: [],
     artifacts: [],
     transitions: []
   };
@@ -49,4 +50,5 @@ test("formatRunnerOutput returns machine-readable json output", () => {
   assert.equal(parsed.artifactsPath, "runtime/runs/run_test_001");
   assert.equal((parsed.agentModes as Record<string, unknown>)["product-agent"], "live");
   assert.equal(parsed.transitionsCount, 0);
+  assert.equal(parsed.patchPlansCount, 0);
 });

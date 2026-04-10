@@ -1,5 +1,6 @@
 import type { ApprovalReference } from "@monitor/agent-config";
 import type { ApprovalTransitionEvidence, WorkflowApproval } from "../approvals/types.js";
+import type { PatchPlanEvidence } from "../backend-patch/types.js";
 import type { AgentExecutionMap } from "../types.js";
 import type { WorkflowArtifact } from "../artifacts/types.js";
 
@@ -62,6 +63,7 @@ export type PersistRunArtifactInput = {
   terminalOutcome: PersistedTerminalOutcomeRecord;
   approvals: WorkflowApproval[];
   artifacts: WorkflowArtifact[];
+  patchPlans?: PatchPlanEvidence[];
   inputTask?: Record<string, unknown>;
   compiledSnapshotMeta?: Record<string, unknown>;
 };

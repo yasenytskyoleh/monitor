@@ -1,5 +1,5 @@
 import * as assert from "node:assert/strict";
-import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { test } from "node:test";
@@ -124,6 +124,60 @@ function createLiveDocsReviewerResponseContent(
   });
 }
 
+function createLiveBackendResponseContent(
+  taskId: string,
+  targetFile: string,
+  overrides: Record<string, unknown> = {}
+): string {
+  return JSON.stringify({
+    taskId,
+    agentRole: "BACKEND",
+    status: "completed",
+    summary: "Backend implementation patch prepared",
+    artifacts: ["code-change", "tests", "implementation-notes"],
+    nextAction: "handoff_to_docs_reviewer",
+    metrics: {
+      changePlan: ["Update backend target file with constrained patch content."],
+      targetFiles: [targetFile],
+      changeType: "patch_only",
+      requiresSchemaChange: false,
+      requiresArchitectureChange: false,
+      requiresMigration: false,
+      proposedDiffs: [
+        {
+          filePath: targetFile,
+          operation: "update",
+          content: `// patched by live backend for ${taskId}\nexport const backendPatched = true;\n`
+        }
+      ],
+      testsPlan: ["pnpm --filter @monitor/orchestrator-runner test"],
+      knownLimitations: ["Constrained patch mode only."]
+    },
+    ...overrides
+  });
+}
+
+function createLiveBackendResponseWithMetrics(
+  taskId: string,
+  targetFile: string,
+  metricsOverrides: Record<string, unknown>
+): string {
+  const parsed = JSON.parse(createLiveBackendResponseContent(taskId, targetFile)) as Record<string, unknown>;
+  const metrics = parsed.metrics as Record<string, unknown>;
+  Object.assign(metrics, metricsOverrides);
+  return JSON.stringify(parsed);
+}
+
+async function prepareBackendTargetFile(
+  workspaceRoot: string,
+  relativePath = "apps/orchestrator-runner/src/backend-live-target.ts"
+): Promise<string> {
+  const absolutePath = join(workspaceRoot, relativePath);
+  await mkdir(dirname(absolutePath), { recursive: true });
+  await writeFile(absolutePath, "export const backendPatched = false;\n", "utf8");
+  return relativePath;
+}
+
 function createChatCompletionFetch(content: string): typeof fetch {
   return async () =>
     new Response(
@@ -201,6 +255,7 @@ test("parseArgs defaults to live mode", () => {
 
   assert.equal(args.mode, "live");
   assert.equal(args.output, "text");
+  assert.equal(args.backendWrite, "dry-run");
   assert.deepEqual(args.agentModeOverrides, {});
   assert.equal(args.environment, "local");
   assert.equal(args.scenario, undefined);
@@ -217,6 +272,9 @@ test("parseArgs validates mode and scenario values", () => {
   const jsonOutput = parseArgs(["--output", "json"]);
   assert.equal(jsonOutput.output, "json");
 
+  const applyWrite = parseArgs(["--backend-write", "apply"]);
+  assert.equal(applyWrite.backendWrite, "apply");
+
   const overrides = parseArgs(["--agent-mode", "product=live,architect=mock"]);
   assert.equal(overrides.agentModeOverrides["product-agent"], "live");
   assert.equal(overrides.agentModeOverrides["architect-agent"], "mock");
@@ -224,6 +282,7 @@ test("parseArgs validates mode and scenario values", () => {
   assert.throws(() => parseArgs(["--mode", "invalid"]), /Invalid --mode/);
   assert.throws(() => parseArgs(["--scenario", "invalid"]), /Invalid --scenario/);
   assert.throws(() => parseArgs(["--output", "yaml"]), /Invalid --output/);
+  assert.throws(() => parseArgs(["--backend-write", "unsafe"]), /Invalid --backend-write/);
   assert.throws(() => parseArgs(["--agent-mode", "foo=live"]), /Invalid --agent-mode agent/);
   assert.throws(() => parseArgs(["--agent-mode", "product=weird"]), /Invalid --agent-mode value/);
   assert.throws(
@@ -441,7 +500,7 @@ test("mock both scenario runs happy and rejection flows", async (context) => {
   assert.equal(result.scenarios?.[1]?.finalState, "REJECTED");
 });
 
-test("live mode runs Product, Architect, Quant Pattern, and Docs Reviewer live and reaches DONE", async (context) => {
+test("live mode runs Product, Architect, Quant Pattern, Backend, and Docs Reviewer live and reaches DONE", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
 
@@ -449,12 +508,14 @@ test("live mode runs Product, Architect, Quant Pattern, and Docs Reviewer live a
   process.env.OPENAI_API_KEY = "test-live-key";
 
   try {
+    const backendTargetFile = await prepareBackendTargetFile(workspaceRoot);
     const calls: Array<{ body?: Record<string, unknown> }> = [];
     const fetchImpl = createChatCompletionSequenceFetch(
       [
         createLiveProductResponseContent("task-live-valid"),
         createLiveArchitectResponseContent("task-live-valid"),
         createLiveQuantPatternResponseContent("task-live-valid"),
+        createLiveBackendResponseContent("task-live-valid", backendTargetFile),
         createLiveDocsReviewerResponseContent("task-live-valid")
       ],
       calls
@@ -486,11 +547,12 @@ test("live mode runs Product, Architect, Quant Pattern, and Docs Reviewer live a
     assert.equal(result.transitions.length, 7);
     assert.equal(result.transitions[0]?.from, "INTAKE");
     assert.equal(result.transitions[0]?.to, "DESIGN");
-    assert.equal(calls.length, 4);
+    assert.equal(calls.length, 5);
     assert.equal(calls[0]?.body?.response_format && typeof calls[0]?.body?.response_format, "object");
     assert.equal(calls[1]?.body?.response_format && typeof calls[1]?.body?.response_format, "object");
     assert.equal(calls[2]?.body?.response_format && typeof calls[2]?.body?.response_format, "object");
     assert.equal(calls[3]?.body?.response_format && typeof calls[3]?.body?.response_format, "object");
+    assert.equal(calls[4]?.body?.response_format && typeof calls[4]?.body?.response_format, "object");
 
     const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
     const runRecord = await readJsonFile<{
@@ -505,7 +567,21 @@ test("live mode runs Product, Architect, Quant Pattern, and Docs Reviewer live a
     assert.equal(runRecord.agentModes["product-agent"], "live");
     assert.equal(runRecord.agentModes["architect-agent"], "live");
     assert.equal(runRecord.agentModes["quant-pattern-agent"], "live");
+    assert.equal(runRecord.agentModes["backend-agent"], "live");
     assert.equal(runRecord.agentModes["docs-reviewer-agent"], "live");
+
+    const patchedFile = await readFile(join(workspaceRoot, backendTargetFile), "utf8");
+    assert.equal(patchedFile, "export const backendPatched = false;\n");
+
+    const patchPlan = await readJsonFile<
+      Array<{ changeType: string; targetFiles: string[]; dryRun: boolean }>
+    >(
+      join(artifactsDir, "patch-plan.json")
+    );
+    assert.ok(patchPlan.length > 0);
+    assert.equal(patchPlan[0]?.changeType, "patch_only");
+    assert.ok(patchPlan[0]?.targetFiles.includes(backendTargetFile));
+    assert.equal(patchPlan[0]?.dryRun, true);
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1199,17 +1275,23 @@ test("mode mock with product, architect, quant-pattern, and docs-reviewer live s
   }
 });
 
-test("fails early when unsupported live agent mode is requested", async (context) => {
+test("mode mock with backend live override applies constrained backend patch", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
 
-  await assert.rejects(
-    runWithArgv(
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const backendTargetFile = await prepareBackendTargetFile(workspaceRoot);
+    const result = await runWithArgv(
       [
         "--mode",
         "mock",
         "--agent-mode",
         "backend=live",
+        "--backend-write",
+        "apply",
         "--scenario",
         "happy",
         "--env",
@@ -1217,12 +1299,163 @@ test("fails early when unsupported live agent mode is requested", async (context
         "--version",
         "v1",
         "--task-id",
-        "task-unsupported-live"
+        "task-backend-live-happy"
       ],
-      workspaceRoot
-    ),
-    /no live handler is implemented/
-  );
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionFetch(
+          createLiveBackendResponseContent("task-backend-live-happy", backendTargetFile)
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.agentModes?.["backend-agent"], "live");
+    assert.equal(result.patchPlans.length, 1);
+    assert.equal(result.patchPlans[0]?.dryRun, false);
+
+    const patchedFile = await readFile(join(workspaceRoot, backendTargetFile), "utf8");
+    assert.match(patchedFile, /patched by live backend/);
+
+    const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
+    const patchPlan = await readJsonFile<Array<{ changeType: string; targetFiles: string[] }>>(
+      join(artifactsDir, "patch-plan.json")
+    );
+    assert.equal(patchPlan.length, 1);
+    assert.equal(patchPlan[0]?.changeType, "patch_only");
+    assert.ok(patchPlan[0]?.targetFiles.includes(backendTargetFile));
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock with backend live override rejects invalid backend patch plans", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const backendTargetFile = await prepareBackendTargetFile(workspaceRoot);
+    const escapedTargetFile = "apps/orchestrator-runner/src/../../../../tmp/backend-escape.ts";
+
+    const cases: Array<{
+      id: string;
+      expected: RegExp;
+      response: (taskId: string) => string;
+    }> = [
+      {
+        id: "forbidden-path",
+        expected: /forbidden target path|outside allowlisted boundaries/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            targetFiles: ["packages/orchestrator-core/src/orchestrator.ts"],
+            proposedDiffs: [
+              {
+                filePath: "packages/orchestrator-core/src/orchestrator.ts",
+                operation: "update",
+                content: "export const forbidden = true;\n"
+              }
+            ]
+          })
+      },
+      {
+        id: "forbidden-change-type",
+        expected: /changeType 'new_file' is not allowed/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            changeType: "new_file"
+          })
+      },
+      {
+        id: "missing-tests-plan",
+        expected: /metrics\.testsPlan must be a non-empty string array/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            testsPlan: []
+          })
+      },
+      {
+        id: "schema-change-flag",
+        expected: /requiresSchemaChange=true is forbidden/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            requiresSchemaChange: true
+          })
+      },
+      {
+        id: "migration-change-flag",
+        expected: /requiresMigration=true is forbidden/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            requiresMigration: true
+          })
+      },
+      {
+        id: "architecture-change-flag",
+        expected: /requiresArchitectureChange=true is forbidden/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            requiresArchitectureChange: true
+          })
+      },
+      {
+        id: "repo-root-escape",
+        expected: /escapes repository root/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            targetFiles: [escapedTargetFile],
+            proposedDiffs: [
+              {
+                filePath: escapedTargetFile,
+                operation: "update",
+                content: "export const escaped = true;\n"
+              }
+            ]
+          })
+      }
+    ];
+
+    for (const testCase of cases) {
+      await assert.rejects(
+        runWithArgv(
+          [
+            "--mode",
+            "mock",
+            "--agent-mode",
+            "backend=live",
+            "--scenario",
+            "happy",
+            "--env",
+            "local",
+            "--version",
+            "v1",
+            "--task-id",
+            `task-backend-invalid-${testCase.id}`
+          ],
+          workspaceRoot,
+          {
+            liveProductFetchImpl: createChatCompletionFetch(
+              testCase.response(`task-backend-invalid-${testCase.id}`)
+            )
+          }
+        ),
+        testCase.expected
+      );
+    }
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
 });
 
 test("live mode rejects invalid non-JSON Product output", async (context) => {

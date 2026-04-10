@@ -45,6 +45,9 @@ export class FileRunStore {
     await writeJson(join(runDir, "terminal-outcome.json"), input.terminalOutcome);
     await writeJson(join(runDir, "approvals.json"), input.approvals);
     await writeJson(join(runDir, "artifacts.json"), input.artifacts);
+    if (input.patchPlans && input.patchPlans.length > 0) {
+      await writeJson(join(runDir, "patch-plan.json"), input.patchPlans);
+    }
 
     if (input.inputTask) {
       await writeJson(join(runDir, "input-task.json"), input.inputTask);

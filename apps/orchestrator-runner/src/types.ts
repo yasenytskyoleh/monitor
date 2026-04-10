@@ -2,10 +2,12 @@ import type { EnvironmentName } from "@monitor/agent-config";
 import type { AgentOutputEnvelope, TransitionRecord } from "@monitor/orchestrator-core";
 import type { ApprovalTransitionEvidence, WorkflowApproval } from "./approvals/types.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
+import type { PatchPlanEvidence } from "./backend-patch/types.js";
 import type { RunOutcome } from "./persistence/types.js";
 
 export type RunnerMode = "live" | "mock";
 export type OutputFormat = "text" | "json";
+export type BackendWriteMode = "dry-run" | "apply";
 export type MockScenario = "happy" | "missing-approval";
 export type MockScenarioSelection = MockScenario | "both";
 export type ExecutionMode = "mock" | "live";
@@ -33,6 +35,7 @@ export type MockScenarioResult = {
   output?: AgentOutputEnvelope;
   approvals: WorkflowApproval[];
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
+  patchPlans: PatchPlanEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   transitionLogPath: string;
@@ -52,6 +55,7 @@ export type RunnerOutput = {
   output?: AgentOutputEnvelope;
   approvals: WorkflowApproval[];
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
+  patchPlans: PatchPlanEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   scenarios?: MockScenarioResult[];
@@ -61,6 +65,7 @@ export type CliArgs = {
   rootDir?: string;
   mode: RunnerMode;
   output: OutputFormat;
+  backendWrite: BackendWriteMode;
   agentModeOverrides: Partial<AgentExecutionMap>;
   scenario?: MockScenarioSelection;
   environment: EnvironmentName;

@@ -1,21 +1,20 @@
 # Next Steps
 
 ## Current recommended next step
-### PR #11 — first live Backend Agent path (controlled)
+### Backend constrained-mode hardening and observability polish
 
 Reason:
-- non-implementation live chain is complete (Product, Architect, Quant Pattern, Docs Reviewer)
+- constrained Backend live mode now exists
 - shared live adapter pipeline is now centralized and reusable
 - approval and artifact/reference enforcement is already strong
-- Backend is the next workflow-critical state to validate in live mode
-- adding Backend live now tests implementation-stage constraints without redesigning the platform
+- next risk is unsafe scope expansion or weak patch traceability
+- hardening and observability now provide the best risk reduction
 
 ## Recommended near-future sequence
-1. live Backend Agent (strict schema + artifact contract)
-2. tighten Backend safety boundaries (contract compliance + explicit limitations)
-3. improve run-level observability outputs (`--output json` plus richer summary contracts)
-4. stabilize replay/debug workflow from persisted run artifacts
-5. only then start market/signal domain slices incrementally
+1. tighten Backend safety boundaries (scope caps, stricter path policies, explicit escalation triggers)
+2. improve run-level observability outputs (`--output json` plus richer patch-plan summaries)
+3. stabilize replay/debug workflow from persisted run artifacts
+4. introduce narrowly scoped market/signal domain slice only after runner stability
 
 ## Things to avoid while moving forward
 - turning everything into prompts

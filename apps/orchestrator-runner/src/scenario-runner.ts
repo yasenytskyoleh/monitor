@@ -15,6 +15,7 @@ import type {
 import { ArtifactRegistry } from "./artifacts/registry.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
 import { validateTransitionArtifacts } from "./artifacts/validate-artifacts.js";
+import { extractPatchPlanEvidenceFromBackendOutput, type PatchPlanEvidence } from "./backend-patch/types.js";
 import { ApprovalRegistry } from "./approvals/registry.js";
 import { approvalEvidenceByTransitionChecksum } from "./approvals/validate-approval.js";
 import {
@@ -73,11 +74,13 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       scenario
     });
     const scenarioContext: ScenarioExecutionContext = {
+      scenario,
       orchestrator,
       snapshot: orchestrator.getSnapshot(),
       registry: artifactRegistry,
       approvals: new ApprovalRegistry(orchestrator.getSnapshot(), options.runId),
       approvalEvidenceByTransitionChecksum: {},
+      patchPlans: [],
       transitions: [],
       results: []
     };
@@ -87,6 +90,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       output?: AgentOutputEnvelope;
       approvals: WorkflowApproval[];
       approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
+      patchPlans: PatchPlanEvidence[];
       artifacts: WorkflowArtifact[];
       transitions: TransitionRecord[];
       blockedTransition?: BlockedTransitionInfo;
@@ -111,6 +115,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       output: scenarioResult.output,
       approvals: scenarioResult.approvals,
       approvalEvidenceByTransitionChecksum: scenarioResult.approvalEvidenceByTransitionChecksum,
+      patchPlans: scenarioResult.patchPlans,
       artifacts: scenarioResult.artifacts,
       transitions: scenarioResult.transitions,
       transitionLogPath: toRelativeOrAbsolute(options.rootDir, transitionLogPath),
@@ -134,6 +139,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       {},
       ...scenarioResults.map((scenarioResult) => scenarioResult.approvalEvidenceByTransitionChecksum)
     ),
+    patchPlans: scenarioResults.flatMap((scenarioResult) => scenarioResult.patchPlans),
     artifacts: scenarioResults.flatMap((scenarioResult) => scenarioResult.artifacts),
     transitions: lastScenario.transitions,
     scenarios: scenarioResults
@@ -177,6 +183,7 @@ export async function runHappyWorkflow(
   output?: AgentOutputEnvelope;
   approvals: WorkflowApproval[];
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
+  patchPlans: PatchPlanEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
 }> {
@@ -230,6 +237,7 @@ export async function runHappyWorkflow(
     output: lastDefinedOutput(scenarioContext.results),
     approvals: scenarioContext.approvals.listApprovals(),
     approvalEvidenceByTransitionChecksum: scenarioContext.approvalEvidenceByTransitionChecksum,
+    patchPlans: scenarioContext.patchPlans,
     artifacts: scenarioContext.registry.listArtifacts(),
     transitions: scenarioContext.transitions
   };
@@ -244,6 +252,7 @@ async function runMockMissingApprovalScenario(
   output?: AgentOutputEnvelope;
   approvals: WorkflowApproval[];
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
+  patchPlans: PatchPlanEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   blockedTransition: BlockedTransitionInfo;
@@ -286,6 +295,7 @@ async function runMockMissingApprovalScenario(
     output: lastDefinedOutput(scenarioContext.results),
     approvals: scenarioContext.approvals.listApprovals(),
     approvalEvidenceByTransitionChecksum: scenarioContext.approvalEvidenceByTransitionChecksum,
+    patchPlans: scenarioContext.patchPlans,
     artifacts: scenarioContext.registry.listArtifacts(),
     transitions: scenarioContext.transitions,
     blockedTransition: blockedTransition ?? {
@@ -323,11 +333,13 @@ function lastDefinedOutput(results: TransitionResult[]): AgentOutputEnvelope | u
 }
 
 type ScenarioExecutionContext = {
+  scenario: MockScenario;
   orchestrator: OrchestratorCore;
   snapshot: RuntimeConfigSnapshot;
   registry: ArtifactRegistry;
   approvals: ApprovalRegistry;
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
+  patchPlans: PatchPlanEvidence[];
   transitions: TransitionRecord[];
   results: TransitionResult[];
 };
@@ -376,6 +388,17 @@ async function executeAndCollectTransition(
     context.approvalEvidenceByTransitionChecksum,
     approvalEvidenceByTransitionChecksum(result, approvalValidation.evidence)
   );
+
+  const patchPlan = extractPatchPlanEvidenceFromBackendOutput({
+    output: result.output,
+    transitionChecksum: result.transition.transitionChecksum,
+    fromState: result.transition.from,
+    toState: result.transition.to,
+    scenario: context.scenario
+  });
+  if (patchPlan) {
+    context.patchPlans.push(patchPlan);
+  }
 
   context.results.push(result);
   context.transitions.push(normalizedTransition);

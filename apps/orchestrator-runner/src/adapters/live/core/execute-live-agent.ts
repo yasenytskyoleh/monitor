@@ -68,10 +68,16 @@ export function createLiveAgentHandler(
 
     assertAgentSpecificOutput(output, config);
     const emittedArtifacts = filterPreviouslyKnownArtifacts(output.artifacts, context.task.artifactRefs);
-    return {
+    const normalizedOutput: AgentOutputEnvelope = {
       ...output,
       artifacts: ensureTargetArtifacts(emittedArtifacts, context)
     };
+
+    if (!config.finalizeOutput) {
+      return normalizedOutput;
+    }
+
+    return await config.finalizeOutput(normalizedOutput, context);
   };
 }
 

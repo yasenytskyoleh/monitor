@@ -103,6 +103,28 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
         version: 1,
         scenario: "happy"
       }
+    ],
+    patchPlans: [
+      {
+        taskId: "task-001",
+        scenario: "happy",
+        transitionChecksum: "checksum-1",
+        fromState: "IMPLEMENT",
+        toState: "REVIEW",
+        changeType: "patch_only",
+        targetFiles: ["apps/orchestrator-runner/src/runner.ts"],
+        proposedDiffCount: 1,
+        testsPlan: ["pnpm --filter @monitor/orchestrator-runner test"],
+        knownLimitations: ["Constrained patch mode only."],
+        appliedOperations: [
+          {
+            filePath: "apps/orchestrator-runner/src/runner.ts",
+            operation: "update",
+            applied: true
+          }
+        ],
+        dryRun: false
+      }
     ]
   });
 
@@ -125,4 +147,10 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
   ) as Array<Record<string, unknown>>;
   assert.equal(approvalsJson.length, 1);
   assert.equal(approvalsJson[0]?.approvalRef, "approval_001");
+
+  const patchPlanJson = JSON.parse(
+    await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/patch-plan.json"), "utf8")
+  ) as Array<Record<string, unknown>>;
+  assert.equal(patchPlanJson.length, 1);
+  assert.equal(patchPlanJson[0]?.changeType, "patch_only");
 });

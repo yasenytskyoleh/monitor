@@ -8,6 +8,7 @@ export function parseArgs(argv: string[]): CliArgs {
   const args: CliArgs = {
     mode: "live",
     output: "text",
+    backendWrite: "dry-run",
     agentModeOverrides: {},
     environment: "local",
     taskId: `task-${Date.now()}`,
@@ -54,6 +55,15 @@ export function parseArgs(argv: string[]): CliArgs {
         throw new Error(`Invalid --output '${output}'. Allowed: text, json`);
       }
       args.output = output;
+      continue;
+    }
+
+    if (arg === "--backend-write") {
+      const backendWrite = requiredValue(argv, ++index, "--backend-write");
+      if (backendWrite !== "dry-run" && backendWrite !== "apply") {
+        throw new Error(`Invalid --backend-write '${backendWrite}'. Allowed: dry-run, apply`);
+      }
+      args.backendWrite = backendWrite;
       continue;
     }
 
@@ -188,6 +198,7 @@ function printHelpAndExit(exitCode: number): never {
     "  --root <path>           Repository root (auto-detected if omitted)",
     "  --mode <live|mock>      Runner mode (default: live)",
     "  --output <text|json>    CLI output format (default: text)",
+    "  --backend-write <dry-run|apply> Backend live patch application mode (default: dry-run)",
     "  --agent-mode <spec>     Per-agent overrides, e.g. product=live,architect=mock",
     "  --scenario <happy|missing-approval|both> Mock mode scenario selector (default: both)",
     "  --env <local|dev|staging|prod>   Environment (default: local)",
@@ -208,7 +219,8 @@ function printHelpAndExit(exitCode: number): never {
     "  --help                  Show this help",
     "",
     "Notes:",
-    "  live mode defaults product-agent, architect-agent, quant-pattern-agent, and docs-reviewer-agent to live; backend-agent stays mock.",
+    "  live mode defaults product-agent, architect-agent, quant-pattern-agent, backend-agent, and docs-reviewer-agent to live.",
+    "  backend live runs in dry-run mode by default; use --backend-write apply to allow workspace mutations.",
     "  use --agent-mode for per-agent overrides."
   ].join("\n");
 
