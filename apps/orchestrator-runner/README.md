@@ -24,8 +24,8 @@ Default mode is `live`:
 - `product-agent` resolves to `live`
 - `architect-agent` resolves to `live`
 - `quant-pattern-agent` resolves to `live`
+- `backend-agent` resolves to `live` (constrained patch mode)
 - `docs-reviewer-agent` resolves to `live`
-- `backend-agent` resolves to `mock` until its live adapter is implemented
 
 Execution mode precedence:
 1. Start from `--mode`.
@@ -37,12 +37,12 @@ Current live adapter coverage:
 - `product-agent`: live supported
 - `architect-agent`: live supported
 - `quant-pattern-agent`: live supported
+- `backend-agent`: live supported in constrained patch mode
 - `docs-reviewer-agent`: live supported
-- `backend-agent`: mock only
 
 Backend live status:
-- live backend adapter execution is intentionally disabled
-- backend live safety contract is defined for future activation
+- live backend adapter execution is enabled in constrained patch mode
+- backend live safety contract is enforced at runtime
 - contract docs: `docs/agents/backend-live-safety.md`
 - contract schema/validators:
   - `src/adapters/live/schemas/backend-agent-response-schema.ts`
@@ -65,7 +65,7 @@ Run hybrid mode explicitly (recommended):
 ```bash
 pnpm runner run \
   --mode mock \
-  --agent-mode product=live,architect=live,quant-pattern=live,docs-reviewer=live \
+  --agent-mode product=live,architect=live,quant-pattern=live,backend=live,docs-reviewer=live \
   --scenario happy \
   --env local \
   --version v1 \
@@ -163,7 +163,7 @@ Approval enforcement is strict for approval-gated transitions:
 - transition evidence in `transitions.json` includes `approvalType`, `validationStatus`, and `evidenceSummary`
 - approval violations are treated as `policy_rejection`; malformed approval/config states are treated as `runtime_failure`
 
-Run default live path (Product + Architect + Quant Pattern + Docs Reviewer live, Backend mocked):
+Run default live path (Product + Architect + Quant Pattern + Backend + Docs Reviewer live):
 ```bash
 pnpm runner run \
   --mode live \
@@ -194,9 +194,7 @@ Invalid overrides fail fast:
 - invalid mode values
 - requesting `live` for agents without a live adapter
 
-For `backend-agent=live`, runner fails early with a safety message:
-- backend live contract exists
-- backend live execution remains disabled until dedicated adapter enablement
+For `backend-agent=live`, constrained patch-mode safety checks run before any file write.
 
 Live Product Agent contract:
 - OpenAI response must be JSON-only
@@ -233,10 +231,15 @@ Live Docs Reviewer Agent contract:
 - reviewer stays bounded to review semantics and cannot bypass workflow artifact enforcement
 
 Future Live Backend Agent safety contract (pre-activation):
+Live Backend Agent constrained mode:
 - output must remain structured and include backend change-planning metrics:
   `changePlan[]`, `targetFiles[]`, `changeType`, `requiresSchemaChange`,
   `requiresArchitectureChange`, `requiresMigration`, `proposedDiffs[]`, `testsPlan[]`, `knownLimitations[]`
 - strict file-path allowlists apply (no unrestricted writes)
 - schema/architecture/migration changes are forbidden in default safety policy and must escalate
 - forbidden paths (configs/core packages/lockfiles/env files) are rejected
-- backend live adapter is not enabled yet; this contract exists to avoid unsafe activation later
+- allowed change types in first live backend mode:
+  - `patch_only`
+  - `test_only`
+  - `docs_only`
+- `patch-plan.json` is persisted when backend patch plans are present

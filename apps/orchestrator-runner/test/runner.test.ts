@@ -1,5 +1,5 @@
 import * as assert from "node:assert/strict";
-import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { test } from "node:test";
@@ -122,6 +122,49 @@ function createLiveDocsReviewerResponseContent(
     },
     ...overrides
   });
+}
+
+function createLiveBackendResponseContent(
+  taskId: string,
+  targetFile: string,
+  overrides: Record<string, unknown> = {}
+): string {
+  return JSON.stringify({
+    taskId,
+    agentRole: "BACKEND",
+    status: "completed",
+    summary: "Backend implementation patch prepared",
+    artifacts: ["code-change", "tests", "implementation-notes"],
+    nextAction: "handoff_to_docs_reviewer",
+    metrics: {
+      changePlan: ["Update backend target file with constrained patch content."],
+      targetFiles: [targetFile],
+      changeType: "patch_only",
+      requiresSchemaChange: false,
+      requiresArchitectureChange: false,
+      requiresMigration: false,
+      proposedDiffs: [
+        {
+          filePath: targetFile,
+          operation: "update",
+          content: `// patched by live backend for ${taskId}\nexport const backendPatched = true;\n`
+        }
+      ],
+      testsPlan: ["pnpm --filter @monitor/orchestrator-runner test"],
+      knownLimitations: ["Constrained patch mode only."]
+    },
+    ...overrides
+  });
+}
+
+async function prepareBackendTargetFile(
+  workspaceRoot: string,
+  relativePath = "apps/orchestrator-runner/src/backend-live-target.ts"
+): Promise<string> {
+  const absolutePath = join(workspaceRoot, relativePath);
+  await mkdir(dirname(absolutePath), { recursive: true });
+  await writeFile(absolutePath, "export const backendPatched = false;\n", "utf8");
+  return relativePath;
 }
 
 function createChatCompletionFetch(content: string): typeof fetch {
@@ -441,7 +484,7 @@ test("mock both scenario runs happy and rejection flows", async (context) => {
   assert.equal(result.scenarios?.[1]?.finalState, "REJECTED");
 });
 
-test("live mode runs Product, Architect, Quant Pattern, and Docs Reviewer live and reaches DONE", async (context) => {
+test("live mode runs Product, Architect, Quant Pattern, Backend, and Docs Reviewer live and reaches DONE", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
 
@@ -449,12 +492,14 @@ test("live mode runs Product, Architect, Quant Pattern, and Docs Reviewer live a
   process.env.OPENAI_API_KEY = "test-live-key";
 
   try {
+    const backendTargetFile = await prepareBackendTargetFile(workspaceRoot);
     const calls: Array<{ body?: Record<string, unknown> }> = [];
     const fetchImpl = createChatCompletionSequenceFetch(
       [
         createLiveProductResponseContent("task-live-valid"),
         createLiveArchitectResponseContent("task-live-valid"),
         createLiveQuantPatternResponseContent("task-live-valid"),
+        createLiveBackendResponseContent("task-live-valid", backendTargetFile),
         createLiveDocsReviewerResponseContent("task-live-valid")
       ],
       calls
@@ -486,11 +531,12 @@ test("live mode runs Product, Architect, Quant Pattern, and Docs Reviewer live a
     assert.equal(result.transitions.length, 7);
     assert.equal(result.transitions[0]?.from, "INTAKE");
     assert.equal(result.transitions[0]?.to, "DESIGN");
-    assert.equal(calls.length, 4);
+    assert.equal(calls.length, 5);
     assert.equal(calls[0]?.body?.response_format && typeof calls[0]?.body?.response_format, "object");
     assert.equal(calls[1]?.body?.response_format && typeof calls[1]?.body?.response_format, "object");
     assert.equal(calls[2]?.body?.response_format && typeof calls[2]?.body?.response_format, "object");
     assert.equal(calls[3]?.body?.response_format && typeof calls[3]?.body?.response_format, "object");
+    assert.equal(calls[4]?.body?.response_format && typeof calls[4]?.body?.response_format, "object");
 
     const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
     const runRecord = await readJsonFile<{
@@ -505,7 +551,18 @@ test("live mode runs Product, Architect, Quant Pattern, and Docs Reviewer live a
     assert.equal(runRecord.agentModes["product-agent"], "live");
     assert.equal(runRecord.agentModes["architect-agent"], "live");
     assert.equal(runRecord.agentModes["quant-pattern-agent"], "live");
+    assert.equal(runRecord.agentModes["backend-agent"], "live");
     assert.equal(runRecord.agentModes["docs-reviewer-agent"], "live");
+
+    const patchedFile = await readFile(join(workspaceRoot, backendTargetFile), "utf8");
+    assert.match(patchedFile, /patched by live backend/);
+
+    const patchPlan = await readJsonFile<Array<{ changeType: string; targetFiles: string[] }>>(
+      join(artifactsDir, "patch-plan.json")
+    );
+    assert.ok(patchPlan.length > 0);
+    assert.equal(patchPlan[0]?.changeType, "patch_only");
+    assert.ok(patchPlan[0]?.targetFiles.includes(backendTargetFile));
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1199,12 +1256,16 @@ test("mode mock with product, architect, quant-pattern, and docs-reviewer live s
   }
 });
 
-test("fails early when unsupported live agent mode is requested", async (context) => {
+test("mode mock with backend live override applies constrained backend patch", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
 
-  await assert.rejects(
-    runWithArgv(
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const backendTargetFile = await prepareBackendTargetFile(workspaceRoot);
+    const result = await runWithArgv(
       [
         "--mode",
         "mock",
@@ -1217,12 +1278,38 @@ test("fails early when unsupported live agent mode is requested", async (context
         "--version",
         "v1",
         "--task-id",
-        "task-unsupported-live"
+        "task-backend-live-happy"
       ],
-      workspaceRoot
-    ),
-    /no live handler is implemented/
-  );
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionFetch(
+          createLiveBackendResponseContent("task-backend-live-happy", backendTargetFile)
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.agentModes?.["backend-agent"], "live");
+    assert.equal(result.patchPlans.length, 1);
+
+    const patchedFile = await readFile(join(workspaceRoot, backendTargetFile), "utf8");
+    assert.match(patchedFile, /patched by live backend/);
+
+    const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
+    const patchPlan = await readJsonFile<Array<{ changeType: string; targetFiles: string[] }>>(
+      join(artifactsDir, "patch-plan.json")
+    );
+    assert.equal(patchPlan.length, 1);
+    assert.equal(patchPlan[0]?.changeType, "patch_only");
+    assert.ok(patchPlan[0]?.targetFiles.includes(backendTargetFile));
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
 });
 
 test("live mode rejects invalid non-JSON Product output", async (context) => {

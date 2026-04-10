@@ -1,7 +1,7 @@
 # Backend Live Safety Contract
 
 ## Purpose
-Define the safety contract that must be satisfied before enabling a future live `backend-agent`.
+Define the safety contract that governs live `backend-agent` execution in constrained patch mode.
 
 This document defines:
 - allowed patch boundaries,
@@ -9,18 +9,18 @@ This document defines:
 - validation and escalation rules,
 - forbidden mutations.
 
-This contract is **active as design policy now**, while backend live execution remains disabled.
+This contract is active in runtime validation for backend live constrained mode.
 
 ## Status
-- backend live model execution: **not implemented**
-- backend live safety contract: **defined**
+- backend live model execution: **implemented in constrained patch mode**
+- backend live safety contract: **defined and enforced**
 - backend live validator modules: **implemented**
 
 ## Why this exists
 Backend is a code-writing role. It can introduce hidden scope expansion and contract drift if unbounded.
-The system must enforce deterministic boundaries before any live patch execution is enabled.
+The system must enforce deterministic boundaries before applying any generated patch.
 
-## Required structured output (future backend live)
+## Required structured output
 Backend output must still satisfy `Agent Output Envelope`, plus backend metrics contract fields:
 
 - `metrics.changePlan[]`
@@ -106,5 +106,6 @@ For `needs_escalation`, standard escalation envelope is mandatory.
   - `apps/orchestrator-runner/src/adapters/live/validators/backend-safety-rules.ts`
   - `apps/orchestrator-runner/src/adapters/live/validators/assert-backend-output.ts`
 
-## Non-goal for this step
-This contract does **not** enable live backend execution. It only defines and validates safe boundaries for future activation.
+## Current implementation boundary
+Backend live execution is enabled only in constrained patch mode.
+It is still intentionally limited and does not permit broad refactors, schema/migration work, or cross-package changes.

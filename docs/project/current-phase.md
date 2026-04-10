@@ -23,8 +23,8 @@ Phase 1 is focused on proving that the project can:
   - Product Agent
   - Architect Agent
   - Quant Pattern Agent
+  - Backend Agent (constrained patch mode)
   - Docs Reviewer Agent
-- Backend Agent remains mocked
 - strict transition guardrails:
   - allowlisted transitions only
   - approval-gated edges enforced

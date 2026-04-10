@@ -37,6 +37,7 @@
 - live Architect Agent path exists
 - live Quant Pattern Agent path exists
 - live Docs Reviewer Agent path exists
+- first constrained live Backend Agent path exists
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -46,4 +47,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **PR #11 — first controlled live Backend Agent path**
+- the currently recommended next step is **backend constrained-mode hardening and observability polish**

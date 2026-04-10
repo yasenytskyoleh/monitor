@@ -39,10 +39,11 @@ Implemented today:
   - Product
   - Architect
   - Quant Pattern
+  - Backend (constrained patch mode)
   - Docs Reviewer
 
 Current limitation:
-- Backend remains mocked and is the next planned live role.
+- Backend live is constrained to strict allowlisted patch mode (no broad refactors, schema/migration/architecture changes).
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

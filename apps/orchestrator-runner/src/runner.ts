@@ -224,6 +224,7 @@ async function persistSuccessRun(options: PersistSuccessOptions): Promise<Persis
     terminalOutcome,
     approvals: options.result.approvals,
     artifacts: options.result.artifacts,
+    patchPlans: options.result.patchPlans,
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
   });
@@ -286,6 +287,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     terminalOutcome,
     approvals: options.partialResult?.approvals ?? [],
     artifacts: options.partialResult?.artifacts ?? [],
+    patchPlans: options.partialResult?.patchPlans ?? [],
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
   });
@@ -583,7 +585,7 @@ function buildPersistedAgentModes(
     "product-agent": args.mode === "live" ? "live" : "mock",
     "architect-agent": args.mode === "live" ? "live" : "mock",
     "quant-pattern-agent": args.mode === "live" ? "live" : "mock",
-    "backend-agent": "mock",
+    "backend-agent": args.mode === "live" ? "live" : "mock",
     "docs-reviewer-agent": args.mode === "live" ? "live" : "mock"
   };
 

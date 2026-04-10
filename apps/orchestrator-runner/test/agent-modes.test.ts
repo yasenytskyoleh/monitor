@@ -32,14 +32,12 @@ test("resolveAgentExecutionMap mode=live defaults only implemented live agents t
   assert.equal(resolved["product-agent"], "live");
   assert.equal(resolved["architect-agent"], "live");
   assert.equal(resolved["quant-pattern-agent"], "live");
-  assert.equal(resolved["backend-agent"], "mock");
+  assert.equal(resolved["backend-agent"], "live");
   assert.equal(resolved["docs-reviewer-agent"], "live");
 });
 
-test("resolveAgentExecutionMap rejects unsupported live override", () => {
+test("resolveAgentExecutionMap accepts backend live override", () => {
   const overrides = parseAgentModeOverrides("backend=live");
-  assert.throws(
-    () => resolveAgentExecutionMap("mock", overrides),
-    /no live handler is implemented/
-  );
+  const resolved = resolveAgentExecutionMap("mock", overrides);
+  assert.equal(resolved["backend-agent"], "live");
 });

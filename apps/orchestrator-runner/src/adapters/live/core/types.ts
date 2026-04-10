@@ -25,4 +25,8 @@ export type LiveAgentPipelineConfig = {
   additionalSystemInstructions?: string[];
   buildUserPrompt: BuildUserPrompt;
   assertSpecificOutput: LiveAgentSpecificValidator;
+  finalizeOutput?: (
+    output: AgentOutputEnvelope,
+    context: AgentHandlerContext
+  ) => Promise<AgentOutputEnvelope> | AgentOutputEnvelope;
 };

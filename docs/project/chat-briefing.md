@@ -32,6 +32,7 @@ Current status:
 - Product Agent is live-capable
 - Architect Agent is live-capable
 - Quant Pattern Agent is live-capable
+- Backend Agent is live-capable in constrained patch mode
 - Docs Reviewer Agent is live-capable
 - per-agent execution mode selection exists
 - persisted workflow artifacts exist
@@ -39,7 +40,7 @@ Current status:
 - shared live-adapter execution pipeline exists
 
 The next likely step is:
-- **first controlled live Backend Agent path**
+- **backend constrained-mode hardening and observability polish**
 
 Please preserve this project direction and avoid broad redesign unless clearly justified.
 

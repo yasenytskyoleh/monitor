@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { AgentHandlers } from "@monitor/orchestrator-core";
 
 import { createLiveArchitectAgentHandler } from "../adapters/live/architect-agent.js";
+import { createLiveBackendAgentHandler } from "../adapters/live/backend-agent.js";
 import { createLiveDocsReviewerAgentHandler } from "../adapters/live/docs-reviewer-agent.js";
 import { createLiveProductAgentHandler } from "../adapters/live/product-agent.js";
 import { createLiveQuantPatternAgentHandler } from "../adapters/live/quant-pattern-agent.js";
@@ -99,9 +100,20 @@ export function resolveHandlers(options: ResolveHandlersOptions): ResolvedHandle
     }
 
     if (agentId === "backend-agent") {
-      throw new Error(
-        "Live mode requested for 'backend-agent', but no live handler is implemented yet (backend live safety contract is defined; execution remains disabled)"
-      );
+      if (!options.openAiApiKey) {
+        throw new Error("OPENAI_API_KEY is required for backend-agent live handler");
+      }
+
+      handlers[agentId] = createLiveBackendAgentHandler({
+        apiKey: options.openAiApiKey,
+        promptsRootDir: join(options.rootDir, "configs/agents/prompts"),
+        rootDir: options.rootDir,
+        model: options.model,
+        temperature: options.temperature,
+        timeoutMs: options.timeoutMs,
+        fetchImpl: options.fetchImpl
+      });
+      continue;
     }
 
     throw new Error(`Live mode requested for '${agentId}', but no live handler is implemented`);
