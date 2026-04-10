@@ -244,6 +244,7 @@ test("parseArgs defaults to live mode", () => {
 
   assert.equal(args.mode, "live");
   assert.equal(args.output, "text");
+  assert.equal(args.backendWrite, "dry-run");
   assert.deepEqual(args.agentModeOverrides, {});
   assert.equal(args.environment, "local");
   assert.equal(args.scenario, undefined);
@@ -260,6 +261,9 @@ test("parseArgs validates mode and scenario values", () => {
   const jsonOutput = parseArgs(["--output", "json"]);
   assert.equal(jsonOutput.output, "json");
 
+  const applyWrite = parseArgs(["--backend-write", "apply"]);
+  assert.equal(applyWrite.backendWrite, "apply");
+
   const overrides = parseArgs(["--agent-mode", "product=live,architect=mock"]);
   assert.equal(overrides.agentModeOverrides["product-agent"], "live");
   assert.equal(overrides.agentModeOverrides["architect-agent"], "mock");
@@ -267,6 +271,7 @@ test("parseArgs validates mode and scenario values", () => {
   assert.throws(() => parseArgs(["--mode", "invalid"]), /Invalid --mode/);
   assert.throws(() => parseArgs(["--scenario", "invalid"]), /Invalid --scenario/);
   assert.throws(() => parseArgs(["--output", "yaml"]), /Invalid --output/);
+  assert.throws(() => parseArgs(["--backend-write", "unsafe"]), /Invalid --backend-write/);
   assert.throws(() => parseArgs(["--agent-mode", "foo=live"]), /Invalid --agent-mode agent/);
   assert.throws(() => parseArgs(["--agent-mode", "product=weird"]), /Invalid --agent-mode value/);
   assert.throws(
@@ -555,14 +560,17 @@ test("live mode runs Product, Architect, Quant Pattern, Backend, and Docs Review
     assert.equal(runRecord.agentModes["docs-reviewer-agent"], "live");
 
     const patchedFile = await readFile(join(workspaceRoot, backendTargetFile), "utf8");
-    assert.match(patchedFile, /patched by live backend/);
+    assert.equal(patchedFile, "export const backendPatched = false;\n");
 
-    const patchPlan = await readJsonFile<Array<{ changeType: string; targetFiles: string[] }>>(
+    const patchPlan = await readJsonFile<
+      Array<{ changeType: string; targetFiles: string[]; dryRun: boolean }>
+    >(
       join(artifactsDir, "patch-plan.json")
     );
     assert.ok(patchPlan.length > 0);
     assert.equal(patchPlan[0]?.changeType, "patch_only");
     assert.ok(patchPlan[0]?.targetFiles.includes(backendTargetFile));
+    assert.equal(patchPlan[0]?.dryRun, true);
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1271,6 +1279,8 @@ test("mode mock with backend live override applies constrained backend patch", a
         "mock",
         "--agent-mode",
         "backend=live",
+        "--backend-write",
+        "apply",
         "--scenario",
         "happy",
         "--env",
@@ -1292,6 +1302,7 @@ test("mode mock with backend live override applies constrained backend patch", a
     assert.equal(result.taskState, "DONE");
     assert.equal(result.agentModes?.["backend-agent"], "live");
     assert.equal(result.patchPlans.length, 1);
+    assert.equal(result.patchPlans[0]?.dryRun, false);
 
     const patchedFile = await readFile(join(workspaceRoot, backendTargetFile), "utf8");
     assert.match(patchedFile, /patched by live backend/);

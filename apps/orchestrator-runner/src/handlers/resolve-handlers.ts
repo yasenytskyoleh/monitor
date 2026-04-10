@@ -15,6 +15,7 @@ export type ResolveHandlersOptions = {
   rootDir: string;
   agentModes: AgentExecutionMap;
   openAiApiKey?: string;
+  backendDryRun?: boolean;
   model?: string;
   temperature?: number;
   timeoutMs?: number;
@@ -108,6 +109,7 @@ export function resolveHandlers(options: ResolveHandlersOptions): ResolvedHandle
         apiKey: options.openAiApiKey,
         promptsRootDir: join(options.rootDir, "configs/agents/prompts"),
         rootDir: options.rootDir,
+        dryRun: options.backendDryRun ?? true,
         model: options.model,
         temperature: options.temperature,
         timeoutMs: options.timeoutMs,

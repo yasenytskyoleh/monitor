@@ -7,6 +7,7 @@ import type { RunOutcome } from "./persistence/types.js";
 
 export type RunnerMode = "live" | "mock";
 export type OutputFormat = "text" | "json";
+export type BackendWriteMode = "dry-run" | "apply";
 export type MockScenario = "happy" | "missing-approval";
 export type MockScenarioSelection = MockScenario | "both";
 export type ExecutionMode = "mock" | "live";
@@ -64,6 +65,7 @@ export type CliArgs = {
   rootDir?: string;
   mode: RunnerMode;
   output: OutputFormat;
+  backendWrite: BackendWriteMode;
   agentModeOverrides: Partial<AgentExecutionMap>;
   scenario?: MockScenarioSelection;
   environment: EnvironmentName;

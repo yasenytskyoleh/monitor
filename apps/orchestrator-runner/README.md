@@ -27,6 +27,10 @@ Default mode is `live`:
 - `backend-agent` resolves to `live` (constrained patch mode)
 - `docs-reviewer-agent` resolves to `live`
 
+Backend write mode:
+- default is `--backend-write dry-run` (no filesystem mutation)
+- use `--backend-write apply` to allow constrained patch application for `backend-agent`
+
 Execution mode precedence:
 1. Start from `--mode`.
 2. Resolve defaults for all agents.
@@ -66,6 +70,7 @@ Run hybrid mode explicitly (recommended):
 pnpm runner run \
   --mode mock \
   --agent-mode product=live,architect=live,quant-pattern=live,backend=live,docs-reviewer=live \
+  --backend-write dry-run \
   --scenario happy \
   --env local \
   --version v1 \
@@ -142,6 +147,7 @@ Persisted run artifacts are written to:
 - `runtime/runs/<runId>/terminal-outcome.json`
 - `runtime/runs/<runId>/approvals.json`
 - `runtime/runs/<runId>/artifacts.json`
+- optional: `runtime/runs/<runId>/patch-plan.json`
 - optional: `runtime/runs/<runId>/input-task.json`
 - optional: `runtime/runs/<runId>/compiled-snapshot-meta.json`
 
@@ -167,12 +173,25 @@ Run default live path (Product + Architect + Quant Pattern + Backend + Docs Revi
 ```bash
 pnpm runner run \
   --mode live \
+  --backend-write dry-run \
   --env local \
   --version v1 \
   --task-id task-live-001 \
   --requested-by oleh \
   --task-title "Detect BTC entry points" \
   --model gpt-5.4-mini
+```
+
+Allow constrained backend writes explicitly:
+```bash
+pnpm runner run \
+  --mode live \
+  --backend-write apply \
+  --env local \
+  --version v1 \
+  --task-id task-live-apply-001 \
+  --requested-by oleh \
+  --task-title "Detect BTC entry points"
 ```
 
 `--agent-mode` format:
@@ -195,6 +214,7 @@ Invalid overrides fail fast:
 - requesting `live` for agents without a live adapter
 
 For `backend-agent=live`, constrained patch-mode safety checks run before any file write.
+`--backend-write dry-run` keeps backend patch execution non-mutating.
 
 Live Product Agent contract:
 - OpenAI response must be JSON-only
@@ -230,7 +250,6 @@ Live Docs Reviewer Agent contract:
   `traceabilityConfirmation.{isTraceable,notes[]}`, `missingArtifactWarnings[]`, `driftWarnings[]`
 - reviewer stays bounded to review semantics and cannot bypass workflow artifact enforcement
 
-Future Live Backend Agent safety contract (pre-activation):
 Live Backend Agent constrained mode:
 - output must remain structured and include backend change-planning metrics:
   `changePlan[]`, `targetFiles[]`, `changeType`, `requiresSchemaChange`,

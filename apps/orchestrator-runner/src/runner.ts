@@ -69,6 +69,7 @@ export async function runWithArgv(
       rootDir,
       agentModes,
       openAiApiKey,
+      backendDryRun: args.backendWrite === "dry-run",
       model: args.model,
       temperature: args.temperature,
       timeoutMs: args.timeoutMs,
