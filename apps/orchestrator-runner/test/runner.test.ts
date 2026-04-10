@@ -157,6 +157,17 @@ function createLiveBackendResponseContent(
   });
 }
 
+function createLiveBackendResponseWithMetrics(
+  taskId: string,
+  targetFile: string,
+  metricsOverrides: Record<string, unknown>
+): string {
+  const parsed = JSON.parse(createLiveBackendResponseContent(taskId, targetFile)) as Record<string, unknown>;
+  const metrics = parsed.metrics as Record<string, unknown>;
+  Object.assign(metrics, metricsOverrides);
+  return JSON.stringify(parsed);
+}
+
 async function prepareBackendTargetFile(
   workspaceRoot: string,
   relativePath = "apps/orchestrator-runner/src/backend-live-target.ts"
@@ -1314,6 +1325,130 @@ test("mode mock with backend live override applies constrained backend patch", a
     assert.equal(patchPlan.length, 1);
     assert.equal(patchPlan[0]?.changeType, "patch_only");
     assert.ok(patchPlan[0]?.targetFiles.includes(backendTargetFile));
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock with backend live override rejects invalid backend patch plans", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const backendTargetFile = await prepareBackendTargetFile(workspaceRoot);
+    const escapedTargetFile = "apps/orchestrator-runner/src/../../../../tmp/backend-escape.ts";
+
+    const cases: Array<{
+      id: string;
+      expected: RegExp;
+      response: (taskId: string) => string;
+    }> = [
+      {
+        id: "forbidden-path",
+        expected: /forbidden target path|outside allowlisted boundaries/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            targetFiles: ["packages/orchestrator-core/src/orchestrator.ts"],
+            proposedDiffs: [
+              {
+                filePath: "packages/orchestrator-core/src/orchestrator.ts",
+                operation: "update",
+                content: "export const forbidden = true;\n"
+              }
+            ]
+          })
+      },
+      {
+        id: "forbidden-change-type",
+        expected: /changeType 'new_file' is not allowed/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            changeType: "new_file"
+          })
+      },
+      {
+        id: "missing-tests-plan",
+        expected: /metrics\.testsPlan must be a non-empty string array/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            testsPlan: []
+          })
+      },
+      {
+        id: "schema-change-flag",
+        expected: /requiresSchemaChange=true is forbidden/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            requiresSchemaChange: true
+          })
+      },
+      {
+        id: "migration-change-flag",
+        expected: /requiresMigration=true is forbidden/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            requiresMigration: true
+          })
+      },
+      {
+        id: "architecture-change-flag",
+        expected: /requiresArchitectureChange=true is forbidden/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            requiresArchitectureChange: true
+          })
+      },
+      {
+        id: "repo-root-escape",
+        expected: /escapes repository root/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            targetFiles: [escapedTargetFile],
+            proposedDiffs: [
+              {
+                filePath: escapedTargetFile,
+                operation: "update",
+                content: "export const escaped = true;\n"
+              }
+            ]
+          })
+      }
+    ];
+
+    for (const testCase of cases) {
+      await assert.rejects(
+        runWithArgv(
+          [
+            "--mode",
+            "mock",
+            "--agent-mode",
+            "backend=live",
+            "--scenario",
+            "happy",
+            "--env",
+            "local",
+            "--version",
+            "v1",
+            "--task-id",
+            `task-backend-invalid-${testCase.id}`
+          ],
+          workspaceRoot,
+          {
+            liveProductFetchImpl: createChatCompletionFetch(
+              testCase.response(`task-backend-invalid-${testCase.id}`)
+            )
+          }
+        ),
+        testCase.expected
+      );
+    }
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;

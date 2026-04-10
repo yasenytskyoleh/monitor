@@ -75,7 +75,7 @@ async function finalizeBackendOutput(
   });
 
   const applyResult = await applyBackendPatchPlan(patchPlan, {
-    dryRun: options.dryRun ?? false
+    dryRun: options.dryRun ?? true
   });
 
   const metrics =
