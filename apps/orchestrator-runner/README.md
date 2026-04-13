@@ -283,6 +283,7 @@ Live Backend Agent constrained mode:
 - allowed change types in first live backend mode:
   - `patch_only`
   - `new_file` (narrow, constrained)
+  - `test_focused_multi_file` (expanded but still constrained)
   - `test_only`
   - `docs_only`
 - `new_file` constraints:
@@ -297,6 +298,13 @@ Live Backend Agent constrained mode:
   - root-level and hidden-file creation are rejected
   - create operation fails if target file already exists
   - rollback deletes created files when apply/post-apply/verification fails
+- `test_focused_multi_file` constraints:
+  - max 3 target files
+  - max 1 create operation
+  - at least one test-related target file is required
+  - at least one non-test implementation target file is required
+  - all files must remain in a single allowed root
+  - verification and rollback semantics are unchanged and mandatory
 - patch scope limits are enforced:
   - max target file count
   - max total content bytes

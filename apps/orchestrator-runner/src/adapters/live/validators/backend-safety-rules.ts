@@ -1,7 +1,12 @@
 import { AgentSpecificValidationError } from "../core/errors.js";
 import { assertRequiredString, assertStringArray } from "./shared.js";
 
-export type BackendChangeType = "patch_only" | "new_file" | "test_only" | "docs_only";
+export type BackendChangeType =
+  | "patch_only"
+  | "new_file"
+  | "test_only"
+  | "docs_only"
+  | "test_focused_multi_file";
 export type BackendDiffOperation = "create" | "update";
 
 export type BackendProposedDiff = {
@@ -35,6 +40,7 @@ export type BackendSafetyPolicy = {
   maxTargetFiles: number;
   maxProposedDiffs: number;
   maxCreateOperations: number;
+  maxTestFocusedTargetFiles: number;
 };
 
 export const DEFAULT_BACKEND_SAFETY_POLICY: BackendSafetyPolicy = {
@@ -63,13 +69,20 @@ export const DEFAULT_BACKEND_SAFETY_POLICY: BackendSafetyPolicy = {
     ".env",
     ".env.example"
   ],
-  allowedChangeTypes: ["patch_only", "new_file", "test_only", "docs_only"],
+  allowedChangeTypes: [
+    "patch_only",
+    "new_file",
+    "test_only",
+    "docs_only",
+    "test_focused_multi_file"
+  ],
   allowSchemaChange: false,
   allowArchitectureChange: false,
   allowMigration: false,
   maxTargetFiles: 12,
   maxProposedDiffs: 20,
-  maxCreateOperations: 1
+  maxCreateOperations: 1,
+  maxTestFocusedTargetFiles: 3
 };
 
 export function parseBackendSafetyMetrics(value: unknown): BackendSafetyMetrics {
@@ -161,6 +174,37 @@ export function validateBackendSafetyRules(
     );
   }
 
+  if (targetFiles.length > 1 && metrics.changeType !== "test_focused_multi_file") {
+    throw new AgentSpecificValidationError(
+      "Schema validation failed for live backend output: multi-file patch sets require changeType 'test_focused_multi_file'"
+    );
+  }
+
+  if (metrics.changeType === "test_focused_multi_file") {
+    if (targetFiles.length < 2) {
+      throw new AgentSpecificValidationError(
+        "Schema validation failed for live backend output: test_focused_multi_file requires at least two target files"
+      );
+    }
+    if (targetFiles.length > policy.maxTestFocusedTargetFiles) {
+      throw new AgentSpecificValidationError(
+        `Schema validation failed for live backend output: test_focused_multi_file target count ${targetFiles.length} exceeds limit ${policy.maxTestFocusedTargetFiles}`
+      );
+    }
+    const hasTestPath = targetFiles.some((filePath) => isTestRelatedPath(filePath));
+    const hasImplementationPath = targetFiles.some((filePath) => !isTestRelatedPath(filePath));
+    if (!hasTestPath) {
+      throw new AgentSpecificValidationError(
+        "Schema validation failed for live backend output: test_focused_multi_file requires at least one test-related target file"
+      );
+    }
+    if (!hasImplementationPath) {
+      throw new AgentSpecificValidationError(
+        "Schema validation failed for live backend output: test_focused_multi_file requires at least one non-test implementation target file"
+      );
+    }
+  }
+
   for (const filePath of targetFiles) {
     assertPathAllowed(filePath, policy);
   }
@@ -197,17 +241,46 @@ export function validateBackendSafetyRules(
   }
 
   const createDiffs = proposedDiffs.filter((diff) => diff.operation === "create");
-  if (metrics.changeType !== "new_file" && createDiffs.length > 0) {
+  if (
+    metrics.changeType !== "new_file" &&
+    metrics.changeType !== "test_focused_multi_file" &&
+    createDiffs.length > 0
+  ) {
     throw new AgentSpecificValidationError(
       `Schema validation failed for live backend output: changeType '${metrics.changeType}' may not create new files`
     );
   }
-  if (metrics.changeType === "new_file" && createDiffs.length === 0) {
+  if (metrics.changeType === "new_file") {
+    if (targetFiles.length !== 1) {
+      throw new AgentSpecificValidationError(
+        "Schema validation failed for live backend output: changeType 'new_file' supports exactly one target file"
+      );
+    }
+    if (createDiffs.length !== 1) {
+      throw new AgentSpecificValidationError(
+        "Schema validation failed for live backend output: changeType 'new_file' requires exactly one create operation"
+      );
+    }
+    if (proposedDiffs.length !== 1) {
+      throw new AgentSpecificValidationError(
+        "Schema validation failed for live backend output: changeType 'new_file' may not include additional update operations"
+      );
+    }
+  }
+  if (metrics.changeType === "test_focused_multi_file" && createDiffs.length > policy.maxCreateOperations) {
     throw new AgentSpecificValidationError(
-      "Schema validation failed for live backend output: changeType 'new_file' requires one create operation"
+      `Schema validation failed for live backend output: create operation count ${createDiffs.length} exceeds limit ${policy.maxCreateOperations}`
     );
   }
-  if (createDiffs.length > policy.maxCreateOperations) {
+  if (metrics.changeType === "test_focused_multi_file" && createDiffs.length === 0) {
+    // create is optional for expanded mode
+  }
+  if (metrics.changeType === "new_file" && createDiffs.length === 0) {
+    throw new AgentSpecificValidationError(
+      "Schema validation failed for live backend output: changeType 'new_file' requires exactly one create operation"
+    );
+  }
+  if (metrics.changeType === "new_file" && createDiffs.length > policy.maxCreateOperations) {
     throw new AgentSpecificValidationError(
       `Schema validation failed for live backend output: create operation count ${createDiffs.length} exceeds limit ${policy.maxCreateOperations}`
     );
@@ -225,13 +298,14 @@ function parseChangeType(value: unknown): BackendChangeType {
     value === "patch_only" ||
     value === "new_file" ||
     value === "test_only" ||
-    value === "docs_only"
+    value === "docs_only" ||
+    value === "test_focused_multi_file"
   ) {
     return value;
   }
 
   throw new AgentSpecificValidationError(
-    "Schema validation failed for live backend output: metrics.changeType must be one of patch_only|new_file|test_only|docs_only"
+    "Schema validation failed for live backend output: metrics.changeType must be one of patch_only|new_file|test_only|docs_only|test_focused_multi_file"
   );
 }
 
@@ -374,4 +448,16 @@ function normalizePath(value: string): string {
 
 function uniqueStrings(values: string[]): string[] {
   return Array.from(new Set(values.map((value) => value.trim()).filter((value) => value.length > 0)));
+}
+
+function isTestRelatedPath(filePath: string): boolean {
+  const normalized = normalizePath(filePath).toLowerCase();
+  return (
+    normalized.includes("/test/") ||
+    normalized.includes("/__tests__/") ||
+    normalized.endsWith(".test.ts") ||
+    normalized.endsWith(".test.tsx") ||
+    normalized.endsWith(".spec.ts") ||
+    normalized.endsWith(".spec.tsx")
+  );
 }

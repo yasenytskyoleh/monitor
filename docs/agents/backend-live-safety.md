@@ -50,6 +50,7 @@ Allowed target path prefixes:
 Allowed change types:
 - `patch_only`
 - `new_file` (narrow constrained mode)
+- `test_focused_multi_file` (small multi-file expansion)
 - `test_only`
 - `docs_only`
 
@@ -60,6 +61,13 @@ Narrow `new_file` rules:
   - `apps/orchestrator-runner/test/`,
 - create extension must be allowlisted (`.ts`, `.tsx`, `.md`),
 - root-level and hidden-file creation are forbidden.
+
+`test_focused_multi_file` rules:
+- max 3 target files,
+- max 1 create operation,
+- at least one test-related target file,
+- at least one non-test implementation target file,
+- single-root constraint remains mandatory.
 
 ## Forbidden mutations (initial policy)
 Forbidden path prefixes:
@@ -96,6 +104,7 @@ For completed backend output:
 8. `new_file` must include exactly one `create` operation.
 9. create target path and extension must pass allowlists.
 10. create operation must fail if target already exists.
+11. `test_focused_multi_file` must include test + non-test files and stay under max 3 files.
 8. Safety booleans must respect policy (`requiresSchemaChange`, `requiresArchitectureChange`, `requiresMigration`).
 
 ## Escalation rules

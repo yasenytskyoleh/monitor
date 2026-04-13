@@ -45,12 +45,16 @@ export type PatchPlanEvidence = {
   transitionChecksum?: string;
   fromState?: string;
   toState?: string;
+  patchMode: "single_file" | "test_focused_multi_file";
+  testFocused: boolean;
   changeType: BackendChangeType;
   applyMode: PatchApplyMode;
   singleRootKey: string;
   totalContentBytes: number;
   limitChecks: PatchLimitChecks;
   targetFiles: string[];
+  createdFiles: string[];
+  updatedFiles: string[];
   operations: Array<{
     filePath: string;
     operation: BackendDiffOperation;
@@ -71,6 +75,8 @@ export type PatchResultEvidence = {
   applyMode: PatchApplyMode;
   applied: boolean;
   changedFiles: string[];
+  createdFiles: string[];
+  updatedFiles: string[];
   postApplyValidationPassed: boolean;
   failureCategory: BackendPatchFailureCategory | null;
   failureReason: string | null;
@@ -99,7 +105,8 @@ export function extractPatchPlanEvidenceFromBackendOutput(input: {
     changeType !== "patch_only" &&
     changeType !== "new_file" &&
     changeType !== "test_only" &&
-    changeType !== "docs_only"
+    changeType !== "docs_only" &&
+    changeType !== "test_focused_multi_file"
   ) {
     return undefined;
   }
@@ -138,6 +145,12 @@ export function extractPatchPlanEvidenceFromBackendOutput(input: {
     toPatchOperations(patchPlan?.operations) ??
     proposedDiffs ??
     [];
+  const createdFiles = operations
+    .filter((operation) => operation.operation === "create")
+    .map((operation) => operation.filePath);
+  const updatedFiles = operations
+    .filter((operation) => operation.operation === "update")
+    .map((operation) => operation.filePath);
   const appliedOperations = toAppliedOperations(patchApplyResult?.appliedOperations);
   const dryRun =
     patchApplyResult && typeof patchApplyResult.dryRun === "boolean" ? patchApplyResult.dryRun : false;
@@ -148,12 +161,16 @@ export function extractPatchPlanEvidenceFromBackendOutput(input: {
     transitionChecksum: input.transitionChecksum,
     fromState: input.fromState,
     toState: input.toState,
+    patchMode: changeType === "test_focused_multi_file" ? "test_focused_multi_file" : "single_file",
+    testFocused: changeType === "test_focused_multi_file",
     changeType,
     applyMode,
     singleRootKey,
     totalContentBytes,
     limitChecks,
     targetFiles,
+    createdFiles,
+    updatedFiles,
     operations,
     proposedDiffCount,
     testsPlan,
@@ -196,6 +213,13 @@ export function extractPatchResultEvidenceFromBackendOutput(input: {
       ? patchApplyResult.applied
       : applyMode === "apply";
   const changedFiles = toStringArray(patchApplyResult.changedFiles);
+  const appliedOperations = toAppliedOperations(patchApplyResult.appliedOperations);
+  const createdFiles = appliedOperations
+    .filter((operation) => operation.operation === "create")
+    .map((operation) => operation.filePath);
+  const updatedFiles = appliedOperations
+    .filter((operation) => operation.operation === "update")
+    .map((operation) => operation.filePath);
   const postApplyValidationPassed =
     typeof patchApplyResult.postApplyValidationPassed === "boolean"
       ? patchApplyResult.postApplyValidationPassed
@@ -218,6 +242,8 @@ export function extractPatchResultEvidenceFromBackendOutput(input: {
     applyMode,
     applied,
     changedFiles,
+    createdFiles,
+    updatedFiles,
     postApplyValidationPassed,
     failureCategory,
     failureReason

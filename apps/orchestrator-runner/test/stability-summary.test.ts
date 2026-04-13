@@ -17,6 +17,8 @@ test("buildStabilitySummary marks pass for successful dry-run evidence", () => {
         applyMode: "dry-run",
         applied: false,
         changedFiles: [],
+        createdFiles: [],
+        updatedFiles: [],
         postApplyValidationPassed: true,
         failureCategory: null,
         failureReason: null
@@ -64,6 +66,8 @@ test("buildStabilitySummary marks fail when verification and rollback evidence f
         applyMode: "apply",
         applied: true,
         changedFiles: ["apps/orchestrator-runner/src/fail.ts"],
+        createdFiles: [],
+        updatedFiles: ["apps/orchestrator-runner/src/fail.ts"],
         postApplyValidationPassed: false,
         failureCategory: "typecheck_failed",
         failureReason: "Typecheck failed"

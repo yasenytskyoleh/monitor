@@ -117,7 +117,7 @@ test("backend patch validation allows mixed update + single create in one root",
   await mkdir(dirname(existingPath), { recursive: true });
   await writeFile(existingPath, "export const mixedExisting = false;\n", "utf8");
 
-  const createdFile = "apps/orchestrator-runner/src/mixed-created.ts";
+  const createdFile = "apps/orchestrator-runner/test/mixed-created.test.ts";
 
   const patchPlan = validateBackendPatchPlan({
     taskId: "task-backend-mixed-create",
@@ -125,7 +125,7 @@ test("backend patch validation allows mixed update + single create in one root",
     metrics: {
       ...createMetrics(existingFile, "export const mixedExisting = true;\n"),
       targetFiles: [existingFile, createdFile],
-      changeType: "new_file",
+      changeType: "test_focused_multi_file",
       proposedDiffs: [
         {
           filePath: existingFile,
@@ -240,16 +240,16 @@ test("backend patch limits reject cross-root target sets", () => {
   const metrics = {
     changePlan: ["Cross-root patch"],
     targetFiles: [
-      "apps/orchestrator-runner/src/cross-root.ts",
+      "apps/orchestrator-runner/test/cross-root.test.ts",
       "docs/project/cross-root.md"
     ],
-    changeType: "patch_only",
+    changeType: "test_focused_multi_file",
     requiresSchemaChange: false,
     requiresArchitectureChange: false,
     requiresMigration: false,
     proposedDiffs: [
       {
-        filePath: "apps/orchestrator-runner/src/cross-root.ts",
+        filePath: "apps/orchestrator-runner/test/cross-root.test.ts",
         operation: "update",
         content: "export const rootA = true;\n"
       },
@@ -279,9 +279,9 @@ test("backend patch validation rejects more than one create operation", () => {
     ...createMetrics("apps/orchestrator-runner/src/placeholder.ts", "export const placeholder = true;\n"),
     targetFiles: [
       "apps/orchestrator-runner/src/new-a.ts",
-      "apps/orchestrator-runner/src/new-b.ts"
+      "apps/orchestrator-runner/test/new-b.test.ts"
     ],
-    changeType: "new_file",
+    changeType: "test_focused_multi_file",
     proposedDiffs: [
       {
         filePath: "apps/orchestrator-runner/src/new-a.ts",
@@ -289,7 +289,7 @@ test("backend patch validation rejects more than one create operation", () => {
         content: "export const a = true;\n"
       },
       {
-        filePath: "apps/orchestrator-runner/src/new-b.ts",
+        filePath: "apps/orchestrator-runner/test/new-b.test.ts",
         operation: "create",
         content: "export const b = true;\n"
       }
@@ -354,6 +354,84 @@ test("backend patch validation rejects root-level create paths", () => {
         metrics
       }),
     /outside allowlisted boundaries|must not be root-level/
+  );
+});
+
+test("backend patch validation rejects expanded mode without test file", () => {
+  const metrics = {
+    ...createMetrics("apps/orchestrator-runner/src/no-test-a.ts", "export const a = true;\n"),
+    targetFiles: [
+      "apps/orchestrator-runner/src/no-test-a.ts",
+      "apps/orchestrator-runner/src/no-test-b.ts"
+    ],
+    changeType: "test_focused_multi_file",
+    proposedDiffs: [
+      {
+        filePath: "apps/orchestrator-runner/src/no-test-a.ts",
+        operation: "update",
+        content: "export const a = true;\n"
+      },
+      {
+        filePath: "apps/orchestrator-runner/src/no-test-b.ts",
+        operation: "update",
+        content: "export const b = true;\n"
+      }
+    ]
+  };
+
+  assert.throws(
+    () =>
+      validateBackendPatchPlan({
+        taskId: "task-backend-expanded-no-test",
+        rootDir: "/tmp",
+        metrics
+      }),
+    /requires at least one test-related target file/
+  );
+});
+
+test("backend patch validation rejects expanded mode over 3 files", () => {
+  const metrics = {
+    ...createMetrics("apps/orchestrator-runner/src/expanded-limit.ts", "export const a = true;\n"),
+    targetFiles: [
+      "apps/orchestrator-runner/src/expanded-limit.ts",
+      "apps/orchestrator-runner/test/expanded-limit.test.ts",
+      "apps/orchestrator-runner/test/expanded-helper.ts",
+      "apps/orchestrator-runner/test/expanded-overflow.ts"
+    ],
+    changeType: "test_focused_multi_file",
+    proposedDiffs: [
+      {
+        filePath: "apps/orchestrator-runner/src/expanded-limit.ts",
+        operation: "update",
+        content: "export const a = true;\n"
+      },
+      {
+        filePath: "apps/orchestrator-runner/test/expanded-limit.test.ts",
+        operation: "update",
+        content: "export const t = true;\n"
+      },
+      {
+        filePath: "apps/orchestrator-runner/test/expanded-helper.ts",
+        operation: "update",
+        content: "export const h = true;\n"
+      },
+      {
+        filePath: "apps/orchestrator-runner/test/expanded-overflow.ts",
+        operation: "update",
+        content: "export const o = true;\n"
+      }
+    ]
+  };
+
+  assert.throws(
+    () =>
+      validateBackendPatchPlan({
+        taskId: "task-backend-expanded-over-limit",
+        rootDir: "/tmp",
+        metrics
+      }),
+    /target count 4 exceeds limit 3|Patch target file count/
   );
 });
 

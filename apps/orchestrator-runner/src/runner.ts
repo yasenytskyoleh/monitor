@@ -605,6 +605,8 @@ function inferFailurePatchResults(error: unknown, taskId: string): PatchResultEv
       applyMode: "dry-run",
       applied: false,
       changedFiles: [],
+      createdFiles: [],
+      updatedFiles: [],
       postApplyValidationPassed: false,
       failureCategory: error.failureCategory,
       failureReason: error.message

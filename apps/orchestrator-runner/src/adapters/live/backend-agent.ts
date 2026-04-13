@@ -68,7 +68,7 @@ function buildUserPrompt(context: AgentHandlerContext): string {
       artifacts:
         "Return backend artifact types only (code-change, tests, implementation-notes).",
       backendSafetyMetrics:
-        "For completed status include metrics.changePlan[], targetFiles[], changeType, requiresSchemaChange, requiresArchitectureChange, requiresMigration, proposedDiffs[], testsPlan[], knownLimitations[].",
+        "For completed status include metrics.changePlan[], targetFiles[], changeType, requiresSchemaChange, requiresArchitectureChange, requiresMigration, proposedDiffs[], testsPlan[], knownLimitations[]. Use test_focused_multi_file only for constrained test-oriented multi-file plans (max 3 files, max 1 create, at least one test file).",
       requiredArtifactsForTargetState
     }
   };
@@ -177,16 +177,29 @@ async function finalizeBackendOutput(
     filePath: diff.filePath,
     operation: diff.operation
   }));
+  const createdFiles = operations
+    .filter((operation) => operation.operation === "create")
+    .map((operation) => operation.filePath);
+  const updatedFiles = operations
+    .filter((operation) => operation.operation === "update")
+    .map((operation) => operation.filePath);
 
   return {
     ...output,
     metrics: {
       ...metrics,
       patchPlan: {
+        patchMode:
+          patchPlan.changeType === "test_focused_multi_file"
+            ? "test_focused_multi_file"
+            : "single_file",
+        testFocused: patchPlan.changeType === "test_focused_multi_file",
         changeType: patchPlan.changeType,
         applyMode: applyResult.applyMode,
         rollbackMode,
         targetFiles: patchPlan.targetFiles,
+        createdFiles,
+        updatedFiles,
         operations,
         singleRootKey: patchPlan.singleRootKey,
         totalContentBytes: patchPlan.totalContentBytes,
@@ -196,6 +209,8 @@ async function finalizeBackendOutput(
         applyMode: applyResult.applyMode,
         applied: applyResult.applied,
         changedFiles: applyResult.changedFiles,
+        createdFiles,
+        updatedFiles,
         appliedOperations: applyResult.appliedOperations,
         appliedCount: applyResult.appliedOperations.length,
         dryRun: applyResult.dryRun,
@@ -305,6 +320,14 @@ function buildFailurePatchResult(input: {
     applyMode: input.applyMode,
     applied: input.applyMode === "apply" && input.rollbackResult.status !== "succeeded",
     changedFiles: input.applyResult?.changedFiles ?? [],
+    createdFiles:
+      input.applyResult?.appliedOperations
+        .filter((operation) => operation.operation === "create")
+        .map((operation) => operation.filePath) ?? [],
+    updatedFiles:
+      input.applyResult?.appliedOperations
+        .filter((operation) => operation.operation === "update")
+        .map((operation) => operation.filePath) ?? [],
     postApplyValidationPassed: false,
     failureCategory: resolveFailureCategory(input.error),
     failureReason: input.error instanceof Error ? input.error.message : String(input.error)
