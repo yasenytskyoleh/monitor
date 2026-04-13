@@ -574,14 +574,33 @@ test("live mode runs Product, Architect, Quant Pattern, Backend, and Docs Review
     assert.equal(patchedFile, "export const backendPatched = false;\n");
 
     const patchPlan = await readJsonFile<
-      Array<{ changeType: string; targetFiles: string[]; dryRun: boolean }>
+      Array<{
+        changeType: string;
+        applyMode: string;
+        targetFiles: string[];
+        limitChecks: { maxFilesPassed: boolean; maxSizePassed: boolean; singleRootPassed: boolean };
+        dryRun: boolean;
+      }>
     >(
       join(artifactsDir, "patch-plan.json")
     );
     assert.ok(patchPlan.length > 0);
     assert.equal(patchPlan[0]?.changeType, "patch_only");
+    assert.equal(patchPlan[0]?.applyMode, "dry-run");
     assert.ok(patchPlan[0]?.targetFiles.includes(backendTargetFile));
+    assert.equal(patchPlan[0]?.limitChecks.maxFilesPassed, true);
+    assert.equal(patchPlan[0]?.limitChecks.maxSizePassed, true);
+    assert.equal(patchPlan[0]?.limitChecks.singleRootPassed, true);
     assert.equal(patchPlan[0]?.dryRun, true);
+
+    const patchResult = await readJsonFile<
+      Array<{ applied: boolean; applyMode: string; changedFiles: string[]; postApplyValidationPassed: boolean }>
+    >(join(artifactsDir, "patch-result.json"));
+    assert.equal(patchResult.length, 1);
+    assert.equal(patchResult[0]?.applyMode, "dry-run");
+    assert.equal(patchResult[0]?.applied, false);
+    assert.deepEqual(patchResult[0]?.changedFiles, []);
+    assert.equal(patchResult[0]?.postApplyValidationPassed, true);
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1319,12 +1338,22 @@ test("mode mock with backend live override applies constrained backend patch", a
     assert.match(patchedFile, /patched by live backend/);
 
     const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
-    const patchPlan = await readJsonFile<Array<{ changeType: string; targetFiles: string[] }>>(
+    const patchPlan = await readJsonFile<Array<{ changeType: string; applyMode: string; targetFiles: string[] }>>(
       join(artifactsDir, "patch-plan.json")
     );
     assert.equal(patchPlan.length, 1);
     assert.equal(patchPlan[0]?.changeType, "patch_only");
+    assert.equal(patchPlan[0]?.applyMode, "apply");
     assert.ok(patchPlan[0]?.targetFiles.includes(backendTargetFile));
+
+    const patchResult = await readJsonFile<
+      Array<{ applied: boolean; applyMode: string; changedFiles: string[]; postApplyValidationPassed: boolean }>
+    >(join(artifactsDir, "patch-result.json"));
+    assert.equal(patchResult.length, 1);
+    assert.equal(patchResult[0]?.applyMode, "apply");
+    assert.equal(patchResult[0]?.applied, true);
+    assert.ok(patchResult[0]?.changedFiles.includes(backendTargetFile));
+    assert.equal(patchResult[0]?.postApplyValidationPassed, true);
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;

@@ -1,6 +1,7 @@
 import type { AgentHandlerContext, AgentOutputEnvelope } from "@monitor/orchestrator-core";
 
 import { applyBackendPatchPlan } from "../../backend-patch/apply-patch-plan.js";
+import { validatePostApplyResult } from "../../backend-patch/post-apply-validate.js";
 import { validateBackendPatchPlan } from "../../backend-patch/validate-patch-plan.js";
 import { createLiveAgentHandler } from "./core/execute-live-agent.js";
 import type { LiveAdapterOptions } from "./core/types.js";
@@ -77,20 +78,45 @@ async function finalizeBackendOutput(
   const applyResult = await applyBackendPatchPlan(patchPlan, {
     dryRun: options.dryRun ?? true
   });
+  const postApplyResult = await validatePostApplyResult({
+    patchPlan,
+    applyResult
+  });
 
   const metrics =
     output.metrics && typeof output.metrics === "object" && !Array.isArray(output.metrics)
       ? { ...output.metrics }
       : {};
 
+  const operations = patchPlan.proposedDiffs.map((diff) => ({
+    filePath: diff.filePath,
+    operation: diff.operation
+  }));
+
   return {
     ...output,
     metrics: {
       ...metrics,
+      patchPlan: {
+        changeType: patchPlan.changeType,
+        applyMode: applyResult.applyMode,
+        targetFiles: patchPlan.targetFiles,
+        operations,
+        singleRootKey: patchPlan.singleRootKey,
+        totalContentBytes: patchPlan.totalContentBytes,
+        limitChecks: patchPlan.limitChecks
+      },
       patchApplyResult: {
+        applyMode: applyResult.applyMode,
+        applied: applyResult.applied,
+        changedFiles: applyResult.changedFiles,
         appliedOperations: applyResult.appliedOperations,
         appliedCount: applyResult.appliedOperations.length,
-        dryRun: applyResult.dryRun
+        dryRun: applyResult.dryRun,
+        postApplyValidationPassed: postApplyResult.passed,
+        postApplyChecks: postApplyResult.checks,
+        failureCategory: null,
+        failureReason: null
       }
     }
   };

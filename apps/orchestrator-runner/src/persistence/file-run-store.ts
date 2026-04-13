@@ -48,6 +48,9 @@ export class FileRunStore {
     if (input.patchPlans && input.patchPlans.length > 0) {
       await writeJson(join(runDir, "patch-plan.json"), input.patchPlans);
     }
+    if (input.patchResults) {
+      await writeJson(join(runDir, "patch-result.json"), input.patchResults);
+    }
 
     if (input.inputTask) {
       await writeJson(join(runDir, "input-task.json"), input.inputTask);
