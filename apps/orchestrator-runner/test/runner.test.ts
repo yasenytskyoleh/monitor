@@ -256,6 +256,7 @@ test("parseArgs defaults to live mode", () => {
   assert.equal(args.mode, "live");
   assert.equal(args.output, "text");
   assert.equal(args.backendWrite, "dry-run");
+  assert.equal(args.backendRollbackMode, "restore_written_files");
   assert.equal(args.backendVerificationMode, "none");
   assert.deepEqual(args.agentModeOverrides, {});
   assert.equal(args.environment, "local");
@@ -279,6 +280,9 @@ test("parseArgs validates mode and scenario values", () => {
   const verifyMode = parseArgs(["--backend-verify", "lint+typecheck"]);
   assert.equal(verifyMode.backendVerificationMode, "lint+typecheck");
 
+  const rollbackMode = parseArgs(["--backend-rollback", "none"]);
+  assert.equal(rollbackMode.backendRollbackMode, "none");
+
   const overrides = parseArgs(["--agent-mode", "product=live,architect=mock"]);
   assert.equal(overrides.agentModeOverrides["product-agent"], "live");
   assert.equal(overrides.agentModeOverrides["architect-agent"], "mock");
@@ -287,6 +291,7 @@ test("parseArgs validates mode and scenario values", () => {
   assert.throws(() => parseArgs(["--scenario", "invalid"]), /Invalid --scenario/);
   assert.throws(() => parseArgs(["--output", "yaml"]), /Invalid --output/);
   assert.throws(() => parseArgs(["--backend-write", "unsafe"]), /Invalid --backend-write/);
+  assert.throws(() => parseArgs(["--backend-rollback", "always"]), /Invalid --backend-rollback/);
   assert.throws(() => parseArgs(["--backend-verify", "all"]), /Invalid --backend-verify/);
   assert.throws(() => parseArgs(["--agent-mode", "foo=live"]), /Invalid --agent-mode agent/);
   assert.throws(() => parseArgs(["--agent-mode", "product=weird"]), /Invalid --agent-mode value/);
@@ -614,6 +619,13 @@ test("live mode runs Product, Architect, Quant Pattern, Backend, and Docs Review
     assert.equal(verificationResult[0]?.overallStatus, "skipped");
     assert.equal(Array.isArray(verificationResult[0]?.hooksExecuted), true);
     assert.equal((verificationResult[0]?.hooksExecuted as unknown[]).length, 0);
+
+    await assert.rejects(() =>
+      readFile(join(artifactsDir, "rollback-plan.json"), "utf8")
+    );
+    await assert.rejects(() =>
+      readFile(join(artifactsDir, "rollback-result.json"), "utf8")
+    );
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1374,6 +1386,110 @@ test("mode mock with backend live override applies constrained backend patch", a
     assert.equal(verificationResult.length, 1);
     assert.equal(verificationResult[0]?.overallStatus, "skipped");
     assert.deepEqual(verificationResult[0]?.hooksRequested, []);
+
+    const rollbackPlan = await readJsonFile<
+      Array<{ applyMode: string; entries: Array<{ filePath: string }> }>
+    >(join(artifactsDir, "rollback-plan.json"));
+    assert.equal(rollbackPlan.length, 1);
+    assert.equal(rollbackPlan[0]?.applyMode, "apply");
+    assert.ok(rollbackPlan[0]?.entries.some((entry) => entry.filePath === backendTargetFile));
+
+    const rollbackResult = await readJsonFile<
+      Array<{ rollbackAttempted: boolean; status: string }>
+    >(join(artifactsDir, "rollback-result.json"));
+    assert.equal(rollbackResult.length, 1);
+    assert.equal(rollbackResult[0]?.rollbackAttempted, false);
+    assert.equal(rollbackResult[0]?.status, "skipped");
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("backend apply failure restores modified files and persists rollback result", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  const runStore = new FileRunStore(workspaceRoot, {
+    runIdGenerator: () => "run_backend_rollback_001"
+  });
+
+  try {
+    const existingFile = "apps/orchestrator-runner/src/backend-live-target.ts";
+    const existingPath = join(workspaceRoot, existingFile);
+    await mkdir(dirname(existingPath), { recursive: true });
+    await writeFile(existingPath, "export const backendPatched = false;\n", "utf8");
+
+    const missingFile = "apps/orchestrator-runner/src/missing-roll-forward.ts";
+    const failingResponse = createLiveBackendResponseWithMetrics(
+      "task-backend-rollback-failure",
+      existingFile,
+      {
+        targetFiles: [existingFile, missingFile],
+        proposedDiffs: [
+          {
+            filePath: existingFile,
+            operation: "update",
+            content: "export const backendPatched = true;\n"
+          },
+          {
+            filePath: missingFile,
+            operation: "update",
+            content: "export const missingShouldFail = true;\n"
+          }
+        ]
+      }
+    );
+
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "backend=live",
+          "--backend-write",
+          "apply",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-backend-rollback-failure"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(failingResponse),
+          runStore
+        }
+      ),
+      /apply_failure|update operation requires existing file/
+    );
+
+    const finalContent = await readFile(existingPath, "utf8");
+    assert.equal(finalContent, "export const backendPatched = false;\n");
+
+    const rollbackResult = await readJsonFile<
+      Array<{
+        rollbackAttempted: boolean;
+        triggerReason: string | null;
+        status: string;
+        restoredFiles: string[];
+      }>
+    >(join(workspaceRoot, "runtime/runs/run_backend_rollback_001/rollback-result.json"));
+    assert.equal(rollbackResult.length, 1);
+    assert.equal(rollbackResult[0]?.rollbackAttempted, true);
+    assert.equal(rollbackResult[0]?.triggerReason, "apply_failed");
+    assert.equal(rollbackResult[0]?.status, "succeeded");
+    assert.ok(rollbackResult[0]?.restoredFiles.includes(existingFile));
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;

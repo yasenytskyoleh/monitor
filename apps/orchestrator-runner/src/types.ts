@@ -3,6 +3,11 @@ import type { AgentOutputEnvelope, TransitionRecord } from "@monitor/orchestrato
 import type { ApprovalTransitionEvidence, WorkflowApproval } from "./approvals/types.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
 import type { PatchPlanEvidence, PatchResultEvidence } from "./backend-patch/types.js";
+import type {
+  BackendRollbackMode,
+  RollbackPlanEvidence,
+  RollbackResultEvidence
+} from "./backend-rollback/types.js";
 import type { VerificationResultEvidence } from "./backend-verification/types.js";
 import type { RunOutcome } from "./persistence/types.js";
 
@@ -38,6 +43,8 @@ export type MockScenarioResult = {
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
   patchResults: PatchResultEvidence[];
+  rollbackPlans: RollbackPlanEvidence[];
+  rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
@@ -60,6 +67,8 @@ export type RunnerOutput = {
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
   patchResults: PatchResultEvidence[];
+  rollbackPlans: RollbackPlanEvidence[];
+  rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
@@ -71,6 +80,7 @@ export type CliArgs = {
   mode: RunnerMode;
   output: OutputFormat;
   backendWrite: BackendWriteMode;
+  backendRollbackMode: BackendRollbackMode;
   backendVerificationMode: "none" | "lint" | "lint+typecheck" | "lint+typecheck+test";
   agentModeOverrides: Partial<AgentExecutionMap>;
   scenario?: MockScenarioSelection;

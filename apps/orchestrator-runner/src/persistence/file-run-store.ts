@@ -51,6 +51,12 @@ export class FileRunStore {
     if (input.patchResults) {
       await writeJson(join(runDir, "patch-result.json"), input.patchResults);
     }
+    if (input.rollbackPlans && input.rollbackPlans.length > 0) {
+      await writeJson(join(runDir, "rollback-plan.json"), input.rollbackPlans);
+    }
+    if (input.rollbackResults && input.rollbackResults.length > 0) {
+      await writeJson(join(runDir, "rollback-result.json"), input.rollbackResults);
+    }
     if (input.verificationResults) {
       await writeJson(join(runDir, "verification-result.json"), input.verificationResults);
     }

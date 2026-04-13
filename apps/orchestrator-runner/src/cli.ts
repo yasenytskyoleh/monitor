@@ -9,6 +9,7 @@ export function parseArgs(argv: string[]): CliArgs {
     mode: "live",
     output: "text",
     backendWrite: "dry-run",
+    backendRollbackMode: "restore_written_files",
     backendVerificationMode: "none",
     agentModeOverrides: {},
     environment: "local",
@@ -81,6 +82,21 @@ export function parseArgs(argv: string[]): CliArgs {
         );
       }
       args.backendVerificationMode = backendVerify;
+      continue;
+    }
+
+    if (arg === "--backend-rollback") {
+      const backendRollback = requiredValue(argv, ++index, "--backend-rollback");
+      if (
+        backendRollback !== "none" &&
+        backendRollback !== "restore_written_files" &&
+        backendRollback !== "full_run_cleanup"
+      ) {
+        throw new Error(
+          `Invalid --backend-rollback '${backendRollback}'. Allowed: none, restore_written_files, full_run_cleanup`
+        );
+      }
+      args.backendRollbackMode = backendRollback;
       continue;
     }
 
@@ -216,6 +232,7 @@ function printHelpAndExit(exitCode: number): never {
     "  --mode <live|mock>      Runner mode (default: live)",
     "  --output <text|json>    CLI output format (default: text)",
     "  --backend-write <dry-run|apply> Backend live patch application mode (default: dry-run)",
+    "  --backend-rollback <none|restore_written_files|full_run_cleanup> Backend rollback mode for apply failures (default: restore_written_files)",
     "  --backend-verify <mode> Backend apply verification hooks: none|lint|lint+typecheck|lint+typecheck+test (default: none)",
     "  --agent-mode <spec>     Per-agent overrides, e.g. product=live,architect=mock",
     "  --scenario <happy|missing-approval|both> Mock mode scenario selector (default: both)",
@@ -239,6 +256,7 @@ function printHelpAndExit(exitCode: number): never {
     "Notes:",
     "  live mode defaults product-agent, architect-agent, quant-pattern-agent, backend-agent, and docs-reviewer-agent to live.",
     "  backend live runs in dry-run mode by default; use --backend-write apply to allow workspace mutations.",
+    "  backend rollback defaults to restore_written_files in apply mode; use --backend-rollback none to disable auto-restore.",
     "  backend verification hooks run only when backend apply mode is active and --backend-verify is not none.",
     "  use --agent-mode for per-agent overrides."
   ].join("\n");

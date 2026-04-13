@@ -8,7 +8,8 @@ export const DOCS_REVIEWER_RESPONSE_SCHEMA: Record<string, unknown> = strictObje
   artifacts: {
     type: "array",
     minItems: 1,
-    items: { type: "string", minLength: 1 }
+    uniqueItems: true,
+    items: { type: "string", enum: ["docs-update", "review-report"] }
   },
   nextAction: {
     type: "string",
@@ -64,4 +65,3 @@ export const DOCS_REVIEWER_RESPONSE_SCHEMA: Record<string, unknown> = strictObje
   ),
   escalation: ESCALATION_SCHEMA
 });
-

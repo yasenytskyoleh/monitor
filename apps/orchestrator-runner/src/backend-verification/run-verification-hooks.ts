@@ -43,16 +43,38 @@ export async function runBackendVerificationHooks(
     hooksExecuted.push(mapHookResult(hook, result));
 
     if (result.timedOut) {
+      const verificationResult: BackendVerificationResult = {
+        applied: input.applied,
+        hooksRequested: hooks.map((item) => item.name),
+        hooksExecuted,
+        overallStatus: "failed"
+      };
       throw new BackendPatchError(
         "verification_timeout",
-        `Backend verification hook '${hook.name}' timed out after ${hook.timeoutMs}ms`
+        `Backend verification hook '${hook.name}' timed out after ${hook.timeoutMs}ms`,
+        {
+          metadata: {
+            verificationResult
+          }
+        }
       );
     }
 
     if (result.exitCode !== 0) {
+      const verificationResult: BackendVerificationResult = {
+        applied: input.applied,
+        hooksRequested: hooks.map((item) => item.name),
+        hooksExecuted,
+        overallStatus: "failed"
+      };
       throw new BackendPatchError(
         hookFailureCategory(hook.name),
-        `Backend verification hook '${hook.name}' failed with exit code ${String(result.exitCode)}`
+        `Backend verification hook '${hook.name}' failed with exit code ${String(result.exitCode)}`,
+        {
+          metadata: {
+            verificationResult
+          }
+        }
       );
     }
   }

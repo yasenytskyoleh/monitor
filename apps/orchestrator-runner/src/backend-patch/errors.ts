@@ -7,6 +7,7 @@ export type BackendPatchFailureCategory =
   | "forbidden_change_type"
   | "apply_failure"
   | "post_apply_validation_failure"
+  | "rollback_failed"
   | "lint_failed"
   | "typecheck_failed"
   | "test_failed"
@@ -18,11 +19,14 @@ export class BackendPatchError extends AgentSpecificValidationError {
   public constructor(
     category: BackendPatchFailureCategory,
     message: string,
-    options: { cause?: unknown } = {}
+    options: { cause?: unknown; metadata?: Record<string, unknown> } = {}
   ) {
     super(`[${category}] ${message}`, options);
     this.name = "BackendPatchError";
     this.failureCategory = category;
+    if (options.metadata) {
+      (this as BackendPatchError & { metadata?: Record<string, unknown> }).metadata = options.metadata;
+    }
   }
 }
 

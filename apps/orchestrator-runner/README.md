@@ -31,6 +31,12 @@ Backend write mode:
 - default is `--backend-write dry-run` (no filesystem mutation)
 - use `--backend-write apply` to allow constrained patch application for `backend-agent`
 
+Backend rollback mode:
+- default is `--backend-rollback restore_written_files` in apply mode
+- available modes: `none`, `restore_written_files`, `full_run_cleanup`
+- rollback is triggered automatically when apply/post-apply/verification fails
+- dry-run mode never produces rollback plans
+
 Backend verification mode:
 - default is `--backend-verify none`
 - available modes: `none`, `lint`, `lint+typecheck`, `lint+typecheck+test`
@@ -76,6 +82,7 @@ pnpm runner run \
   --mode mock \
   --agent-mode product=live,architect=live,quant-pattern=live,backend=live,docs-reviewer=live \
   --backend-write dry-run \
+  --backend-rollback restore_written_files \
   --backend-verify none \
   --scenario happy \
   --env local \
@@ -155,6 +162,8 @@ Persisted run artifacts are written to:
 - `runtime/runs/<runId>/artifacts.json`
 - optional: `runtime/runs/<runId>/patch-plan.json`
 - optional: `runtime/runs/<runId>/patch-result.json`
+- optional: `runtime/runs/<runId>/rollback-plan.json`
+- optional: `runtime/runs/<runId>/rollback-result.json`
 - optional: `runtime/runs/<runId>/verification-result.json`
 - optional: `runtime/runs/<runId>/input-task.json`
 - optional: `runtime/runs/<runId>/compiled-snapshot-meta.json`
@@ -182,6 +191,7 @@ Run default live path (Product + Architect + Quant Pattern + Backend + Docs Revi
 pnpm runner run \
   --mode live \
   --backend-write dry-run \
+  --backend-rollback restore_written_files \
   --backend-verify none \
   --env local \
   --version v1 \
@@ -196,6 +206,7 @@ Allow constrained backend writes explicitly:
 pnpm runner run \
   --mode live \
   --backend-write apply \
+  --backend-rollback restore_written_files \
   --backend-verify lint+typecheck+test \
   --env local \
   --version v1 \
@@ -283,6 +294,9 @@ Live Backend Agent constrained mode:
 - backend patch evidence files:
   - `patch-plan.json`
   - `patch-result.json`
+- backend rollback evidence files:
+  - `rollback-plan.json`
+  - `rollback-result.json`
 - backend verification evidence file:
   - `verification-result.json`
 - verification hook pipeline (allowlisted commands only):
@@ -301,3 +315,4 @@ Live Backend Agent constrained mode:
   - `typecheck_failed`
   - `test_failed`
   - `verification_timeout`
+  - `rollback_failed`

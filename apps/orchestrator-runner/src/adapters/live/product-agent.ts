@@ -18,7 +18,8 @@ const AGENT_OUTPUT_RESPONSE_SCHEMA: Record<string, unknown> = strictObjectSchema
   artifacts: {
     type: "array",
     minItems: 1,
-    items: { type: "string", minLength: 1 }
+    uniqueItems: true,
+    items: { type: "string", enum: ["product-brief"] }
   },
   nextAction: {
     type: "string",
@@ -81,7 +82,7 @@ function buildUserPrompt(context: AgentHandlerContext): string {
       nextAction:
         "Use one valid action from Agent Output Envelope schema. For successful intake handoff use handoff_to_architect.",
       artifacts:
-        "Return an array of non-empty string artifact refs. Include all artifacts required by target state.",
+        "Return artifact types allowed for Product only: product-brief. Include all artifacts required by target state.",
       productPlanningFields:
         "Populate metrics.problemStatement, metrics.scope, metrics.assumptions[], metrics.acceptanceCriteria[], metrics.backlogItem.",
       requiredArtifactsForTargetState

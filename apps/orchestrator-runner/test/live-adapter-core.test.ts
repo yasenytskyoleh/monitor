@@ -157,6 +157,81 @@ test("createLiveAgentHandler wraps domain assertions as AgentSpecificValidationE
   );
 });
 
+test("createLiveAgentHandler retries once after invalid first response", async (context) => {
+  const promptsRootDir = await mkdtemp(join(tmpdir(), "live-adapter-prompts-"));
+  context.after(async () => rm(promptsRootDir, { recursive: true, force: true }));
+
+  await writePromptFile(promptsRootDir, "v1", "test.prompt.txt", "System prompt");
+
+  let callCount = 0;
+  const handler = createLiveAgentHandler(
+    {
+      apiKey: "test-key",
+      promptsRootDir,
+      fetchImpl: async () => {
+        callCount += 1;
+        const content =
+          callCount === 1
+            ? JSON.stringify({
+                taskId: "task-retry-validation",
+                agentRole: "PRODUCT",
+                status: "completed",
+                artifacts: ["product-brief"],
+                nextAction: "handoff_to_architect"
+              })
+            : JSON.stringify({
+                taskId: "task-retry-validation",
+                agentRole: "PRODUCT",
+                status: "completed",
+                summary: "Recovered output",
+                artifacts: ["product-brief"],
+                nextAction: "handoff_to_architect"
+              });
+
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content
+                }
+              }
+            ]
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }
+        );
+      }
+    },
+    {
+      adapterLabel: "Live Product",
+      boundAgentId: "product-agent",
+      expectedRole: "PRODUCT",
+      responseFormatName: "test_response",
+      responseSchema: strictObjectSchema({
+        taskId: { type: "string" },
+        agentRole: { type: "string" },
+        status: { type: "string" },
+        summary: { type: "string" },
+        artifacts: { type: "array", items: { type: "string" } },
+        nextAction: { type: "string" }
+      }),
+      envelopeValidationContext: "live product agent output",
+      nullableFields: ["risks", "notes", "metrics", "escalation"],
+      buildUserPrompt: () => "Run test",
+      assertSpecificOutput: () => undefined
+    }
+  );
+
+  const result = await handler(createContext("task-retry-validation"));
+  assert.equal(result.summary, "Recovered output");
+  assert.equal(callCount, 2);
+});
+
 test("createLiveAgentHandler appends required target-state artifacts", async (context) => {
   const promptsRootDir = await mkdtemp(join(tmpdir(), "live-adapter-prompts-"));
   context.after(async () => rm(promptsRootDir, { recursive: true, force: true }));

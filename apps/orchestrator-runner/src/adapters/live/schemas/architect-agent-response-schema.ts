@@ -8,7 +8,8 @@ export const ARCHITECT_RESPONSE_SCHEMA: Record<string, unknown> = strictObjectSc
   artifacts: {
     type: "array",
     minItems: 1,
-    items: { type: "string", minLength: 1 }
+    uniqueItems: true,
+    items: { type: "string", enum: ["architecture-design", "adr-draft"] }
   },
   nextAction: {
     type: "string",

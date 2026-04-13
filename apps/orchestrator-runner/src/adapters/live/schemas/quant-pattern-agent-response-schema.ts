@@ -8,7 +8,8 @@ export const QUANT_PATTERN_RESPONSE_SCHEMA: Record<string, unknown> = strictObje
   artifacts: {
     type: "array",
     minItems: 1,
-    items: { type: "string", minLength: 1 }
+    uniqueItems: true,
+    items: { type: "string", enum: ["pattern-definition", "metrics-plan"] }
   },
   nextAction: {
     type: "string",

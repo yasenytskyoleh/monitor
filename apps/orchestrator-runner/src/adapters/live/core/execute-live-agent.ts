@@ -6,6 +6,7 @@ import {
   EnvelopeValidationError,
   LiveAdapterError,
   ModelCallError,
+  ResponseParseError,
   toErrorMessage
 } from "./errors.js";
 import { loadPromptTemplateCached } from "./load-prompt.js";
@@ -36,48 +37,68 @@ export function createLiveAgentHandler(
     const model = options.model ?? process.env.OPENAI_MODEL ?? context.agent.runtime.model;
     const temperature = options.temperature ?? context.agent.runtime.temperature;
     const maxCompletionTokens = context.agent.runtime.maxTokens;
+    const baseSystemPrompt = [
+      promptText,
+      ...(config.additionalSystemInstructions ?? []),
+      "Return JSON only.",
+      "No markdown, no code fences, no prose."
+    ].join("\n\n");
+    const baseUserPrompt = config.buildUserPrompt(context);
+    const maxValidationAttempts = 2;
+    let repairInstruction: string | undefined;
 
-    const rawJson = await completeModelJson({
-      client,
-      model,
-      temperature,
-      maxCompletionTokens,
-      systemPrompt: [
-        promptText,
-        ...(config.additionalSystemInstructions ?? []),
-        "Return JSON only.",
-        "No markdown, no code fences, no prose."
-      ].join("\n\n"),
-      userPrompt: config.buildUserPrompt(context),
-      responseFormatName: config.responseFormatName,
-      responseSchema: config.responseSchema
-    });
+    for (let attempt = 1; attempt <= maxValidationAttempts; attempt += 1) {
+      const rawJson = await completeModelJson({
+        client,
+        model,
+        temperature,
+        maxCompletionTokens,
+        systemPrompt: appendRepairInstruction(baseSystemPrompt, repairInstruction),
+        userPrompt: baseUserPrompt,
+        responseFormatName: config.responseFormatName,
+        responseSchema: config.responseSchema
+      });
 
-    const parsed = parseOpenAiStructuredResponse(rawJson);
-    const output = await validateAgentEnvelopeOutput({
-      parsed,
-      context: config.envelopeValidationContext,
-      nullableFields: config.nullableFields
-    });
+      try {
+        const parsed = parseOpenAiStructuredResponse(rawJson);
+        const output = await validateAgentEnvelopeOutput({
+          parsed,
+          context: config.envelopeValidationContext,
+          nullableFields: config.nullableFields
+        });
 
-    assertAgentOutputIdentity(output, {
-      expectedTaskId: context.task.taskId,
-      expectedRole: config.expectedRole,
-      adapterLabel: config.adapterLabel
-    });
+        assertAgentOutputIdentity(output, {
+          expectedTaskId: context.task.taskId,
+          expectedRole: config.expectedRole,
+          adapterLabel: config.adapterLabel
+        });
 
-    assertAgentSpecificOutput(output, config);
-    const emittedArtifacts = filterPreviouslyKnownArtifacts(output.artifacts, context.task.artifactRefs);
-    const normalizedOutput: AgentOutputEnvelope = {
-      ...output,
-      artifacts: ensureTargetArtifacts(emittedArtifacts, context)
-    };
+        assertAgentSpecificOutput(output, config);
+        const emittedArtifacts = filterPreviouslyKnownArtifacts(output.artifacts, context.task.artifactRefs);
+        const normalizedOutput: AgentOutputEnvelope = {
+          ...output,
+          artifacts: ensureTargetArtifacts(emittedArtifacts, context)
+        };
 
-    if (!config.finalizeOutput) {
-      return normalizedOutput;
+        if (!config.finalizeOutput) {
+          return normalizedOutput;
+        }
+
+        return await config.finalizeOutput(normalizedOutput, context);
+      } catch (error) {
+        if (!isRepairableValidationError(error) || attempt >= maxValidationAttempts) {
+          throw error;
+        }
+
+        repairInstruction = [
+          "Previous response was invalid. Return one corrected JSON object that strictly matches the response schema.",
+          "Use only allowed enum values, required fields, and valid artifact types for this role.",
+          `Validation error: ${error.message}`
+        ].join("\n");
+      }
     }
 
-    return await config.finalizeOutput(normalizedOutput, context);
+    throw new EnvelopeValidationError("Live adapter failed to produce valid output after retry");
   };
 }
 
@@ -182,4 +203,22 @@ function filterPreviouslyKnownArtifacts(artifacts: string[], existingArtifactRef
 
   const known = new Set(existingArtifactRefs.map((value) => value.trim()).filter((value) => value.length > 0));
   return artifacts.filter((artifact) => !known.has(artifact));
+}
+
+function isRepairableValidationError(error: unknown): error is
+  | ResponseParseError
+  | EnvelopeValidationError
+  | AgentSpecificValidationError {
+  return (
+    error instanceof ResponseParseError ||
+    error instanceof EnvelopeValidationError ||
+    error instanceof AgentSpecificValidationError
+  );
+}
+
+function appendRepairInstruction(systemPrompt: string, repairInstruction?: string): string {
+  if (!repairInstruction || repairInstruction.trim().length === 0) {
+    return systemPrompt;
+  }
+  return `${systemPrompt}\n\n${repairInstruction}`;
 }
