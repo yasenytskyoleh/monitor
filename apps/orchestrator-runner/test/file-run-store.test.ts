@@ -111,6 +111,8 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
         transitionChecksum: "checksum-1",
         fromState: "IMPLEMENT",
         toState: "REVIEW",
+        patchMode: "single_file",
+        testFocused: false,
         changeType: "patch_only",
         applyMode: "apply",
         singleRootKey: "apps/orchestrator-runner",
@@ -122,6 +124,8 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
           singleRootPassed: true
         },
         targetFiles: ["apps/orchestrator-runner/src/runner.ts"],
+        createdFiles: [],
+        updatedFiles: ["apps/orchestrator-runner/src/runner.ts"],
         operations: [
           {
             filePath: "apps/orchestrator-runner/src/runner.ts",
@@ -151,6 +155,8 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
         applyMode: "apply",
         applied: true,
         changedFiles: ["apps/orchestrator-runner/src/runner.ts"],
+        createdFiles: [],
+        updatedFiles: ["apps/orchestrator-runner/src/runner.ts"],
         postApplyValidationPassed: true,
         failureCategory: null,
         failureReason: null

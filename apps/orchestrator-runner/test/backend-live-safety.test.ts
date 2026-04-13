@@ -86,7 +86,7 @@ test("backend safety validator blocks create path outside create allowlist", () 
 test("backend safety validator blocks more than one create operation", () => {
   const output = createValidBackendOutput({
     metrics: {
-      changeType: "new_file",
+      changeType: "test_focused_multi_file",
       proposedDiffs: [
         {
           filePath: "apps/orchestrator-runner/src/new-a.ts",
@@ -94,14 +94,14 @@ test("backend safety validator blocks more than one create operation", () => {
           content: "export const a = 1;"
         },
         {
-          filePath: "apps/orchestrator-runner/src/new-b.ts",
+          filePath: "apps/orchestrator-runner/test/new-b.test.ts",
           operation: "create",
           content: "export const b = 2;"
         }
       ],
       targetFiles: [
         "apps/orchestrator-runner/src/new-a.ts",
-        "apps/orchestrator-runner/src/new-b.ts"
+        "apps/orchestrator-runner/test/new-b.test.ts"
       ]
     }
   });
@@ -207,7 +207,7 @@ type BackendOutputOverrides = {
 function createValidBackendOutput(overrides: BackendOutputOverrides = {}): AgentOutputEnvelope {
   const metrics = {
     changePlan: ["Update service handler to support validated output"],
-    targetFiles: ["apps/orchestrator-runner/src/runner.ts", "apps/orchestrator-runner/test/runner.test.ts"],
+    targetFiles: ["apps/orchestrator-runner/src/runner.ts"],
     changeType: "patch_only",
     requiresSchemaChange: false,
     requiresArchitectureChange: false,
@@ -217,11 +217,6 @@ function createValidBackendOutput(overrides: BackendOutputOverrides = {}): Agent
         filePath: "apps/orchestrator-runner/src/runner.ts",
         operation: "update" as const,
         content: "/* patch content */"
-      },
-      {
-        filePath: "apps/orchestrator-runner/test/runner.test.ts",
-        operation: "update" as const,
-        content: "/* test patch content */"
       }
     ],
     testsPlan: ["pnpm --filter @monitor/orchestrator-runner test"],

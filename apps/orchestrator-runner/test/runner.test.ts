@@ -1446,7 +1446,7 @@ test("mode mock with backend live override applies one allowlisted new file", as
   process.env.OPENAI_API_KEY = "test-live-key";
 
   try {
-    const newFile = "apps/orchestrator-runner/src/backend-live-created.ts";
+    const newFile = "apps/orchestrator-runner/test/backend-live-created.test.ts";
     const result = await runWithArgv(
       [
         "--mode",
@@ -1496,6 +1496,148 @@ test("mode mock with backend live override applies one allowlisted new file", as
       patchPlan[0]?.operations.some(
         (operation) => operation.operation === "create" && operation.filePath === newFile
       )
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock with backend live override applies test-focused impl+test updates", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const implFile = "apps/orchestrator-runner/src/backend-live-expanded.ts";
+    const implPath = join(workspaceRoot, implFile);
+    await mkdir(dirname(implPath), { recursive: true });
+    await writeFile(implPath, "export const expandedImpl = false;\n", "utf8");
+
+    const testFile = "apps/orchestrator-runner/test/backend-live-expanded.test.ts";
+    const testPath = join(workspaceRoot, testFile);
+    await mkdir(dirname(testPath), { recursive: true });
+    await writeFile(testPath, "export const expandedTest = false;\n", "utf8");
+
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "backend=live",
+        "--backend-write",
+        "apply",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-backend-live-expanded-update"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionFetch(
+          createLiveBackendResponseWithMetrics("task-backend-live-expanded-update", implFile, {
+            changeType: "test_focused_multi_file",
+            targetFiles: [implFile, testFile],
+            proposedDiffs: [
+              {
+                filePath: implFile,
+                operation: "update",
+                content: "export const expandedImpl = true;\n"
+              },
+              {
+                filePath: testFile,
+                operation: "update",
+                content: "export const expandedTest = true;\n"
+              }
+            ]
+          })
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(await readFile(implPath, "utf8"), "export const expandedImpl = true;\n");
+    assert.equal(await readFile(testPath, "utf8"), "export const expandedTest = true;\n");
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock with backend live override applies test-focused impl update + new test file", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const implFile = "apps/orchestrator-runner/src/backend-live-expanded-create.ts";
+    const implPath = join(workspaceRoot, implFile);
+    await mkdir(dirname(implPath), { recursive: true });
+    await writeFile(implPath, "export const expandedCreateImpl = false;\n", "utf8");
+
+    const newTestFile = "apps/orchestrator-runner/test/backend-live-expanded-create.test.ts";
+
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "backend=live",
+        "--backend-write",
+        "apply",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-backend-live-expanded-create"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionFetch(
+          createLiveBackendResponseWithMetrics("task-backend-live-expanded-create", implFile, {
+            changeType: "test_focused_multi_file",
+            targetFiles: [implFile, newTestFile],
+            proposedDiffs: [
+              {
+                filePath: implFile,
+                operation: "update",
+                content: "export const expandedCreateImpl = true;\n"
+              },
+              {
+                filePath: newTestFile,
+                operation: "create",
+                content: "export const expandedCreateTest = true;\n"
+              }
+            ]
+          })
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(await readFile(implPath, "utf8"), "export const expandedCreateImpl = true;\n");
+    assert.equal(
+      await readFile(join(workspaceRoot, newTestFile), "utf8"),
+      "export const expandedCreateTest = true;\n"
     );
   } finally {
     if (oldKey === undefined) {
@@ -1576,12 +1718,13 @@ test("backend apply failure restores modified files and persists rollback result
     await mkdir(dirname(existingPath), { recursive: true });
     await writeFile(existingPath, "export const backendPatched = false;\n", "utf8");
 
-    const missingFile = "apps/orchestrator-runner/src/missing-roll-forward.ts";
+    const missingFile = "apps/orchestrator-runner/test/missing-roll-forward.test.ts";
     const failingResponse = createLiveBackendResponseWithMetrics(
       "task-backend-rollback-failure",
       existingFile,
       {
         targetFiles: [existingFile, missingFile],
+        changeType: "test_focused_multi_file",
         proposedDiffs: [
           {
             filePath: existingFile,
@@ -1673,7 +1816,7 @@ test("backend apply failure deletes created file during rollback", async (contex
   });
 
   try {
-    const newFile = "apps/orchestrator-runner/src/backend-live-created-rollback.ts";
+    const newFile = "apps/orchestrator-runner/test/backend-live-created-rollback.test.ts";
     const missingFile = "apps/orchestrator-runner/src/backend-live-missing-update.ts";
 
     const failingResponse = createLiveBackendResponseWithMetrics(
@@ -1681,7 +1824,7 @@ test("backend apply failure deletes created file during rollback", async (contex
       newFile,
       {
         targetFiles: [newFile, missingFile],
-        changeType: "new_file",
+        changeType: "test_focused_multi_file",
         proposedDiffs: [
           {
             filePath: newFile,
@@ -1861,10 +2004,10 @@ test("mode mock with backend live override rejects invalid backend patch plans",
         expected: /create operation count 2 exceeds limit 1/,
         response: (taskId) =>
           createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
-            changeType: "new_file",
+            changeType: "test_focused_multi_file",
             targetFiles: [
               "apps/orchestrator-runner/src/new-a.ts",
-              "apps/orchestrator-runner/src/new-b.ts"
+              "apps/orchestrator-runner/test/new-b.test.ts"
             ],
             proposedDiffs: [
               {
@@ -1873,7 +2016,7 @@ test("mode mock with backend live override rejects invalid backend patch plans",
                 content: "export const a = true;\n"
               },
               {
-                filePath: "apps/orchestrator-runner/src/new-b.ts",
+                filePath: "apps/orchestrator-runner/test/new-b.test.ts",
                 operation: "create",
                 content: "export const b = true;\n"
               }
@@ -1892,6 +2035,66 @@ test("mode mock with backend live override rejects invalid backend patch plans",
                 filePath: "docs/project/new-from-backend.md",
                 operation: "create",
                 content: "# forbidden create path\n"
+              }
+            ]
+          })
+      },
+      {
+        id: "expanded-no-test-path",
+        expected: /requires at least one test-related target file/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            changeType: "test_focused_multi_file",
+            targetFiles: [
+              "apps/orchestrator-runner/src/expanded-a.ts",
+              "apps/orchestrator-runner/src/expanded-b.ts"
+            ],
+            proposedDiffs: [
+              {
+                filePath: "apps/orchestrator-runner/src/expanded-a.ts",
+                operation: "update",
+                content: "export const a = true;\n"
+              },
+              {
+                filePath: "apps/orchestrator-runner/src/expanded-b.ts",
+                operation: "update",
+                content: "export const b = true;\n"
+              }
+            ]
+          })
+      },
+      {
+        id: "expanded-too-many-files",
+        expected: /target count 4 exceeds limit 3/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            changeType: "test_focused_multi_file",
+            targetFiles: [
+              "apps/orchestrator-runner/src/expanded-limit-a.ts",
+              "apps/orchestrator-runner/test/expanded-limit.test.ts",
+              "apps/orchestrator-runner/test/expanded-helper.ts",
+              "apps/orchestrator-runner/test/expanded-overflow.ts"
+            ],
+            proposedDiffs: [
+              {
+                filePath: "apps/orchestrator-runner/src/expanded-limit-a.ts",
+                operation: "update",
+                content: "export const a = true;\n"
+              },
+              {
+                filePath: "apps/orchestrator-runner/test/expanded-limit.test.ts",
+                operation: "update",
+                content: "export const t = true;\n"
+              },
+              {
+                filePath: "apps/orchestrator-runner/test/expanded-helper.ts",
+                operation: "update",
+                content: "export const h = true;\n"
+              },
+              {
+                filePath: "apps/orchestrator-runner/test/expanded-overflow.ts",
+                operation: "update",
+                content: "export const o = true;\n"
               }
             ]
           })

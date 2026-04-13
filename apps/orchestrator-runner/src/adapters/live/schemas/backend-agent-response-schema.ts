@@ -48,7 +48,7 @@ export const BACKEND_RESPONSE_SCHEMA: Record<string, unknown> = strictObjectSche
       },
       changeType: {
         type: "string",
-        enum: ["patch_only", "new_file", "test_only", "docs_only"]
+        enum: ["patch_only", "new_file", "test_only", "docs_only", "test_focused_multi_file"]
       },
       requiresSchemaChange: { type: "boolean" },
       requiresArchitectureChange: { type: "boolean" },
