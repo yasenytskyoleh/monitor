@@ -1378,7 +1378,7 @@ test("mode mock with backend live override applies constrained backend patch", a
     assert.equal(result.patchPlans[0]?.dryRun, false);
 
     const patchedFile = await readFile(join(workspaceRoot, backendTargetFile), "utf8");
-    assert.match(patchedFile, /patched by live backend/);
+    assert.equal(patchedFile, "export const backendPatched = false;\n");
 
     const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
     const patchPlan = await readJsonFile<Array<{ changeType: string; applyMode: string; targetFiles: string[] }>>(
@@ -1404,6 +1404,20 @@ test("mode mock with backend live override applies constrained backend patch", a
     assert.equal(verificationResult.length, 1);
     assert.equal(verificationResult[0]?.overallStatus, "skipped");
     assert.deepEqual(verificationResult[0]?.hooksRequested, []);
+
+    const workspaceSummary = await readJsonFile<
+      Array<{
+        isolationEnabled: boolean;
+        copiedFilesCount: number;
+        patchedFiles: string[];
+        cleanupStatus: string;
+      }>
+    >(join(artifactsDir, "workspace-summary.json"));
+    assert.equal(workspaceSummary.length, 1);
+    assert.equal(workspaceSummary[0]?.isolationEnabled, true);
+    assert.ok((workspaceSummary[0]?.copiedFilesCount ?? 0) > 0);
+    assert.ok(workspaceSummary[0]?.patchedFiles.includes(backendTargetFile));
+    assert.equal(workspaceSummary[0]?.cleanupStatus, "succeeded");
 
     const rollbackPlan = await readJsonFile<
       Array<{ applyMode: string; entries: Array<{ filePath: string }> }>
@@ -1480,8 +1494,7 @@ test("mode mock with backend live override applies one allowlisted new file", as
     assert.equal(result.taskState, "DONE");
     assert.equal(result.agentModes?.["backend-agent"], "live");
 
-    const createdContent = await readFile(join(workspaceRoot, newFile), "utf8");
-    assert.equal(createdContent, "export const backendCreated = true;\n");
+    await assert.rejects(() => access(join(workspaceRoot, newFile)));
 
     const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
     const patchPlan = await readJsonFile<
@@ -1497,6 +1510,13 @@ test("mode mock with backend live override applies one allowlisted new file", as
         (operation) => operation.operation === "create" && operation.filePath === newFile
       )
     );
+
+    const workspaceSummary = await readJsonFile<
+      Array<{ patchedFiles: string[]; cleanupStatus: string }>
+    >(join(artifactsDir, "workspace-summary.json"));
+    assert.equal(workspaceSummary.length, 1);
+    assert.ok(workspaceSummary[0]?.patchedFiles.includes(newFile));
+    assert.equal(workspaceSummary[0]?.cleanupStatus, "succeeded");
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1566,8 +1586,8 @@ test("mode mock with backend live override applies test-focused impl+test update
 
     assert.equal(result.status, "ok");
     assert.equal(result.taskState, "DONE");
-    assert.equal(await readFile(implPath, "utf8"), "export const expandedImpl = true;\n");
-    assert.equal(await readFile(testPath, "utf8"), "export const expandedTest = true;\n");
+    assert.equal(await readFile(implPath, "utf8"), "export const expandedImpl = false;\n");
+    assert.equal(await readFile(testPath, "utf8"), "export const expandedTest = false;\n");
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1634,11 +1654,8 @@ test("mode mock with backend live override applies test-focused impl update + ne
 
     assert.equal(result.status, "ok");
     assert.equal(result.taskState, "DONE");
-    assert.equal(await readFile(implPath, "utf8"), "export const expandedCreateImpl = true;\n");
-    assert.equal(
-      await readFile(join(workspaceRoot, newTestFile), "utf8"),
-      "export const expandedCreateTest = true;\n"
-    );
+    assert.equal(await readFile(implPath, "utf8"), "export const expandedCreateImpl = false;\n");
+    await assert.rejects(() => access(join(workspaceRoot, newTestFile)));
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1784,6 +1801,13 @@ test("backend apply failure restores modified files and persists rollback result
     assert.equal(rollbackResult[0]?.status, "succeeded");
     assert.ok(rollbackResult[0]?.restoredFiles.includes(existingFile));
 
+    const workspaceSummary = await readJsonFile<
+      Array<{ isolationEnabled: boolean; cleanupStatus: string }>
+    >(join(workspaceRoot, "runtime/runs/run_backend_rollback_001/workspace-summary.json"));
+    assert.equal(workspaceSummary.length, 1);
+    assert.equal(workspaceSummary[0]?.isolationEnabled, true);
+    assert.equal(workspaceSummary[0]?.cleanupStatus, "succeeded");
+
     const stabilitySummary = await readJsonFile<{
       overallStatus: string;
       applyStatus: string;
@@ -1884,6 +1908,13 @@ test("backend apply failure deletes created file during rollback", async (contex
     assert.equal(rollbackResult[0]?.triggerReason, "apply_failed");
     assert.equal(rollbackResult[0]?.status, "succeeded");
     assert.ok(rollbackResult[0]?.deletedCreatedFiles.includes(newFile));
+
+    const workspaceSummary = await readJsonFile<
+      Array<{ isolationEnabled: boolean; cleanupStatus: string }>
+    >(join(workspaceRoot, "runtime/runs/run_backend_create_rollback_001/workspace-summary.json"));
+    assert.equal(workspaceSummary.length, 1);
+    assert.equal(workspaceSummary[0]?.isolationEnabled, true);
+    assert.equal(workspaceSummary[0]?.cleanupStatus, "succeeded");
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;

@@ -3,6 +3,7 @@ import type { AgentOutputEnvelope, TransitionRecord } from "@monitor/orchestrato
 import type { ApprovalTransitionEvidence, WorkflowApproval } from "./approvals/types.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
 import type { PatchPlanEvidence, PatchResultEvidence } from "./backend-patch/types.js";
+import type { WorkspaceSummaryEvidence } from "./backend-isolation/types.js";
 import type {
   BackendRollbackMode,
   RollbackPlanEvidence,
@@ -43,6 +44,7 @@ export type MockScenarioResult = {
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
   patchResults: PatchResultEvidence[];
+  workspaceSummaries: WorkspaceSummaryEvidence[];
   rollbackPlans: RollbackPlanEvidence[];
   rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
@@ -67,6 +69,7 @@ export type RunnerOutput = {
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
   patchResults: PatchResultEvidence[];
+  workspaceSummaries: WorkspaceSummaryEvidence[];
   rollbackPlans: RollbackPlanEvidence[];
   rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];

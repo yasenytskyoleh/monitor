@@ -22,6 +22,10 @@ import {
   type PatchResultEvidence
 } from "./backend-patch/types.js";
 import {
+  extractWorkspaceSummaryEvidenceFromBackendOutput,
+  type WorkspaceSummaryEvidence
+} from "./backend-isolation/types.js";
+import {
   extractRollbackPlanEvidenceFromBackendOutput,
   extractRollbackResultEvidenceFromBackendOutput,
   type RollbackPlanEvidence,
@@ -95,6 +99,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       approvalEvidenceByTransitionChecksum: {},
       patchPlans: [],
       patchResults: [],
+      workspaceSummaries: [],
       rollbackPlans: [],
       rollbackResults: [],
       verificationResults: [],
@@ -109,6 +114,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
       patchPlans: PatchPlanEvidence[];
       patchResults: PatchResultEvidence[];
+      workspaceSummaries: WorkspaceSummaryEvidence[];
       rollbackPlans: RollbackPlanEvidence[];
       rollbackResults: RollbackResultEvidence[];
       verificationResults: VerificationResultEvidence[];
@@ -138,6 +144,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       approvalEvidenceByTransitionChecksum: scenarioResult.approvalEvidenceByTransitionChecksum,
       patchPlans: scenarioResult.patchPlans,
       patchResults: scenarioResult.patchResults,
+      workspaceSummaries: scenarioResult.workspaceSummaries,
       rollbackPlans: scenarioResult.rollbackPlans,
       rollbackResults: scenarioResult.rollbackResults,
       verificationResults: scenarioResult.verificationResults,
@@ -166,6 +173,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
     ),
     patchPlans: scenarioResults.flatMap((scenarioResult) => scenarioResult.patchPlans),
     patchResults: scenarioResults.flatMap((scenarioResult) => scenarioResult.patchResults),
+    workspaceSummaries: scenarioResults.flatMap((scenarioResult) => scenarioResult.workspaceSummaries),
     rollbackPlans: scenarioResults.flatMap((scenarioResult) => scenarioResult.rollbackPlans),
     rollbackResults: scenarioResults.flatMap((scenarioResult) => scenarioResult.rollbackResults),
     verificationResults: scenarioResults.flatMap((scenarioResult) => scenarioResult.verificationResults),
@@ -214,6 +222,7 @@ export async function runHappyWorkflow(
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
   patchResults: PatchResultEvidence[];
+  workspaceSummaries: WorkspaceSummaryEvidence[];
   rollbackPlans: RollbackPlanEvidence[];
   rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
@@ -272,6 +281,7 @@ export async function runHappyWorkflow(
     approvalEvidenceByTransitionChecksum: scenarioContext.approvalEvidenceByTransitionChecksum,
     patchPlans: scenarioContext.patchPlans,
     patchResults: scenarioContext.patchResults,
+    workspaceSummaries: scenarioContext.workspaceSummaries,
     rollbackPlans: scenarioContext.rollbackPlans,
     rollbackResults: scenarioContext.rollbackResults,
     verificationResults: scenarioContext.verificationResults,
@@ -291,6 +301,7 @@ async function runMockMissingApprovalScenario(
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
   patchResults: PatchResultEvidence[];
+  workspaceSummaries: WorkspaceSummaryEvidence[];
   rollbackPlans: RollbackPlanEvidence[];
   rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
@@ -338,6 +349,7 @@ async function runMockMissingApprovalScenario(
     approvalEvidenceByTransitionChecksum: scenarioContext.approvalEvidenceByTransitionChecksum,
     patchPlans: scenarioContext.patchPlans,
     patchResults: scenarioContext.patchResults,
+    workspaceSummaries: scenarioContext.workspaceSummaries,
     rollbackPlans: scenarioContext.rollbackPlans,
     rollbackResults: scenarioContext.rollbackResults,
     verificationResults: scenarioContext.verificationResults,
@@ -386,6 +398,7 @@ type ScenarioExecutionContext = {
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
   patchResults: PatchResultEvidence[];
+  workspaceSummaries: WorkspaceSummaryEvidence[];
   rollbackPlans: RollbackPlanEvidence[];
   rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
@@ -491,6 +504,17 @@ async function executeAndCollectTransition(
   });
   if (verificationResult) {
     context.verificationResults.push(verificationResult);
+  }
+
+  const workspaceSummary = extractWorkspaceSummaryEvidenceFromBackendOutput({
+    output: result.output,
+    transitionChecksum: result.transition.transitionChecksum,
+    fromState: result.transition.from,
+    toState: result.transition.to,
+    scenario: context.scenario
+  });
+  if (workspaceSummary) {
+    context.workspaceSummaries.push(workspaceSummary);
   }
 
   context.results.push(result);
