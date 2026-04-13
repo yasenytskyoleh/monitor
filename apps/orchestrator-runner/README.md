@@ -30,6 +30,8 @@ Default mode is `live`:
 Backend write mode:
 - default is `--backend-write dry-run` (no filesystem mutation)
 - use `--backend-write apply` to allow constrained patch application for `backend-agent`
+- apply mode executes patching and verification in an isolated temporary workspace by default
+- main workspace files are not directly mutated during isolated backend execution
 
 Backend rollback mode:
 - default is `--backend-rollback restore_written_files` in apply mode
@@ -163,6 +165,7 @@ Persisted run artifacts are written to:
 - `runtime/runs/<runId>/artifacts.json`
 - optional: `runtime/runs/<runId>/patch-plan.json`
 - optional: `runtime/runs/<runId>/patch-result.json`
+- optional: `runtime/runs/<runId>/workspace-summary.json`
 - optional: `runtime/runs/<runId>/rollback-plan.json`
 - optional: `runtime/runs/<runId>/rollback-result.json`
 - optional: `runtime/runs/<runId>/verification-result.json`
@@ -317,6 +320,9 @@ Live Backend Agent constrained mode:
 - backend patch evidence files:
   - `patch-plan.json`
   - `patch-result.json`
+- backend isolation evidence file:
+  - `workspace-summary.json`
+  - includes isolation status, workspace id/path metadata, copied entry count, patched files, and cleanup status
 - backend rollback evidence files:
   - `rollback-plan.json`
   - `rollback-result.json`

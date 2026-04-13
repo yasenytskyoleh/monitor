@@ -10,6 +10,7 @@ import { isPolicyApprovalError } from "./approvals/types.js";
 import { parseArgs } from "./cli.js";
 import { loadDotEnv, requireOpenAiApiKey } from "./env.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
+import type { WorkspaceSummaryEvidence } from "./backend-isolation/types.js";
 import { isBackendPatchError } from "./backend-patch/errors.js";
 import type { PatchResultEvidence } from "./backend-patch/types.js";
 import type { RollbackPlanEvidence, RollbackResultEvidence } from "./backend-rollback/types.js";
@@ -247,6 +248,7 @@ async function persistSuccessRun(options: PersistSuccessOptions): Promise<Persis
     artifacts: options.result.artifacts,
     patchPlans: options.result.patchPlans,
     patchResults: options.result.patchResults,
+    workspaceSummaries: options.result.workspaceSummaries,
     rollbackPlans: options.result.rollbackPlans,
     rollbackResults: options.result.rollbackResults,
     verificationResults: options.result.verificationResults,
@@ -307,6 +309,9 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
   };
 
   const patchResults = options.partialResult?.patchResults ?? inferFailurePatchResults(options.error, options.args.taskId);
+  const workspaceSummaries =
+    options.partialResult?.workspaceSummaries ??
+    inferFailureWorkspaceSummaries(options.error, options.args.taskId);
   const rollbackPlans = options.partialResult?.rollbackPlans ?? inferFailureRollbackPlans(options.error, options.args.taskId);
   const rollbackResults =
     options.partialResult?.rollbackResults ?? inferFailureRollbackResults(options.error, options.args.taskId);
@@ -336,6 +341,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     artifacts: options.partialResult?.artifacts ?? [],
     patchPlans: options.partialResult?.patchPlans ?? [],
     patchResults,
+    workspaceSummaries,
     rollbackPlans,
     rollbackResults,
     verificationResults,
@@ -668,6 +674,32 @@ function inferFailureRollbackResults(error: unknown, taskId: string): RollbackRe
       deletedCreatedFiles: [],
       status: "skipped",
       failureReason: null
+    }
+  ];
+}
+
+function inferFailureWorkspaceSummaries(error: unknown, taskId: string): WorkspaceSummaryEvidence[] {
+  const metadata = extractBackendPatchMetadata(error);
+  const summary = metadata?.workspaceSummary as WorkspaceSummaryEvidence | undefined;
+  if (summary) {
+    return [summary];
+  }
+
+  if (!isBackendPatchError(error)) {
+    return [];
+  }
+
+  return [
+    {
+      taskId,
+      isolationEnabled: false,
+      workspaceId: null,
+      workspacePath: null,
+      copiedFilesCount: 0,
+      patchedFiles: [],
+      verificationRanInWorkspace: false,
+      cleanupStatus: "skipped",
+      cleanupFailureReason: null
     }
   ];
 }

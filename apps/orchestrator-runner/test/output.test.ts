@@ -26,6 +26,7 @@ function createBaseResult(): RunnerOutput {
     approvalEvidenceByTransitionChecksum: {},
     patchPlans: [],
     patchResults: [],
+    workspaceSummaries: [],
     rollbackPlans: [],
     rollbackResults: [],
     verificationResults: [],
@@ -56,6 +57,7 @@ test("formatRunnerOutput returns machine-readable json output", () => {
   assert.equal(parsed.transitionsCount, 0);
   assert.equal(parsed.patchPlansCount, 0);
   assert.equal(parsed.patchResultsCount, 0);
+  assert.equal(parsed.workspaceSummariesCount, 0);
   assert.equal(parsed.rollbackPlansCount, 0);
   assert.equal(parsed.rollbackResultsCount, 0);
   assert.equal(parsed.verificationResultsCount, 0);

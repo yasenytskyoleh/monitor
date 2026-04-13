@@ -15,6 +15,7 @@ export function formatRunnerOutput(result: RunnerOutput, format: OutputFormat = 
         transitionsCount: result.transitions.length,
         patchPlansCount: result.patchPlans.length,
         patchResultsCount: result.patchResults.length,
+        workspaceSummariesCount: result.workspaceSummaries.length,
         rollbackPlansCount: result.rollbackPlans.length,
         rollbackResultsCount: result.rollbackResults.length,
         verificationResultsCount: result.verificationResults.length,

@@ -11,6 +11,19 @@ This document defines:
 
 This contract is active in runtime validation for backend live constrained mode.
 
+## Isolated execution model
+When backend runs in `apply` mode, patch application and verification execute in an isolated temporary workspace.
+
+Rules:
+- validate plan against repo-relative paths first,
+- materialize an isolated workspace copy,
+- apply only validated operations inside the isolated workspace,
+- run verification hooks (`lint` / `typecheck` / `test`) against the isolated workspace,
+- persist workspace execution evidence,
+- cleanup isolated workspace by default.
+
+This keeps the main workspace protected during live backend execution.
+
 ## Status
 - backend live model execution: **implemented in constrained patch mode**
 - backend live safety contract: **defined and enforced**

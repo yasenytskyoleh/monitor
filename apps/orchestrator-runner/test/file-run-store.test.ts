@@ -162,6 +162,23 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
         failureReason: null
       }
     ],
+    workspaceSummaries: [
+      {
+        taskId: "task-001",
+        scenario: "happy",
+        transitionChecksum: "checksum-1",
+        fromState: "IMPLEMENT",
+        toState: "REVIEW",
+        isolationEnabled: true,
+        workspaceId: "workspace_run_fixed_001",
+        workspacePath: "/tmp/workspace_run_fixed_001",
+        copiedFilesCount: 8,
+        patchedFiles: ["apps/orchestrator-runner/src/runner.ts"],
+        verificationRanInWorkspace: true,
+        cleanupStatus: "succeeded",
+        cleanupFailureReason: null
+      }
+    ],
     rollbackPlans: [
       {
         taskId: "task-001",
@@ -281,6 +298,13 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
   ) as Array<Record<string, unknown>>;
   assert.equal(patchResultJson.length, 1);
   assert.equal(patchResultJson[0]?.applied, true);
+
+  const workspaceSummaryJson = JSON.parse(
+    await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/workspace-summary.json"), "utf8")
+  ) as Array<Record<string, unknown>>;
+  assert.equal(workspaceSummaryJson.length, 1);
+  assert.equal(workspaceSummaryJson[0]?.isolationEnabled, true);
+  assert.equal(workspaceSummaryJson[0]?.cleanupStatus, "succeeded");
 
   const rollbackPlanJson = JSON.parse(
     await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/rollback-plan.json"), "utf8")

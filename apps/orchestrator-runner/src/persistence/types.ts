@@ -1,5 +1,6 @@
 import type { ApprovalReference } from "@monitor/agent-config";
 import type { ApprovalTransitionEvidence, WorkflowApproval } from "../approvals/types.js";
+import type { WorkspaceSummaryEvidence } from "../backend-isolation/types.js";
 import type { PatchPlanEvidence, PatchResultEvidence } from "../backend-patch/types.js";
 import type { RollbackPlanEvidence, RollbackResultEvidence } from "../backend-rollback/types.js";
 import type { VerificationResultEvidence } from "../backend-verification/types.js";
@@ -68,6 +69,7 @@ export type PersistRunArtifactInput = {
   artifacts: WorkflowArtifact[];
   patchPlans?: PatchPlanEvidence[];
   patchResults?: PatchResultEvidence[];
+  workspaceSummaries?: WorkspaceSummaryEvidence[];
   rollbackPlans?: RollbackPlanEvidence[];
   rollbackResults?: RollbackResultEvidence[];
   verificationResults?: VerificationResultEvidence[];

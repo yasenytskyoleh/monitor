@@ -51,6 +51,9 @@ export class FileRunStore {
     if (input.patchResults) {
       await writeJson(join(runDir, "patch-result.json"), input.patchResults);
     }
+    if (input.workspaceSummaries && input.workspaceSummaries.length > 0) {
+      await writeJson(join(runDir, "workspace-summary.json"), input.workspaceSummaries);
+    }
     if (input.rollbackPlans && input.rollbackPlans.length > 0) {
       await writeJson(join(runDir, "rollback-plan.json"), input.rollbackPlans);
     }

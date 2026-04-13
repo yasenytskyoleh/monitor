@@ -1,5 +1,12 @@
 import type { AgentHandlerContext, AgentOutputEnvelope } from "@monitor/orchestrator-core";
 
+import { cleanupIsolatedWorkspace } from "../../backend-isolation/cleanup-isolated-workspace.js";
+import { prepareIsolatedWorkspace } from "../../backend-isolation/prepare-isolated-workspace.js";
+import type {
+  IsolatedWorkspaceCleanupResult,
+  PreparedIsolatedWorkspace,
+  WorkspaceSummaryEvidence
+} from "../../backend-isolation/types.js";
 import { applyBackendPatchPlan } from "../../backend-patch/apply-patch-plan.js";
 import { BackendPatchError, isBackendPatchError, type BackendPatchFailureCategory } from "../../backend-patch/errors.js";
 import type { PatchResultEvidence } from "../../backend-patch/types.js";
@@ -29,6 +36,8 @@ import { assertBackendOutput } from "./validators/assert-backend-output.js";
 export type LiveBackendAgentOptions = LiveAdapterOptions & {
   rootDir: string;
   dryRun?: boolean;
+  isolatedWorkspace?: boolean;
+  keepIsolatedWorkspace?: boolean;
   rollbackMode?: BackendRollbackMode;
   verificationMode?: BackendVerificationMode;
 };
@@ -95,9 +104,31 @@ async function finalizeBackendOutput(
     metrics: output.metrics
   });
   const applyMode: "dry-run" | "apply" = options.dryRun === false ? "apply" : "dry-run";
+  const verificationMode: BackendVerificationMode = options.verificationMode ?? "none";
   const rollbackMode: BackendRollbackMode = options.rollbackMode ?? "restore_written_files";
+  const useIsolatedWorkspace = applyMode === "apply" && (options.isolatedWorkspace ?? true);
+
+  let preparedWorkspace: PreparedIsolatedWorkspace | null = null;
+  let cleanupResult: IsolatedWorkspaceCleanupResult = {
+    status: "skipped",
+    failureReason: null
+  };
+
+  let executionPatchPlan = patchPlan;
+  let executionCwd = options.rootDir;
+
+  if (useIsolatedWorkspace) {
+    preparedWorkspace = await prepareIsolatedWorkspace({
+      rootDir: options.rootDir,
+      patchPlan,
+      verificationMode
+    });
+    executionPatchPlan = preparedWorkspace.executionPatchPlan;
+    executionCwd = preparedWorkspace.workspaceRoot;
+  }
+
   const rollbackPlan = await buildRollbackPlan({
-    patchPlan,
+    patchPlan: executionPatchPlan,
     applyMode
   });
 
@@ -109,18 +140,21 @@ async function finalizeBackendOutput(
     | undefined;
   let verificationResult: BackendVerificationResult | undefined;
   let rollbackResult: BackendRollbackResult | undefined;
+  let patchFailure: PatchResultEvidence | undefined;
+  let failureVerificationResult: BackendVerificationResult | undefined;
+  let capturedError: unknown;
 
   try {
-    applyResult = await applyBackendPatchPlan(patchPlan, {
+    applyResult = await applyBackendPatchPlan(executionPatchPlan, {
       dryRun: options.dryRun ?? true
     });
     postApplyResult = await validatePostApplyResult({
-      patchPlan,
+      patchPlan: executionPatchPlan,
       applyResult
     });
     verificationResult = await runBackendVerificationHooks({
-      mode: options.verificationMode ?? "none",
-      cwd: options.rootDir,
+      mode: verificationMode,
+      cwd: executionCwd,
       applied: applyResult.applied
     });
   } catch (error) {
@@ -138,9 +172,9 @@ async function finalizeBackendOutput(
       applyResult,
       error
     });
-    const fallbackVerificationResult = buildFailureVerificationResult({
+    failureVerificationResult = buildFailureVerificationResult({
       taskId: context.task.taskId,
-      mode: options.verificationMode ?? "none",
+      mode: verificationMode,
       applied: applyMode === "apply",
       error
     });
@@ -148,22 +182,64 @@ async function finalizeBackendOutput(
     try {
       assertRollbackSucceeded(rollbackResult);
     } catch (rollbackError) {
-      throw createAugmentedBackendError(
-        rollbackError,
-        patchFailure,
-        fallbackVerificationResult,
-        rollbackPlan,
-        rollbackResult,
-        context.task.taskId
-      );
+      capturedError = rollbackError;
     }
+    capturedError ??= error;
+  } finally {
+    if (preparedWorkspace) {
+      cleanupResult = await cleanupIsolatedWorkspace({
+        workspaceRoot: preparedWorkspace.workspaceRoot,
+        keepWorkspace: options.keepIsolatedWorkspace
+      });
+    }
+  }
 
+  const workspaceSummary = buildWorkspaceSummaryEvidence({
+    taskId: context.task.taskId,
+    isolationEnabled: useIsolatedWorkspace,
+    preparedWorkspace,
+    executionPatchPlan,
+    verificationMode,
+    cleanupResult
+  });
+
+  if (cleanupResult.status === "failed") {
+    const cleanupError = new BackendPatchError(
+      "apply_failure",
+      `Isolated workspace cleanup failed: ${cleanupResult.failureReason ?? "unknown cleanup error"}`
+    );
+    capturedError = capturedError
+      ? new BackendPatchError(
+          "apply_failure",
+          `${cleanupError.message}. Previous error: ${
+            capturedError instanceof Error ? capturedError.message : String(capturedError)
+          }`,
+          { cause: capturedError }
+        )
+      : cleanupError;
+  }
+
+  if (capturedError) {
     throw createAugmentedBackendError(
-      error,
-      patchFailure,
-      fallbackVerificationResult,
+      capturedError,
+      patchFailure ??
+        buildFailurePatchResult({
+          taskId: context.task.taskId,
+          applyMode,
+          rollbackResult: rollbackResult ?? buildSkippedRollbackResult(null),
+          applyResult,
+          error: capturedError
+        }),
+      failureVerificationResult ??
+        buildFailureVerificationResult({
+          taskId: context.task.taskId,
+          mode: verificationMode,
+          applied: applyMode === "apply",
+          error: capturedError
+        }),
       rollbackPlan,
-      rollbackResult,
+      rollbackResult ?? buildSkippedRollbackResult(null),
+      workspaceSummary,
       context.task.taskId
     );
   }
@@ -173,7 +249,7 @@ async function finalizeBackendOutput(
       ? { ...output.metrics }
       : {};
 
-  const operations = patchPlan.proposedDiffs.map((diff) => ({
+  const operations = executionPatchPlan.proposedDiffs.map((diff) => ({
     filePath: diff.filePath,
     operation: diff.operation
   }));
@@ -190,36 +266,37 @@ async function finalizeBackendOutput(
       ...metrics,
       patchPlan: {
         patchMode:
-          patchPlan.changeType === "test_focused_multi_file"
+          executionPatchPlan.changeType === "test_focused_multi_file"
             ? "test_focused_multi_file"
             : "single_file",
-        testFocused: patchPlan.changeType === "test_focused_multi_file",
-        changeType: patchPlan.changeType,
-        applyMode: applyResult.applyMode,
+        testFocused: executionPatchPlan.changeType === "test_focused_multi_file",
+        changeType: executionPatchPlan.changeType,
+        applyMode: applyResult!.applyMode,
         rollbackMode,
-        targetFiles: patchPlan.targetFiles,
+        targetFiles: executionPatchPlan.targetFiles,
         createdFiles,
         updatedFiles,
         operations,
-        singleRootKey: patchPlan.singleRootKey,
-        totalContentBytes: patchPlan.totalContentBytes,
-        limitChecks: patchPlan.limitChecks
+        singleRootKey: executionPatchPlan.singleRootKey,
+        totalContentBytes: executionPatchPlan.totalContentBytes,
+        limitChecks: executionPatchPlan.limitChecks
       },
       patchApplyResult: {
-        applyMode: applyResult.applyMode,
-        applied: applyResult.applied,
-        changedFiles: applyResult.changedFiles,
+        applyMode: applyResult!.applyMode,
+        applied: applyResult!.applied,
+        changedFiles: applyResult!.changedFiles,
         createdFiles,
         updatedFiles,
-        appliedOperations: applyResult.appliedOperations,
-        appliedCount: applyResult.appliedOperations.length,
-        dryRun: applyResult.dryRun,
-        postApplyValidationPassed: postApplyResult.passed,
-        postApplyChecks: postApplyResult.checks,
+        appliedOperations: applyResult!.appliedOperations,
+        appliedCount: applyResult!.appliedOperations.length,
+        dryRun: applyResult!.dryRun,
+        postApplyValidationPassed: postApplyResult!.passed,
+        postApplyChecks: postApplyResult!.checks,
         failureCategory: null,
         failureReason: null
       },
-      verificationResult,
+      verificationResult: verificationResult!,
+      workspaceSummary,
       ...(rollbackPlan
         ? {
             rollbackPlan: {
@@ -231,17 +308,32 @@ async function finalizeBackendOutput(
                 previousContent: entry.previousContent
               }))
             },
-            rollbackResult: {
-              rollbackAttempted: false,
-              triggerReason: null,
-              restoredFiles: [],
-              deletedCreatedFiles: [],
-              status: "skipped",
-              failureReason: null
-            }
+            rollbackResult: rollbackResult ?? buildSkippedRollbackResult(null)
           }
         : {})
     }
+  };
+}
+
+function buildWorkspaceSummaryEvidence(input: {
+  taskId: string;
+  isolationEnabled: boolean;
+  preparedWorkspace: PreparedIsolatedWorkspace | null;
+  executionPatchPlan: ReturnType<typeof validateBackendPatchPlan>;
+  verificationMode: BackendVerificationMode;
+  cleanupResult: IsolatedWorkspaceCleanupResult;
+}): WorkspaceSummaryEvidence {
+  return {
+    taskId: input.taskId,
+    isolationEnabled: input.isolationEnabled,
+    workspaceId: input.preparedWorkspace?.workspaceId ?? null,
+    workspacePath: input.preparedWorkspace?.workspaceRoot ?? null,
+    copiedFilesCount: input.preparedWorkspace?.copiedFilesCount ?? 0,
+    patchedFiles: [...input.executionPatchPlan.targetFiles],
+    verificationRanInWorkspace:
+      input.isolationEnabled && input.verificationMode !== "none",
+    cleanupStatus: input.cleanupResult.status,
+    cleanupFailureReason: input.cleanupResult.failureReason
   };
 }
 
@@ -281,6 +373,7 @@ function createAugmentedBackendError(
   verificationFailure: BackendVerificationResult,
   rollbackPlan: BackendRollbackPlan | null,
   rollbackResult: BackendRollbackResult,
+  workspaceSummary: WorkspaceSummaryEvidence,
   taskId: string
 ): BackendPatchError {
   const source = isBackendPatchError(error)
@@ -300,7 +393,8 @@ function createAugmentedBackendError(
         patchResult: patchFailure,
         verificationResult: toVerificationEvidence(taskId, verificationFailure),
         ...(rollbackPlan ? { rollbackPlan: toRollbackPlanEvidence(taskId, rollbackPlan) } : {}),
-        rollbackResult: toRollbackResultEvidence(taskId, rollbackResult)
+        rollbackResult: toRollbackResultEvidence(taskId, rollbackResult),
+        workspaceSummary
       }
     }
   );
