@@ -1540,6 +1540,133 @@ test("mode mock with backend live override applies one allowlisted new file", as
   }
 });
 
+test("mode mock with backend live override creates and promotes json helper fixture", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const helperFile = "apps/orchestrator-runner/test/fixtures/new-helper.json";
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "backend=live",
+        "--backend-write",
+        "apply",
+        "--backend-promotion",
+        "promote_verified",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-backend-helper-promote-happy"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionFetch(
+          createLiveBackendNewFileResponseContent(
+            "task-backend-helper-promote-happy",
+            helperFile,
+            "{\"helper\":true}\n"
+          )
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.agentModes?.["backend-agent"], "live");
+    assert.equal(await readFile(join(workspaceRoot, helperFile), "utf8"), "{\"helper\":true}\n");
+
+    const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
+    const patchResult = await readJsonFile<
+      Array<{ createdFiles: string[]; helperCreatedFiles?: string[]; applyMode: string }>
+    >(join(artifactsDir, "patch-result.json"));
+    assert.equal(patchResult.length, 1);
+    assert.equal(patchResult[0]?.applyMode, "apply");
+    assert.ok(patchResult[0]?.createdFiles.includes(helperFile));
+    assert.ok((patchResult[0]?.helperCreatedFiles ?? []).includes(helperFile));
+
+    const promotionResult = await readJsonFile<
+      Array<{
+        status: string;
+        filesPromoted: string[];
+        helperPromotedFiles?: string[];
+      }>
+    >(join(artifactsDir, "promotion-result.json"));
+    assert.equal(promotionResult.length, 1);
+    assert.equal(promotionResult[0]?.status, "succeeded");
+    assert.ok(promotionResult[0]?.filesPromoted.includes(helperFile));
+    assert.ok((promotionResult[0]?.helperPromotedFiles ?? []).includes(helperFile));
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock with backend live override rejects helper create when file already exists", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const helperFile = "apps/orchestrator-runner/test/fixtures/existing-helper.json";
+    const helperPath = join(workspaceRoot, helperFile);
+    await mkdir(dirname(helperPath), { recursive: true });
+    await writeFile(helperPath, "{\"helper\":false}\n", "utf8");
+
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "backend=live",
+          "--backend-write",
+          "apply",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-backend-helper-create-existing"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveBackendNewFileResponseContent(
+              "task-backend-helper-create-existing",
+              helperFile,
+              "{\"helper\":true}\n"
+            )
+          )
+        }
+      ),
+      /create operation requires non-existing file/
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
 test("mode mock with backend live override applies test-focused impl+test updates", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
@@ -2006,6 +2133,93 @@ test("mode mock with backend live override promotes verified isolated result to 
     assert.equal(promotionResult[0]?.conflictDetected, false);
     assert.equal(promotionResult[0]?.status, "succeeded");
     assert.equal(promotionResult[0]?.failureReason, null);
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("backend apply failure deletes created json helper file during rollback", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  const runStore = new FileRunStore(workspaceRoot, {
+    runIdGenerator: () => "run_backend_helper_rollback_001"
+  });
+
+  try {
+    const helperFile = "apps/orchestrator-runner/test/fixtures/helper-rollback.json";
+    const missingFile = "apps/orchestrator-runner/src/backend-live-missing-helper-update.ts";
+
+    const failingResponse = createLiveBackendResponseWithMetrics(
+      "task-backend-helper-rollback-failure",
+      helperFile,
+      {
+        targetFiles: [helperFile, missingFile],
+        changeType: "test_focused_multi_file",
+        proposedDiffs: [
+          {
+            filePath: helperFile,
+            operation: "create",
+            content: "{\"helper\":true}\n"
+          },
+          {
+            filePath: missingFile,
+            operation: "update",
+            content: "export const missingUpdate = true;\n"
+          }
+        ]
+      }
+    );
+
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "backend=live",
+          "--backend-write",
+          "apply",
+          "--backend-rollback",
+          "restore_written_files",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-backend-helper-rollback-failure"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(failingResponse),
+          runStore
+        }
+      ),
+      /create operation requires non-existing file|update operation requires existing file|apply_failure/
+    );
+
+    await assert.rejects(() => access(join(workspaceRoot, helperFile)));
+
+    const rollbackResult = await readJsonFile<
+      Array<{
+        rollbackAttempted: boolean;
+        status: string;
+        deletedCreatedFiles: string[];
+      }>
+    >(join(workspaceRoot, "runtime/runs/run_backend_helper_rollback_001/rollback-result.json"));
+    assert.equal(rollbackResult.length, 1);
+    assert.equal(rollbackResult[0]?.rollbackAttempted, true);
+    assert.equal(rollbackResult[0]?.status, "succeeded");
+    assert.ok(rollbackResult[0]?.deletedCreatedFiles.includes(helperFile));
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;

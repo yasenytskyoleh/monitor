@@ -145,6 +145,60 @@ test("backend safety validator blocks disallowed create extension", () => {
   assert.throws(() => assertBackendOutput(output), /extension is not allowlisted/);
 });
 
+test("backend safety validator allows narrow json helper creation in test fixtures", () => {
+  const output = createValidBackendOutput({
+    metrics: {
+      changeType: "new_file",
+      proposedDiffs: [
+        {
+          filePath: "apps/orchestrator-runner/test/fixtures/new-helper.json",
+          operation: "create",
+          content: "{\"helper\":true}"
+        }
+      ],
+      targetFiles: ["apps/orchestrator-runner/test/fixtures/new-helper.json"]
+    }
+  });
+
+  assert.doesNotThrow(() => assertBackendOutput(output));
+});
+
+test("backend safety validator blocks json helper creation outside fixtures allowlist", () => {
+  const output = createValidBackendOutput({
+    metrics: {
+      changeType: "new_file",
+      proposedDiffs: [
+        {
+          filePath: "apps/orchestrator-runner/src/new-helper.json",
+          operation: "create",
+          content: "{\"helper\":true}"
+        }
+      ],
+      targetFiles: ["apps/orchestrator-runner/src/new-helper.json"]
+    }
+  });
+
+  assert.throws(() => assertBackendOutput(output), /outside json helper allowlist/);
+});
+
+test("backend safety validator blocks helper create paths that look like config/schema/migration", () => {
+  const output = createValidBackendOutput({
+    metrics: {
+      changeType: "new_file",
+      proposedDiffs: [
+        {
+          filePath: "apps/orchestrator-runner/src/helper-config.ts",
+          operation: "create",
+          content: "export const helper = true;"
+        }
+      ],
+      targetFiles: ["apps/orchestrator-runner/src/helper-config.ts"]
+    }
+  });
+
+  assert.throws(() => assertBackendOutput(output), /looks like config\/schema\/migration/);
+});
+
 test("backend safety validator blocks schema changes without permission", () => {
   const output = createValidBackendOutput({
     metrics: {

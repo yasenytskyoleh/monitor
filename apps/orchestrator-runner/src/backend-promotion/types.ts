@@ -21,6 +21,8 @@ export type PromotionResultEvidence = {
   filesPlannedForPromotion: string[];
   filesPromoted: string[];
   filesBlocked: string[];
+  helperPromotedFiles?: string[];
+  helperBlockedFiles?: string[];
   conflictDetected: boolean;
   conflicts: PromotionConflictEvidence[];
   status: PromotionStatus;
@@ -91,6 +93,8 @@ export function extractPromotionResultEvidenceFromBackendOutput(input: {
     filesPlannedForPromotion: toStringArray(promotionResult.filesPlannedForPromotion),
     filesPromoted: toStringArray(promotionResult.filesPromoted),
     filesBlocked: toStringArray(promotionResult.filesBlocked),
+    helperPromotedFiles: toStringArray(promotionResult.helperPromotedFiles),
+    helperBlockedFiles: toStringArray(promotionResult.helperBlockedFiles),
     conflictDetected: promotionResult.conflictDetected === true,
     conflicts: toPromotionConflicts(promotionResult.conflicts),
     status,

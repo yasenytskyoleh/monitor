@@ -31,6 +31,7 @@ export type BackendSafetyPolicy = {
   allowedTargetPathPrefixes: string[];
   allowedCreatePathPrefixes: string[];
   allowedCreateFileExtensions: string[];
+  allowedJsonHelperCreatePathPrefixes: string[];
   forbiddenPathPrefixes: string[];
   forbiddenExactPaths: string[];
   allowedChangeTypes: BackendChangeType[];
@@ -41,6 +42,8 @@ export type BackendSafetyPolicy = {
   maxProposedDiffs: number;
   maxCreateOperations: number;
   maxTestFocusedTargetFiles: number;
+  maxCreateContentBytes: number;
+  maxJsonHelperContentBytes: number;
 };
 
 export const DEFAULT_BACKEND_SAFETY_POLICY: BackendSafetyPolicy = {
@@ -54,7 +57,10 @@ export const DEFAULT_BACKEND_SAFETY_POLICY: BackendSafetyPolicy = {
     "apps/orchestrator-runner/src/",
     "apps/orchestrator-runner/test/"
   ],
-  allowedCreateFileExtensions: [".ts", ".tsx", ".md"],
+  allowedCreateFileExtensions: [".ts", ".tsx", ".md", ".json"],
+  allowedJsonHelperCreatePathPrefixes: [
+    "apps/orchestrator-runner/test/fixtures/"
+  ],
   forbiddenPathPrefixes: [
     "configs/",
     "packages/agent-config/",
@@ -82,7 +88,9 @@ export const DEFAULT_BACKEND_SAFETY_POLICY: BackendSafetyPolicy = {
   maxTargetFiles: 12,
   maxProposedDiffs: 20,
   maxCreateOperations: 1,
-  maxTestFocusedTargetFiles: 3
+  maxTestFocusedTargetFiles: 3,
+  maxCreateContentBytes: 8_000,
+  maxJsonHelperContentBytes: 2_000
 };
 
 export function parseBackendSafetyMetrics(value: unknown): BackendSafetyMetrics {
@@ -290,6 +298,9 @@ export function validateBackendSafetyRules(
     assertCreatePathAllowed(createDiff.filePath, policy);
     assertCreateFileNameSafe(createDiff.filePath);
     assertCreateFileExtensionAllowed(createDiff.filePath, policy);
+    assertCreateFileNameNotSensitive(createDiff.filePath);
+    assertCreateContentSizeAllowed(createDiff, policy);
+    assertJsonHelperPathConstraint(createDiff.filePath, policy);
   }
 }
 
@@ -438,6 +449,71 @@ function assertCreateFileExtensionAllowed(filePath: string, policy: BackendSafet
   if (!allowed) {
     throw new AgentSpecificValidationError(
       `Schema validation failed for live backend output: create operation extension is not allowlisted for '${filePath}'`
+    );
+  }
+}
+
+function assertCreateFileNameNotSensitive(filePath: string): void {
+  const normalizedPath = normalizePath(filePath).toLowerCase();
+  const segments = normalizedPath.split("/");
+  const baseName = segments[segments.length - 1] ?? "";
+  const blockedExact = new Set([
+    "package.json",
+    "pnpm-lock.yaml",
+    "package-lock.json",
+    "yarn.lock",
+    ".env",
+    ".env.local",
+    ".env.example",
+    "tsconfig.json",
+    "tsconfig.base.json",
+    "schema.prisma"
+  ]);
+  if (blockedExact.has(baseName)) {
+    throw new AgentSpecificValidationError(
+      `Schema validation failed for live backend output: create operation path '${filePath}' is forbidden`
+    );
+  }
+
+  if (
+    baseName.includes("config") ||
+    baseName.includes("schema") ||
+    baseName.includes("migration")
+  ) {
+    throw new AgentSpecificValidationError(
+      `Schema validation failed for live backend output: create operation path '${filePath}' looks like config/schema/migration and is forbidden`
+    );
+  }
+}
+
+function assertCreateContentSizeAllowed(diff: BackendProposedDiff, policy: BackendSafetyPolicy): void {
+  const normalizedPath = normalizePath(diff.filePath).toLowerCase();
+  const bytes = Buffer.byteLength(diff.content, "utf8");
+  if (bytes > policy.maxCreateContentBytes) {
+    throw new AgentSpecificValidationError(
+      `Schema validation failed for live backend output: create operation content for '${diff.filePath}' exceeds size limit ${policy.maxCreateContentBytes} bytes`
+    );
+  }
+  if (normalizedPath.endsWith(".json") && bytes > policy.maxJsonHelperContentBytes) {
+    throw new AgentSpecificValidationError(
+      `Schema validation failed for live backend output: json helper create content for '${diff.filePath}' exceeds size limit ${policy.maxJsonHelperContentBytes} bytes`
+    );
+  }
+}
+
+function assertJsonHelperPathConstraint(filePath: string, policy: BackendSafetyPolicy): void {
+  const normalizedPath = normalizePath(filePath).toLowerCase();
+  const isJson = normalizedPath.endsWith(".json");
+  if (!isJson) {
+    return;
+  }
+
+  const allowed = policy.allowedJsonHelperCreatePathPrefixes.some((prefix) =>
+    normalizedPath.startsWith(normalizePath(prefix).toLowerCase())
+  );
+  if (!allowed) {
+    throw new AgentSpecificValidationError(
+      `Schema validation failed for live backend output: json helper create path '${filePath}' is outside json helper allowlist`
     );
   }
 }

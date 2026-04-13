@@ -108,6 +108,45 @@ test("backend patch apply mode creates one allowlisted new file", async (context
   assert.equal(postApply.passed, true);
 });
 
+test("backend patch apply mode creates one allowlisted json helper fixture", async (context) => {
+  const workspaceRoot = await mkdtemp(join(tmpdir(), "backend-patch-json-helper-"));
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const helperFile = "apps/orchestrator-runner/test/fixtures/new-helper.json";
+  const helperPath = join(workspaceRoot, helperFile);
+
+  const patchPlan = validateBackendPatchPlan({
+    taskId: "task-backend-json-helper-create",
+    rootDir: workspaceRoot,
+    metrics: {
+      ...createMetrics("apps/orchestrator-runner/src/placeholder.ts", "export const placeholder = true;\n"),
+      targetFiles: [helperFile],
+      changeType: "new_file",
+      proposedDiffs: [
+        {
+          filePath: helperFile,
+          operation: "create",
+          content: "{\"helper\":true}\n"
+        }
+      ]
+    }
+  });
+
+  const applyResult = await applyBackendPatchPlan(patchPlan, {
+    dryRun: false
+  });
+  const postApply = await validatePostApplyResult({
+    patchPlan,
+    applyResult
+  });
+
+  const content = await readFile(helperPath, "utf8");
+  assert.equal(content, "{\"helper\":true}\n");
+  assert.equal(applyResult.applied, true);
+  assert.deepEqual(applyResult.changedFiles, [helperFile]);
+  assert.equal(postApply.passed, true);
+});
+
 test("backend patch validation allows mixed update + single create in one root", async (context) => {
   const workspaceRoot = await mkdtemp(join(tmpdir(), "backend-patch-mixed-create-"));
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
@@ -329,6 +368,56 @@ test("backend patch validation rejects new file outside create allowlist", () =>
         metrics
       }),
     /outside create allowlist/
+  );
+});
+
+test("backend patch validation rejects json helper create outside fixtures", () => {
+  const metrics = {
+    ...createMetrics("apps/orchestrator-runner/src/placeholder.ts", "export const placeholder = true;\n"),
+    targetFiles: ["apps/orchestrator-runner/src/new-helper.json"],
+    changeType: "new_file",
+    proposedDiffs: [
+      {
+        filePath: "apps/orchestrator-runner/src/new-helper.json",
+        operation: "create",
+        content: "{\"helper\":true}"
+      }
+    ]
+  };
+
+  assert.throws(
+    () =>
+      validateBackendPatchPlan({
+        taskId: "task-backend-json-helper-forbidden-path",
+        rootDir: "/tmp",
+        metrics
+      }),
+    /outside json helper allowlist/
+  );
+});
+
+test("backend patch validation rejects oversized json helper create content", () => {
+  const metrics = {
+    ...createMetrics("apps/orchestrator-runner/src/placeholder.ts", "export const placeholder = true;\n"),
+    targetFiles: ["apps/orchestrator-runner/test/fixtures/oversized-helper.json"],
+    changeType: "new_file",
+    proposedDiffs: [
+      {
+        filePath: "apps/orchestrator-runner/test/fixtures/oversized-helper.json",
+        operation: "create",
+        content: "x".repeat(2_100)
+      }
+    ]
+  };
+
+  assert.throws(
+    () =>
+      validateBackendPatchPlan({
+        taskId: "task-backend-json-helper-too-large",
+        rootDir: "/tmp",
+        metrics
+      }),
+    /json helper create content.*exceeds size limit 2000 bytes/
   );
 });
 
