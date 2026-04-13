@@ -19,6 +19,7 @@ export function formatRunnerOutput(result: RunnerOutput, format: OutputFormat = 
         rollbackPlansCount: result.rollbackPlans.length,
         rollbackResultsCount: result.rollbackResults.length,
         verificationResultsCount: result.verificationResults.length,
+        promotionResultsCount: result.promotionResults.length,
         scenarios:
           result.scenarios?.map((scenario) => ({
             scenario: scenario.scenario,

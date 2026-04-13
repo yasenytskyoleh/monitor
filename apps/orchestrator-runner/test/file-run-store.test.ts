@@ -239,6 +239,24 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
         overallStatus: "passed"
       }
     ],
+    promotionResults: [
+      {
+        taskId: "task-001",
+        scenario: "happy",
+        transitionChecksum: "checksum-1",
+        fromState: "IMPLEMENT",
+        toState: "REVIEW",
+        promotionMode: "promote_verified",
+        promotionAttempted: true,
+        filesPlannedForPromotion: ["apps/orchestrator-runner/src/runner.ts"],
+        filesPromoted: ["apps/orchestrator-runner/src/runner.ts"],
+        filesBlocked: [],
+        conflictDetected: false,
+        conflicts: [],
+        status: "succeeded",
+        failureReason: null
+      }
+    ],
     stabilitySummary: {
       runId: "run_fixed_001",
       mode: "mock",
@@ -323,6 +341,12 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
   ) as Array<Record<string, unknown>>;
   assert.equal(verificationResultJson.length, 1);
   assert.equal(verificationResultJson[0]?.overallStatus, "passed");
+
+  const promotionResultJson = JSON.parse(
+    await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/promotion-result.json"), "utf8")
+  ) as Array<Record<string, unknown>>;
+  assert.equal(promotionResultJson.length, 1);
+  assert.equal(promotionResultJson[0]?.status, "succeeded");
 
   const stabilitySummaryJson = JSON.parse(
     await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/stability-summary.json"), "utf8")

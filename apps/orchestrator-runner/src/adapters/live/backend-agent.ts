@@ -10,6 +10,14 @@ import type {
 import { applyBackendPatchPlan } from "../../backend-patch/apply-patch-plan.js";
 import { BackendPatchError, isBackendPatchError, type BackendPatchFailureCategory } from "../../backend-patch/errors.js";
 import type { PatchResultEvidence } from "../../backend-patch/types.js";
+import { applyPromotion } from "../../backend-promotion/apply-promotion.js";
+import { preparePromotion } from "../../backend-promotion/prepare-promotion.js";
+import type {
+  BackendPromotionMode,
+  PreparedPromotion,
+  PromotionResultEvidence
+} from "../../backend-promotion/types.js";
+import { validatePromotion } from "../../backend-promotion/validate-promotion.js";
 import { validatePostApplyResult } from "../../backend-patch/post-apply-validate.js";
 import { validateBackendPatchPlan } from "../../backend-patch/validate-patch-plan.js";
 import { applyRollback, assertRollbackSucceeded } from "../../backend-rollback/apply-rollback.js";
@@ -40,6 +48,7 @@ export type LiveBackendAgentOptions = LiveAdapterOptions & {
   keepIsolatedWorkspace?: boolean;
   rollbackMode?: BackendRollbackMode;
   verificationMode?: BackendVerificationMode;
+  promotionMode?: BackendPromotionMode;
 };
 
 export function createLiveBackendAgentHandler(options: LiveBackendAgentOptions) {
@@ -106,9 +115,11 @@ async function finalizeBackendOutput(
   const applyMode: "dry-run" | "apply" = options.dryRun === false ? "apply" : "dry-run";
   const verificationMode: BackendVerificationMode = options.verificationMode ?? "none";
   const rollbackMode: BackendRollbackMode = options.rollbackMode ?? "restore_written_files";
+  const promotionMode: BackendPromotionMode = options.promotionMode ?? "none";
   const useIsolatedWorkspace = applyMode === "apply" && (options.isolatedWorkspace ?? true);
 
   let preparedWorkspace: PreparedIsolatedWorkspace | null = null;
+  let preparedPromotion: PreparedPromotion | null = null;
   let cleanupResult: IsolatedWorkspaceCleanupResult = {
     status: "skipped",
     failureReason: null
@@ -116,6 +127,13 @@ async function finalizeBackendOutput(
 
   let executionPatchPlan = patchPlan;
   let executionCwd = options.rootDir;
+
+  if (useIsolatedWorkspace && promotionMode === "promote_verified") {
+    preparedPromotion = await preparePromotion({
+      rootDir: options.rootDir,
+      patchPlan
+    });
+  }
 
   if (useIsolatedWorkspace) {
     preparedWorkspace = await prepareIsolatedWorkspace({
@@ -142,6 +160,17 @@ async function finalizeBackendOutput(
   let rollbackResult: BackendRollbackResult | undefined;
   let patchFailure: PatchResultEvidence | undefined;
   let failureVerificationResult: BackendVerificationResult | undefined;
+  let promotionResult = buildSkippedPromotionResult({
+    taskId: context.task.taskId,
+    promotionMode,
+    filesPlannedForPromotion:
+      preparedPromotion?.filesPlannedForPromotion ??
+      executionPatchPlan.proposedDiffs.map((diff) => diff.filePath),
+    failureReason:
+      promotionMode === "none"
+        ? "Promotion mode is disabled"
+        : "Promotion was not attempted"
+  });
   let capturedError: unknown;
 
   try {
@@ -157,33 +186,68 @@ async function finalizeBackendOutput(
       cwd: executionCwd,
       applied: applyResult.applied
     });
-  } catch (error) {
-    const triggerReason = mapRollbackTriggerReason(error);
-    rollbackResult = await resolveRollbackResult({
-      rollbackMode,
-      rollbackPlan,
-      triggerReason
-    });
 
-    const patchFailure = buildFailurePatchResult({
+    promotionResult = await runPromotionStep({
       taskId: context.task.taskId,
-      applyMode,
-      rollbackResult,
+      rootDir: options.rootDir,
+      promotionMode,
+      preparedWorkspace,
+      patchPlan,
       applyResult,
-      error
+      verificationResult,
+      preparedPromotion
     });
-    failureVerificationResult = buildFailureVerificationResult({
-      taskId: context.task.taskId,
-      mode: verificationMode,
-      applied: applyMode === "apply",
-      error
-    });
+  } catch (error) {
+    const isPromotionFailure = isBackendPatchError(error) && error.failureCategory === "promotion_failure";
 
-    try {
-      assertRollbackSucceeded(rollbackResult);
-    } catch (rollbackError) {
-      capturedError = rollbackError;
+    if (isPromotionFailure) {
+      rollbackResult = buildSkippedRollbackResult(
+        "Rollback skipped: promotion failure occurred after isolated verification."
+      );
+      patchFailure = buildFailurePatchResult({
+        taskId: context.task.taskId,
+        applyMode,
+        rollbackResult,
+        applyResult,
+        error,
+        postApplyValidationPassed: postApplyResult?.passed === true
+      });
+      failureVerificationResult = verificationResult;
+      promotionResult = extractPromotionResultFromError(
+        error,
+        context.task.taskId,
+        promotionMode,
+        executionPatchPlan.proposedDiffs.map((diff) => diff.filePath)
+      );
+    } else {
+      const triggerReason = mapRollbackTriggerReason(error);
+      rollbackResult = await resolveRollbackResult({
+        rollbackMode,
+        rollbackPlan,
+        triggerReason
+      });
+
+      patchFailure = buildFailurePatchResult({
+        taskId: context.task.taskId,
+        applyMode,
+        rollbackResult,
+        applyResult,
+        error
+      });
+      failureVerificationResult = buildFailureVerificationResult({
+        taskId: context.task.taskId,
+        mode: verificationMode,
+        applied: applyMode === "apply",
+        error
+      });
+
+      try {
+        assertRollbackSucceeded(rollbackResult);
+      } catch (rollbackError) {
+        capturedError = rollbackError;
+      }
     }
+
     capturedError ??= error;
   } finally {
     if (preparedWorkspace) {
@@ -239,6 +303,7 @@ async function finalizeBackendOutput(
         }),
       rollbackPlan,
       rollbackResult ?? buildSkippedRollbackResult(null),
+      promotionResult,
       workspaceSummary,
       context.task.taskId
     );
@@ -296,6 +361,7 @@ async function finalizeBackendOutput(
         failureReason: null
       },
       verificationResult: verificationResult!,
+      promotionResult,
       workspaceSummary,
       ...(rollbackPlan
         ? {
@@ -312,6 +378,172 @@ async function finalizeBackendOutput(
           }
         : {})
     }
+  };
+}
+
+async function runPromotionStep(input: {
+  taskId: string;
+  rootDir: string;
+  promotionMode: BackendPromotionMode;
+  preparedWorkspace: PreparedIsolatedWorkspace | null;
+  patchPlan: ReturnType<typeof validateBackendPatchPlan>;
+  applyResult: Awaited<ReturnType<typeof applyBackendPatchPlan>>;
+  verificationResult: BackendVerificationResult;
+  preparedPromotion: PreparedPromotion | null;
+}): Promise<PromotionResultEvidence> {
+  const filesPlannedForPromotion = uniqueStrings(input.patchPlan.proposedDiffs.map((diff) => diff.filePath));
+
+  if (input.promotionMode === "none") {
+    return buildSkippedPromotionResult({
+      taskId: input.taskId,
+      promotionMode: input.promotionMode,
+      filesPlannedForPromotion,
+      failureReason: "Promotion mode is disabled"
+    });
+  }
+
+  if (input.applyResult.applyMode !== "apply" || input.applyResult.applied !== true) {
+    return buildSkippedPromotionResult({
+      taskId: input.taskId,
+      promotionMode: input.promotionMode,
+      filesPlannedForPromotion,
+      failureReason: "Promotion requires successful apply mode execution"
+    });
+  }
+
+  if (!input.preparedWorkspace) {
+    return buildSkippedPromotionResult({
+      taskId: input.taskId,
+      promotionMode: input.promotionMode,
+      filesPlannedForPromotion,
+      failureReason: "Promotion requires isolated workspace execution"
+    });
+  }
+
+  const validation = await validatePromotion({
+    mode: input.promotionMode,
+    rootDir: input.rootDir,
+    isolatedWorkspaceRoot: input.preparedWorkspace.workspaceRoot,
+    patchPlan: input.patchPlan,
+    applyResult: input.applyResult,
+    verificationResult: input.verificationResult,
+    preparedPromotion: input.preparedPromotion
+  });
+
+  if (!validation.eligible) {
+    const failureResult: PromotionResultEvidence = {
+      taskId: input.taskId,
+      promotionMode: input.promotionMode,
+      promotionAttempted: true,
+      filesPlannedForPromotion: validation.filesPlannedForPromotion,
+      filesPromoted: [],
+      filesBlocked: validation.filesBlocked,
+      conflictDetected: validation.conflictDetected,
+      conflicts: validation.conflicts,
+      status: "failed",
+      failureReason: validation.failureReason ?? "Promotion validation failed"
+    };
+    throw new BackendPatchError(
+      "promotion_failure",
+      failureResult.failureReason ?? "Promotion validation failed",
+      {
+        metadata: {
+          promotionResult: failureResult
+        }
+      }
+    );
+  }
+
+  try {
+    const applyResult = await applyPromotion({
+      rootDir: input.rootDir,
+      isolatedWorkspaceRoot: input.preparedWorkspace.workspaceRoot,
+      filesToPromote: validation.filesPlannedForPromotion
+    });
+
+    return {
+      taskId: input.taskId,
+      promotionMode: input.promotionMode,
+      promotionAttempted: true,
+      filesPlannedForPromotion: validation.filesPlannedForPromotion,
+      filesPromoted: applyResult.filesPromoted,
+      filesBlocked: [],
+      conflictDetected: false,
+      conflicts: [],
+      status: "succeeded",
+      failureReason: null
+    };
+  } catch (error) {
+    const failureReason = error instanceof Error ? error.message : String(error);
+    const failureResult: PromotionResultEvidence = {
+      taskId: input.taskId,
+      promotionMode: input.promotionMode,
+      promotionAttempted: true,
+      filesPlannedForPromotion: validation.filesPlannedForPromotion,
+      filesPromoted: [],
+      filesBlocked: validation.filesPlannedForPromotion,
+      conflictDetected: false,
+      conflicts: [],
+      status: "failed",
+      failureReason
+    };
+
+    throw new BackendPatchError("promotion_failure", failureReason, {
+      cause: error,
+      metadata: {
+        promotionResult: failureResult
+      }
+    });
+  }
+}
+
+function buildSkippedPromotionResult(input: {
+  taskId: string;
+  promotionMode: BackendPromotionMode;
+  filesPlannedForPromotion: string[];
+  failureReason: string;
+}): PromotionResultEvidence {
+  return {
+    taskId: input.taskId,
+    promotionMode: input.promotionMode,
+    promotionAttempted: false,
+    filesPlannedForPromotion: uniqueStrings(input.filesPlannedForPromotion),
+    filesPromoted: [],
+    filesBlocked: [],
+    conflictDetected: false,
+    conflicts: [],
+    status: "skipped",
+    failureReason: input.failureReason
+  };
+}
+
+function extractPromotionResultFromError(
+  error: unknown,
+  taskId: string,
+  promotionMode: BackendPromotionMode,
+  filesPlannedForPromotion: string[]
+): PromotionResultEvidence {
+  if (isBackendPatchError(error)) {
+    const metadata = (error as { metadata?: unknown }).metadata;
+    if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
+      const promotionResult = (metadata as Record<string, unknown>).promotionResult;
+      if (promotionResult && typeof promotionResult === "object" && !Array.isArray(promotionResult)) {
+        return promotionResult as PromotionResultEvidence;
+      }
+    }
+  }
+
+  return {
+    taskId,
+    promotionMode,
+    promotionAttempted: true,
+    filesPlannedForPromotion: uniqueStrings(filesPlannedForPromotion),
+    filesPromoted: [],
+    filesBlocked: uniqueStrings(filesPlannedForPromotion),
+    conflictDetected: false,
+    conflicts: [],
+    status: "failed",
+    failureReason: error instanceof Error ? error.message : String(error)
   };
 }
 
@@ -373,6 +605,7 @@ function createAugmentedBackendError(
   verificationFailure: BackendVerificationResult,
   rollbackPlan: BackendRollbackPlan | null,
   rollbackResult: BackendRollbackResult,
+  promotionResult: PromotionResultEvidence,
   workspaceSummary: WorkspaceSummaryEvidence,
   taskId: string
 ): BackendPatchError {
@@ -394,6 +627,7 @@ function createAugmentedBackendError(
         verificationResult: toVerificationEvidence(taskId, verificationFailure),
         ...(rollbackPlan ? { rollbackPlan: toRollbackPlanEvidence(taskId, rollbackPlan) } : {}),
         rollbackResult: toRollbackResultEvidence(taskId, rollbackResult),
+        promotionResult,
         workspaceSummary
       }
     }
@@ -408,6 +642,7 @@ function buildFailurePatchResult(input: {
   rollbackResult: BackendRollbackResult;
   applyResult?: Awaited<ReturnType<typeof applyBackendPatchPlan>>;
   error: unknown;
+  postApplyValidationPassed?: boolean;
 }): PatchResultEvidence {
   return {
     taskId: input.taskId,
@@ -422,7 +657,7 @@ function buildFailurePatchResult(input: {
       input.applyResult?.appliedOperations
         .filter((operation) => operation.operation === "update")
         .map((operation) => operation.filePath) ?? [],
-    postApplyValidationPassed: false,
+    postApplyValidationPassed: input.postApplyValidationPassed ?? false,
     failureCategory: resolveFailureCategory(input.error),
     failureReason: input.error instanceof Error ? input.error.message : String(input.error)
   };
@@ -525,4 +760,8 @@ function toVerificationEvidence(
     hooksExecuted: result.hooksExecuted,
     overallStatus: result.overallStatus
   };
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return Array.from(new Set(values.map((item) => item.trim()).filter((item) => item.length > 0)));
 }

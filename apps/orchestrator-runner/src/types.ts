@@ -3,6 +3,10 @@ import type { AgentOutputEnvelope, TransitionRecord } from "@monitor/orchestrato
 import type { ApprovalTransitionEvidence, WorkflowApproval } from "./approvals/types.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
 import type { PatchPlanEvidence, PatchResultEvidence } from "./backend-patch/types.js";
+import type {
+  BackendPromotionMode,
+  PromotionResultEvidence
+} from "./backend-promotion/types.js";
 import type { WorkspaceSummaryEvidence } from "./backend-isolation/types.js";
 import type {
   BackendRollbackMode,
@@ -48,6 +52,7 @@ export type MockScenarioResult = {
   rollbackPlans: RollbackPlanEvidence[];
   rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
+  promotionResults: PromotionResultEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   transitionLogPath: string;
@@ -73,6 +78,7 @@ export type RunnerOutput = {
   rollbackPlans: RollbackPlanEvidence[];
   rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
+  promotionResults: PromotionResultEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   scenarios?: MockScenarioResult[];
@@ -85,6 +91,7 @@ export type CliArgs = {
   backendWrite: BackendWriteMode;
   backendRollbackMode: BackendRollbackMode;
   backendVerificationMode: "none" | "lint" | "lint+typecheck" | "lint+typecheck+test";
+  backendPromotionMode: BackendPromotionMode;
   agentModeOverrides: Partial<AgentExecutionMap>;
   scenario?: MockScenarioSelection;
   environment: EnvironmentName;

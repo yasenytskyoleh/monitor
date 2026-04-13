@@ -22,6 +22,10 @@ import {
   type PatchResultEvidence
 } from "./backend-patch/types.js";
 import {
+  extractPromotionResultEvidenceFromBackendOutput,
+  type PromotionResultEvidence
+} from "./backend-promotion/types.js";
+import {
   extractWorkspaceSummaryEvidenceFromBackendOutput,
   type WorkspaceSummaryEvidence
 } from "./backend-isolation/types.js";
@@ -103,6 +107,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       rollbackPlans: [],
       rollbackResults: [],
       verificationResults: [],
+      promotionResults: [],
       transitions: [],
       results: []
     };
@@ -118,6 +123,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       rollbackPlans: RollbackPlanEvidence[];
       rollbackResults: RollbackResultEvidence[];
       verificationResults: VerificationResultEvidence[];
+      promotionResults: PromotionResultEvidence[];
       artifacts: WorkflowArtifact[];
       transitions: TransitionRecord[];
       blockedTransition?: BlockedTransitionInfo;
@@ -148,6 +154,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       rollbackPlans: scenarioResult.rollbackPlans,
       rollbackResults: scenarioResult.rollbackResults,
       verificationResults: scenarioResult.verificationResults,
+      promotionResults: scenarioResult.promotionResults,
       artifacts: scenarioResult.artifacts,
       transitions: scenarioResult.transitions,
       transitionLogPath: toRelativeOrAbsolute(options.rootDir, transitionLogPath),
@@ -177,6 +184,7 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
     rollbackPlans: scenarioResults.flatMap((scenarioResult) => scenarioResult.rollbackPlans),
     rollbackResults: scenarioResults.flatMap((scenarioResult) => scenarioResult.rollbackResults),
     verificationResults: scenarioResults.flatMap((scenarioResult) => scenarioResult.verificationResults),
+    promotionResults: scenarioResults.flatMap((scenarioResult) => scenarioResult.promotionResults),
     artifacts: scenarioResults.flatMap((scenarioResult) => scenarioResult.artifacts),
     transitions: lastScenario.transitions,
     scenarios: scenarioResults
@@ -226,6 +234,7 @@ export async function runHappyWorkflow(
   rollbackPlans: RollbackPlanEvidence[];
   rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
+  promotionResults: PromotionResultEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
 }> {
@@ -285,6 +294,7 @@ export async function runHappyWorkflow(
     rollbackPlans: scenarioContext.rollbackPlans,
     rollbackResults: scenarioContext.rollbackResults,
     verificationResults: scenarioContext.verificationResults,
+    promotionResults: scenarioContext.promotionResults,
     artifacts: scenarioContext.registry.listArtifacts(),
     transitions: scenarioContext.transitions
   };
@@ -305,6 +315,7 @@ async function runMockMissingApprovalScenario(
   rollbackPlans: RollbackPlanEvidence[];
   rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
+  promotionResults: PromotionResultEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   blockedTransition: BlockedTransitionInfo;
@@ -353,6 +364,7 @@ async function runMockMissingApprovalScenario(
     rollbackPlans: scenarioContext.rollbackPlans,
     rollbackResults: scenarioContext.rollbackResults,
     verificationResults: scenarioContext.verificationResults,
+    promotionResults: scenarioContext.promotionResults,
     artifacts: scenarioContext.registry.listArtifacts(),
     transitions: scenarioContext.transitions,
     blockedTransition: blockedTransition ?? {
@@ -402,6 +414,7 @@ type ScenarioExecutionContext = {
   rollbackPlans: RollbackPlanEvidence[];
   rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
+  promotionResults: PromotionResultEvidence[];
   transitions: TransitionRecord[];
   results: TransitionResult[];
 };
@@ -504,6 +517,17 @@ async function executeAndCollectTransition(
   });
   if (verificationResult) {
     context.verificationResults.push(verificationResult);
+  }
+
+  const promotionResult = extractPromotionResultEvidenceFromBackendOutput({
+    output: result.output,
+    transitionChecksum: result.transition.transitionChecksum,
+    fromState: result.transition.from,
+    toState: result.transition.to,
+    scenario: context.scenario
+  });
+  if (promotionResult) {
+    context.promotionResults.push(promotionResult);
   }
 
   const workspaceSummary = extractWorkspaceSummaryEvidenceFromBackendOutput({
