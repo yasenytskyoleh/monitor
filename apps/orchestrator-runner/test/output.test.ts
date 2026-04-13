@@ -30,6 +30,7 @@ function createBaseResult(): RunnerOutput {
     rollbackPlans: [],
     rollbackResults: [],
     verificationResults: [],
+    promotionResults: [],
     artifacts: [],
     transitions: []
   };
@@ -61,4 +62,5 @@ test("formatRunnerOutput returns machine-readable json output", () => {
   assert.equal(parsed.rollbackPlansCount, 0);
   assert.equal(parsed.rollbackResultsCount, 0);
   assert.equal(parsed.verificationResultsCount, 0);
+  assert.equal(parsed.promotionResultsCount, 0);
 });

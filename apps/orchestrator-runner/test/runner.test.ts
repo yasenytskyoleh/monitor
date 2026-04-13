@@ -276,6 +276,7 @@ test("parseArgs defaults to live mode", () => {
   assert.equal(args.backendWrite, "dry-run");
   assert.equal(args.backendRollbackMode, "restore_written_files");
   assert.equal(args.backendVerificationMode, "none");
+  assert.equal(args.backendPromotionMode, "none");
   assert.deepEqual(args.agentModeOverrides, {});
   assert.equal(args.environment, "local");
   assert.equal(args.scenario, undefined);
@@ -301,6 +302,9 @@ test("parseArgs validates mode and scenario values", () => {
   const rollbackMode = parseArgs(["--backend-rollback", "none"]);
   assert.equal(rollbackMode.backendRollbackMode, "none");
 
+  const promotionMode = parseArgs(["--backend-promotion", "promote_verified"]);
+  assert.equal(promotionMode.backendPromotionMode, "promote_verified");
+
   const overrides = parseArgs(["--agent-mode", "product=live,architect=mock"]);
   assert.equal(overrides.agentModeOverrides["product-agent"], "live");
   assert.equal(overrides.agentModeOverrides["architect-agent"], "mock");
@@ -311,6 +315,7 @@ test("parseArgs validates mode and scenario values", () => {
   assert.throws(() => parseArgs(["--backend-write", "unsafe"]), /Invalid --backend-write/);
   assert.throws(() => parseArgs(["--backend-rollback", "always"]), /Invalid --backend-rollback/);
   assert.throws(() => parseArgs(["--backend-verify", "all"]), /Invalid --backend-verify/);
+  assert.throws(() => parseArgs(["--backend-promotion", "copy"]), /Invalid --backend-promotion/);
   assert.throws(() => parseArgs(["--agent-mode", "foo=live"]), /Invalid --agent-mode agent/);
   assert.throws(() => parseArgs(["--agent-mode", "product=weird"]), /Invalid --agent-mode value/);
   assert.throws(
@@ -1405,6 +1410,15 @@ test("mode mock with backend live override applies constrained backend patch", a
     assert.equal(verificationResult[0]?.overallStatus, "skipped");
     assert.deepEqual(verificationResult[0]?.hooksRequested, []);
 
+    const promotionResult = await readJsonFile<
+      Array<{ promotionMode: string; status: string; promotionAttempted: boolean; filesPromoted: string[] }>
+    >(join(artifactsDir, "promotion-result.json"));
+    assert.equal(promotionResult.length, 1);
+    assert.equal(promotionResult[0]?.promotionMode, "none");
+    assert.equal(promotionResult[0]?.status, "skipped");
+    assert.equal(promotionResult[0]?.promotionAttempted, false);
+    assert.deepEqual(promotionResult[0]?.filesPromoted, []);
+
     const workspaceSummary = await readJsonFile<
       Array<{
         isolationEnabled: boolean;
@@ -1915,6 +1929,83 @@ test("backend apply failure deletes created file during rollback", async (contex
     assert.equal(workspaceSummary.length, 1);
     assert.equal(workspaceSummary[0]?.isolationEnabled, true);
     assert.equal(workspaceSummary[0]?.cleanupStatus, "succeeded");
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock with backend live override promotes verified isolated result to main workspace", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const backendTargetFile = await prepareBackendTargetFile(
+      workspaceRoot,
+      "apps/orchestrator-runner/src/backend-live-promotion.ts"
+    );
+
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "backend=live",
+        "--backend-write",
+        "apply",
+        "--backend-promotion",
+        "promote_verified",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-backend-live-promotion-happy"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionFetch(
+          createLiveBackendResponseContent("task-backend-live-promotion-happy", backendTargetFile)
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.agentModes?.["backend-agent"], "live");
+
+    const patchedFile = await readFile(join(workspaceRoot, backendTargetFile), "utf8");
+    assert.equal(
+      patchedFile,
+      "// patched by live backend for task-backend-live-promotion-happy\nexport const backendPatched = true;\n"
+    );
+
+    const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
+    const promotionResult = await readJsonFile<
+      Array<{
+        promotionMode: string;
+        promotionAttempted: boolean;
+        filesPromoted: string[];
+        conflictDetected: boolean;
+        status: string;
+        failureReason: string | null;
+      }>
+    >(join(artifactsDir, "promotion-result.json"));
+    assert.equal(promotionResult.length, 1);
+    assert.equal(promotionResult[0]?.promotionMode, "promote_verified");
+    assert.equal(promotionResult[0]?.promotionAttempted, true);
+    assert.ok(promotionResult[0]?.filesPromoted.includes(backendTargetFile));
+    assert.equal(promotionResult[0]?.conflictDetected, false);
+    assert.equal(promotionResult[0]?.status, "succeeded");
+    assert.equal(promotionResult[0]?.failureReason, null);
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;

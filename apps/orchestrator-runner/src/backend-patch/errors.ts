@@ -7,6 +7,7 @@ export type BackendPatchFailureCategory =
   | "forbidden_change_type"
   | "apply_failure"
   | "post_apply_validation_failure"
+  | "promotion_failure"
   | "rollback_failed"
   | "lint_failed"
   | "typecheck_failed"

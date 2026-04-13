@@ -7,6 +7,7 @@ import { createLiveBackendAgentHandler } from "../adapters/live/backend-agent.js
 import { createLiveDocsReviewerAgentHandler } from "../adapters/live/docs-reviewer-agent.js";
 import { createLiveProductAgentHandler } from "../adapters/live/product-agent.js";
 import { createLiveQuantPatternAgentHandler } from "../adapters/live/quant-pattern-agent.js";
+import type { BackendPromotionMode } from "../backend-promotion/types.js";
 import type { BackendRollbackMode } from "../backend-rollback/types.js";
 import type { BackendVerificationMode } from "../backend-verification/types.js";
 import { createMockHandlers } from "../mock-handlers.js";
@@ -20,6 +21,7 @@ export type ResolveHandlersOptions = {
   backendDryRun?: boolean;
   backendRollbackMode?: BackendRollbackMode;
   backendVerificationMode?: BackendVerificationMode;
+  backendPromotionMode?: BackendPromotionMode;
   model?: string;
   temperature?: number;
   timeoutMs?: number;
@@ -116,6 +118,7 @@ export function resolveHandlers(options: ResolveHandlersOptions): ResolvedHandle
         dryRun: options.backendDryRun ?? true,
         rollbackMode: options.backendRollbackMode ?? "restore_written_files",
         verificationMode: options.backendVerificationMode ?? "none",
+        promotionMode: options.backendPromotionMode ?? "none",
         model: options.model,
         temperature: options.temperature,
         timeoutMs: options.timeoutMs,

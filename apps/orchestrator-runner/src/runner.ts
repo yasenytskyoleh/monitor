@@ -13,6 +13,7 @@ import type { WorkflowArtifact } from "./artifacts/types.js";
 import type { WorkspaceSummaryEvidence } from "./backend-isolation/types.js";
 import { isBackendPatchError } from "./backend-patch/errors.js";
 import type { PatchResultEvidence } from "./backend-patch/types.js";
+import type { PromotionResultEvidence } from "./backend-promotion/types.js";
 import type { RollbackPlanEvidence, RollbackResultEvidence } from "./backend-rollback/types.js";
 import type { VerificationResultEvidence } from "./backend-verification/types.js";
 import {
@@ -78,6 +79,7 @@ export async function runWithArgv(
       backendDryRun: args.backendWrite === "dry-run",
       backendRollbackMode: args.backendRollbackMode,
       backendVerificationMode: args.backendVerificationMode,
+      backendPromotionMode: args.backendPromotionMode,
       model: args.model,
       temperature: args.temperature,
       timeoutMs: args.timeoutMs,
@@ -252,6 +254,7 @@ async function persistSuccessRun(options: PersistSuccessOptions): Promise<Persis
     rollbackPlans: options.result.rollbackPlans,
     rollbackResults: options.result.rollbackResults,
     verificationResults: options.result.verificationResults,
+    promotionResults: options.result.promotionResults,
     stabilitySummary,
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
@@ -318,6 +321,9 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
   const verificationResults =
     options.partialResult?.verificationResults ??
     inferFailureVerificationResults(options.error, options.args.taskId);
+  const promotionResults =
+    options.partialResult?.promotionResults ??
+    inferFailurePromotionResults(options.error, options.args.taskId);
   const stabilitySummary = buildStabilitySummary({
     runId: options.runId,
     mode: options.args.mode,
@@ -345,6 +351,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     rollbackPlans,
     rollbackResults,
     verificationResults,
+    promotionResults,
     stabilitySummary,
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
@@ -700,6 +707,33 @@ function inferFailureWorkspaceSummaries(error: unknown, taskId: string): Workspa
       verificationRanInWorkspace: false,
       cleanupStatus: "skipped",
       cleanupFailureReason: null
+    }
+  ];
+}
+
+function inferFailurePromotionResults(error: unknown, taskId: string): PromotionResultEvidence[] {
+  const metadata = extractBackendPatchMetadata(error);
+  const result = metadata?.promotionResult as PromotionResultEvidence | undefined;
+  if (result) {
+    return [result];
+  }
+
+  if (!isBackendPatchError(error)) {
+    return [];
+  }
+
+  return [
+    {
+      taskId,
+      promotionMode: "none",
+      promotionAttempted: false,
+      filesPlannedForPromotion: [],
+      filesPromoted: [],
+      filesBlocked: [],
+      conflictDetected: false,
+      conflicts: [],
+      status: "failed",
+      failureReason: error.message
     }
   ];
 }

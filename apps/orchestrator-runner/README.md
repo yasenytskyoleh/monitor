@@ -33,6 +33,13 @@ Backend write mode:
 - apply mode executes patching and verification in an isolated temporary workspace by default
 - main workspace files are not directly mutated during isolated backend execution
 
+Backend promotion mode:
+- default is `--backend-promotion none`
+- available modes: `none`, `promote_verified`
+- promotion is opt-in and never happens implicitly
+- `promote_verified` runs post-verification promotion from isolated workspace back to main workspace
+- promotion is all-or-nothing and blocked when main-workspace fingerprints changed during isolation
+
 Backend rollback mode:
 - default is `--backend-rollback restore_written_files` in apply mode
 - available modes: `none`, `restore_written_files`, `full_run_cleanup`
@@ -85,6 +92,7 @@ pnpm runner run \
   --mode mock \
   --agent-mode product=live,architect=live,quant-pattern=live,backend=live,docs-reviewer=live \
   --backend-write dry-run \
+  --backend-promotion none \
   --backend-rollback restore_written_files \
   --backend-verify none \
   --scenario happy \
@@ -169,6 +177,7 @@ Persisted run artifacts are written to:
 - optional: `runtime/runs/<runId>/rollback-plan.json`
 - optional: `runtime/runs/<runId>/rollback-result.json`
 - optional: `runtime/runs/<runId>/verification-result.json`
+- optional: `runtime/runs/<runId>/promotion-result.json`
 - `runtime/runs/<runId>/stability-summary.json`
 - optional: `runtime/runs/<runId>/input-task.json`
 - optional: `runtime/runs/<runId>/compiled-snapshot-meta.json`
@@ -196,6 +205,7 @@ Run default live path (Product + Architect + Quant Pattern + Backend + Docs Revi
 pnpm runner run \
   --mode live \
   --backend-write dry-run \
+  --backend-promotion none \
   --backend-rollback restore_written_files \
   --backend-verify none \
   --env local \
@@ -211,6 +221,7 @@ Allow constrained backend writes explicitly:
 pnpm runner run \
   --mode live \
   --backend-write apply \
+  --backend-promotion none \
   --backend-rollback restore_written_files \
   --backend-verify lint+typecheck+test \
   --env local \
@@ -328,11 +339,17 @@ Live Backend Agent constrained mode:
   - `rollback-result.json`
 - backend verification evidence file:
   - `verification-result.json`
+- backend promotion evidence file:
+  - `promotion-result.json`
+  - includes promotion mode, attempt status, planned/promoted/blocked files, conflict checks, and final status
 - verification hook pipeline (allowlisted commands only):
   - `lint`: `pnpm --filter @monitor/orchestrator-runner lint`
   - `typecheck`: `pnpm --filter @monitor/orchestrator-runner typecheck`
   - `test`: `pnpm --filter @monitor/orchestrator-runner test`
 - verification is fail-fast and runs only after successful backend apply
+- promotion runs only after successful isolated apply + post-apply validation + verification
+- promotion re-checks allowlists, single-root constraints, and patch limits before copy-back
+- promotion only copies validated/applied target files and never copies unrelated isolated files
 - backend patch failure categories are explicit:
   - `patch_validation_failure`
   - `patch_limit_exceeded`
@@ -340,6 +357,7 @@ Live Backend Agent constrained mode:
   - `forbidden_change_type`
   - `apply_failure`
   - `post_apply_validation_failure`
+  - `promotion_failure`
   - `lint_failed`
   - `typecheck_failed`
   - `test_failed`

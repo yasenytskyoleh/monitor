@@ -11,6 +11,7 @@ export function parseArgs(argv: string[]): CliArgs {
     backendWrite: "dry-run",
     backendRollbackMode: "restore_written_files",
     backendVerificationMode: "none",
+    backendPromotionMode: "none",
     agentModeOverrides: {},
     environment: "local",
     taskId: `task-${Date.now()}`,
@@ -97,6 +98,17 @@ export function parseArgs(argv: string[]): CliArgs {
         );
       }
       args.backendRollbackMode = backendRollback;
+      continue;
+    }
+
+    if (arg === "--backend-promotion") {
+      const backendPromotion = requiredValue(argv, ++index, "--backend-promotion");
+      if (backendPromotion !== "none" && backendPromotion !== "promote_verified") {
+        throw new Error(
+          `Invalid --backend-promotion '${backendPromotion}'. Allowed: none, promote_verified`
+        );
+      }
+      args.backendPromotionMode = backendPromotion;
       continue;
     }
 
@@ -234,6 +246,7 @@ function printHelpAndExit(exitCode: number): never {
     "  --backend-write <dry-run|apply> Backend live patch application mode (default: dry-run)",
     "  --backend-rollback <none|restore_written_files|full_run_cleanup> Backend rollback mode for apply failures (default: restore_written_files)",
     "  --backend-verify <mode> Backend apply verification hooks: none|lint|lint+typecheck|lint+typecheck+test (default: none)",
+    "  --backend-promotion <none|promote_verified> Backend promotion mode for isolated apply success (default: none)",
     "  --agent-mode <spec>     Per-agent overrides, e.g. product=live,architect=mock",
     "  --scenario <happy|missing-approval|both> Mock mode scenario selector (default: both)",
     "  --env <local|dev|staging|prod>   Environment (default: local)",
@@ -258,6 +271,7 @@ function printHelpAndExit(exitCode: number): never {
     "  backend live runs in dry-run mode by default; use --backend-write apply to allow workspace mutations.",
     "  backend rollback defaults to restore_written_files in apply mode; use --backend-rollback none to disable auto-restore.",
     "  backend verification hooks run only when backend apply mode is active and --backend-verify is not none.",
+    "  backend promotion defaults to none; use --backend-promotion promote_verified for controlled copy-back to main workspace.",
     "  use --agent-mode for per-agent overrides."
   ].join("\n");
 
