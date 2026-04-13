@@ -12,6 +12,7 @@ import { loadDotEnv, requireOpenAiApiKey } from "./env.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
 import { isBackendPatchError } from "./backend-patch/errors.js";
 import type { PatchResultEvidence } from "./backend-patch/types.js";
+import type { VerificationResultEvidence } from "./backend-verification/types.js";
 import {
   hasLiveAgents,
   resolveAgentExecutionMap,
@@ -72,6 +73,7 @@ export async function runWithArgv(
       agentModes,
       openAiApiKey,
       backendDryRun: args.backendWrite === "dry-run",
+      backendVerificationMode: args.backendVerificationMode,
       model: args.model,
       temperature: args.temperature,
       timeoutMs: args.timeoutMs,
@@ -229,6 +231,7 @@ async function persistSuccessRun(options: PersistSuccessOptions): Promise<Persis
     artifacts: options.result.artifacts,
     patchPlans: options.result.patchPlans,
     patchResults: options.result.patchResults,
+    verificationResults: options.result.verificationResults,
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
   });
@@ -285,6 +288,9 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
   };
 
   const patchResults = options.partialResult?.patchResults ?? inferFailurePatchResults(options.error, options.args.taskId);
+  const verificationResults =
+    options.partialResult?.verificationResults ??
+    inferFailureVerificationResults(options.error, options.args.taskId);
 
   const persisted = await options.runStore.persist({
     runId: options.runId,
@@ -295,6 +301,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     artifacts: options.partialResult?.artifacts ?? [],
     patchPlans: options.partialResult?.patchPlans ?? [],
     patchResults,
+    verificationResults,
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
   });
@@ -557,6 +564,25 @@ function inferFailurePatchResults(error: unknown, taskId: string): PatchResultEv
       postApplyValidationPassed: false,
       failureCategory: error.failureCategory,
       failureReason: error.message
+    }
+  ];
+}
+
+function inferFailureVerificationResults(
+  error: unknown,
+  taskId: string
+): VerificationResultEvidence[] {
+  if (!isBackendPatchError(error)) {
+    return [];
+  }
+
+  return [
+    {
+      taskId,
+      applied: false,
+      hooksRequested: [],
+      hooksExecuted: [],
+      overallStatus: "failed"
     }
   ];
 }

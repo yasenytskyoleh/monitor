@@ -51,6 +51,9 @@ export class FileRunStore {
     if (input.patchResults) {
       await writeJson(join(runDir, "patch-result.json"), input.patchResults);
     }
+    if (input.verificationResults) {
+      await writeJson(join(runDir, "verification-result.json"), input.verificationResults);
+    }
 
     if (input.inputTask) {
       await writeJson(join(runDir, "input-task.json"), input.inputTask);

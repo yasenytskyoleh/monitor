@@ -9,6 +9,7 @@ export function parseArgs(argv: string[]): CliArgs {
     mode: "live",
     output: "text",
     backendWrite: "dry-run",
+    backendVerificationMode: "none",
     agentModeOverrides: {},
     environment: "local",
     taskId: `task-${Date.now()}`,
@@ -64,6 +65,22 @@ export function parseArgs(argv: string[]): CliArgs {
         throw new Error(`Invalid --backend-write '${backendWrite}'. Allowed: dry-run, apply`);
       }
       args.backendWrite = backendWrite;
+      continue;
+    }
+
+    if (arg === "--backend-verify") {
+      const backendVerify = requiredValue(argv, ++index, "--backend-verify");
+      if (
+        backendVerify !== "none" &&
+        backendVerify !== "lint" &&
+        backendVerify !== "lint+typecheck" &&
+        backendVerify !== "lint+typecheck+test"
+      ) {
+        throw new Error(
+          `Invalid --backend-verify '${backendVerify}'. Allowed: none, lint, lint+typecheck, lint+typecheck+test`
+        );
+      }
+      args.backendVerificationMode = backendVerify;
       continue;
     }
 
@@ -199,6 +216,7 @@ function printHelpAndExit(exitCode: number): never {
     "  --mode <live|mock>      Runner mode (default: live)",
     "  --output <text|json>    CLI output format (default: text)",
     "  --backend-write <dry-run|apply> Backend live patch application mode (default: dry-run)",
+    "  --backend-verify <mode> Backend apply verification hooks: none|lint|lint+typecheck|lint+typecheck+test (default: none)",
     "  --agent-mode <spec>     Per-agent overrides, e.g. product=live,architect=mock",
     "  --scenario <happy|missing-approval|both> Mock mode scenario selector (default: both)",
     "  --env <local|dev|staging|prod>   Environment (default: local)",
@@ -221,6 +239,7 @@ function printHelpAndExit(exitCode: number): never {
     "Notes:",
     "  live mode defaults product-agent, architect-agent, quant-pattern-agent, backend-agent, and docs-reviewer-agent to live.",
     "  backend live runs in dry-run mode by default; use --backend-write apply to allow workspace mutations.",
+    "  backend verification hooks run only when backend apply mode is active and --backend-verify is not none.",
     "  use --agent-mode for per-agent overrides."
   ].join("\n");
 
