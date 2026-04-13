@@ -24,6 +24,8 @@ export type BackendSafetyMetrics = {
 
 export type BackendSafetyPolicy = {
   allowedTargetPathPrefixes: string[];
+  allowedCreatePathPrefixes: string[];
+  allowedCreateFileExtensions: string[];
   forbiddenPathPrefixes: string[];
   forbiddenExactPaths: string[];
   allowedChangeTypes: BackendChangeType[];
@@ -32,6 +34,7 @@ export type BackendSafetyPolicy = {
   allowMigration: boolean;
   maxTargetFiles: number;
   maxProposedDiffs: number;
+  maxCreateOperations: number;
 };
 
 export const DEFAULT_BACKEND_SAFETY_POLICY: BackendSafetyPolicy = {
@@ -41,6 +44,11 @@ export const DEFAULT_BACKEND_SAFETY_POLICY: BackendSafetyPolicy = {
     "docs/agents/",
     "docs/project/"
   ],
+  allowedCreatePathPrefixes: [
+    "apps/orchestrator-runner/src/",
+    "apps/orchestrator-runner/test/"
+  ],
+  allowedCreateFileExtensions: [".ts", ".tsx", ".md"],
   forbiddenPathPrefixes: [
     "configs/",
     "packages/agent-config/",
@@ -55,12 +63,13 @@ export const DEFAULT_BACKEND_SAFETY_POLICY: BackendSafetyPolicy = {
     ".env",
     ".env.example"
   ],
-  allowedChangeTypes: ["patch_only", "test_only", "docs_only"],
+  allowedChangeTypes: ["patch_only", "new_file", "test_only", "docs_only"],
   allowSchemaChange: false,
   allowArchitectureChange: false,
   allowMigration: false,
   maxTargetFiles: 12,
-  maxProposedDiffs: 20
+  maxProposedDiffs: 20,
+  maxCreateOperations: 1
 };
 
 export function parseBackendSafetyMetrics(value: unknown): BackendSafetyMetrics {
@@ -181,15 +190,33 @@ export function validateBackendSafetyRules(
         "Schema validation failed for live backend output: patch_only changeType may only use update operations"
       );
     }
-    if (metrics.changeType !== "new_file" && diff.operation === "create") {
-      throw new AgentSpecificValidationError(
-        `Schema validation failed for live backend output: changeType '${metrics.changeType}' may not create new files`
-      );
-    }
     assertRequiredString(
       diff.content,
       `Schema validation failed for live backend output: proposed diff content is required for '${diff.filePath}'`
     );
+  }
+
+  const createDiffs = proposedDiffs.filter((diff) => diff.operation === "create");
+  if (metrics.changeType !== "new_file" && createDiffs.length > 0) {
+    throw new AgentSpecificValidationError(
+      `Schema validation failed for live backend output: changeType '${metrics.changeType}' may not create new files`
+    );
+  }
+  if (metrics.changeType === "new_file" && createDiffs.length === 0) {
+    throw new AgentSpecificValidationError(
+      "Schema validation failed for live backend output: changeType 'new_file' requires one create operation"
+    );
+  }
+  if (createDiffs.length > policy.maxCreateOperations) {
+    throw new AgentSpecificValidationError(
+      `Schema validation failed for live backend output: create operation count ${createDiffs.length} exceeds limit ${policy.maxCreateOperations}`
+    );
+  }
+
+  for (const createDiff of createDiffs) {
+    assertCreatePathAllowed(createDiff.filePath, policy);
+    assertCreateFileNameSafe(createDiff.filePath);
+    assertCreateFileExtensionAllowed(createDiff.filePath, policy);
   }
 }
 
@@ -297,6 +324,46 @@ function assertPathAllowed(filePath: string, policy: BackendSafetyPolicy): void 
   if (!allowed) {
     throw new AgentSpecificValidationError(
       `Schema validation failed for live backend output: target path '${normalizedPath}' is outside allowlisted boundaries`
+    );
+  }
+}
+
+function assertCreatePathAllowed(filePath: string, policy: BackendSafetyPolicy): void {
+  const normalizedPath = normalizePath(filePath).toLowerCase();
+  const allowed = policy.allowedCreatePathPrefixes.some((prefix) =>
+    normalizedPath.startsWith(normalizePath(prefix).toLowerCase())
+  );
+  if (!allowed) {
+    throw new AgentSpecificValidationError(
+      `Schema validation failed for live backend output: create operation path '${filePath}' is outside create allowlist`
+    );
+  }
+}
+
+function assertCreateFileNameSafe(filePath: string): void {
+  const normalizedPath = normalizePath(filePath);
+  if (!normalizedPath.includes("/")) {
+    throw new AgentSpecificValidationError(
+      `Schema validation failed for live backend output: create operation path '${filePath}' must not be root-level`
+    );
+  }
+
+  const segments = normalizedPath.split("/");
+  if (segments.some((segment) => segment.startsWith("."))) {
+    throw new AgentSpecificValidationError(
+      `Schema validation failed for live backend output: create operation path '${filePath}' must not create hidden files`
+    );
+  }
+}
+
+function assertCreateFileExtensionAllowed(filePath: string, policy: BackendSafetyPolicy): void {
+  const normalizedPath = normalizePath(filePath).toLowerCase();
+  const allowed = policy.allowedCreateFileExtensions.some((extension) =>
+    normalizedPath.endsWith(extension.toLowerCase())
+  );
+  if (!allowed) {
+    throw new AgentSpecificValidationError(
+      `Schema validation failed for live backend output: create operation extension is not allowlisted for '${filePath}'`
     );
   }
 }

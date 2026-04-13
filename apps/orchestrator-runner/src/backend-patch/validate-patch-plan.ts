@@ -79,7 +79,13 @@ function parseMetricsWithCategorizedError(
 
     if (error instanceof AgentSpecificValidationError) {
       const message = error.message.toLowerCase();
-      if (message.includes("outside allowlisted boundaries") || message.includes("forbidden target path")) {
+      if (
+        message.includes("outside allowlisted boundaries") ||
+        message.includes("outside create allowlist") ||
+        message.includes("forbidden target path") ||
+        message.includes("hidden files") ||
+        message.includes("root-level")
+      ) {
         throw new BackendPatchError("forbidden_path", error.message, { cause: error });
       }
       if (message.includes("changetype")) {

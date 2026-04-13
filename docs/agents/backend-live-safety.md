@@ -49,10 +49,17 @@ Allowed target path prefixes:
 
 Allowed change types:
 - `patch_only`
+- `new_file` (narrow constrained mode)
 - `test_only`
 - `docs_only`
 
-`new_file` is defined in schema for forward compatibility, but **disallowed by current policy**.
+Narrow `new_file` rules:
+- at most one `create` operation per run,
+- create path must be inside:
+  - `apps/orchestrator-runner/src/`
+  - `apps/orchestrator-runner/test/`,
+- create extension must be allowlisted (`.ts`, `.tsx`, `.md`),
+- root-level and hidden-file creation are forbidden.
 
 ## Forbidden mutations (initial policy)
 Forbidden path prefixes:
@@ -86,6 +93,9 @@ For completed backend output:
 5. Every proposed diff file must exist in `targetFiles[]`.
 6. `patch_only` may only use `update` operations.
 7. Non-`new_file` change types may not use `create`.
+8. `new_file` must include exactly one `create` operation.
+9. create target path and extension must pass allowlists.
+10. create operation must fail if target already exists.
 8. Safety booleans must respect policy (`requiresSchemaChange`, `requiresArchitectureChange`, `requiresMigration`).
 
 ## Escalation rules
@@ -109,3 +119,4 @@ For `needs_escalation`, standard escalation envelope is mandatory.
 ## Current implementation boundary
 Backend live execution is enabled only in constrained patch mode.
 It is still intentionally limited and does not permit broad refactors, schema/migration work, or cross-package changes.
+`new_file` support is intentionally narrow and remains inside the same validation, verification, and rollback safeguards.
