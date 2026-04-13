@@ -1400,6 +1400,17 @@ test("mode mock with backend live override applies constrained backend patch", a
     assert.equal(rollbackResult.length, 1);
     assert.equal(rollbackResult[0]?.rollbackAttempted, false);
     assert.equal(rollbackResult[0]?.status, "skipped");
+
+    const stabilitySummary = await readJsonFile<{
+      overallStatus: string;
+      applyStatus: string;
+      verificationStatus: string;
+      rollbackStatus: string;
+    }>(join(artifactsDir, "stability-summary.json"));
+    assert.equal(stabilitySummary.overallStatus, "passed");
+    assert.equal(stabilitySummary.applyStatus, "passed");
+    assert.equal(stabilitySummary.verificationStatus, "skipped");
+    assert.equal(stabilitySummary.rollbackStatus, "skipped");
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1490,6 +1501,93 @@ test("backend apply failure restores modified files and persists rollback result
     assert.equal(rollbackResult[0]?.triggerReason, "apply_failed");
     assert.equal(rollbackResult[0]?.status, "succeeded");
     assert.ok(rollbackResult[0]?.restoredFiles.includes(existingFile));
+
+    const stabilitySummary = await readJsonFile<{
+      overallStatus: string;
+      applyStatus: string;
+      verificationStatus: string;
+      rollbackStatus: string;
+      failureCategories: string[];
+    }>(join(workspaceRoot, "runtime/runs/run_backend_rollback_001/stability-summary.json"));
+    assert.equal(stabilitySummary.overallStatus, "failed");
+    assert.equal(stabilitySummary.applyStatus, "failed");
+    assert.equal(stabilitySummary.rollbackStatus, "passed");
+    assert.ok(stabilitySummary.failureCategories.includes("apply_failure"));
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("backend live repeated identical dry-run inputs keep deterministic transition path", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const backendTargetFile = await prepareBackendTargetFile(
+      workspaceRoot,
+      "apps/orchestrator-runner/src/backend-live-deterministic.ts"
+    );
+
+    const runOnce = async (taskId: string): Promise<RunnerOutput> =>
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "backend=live",
+          "--backend-write",
+          "dry-run",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          taskId,
+          "--approval-id",
+          "appr-fixed-001",
+          "--approval-by",
+          "architect-reviewer",
+          "--approval-expires-at-utc",
+          "2099-01-01T00:00:00.000Z"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveBackendResponseContent(taskId, backendTargetFile)
+          )
+        }
+      );
+
+    const first = await runOnce("task-backend-deterministic-1");
+    const second = await runOnce("task-backend-deterministic-2");
+
+    assert.equal(first.taskState, "DONE");
+    assert.equal(second.taskState, "DONE");
+    assert.deepEqual(
+      first.transitions.map((item) => `${item.from}->${item.to}`),
+      second.transitions.map((item) => `${item.from}->${item.to}`)
+    );
+    assert.deepEqual(
+      first.patchPlans.map((item) => ({
+        changeType: item.changeType,
+        applyMode: item.applyMode,
+        targetFiles: item.targetFiles
+      })),
+      second.patchPlans.map((item) => ({
+        changeType: item.changeType,
+        applyMode: item.applyMode,
+        targetFiles: item.targetFiles
+      }))
+    );
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;

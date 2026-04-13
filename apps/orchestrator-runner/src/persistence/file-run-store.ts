@@ -60,6 +60,9 @@ export class FileRunStore {
     if (input.verificationResults) {
       await writeJson(join(runDir, "verification-result.json"), input.verificationResults);
     }
+    if (input.stabilitySummary) {
+      await writeJson(join(runDir, "stability-summary.json"), input.stabilitySummary);
+    }
 
     if (input.inputTask) {
       await writeJson(join(runDir, "input-task.json"), input.inputTask);

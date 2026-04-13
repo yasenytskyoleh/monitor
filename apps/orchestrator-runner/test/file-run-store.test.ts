@@ -215,7 +215,32 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
         ],
         overallStatus: "passed"
       }
-    ]
+    ],
+    stabilitySummary: {
+      runId: "run_fixed_001",
+      mode: "mock",
+      finalState: "DONE",
+      outcome: "success",
+      overallStatus: "passed",
+      applyStatus: "passed",
+      verificationStatus: "passed",
+      rollbackStatus: "skipped",
+      failureCategories: [],
+      determinism: {
+        status: "not_evaluated",
+        note: "Determinism is evaluated by repeated-run stability matrix tests."
+      },
+      scenarios: [
+        {
+          scenario: "happy",
+          finalState: "DONE",
+          applyStatus: "passed",
+          verificationStatus: "passed",
+          rollbackStatus: "skipped",
+          failureCategories: []
+        }
+      ]
+    }
   });
 
   assert.equal(persisted.relativeRunDir, "runtime/runs/run_fixed_001");
@@ -268,4 +293,10 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
   ) as Array<Record<string, unknown>>;
   assert.equal(verificationResultJson.length, 1);
   assert.equal(verificationResultJson[0]?.overallStatus, "passed");
+
+  const stabilitySummaryJson = JSON.parse(
+    await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/stability-summary.json"), "utf8")
+  ) as Record<string, unknown>;
+  assert.equal(stabilitySummaryJson.overallStatus, "passed");
+  assert.equal(stabilitySummaryJson.mode, "mock");
 });

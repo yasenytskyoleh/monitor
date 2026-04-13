@@ -59,6 +59,7 @@ Backend live status:
 - live backend adapter execution is enabled in constrained patch mode
 - backend live safety contract is enforced at runtime
 - contract docs: `docs/agents/backend-live-safety.md`
+- stability gate checklist: `docs/agents/backend-live-stability-checklist.md`
 - contract schema/validators:
   - `src/adapters/live/schemas/backend-agent-response-schema.ts`
   - `src/adapters/live/validators/backend-safety-rules.ts`
@@ -165,6 +166,7 @@ Persisted run artifacts are written to:
 - optional: `runtime/runs/<runId>/rollback-plan.json`
 - optional: `runtime/runs/<runId>/rollback-result.json`
 - optional: `runtime/runs/<runId>/verification-result.json`
+- `runtime/runs/<runId>/stability-summary.json`
 - optional: `runtime/runs/<runId>/input-task.json`
 - optional: `runtime/runs/<runId>/compiled-snapshot-meta.json`
 
@@ -316,3 +318,10 @@ Live Backend Agent constrained mode:
   - `test_failed`
   - `verification_timeout`
   - `rollback_failed`
+- backend stability audit summary (`stability-summary.json`) captures:
+  - apply status
+  - verification status
+  - rollback status
+  - failure categories
+  - per-scenario status rollup
+- PR #16 is audit-first: no backend scope expansion is enabled in this step.
