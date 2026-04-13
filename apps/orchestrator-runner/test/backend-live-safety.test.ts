@@ -47,7 +47,7 @@ test("backend safety validator blocks forbidden target paths", () => {
   assert.throws(() => assertBackendOutput(output), /outside allowlisted boundaries|forbidden target path/);
 });
 
-test("backend safety validator blocks forbidden change type", () => {
+test("backend safety validator allows narrow single new file creation", () => {
   const output = createValidBackendOutput({
     metrics: {
       changeType: "new_file",
@@ -62,7 +62,87 @@ test("backend safety validator blocks forbidden change type", () => {
     }
   });
 
-  assert.throws(() => assertBackendOutput(output), /changeType 'new_file' is not allowed/);
+  assert.doesNotThrow(() => assertBackendOutput(output));
+});
+
+test("backend safety validator blocks create path outside create allowlist", () => {
+  const output = createValidBackendOutput({
+    metrics: {
+      changeType: "new_file",
+      proposedDiffs: [
+        {
+          filePath: "docs/project/new-file.md",
+          operation: "create",
+          content: "# unsupported create target"
+        }
+      ],
+      targetFiles: ["docs/project/new-file.md"]
+    }
+  });
+
+  assert.throws(() => assertBackendOutput(output), /outside create allowlist/);
+});
+
+test("backend safety validator blocks more than one create operation", () => {
+  const output = createValidBackendOutput({
+    metrics: {
+      changeType: "new_file",
+      proposedDiffs: [
+        {
+          filePath: "apps/orchestrator-runner/src/new-a.ts",
+          operation: "create",
+          content: "export const a = 1;"
+        },
+        {
+          filePath: "apps/orchestrator-runner/src/new-b.ts",
+          operation: "create",
+          content: "export const b = 2;"
+        }
+      ],
+      targetFiles: [
+        "apps/orchestrator-runner/src/new-a.ts",
+        "apps/orchestrator-runner/src/new-b.ts"
+      ]
+    }
+  });
+
+  assert.throws(() => assertBackendOutput(output), /create operation count 2 exceeds limit 1/);
+});
+
+test("backend safety validator blocks hidden file creation", () => {
+  const output = createValidBackendOutput({
+    metrics: {
+      changeType: "new_file",
+      proposedDiffs: [
+        {
+          filePath: "apps/orchestrator-runner/src/.hidden.ts",
+          operation: "create",
+          content: "export const hidden = true;"
+        }
+      ],
+      targetFiles: ["apps/orchestrator-runner/src/.hidden.ts"]
+    }
+  });
+
+  assert.throws(() => assertBackendOutput(output), /must not create hidden files/);
+});
+
+test("backend safety validator blocks disallowed create extension", () => {
+  const output = createValidBackendOutput({
+    metrics: {
+      changeType: "new_file",
+      proposedDiffs: [
+        {
+          filePath: "apps/orchestrator-runner/src/new-script.sh",
+          operation: "create",
+          content: "echo unsafe"
+        }
+      ],
+      targetFiles: ["apps/orchestrator-runner/src/new-script.sh"]
+    }
+  });
+
+  assert.throws(() => assertBackendOutput(output), /extension is not allowlisted/);
 });
 
 test("backend safety validator blocks schema changes without permission", () => {

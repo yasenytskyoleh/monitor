@@ -282,8 +282,21 @@ Live Backend Agent constrained mode:
 - forbidden paths (configs/core packages/lockfiles/env files) are rejected
 - allowed change types in first live backend mode:
   - `patch_only`
+  - `new_file` (narrow, constrained)
   - `test_only`
   - `docs_only`
+- `new_file` constraints:
+  - max one `create` operation per run
+  - create paths only under:
+    - `apps/orchestrator-runner/src/`
+    - `apps/orchestrator-runner/test/`
+  - create file extension allowlist:
+    - `.ts`
+    - `.tsx`
+    - `.md`
+  - root-level and hidden-file creation are rejected
+  - create operation fails if target file already exists
+  - rollback deletes created files when apply/post-apply/verification fails
 - patch scope limits are enforced:
   - max target file count
   - max total content bytes
@@ -325,3 +338,4 @@ Live Backend Agent constrained mode:
   - failure categories
   - per-scenario status rollup
 - PR #16 is audit-first: no backend scope expansion is enabled in this step.
+- PR #17 enables only one tiny expansion: narrow single-file creation under strict constraints.

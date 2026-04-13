@@ -69,6 +69,121 @@ test("backend patch apply mode writes only validated files", async (context) => 
   assert.equal(postApply.passed, true);
 });
 
+test("backend patch apply mode creates one allowlisted new file", async (context) => {
+  const workspaceRoot = await mkdtemp(join(tmpdir(), "backend-patch-create-"));
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const newFile = "apps/orchestrator-runner/src/new-helper.ts";
+  const newPath = join(workspaceRoot, newFile);
+
+  const patchPlan = validateBackendPatchPlan({
+    taskId: "task-backend-create",
+    rootDir: workspaceRoot,
+    metrics: {
+      ...createMetrics("apps/orchestrator-runner/src/placeholder.ts", "export const placeholder = true;\n"),
+      targetFiles: [newFile],
+      changeType: "new_file",
+      proposedDiffs: [
+        {
+          filePath: newFile,
+          operation: "create",
+          content: "export const createdHelper = true;\n"
+        }
+      ]
+    }
+  });
+
+  const applyResult = await applyBackendPatchPlan(patchPlan, {
+    dryRun: false
+  });
+  const postApply = await validatePostApplyResult({
+    patchPlan,
+    applyResult
+  });
+
+  const content = await readFile(newPath, "utf8");
+  assert.equal(content, "export const createdHelper = true;\n");
+  assert.equal(applyResult.applied, true);
+  assert.deepEqual(applyResult.changedFiles, [newFile]);
+  assert.equal(postApply.passed, true);
+});
+
+test("backend patch validation allows mixed update + single create in one root", async (context) => {
+  const workspaceRoot = await mkdtemp(join(tmpdir(), "backend-patch-mixed-create-"));
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const existingFile = "apps/orchestrator-runner/src/mixed-existing.ts";
+  const existingPath = join(workspaceRoot, existingFile);
+  await mkdir(dirname(existingPath), { recursive: true });
+  await writeFile(existingPath, "export const mixedExisting = false;\n", "utf8");
+
+  const createdFile = "apps/orchestrator-runner/src/mixed-created.ts";
+
+  const patchPlan = validateBackendPatchPlan({
+    taskId: "task-backend-mixed-create",
+    rootDir: workspaceRoot,
+    metrics: {
+      ...createMetrics(existingFile, "export const mixedExisting = true;\n"),
+      targetFiles: [existingFile, createdFile],
+      changeType: "new_file",
+      proposedDiffs: [
+        {
+          filePath: existingFile,
+          operation: "update",
+          content: "export const mixedExisting = true;\n"
+        },
+        {
+          filePath: createdFile,
+          operation: "create",
+          content: "export const mixedCreated = true;\n"
+        }
+      ]
+    }
+  });
+
+  const applyResult = await applyBackendPatchPlan(patchPlan, {
+    dryRun: false
+  });
+
+  assert.equal(applyResult.applied, true);
+  assert.deepEqual(applyResult.changedFiles.sort(), [createdFile, existingFile].sort());
+});
+
+test("backend patch apply mode rejects create when file already exists", async (context) => {
+  const workspaceRoot = await mkdtemp(join(tmpdir(), "backend-patch-create-existing-"));
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const existingFile = "apps/orchestrator-runner/src/existing-create-target.ts";
+  const existingPath = join(workspaceRoot, existingFile);
+  await mkdir(dirname(existingPath), { recursive: true });
+  await writeFile(existingPath, "export const alreadyThere = true;\n", "utf8");
+
+  const patchPlan = validateBackendPatchPlan({
+    taskId: "task-backend-create-existing",
+    rootDir: workspaceRoot,
+    metrics: {
+      ...createMetrics("apps/orchestrator-runner/src/placeholder.ts", "export const placeholder = true;\n"),
+      targetFiles: [existingFile],
+      changeType: "new_file",
+      proposedDiffs: [
+        {
+          filePath: existingFile,
+          operation: "create",
+          content: "export const shouldFail = true;\n"
+        }
+      ]
+    }
+  });
+
+  await assert.rejects(
+    () =>
+      applyBackendPatchPlan(patchPlan, {
+        dryRun: false
+      }),
+    /create operation requires non-existing file/
+  );
+});
+
 test("backend patch limits reject excessive target file count", () => {
   const targetFiles = Array.from({ length: 13 }, (_, index) => `apps/orchestrator-runner/src/t-${index}.ts`);
   const metrics = {
@@ -156,6 +271,89 @@ test("backend patch limits reject cross-root target sets", () => {
         metrics
       }),
     /single root|patch_limit_exceeded/
+  );
+});
+
+test("backend patch validation rejects more than one create operation", () => {
+  const metrics = {
+    ...createMetrics("apps/orchestrator-runner/src/placeholder.ts", "export const placeholder = true;\n"),
+    targetFiles: [
+      "apps/orchestrator-runner/src/new-a.ts",
+      "apps/orchestrator-runner/src/new-b.ts"
+    ],
+    changeType: "new_file",
+    proposedDiffs: [
+      {
+        filePath: "apps/orchestrator-runner/src/new-a.ts",
+        operation: "create",
+        content: "export const a = true;\n"
+      },
+      {
+        filePath: "apps/orchestrator-runner/src/new-b.ts",
+        operation: "create",
+        content: "export const b = true;\n"
+      }
+    ]
+  };
+
+  assert.throws(
+    () =>
+      validateBackendPatchPlan({
+        taskId: "task-backend-too-many-create",
+        rootDir: "/tmp",
+        metrics
+      }),
+    /create operation count 2 exceeds limit 1/
+  );
+});
+
+test("backend patch validation rejects new file outside create allowlist", () => {
+  const metrics = {
+    ...createMetrics("apps/orchestrator-runner/src/placeholder.ts", "export const placeholder = true;\n"),
+    targetFiles: ["docs/project/new-file.md"],
+    changeType: "new_file",
+    proposedDiffs: [
+      {
+        filePath: "docs/project/new-file.md",
+        operation: "create",
+        content: "# should fail"
+      }
+    ]
+  };
+
+  assert.throws(
+    () =>
+      validateBackendPatchPlan({
+        taskId: "task-backend-create-forbidden-path",
+        rootDir: "/tmp",
+        metrics
+      }),
+    /outside create allowlist/
+  );
+});
+
+test("backend patch validation rejects root-level create paths", () => {
+  const metrics = {
+    ...createMetrics("apps/orchestrator-runner/src/placeholder.ts", "export const placeholder = true;\n"),
+    targetFiles: ["top-level.ts"],
+    changeType: "new_file",
+    proposedDiffs: [
+      {
+        filePath: "top-level.ts",
+        operation: "create",
+        content: "export const topLevel = true;\n"
+      }
+    ]
+  };
+
+  assert.throws(
+    () =>
+      validateBackendPatchPlan({
+        taskId: "task-backend-create-root-level",
+        rootDir: "/tmp",
+        metrics
+      }),
+    /outside allowlisted boundaries|must not be root-level/
   );
 });
 

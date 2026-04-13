@@ -1,5 +1,5 @@
 import * as assert from "node:assert/strict";
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { test } from "node:test";
@@ -166,6 +166,24 @@ function createLiveBackendResponseWithMetrics(
   const metrics = parsed.metrics as Record<string, unknown>;
   Object.assign(metrics, metricsOverrides);
   return JSON.stringify(parsed);
+}
+
+function createLiveBackendNewFileResponseContent(
+  taskId: string,
+  newFilePath: string,
+  content: string
+): string {
+  return createLiveBackendResponseWithMetrics(taskId, newFilePath, {
+    targetFiles: [newFilePath],
+    changeType: "new_file",
+    proposedDiffs: [
+      {
+        filePath: newFilePath,
+        operation: "create",
+        content
+      }
+    ]
+  });
 }
 
 async function prepareBackendTargetFile(
@@ -1420,6 +1438,127 @@ test("mode mock with backend live override applies constrained backend patch", a
   }
 });
 
+test("mode mock with backend live override applies one allowlisted new file", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const newFile = "apps/orchestrator-runner/src/backend-live-created.ts";
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "backend=live",
+        "--backend-write",
+        "apply",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-backend-live-create-happy"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionFetch(
+          createLiveBackendNewFileResponseContent(
+            "task-backend-live-create-happy",
+            newFile,
+            "export const backendCreated = true;\n"
+          )
+        )
+      }
+    );
+
+    assert.equal(result.status, "ok");
+    assert.equal(result.taskState, "DONE");
+    assert.equal(result.agentModes?.["backend-agent"], "live");
+
+    const createdContent = await readFile(join(workspaceRoot, newFile), "utf8");
+    assert.equal(createdContent, "export const backendCreated = true;\n");
+
+    const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
+    const patchPlan = await readJsonFile<
+      Array<{
+        changeType: string;
+        operations: Array<{ operation: string; filePath: string }>;
+      }>
+    >(join(artifactsDir, "patch-plan.json"));
+    assert.equal(patchPlan.length, 1);
+    assert.equal(patchPlan[0]?.changeType, "new_file");
+    assert.ok(
+      patchPlan[0]?.operations.some(
+        (operation) => operation.operation === "create" && operation.filePath === newFile
+      )
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("mode mock with backend live override rejects create when file already exists", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const existingFile = "apps/orchestrator-runner/src/backend-live-existing-create.ts";
+    const existingPath = join(workspaceRoot, existingFile);
+    await mkdir(dirname(existingPath), { recursive: true });
+    await writeFile(existingPath, "export const alreadyExists = true;\n", "utf8");
+
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "backend=live",
+          "--backend-write",
+          "apply",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-backend-live-create-existing"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveBackendNewFileResponseContent(
+              "task-backend-live-create-existing",
+              existingFile,
+              "export const shouldFail = true;\n"
+            )
+          )
+        }
+      ),
+      /create operation requires non-existing file/
+    );
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
 test("backend apply failure restores modified files and persists rollback result", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
@@ -1513,6 +1652,95 @@ test("backend apply failure restores modified files and persists rollback result
     assert.equal(stabilitySummary.applyStatus, "failed");
     assert.equal(stabilitySummary.rollbackStatus, "passed");
     assert.ok(stabilitySummary.failureCategories.includes("apply_failure"));
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("backend apply failure deletes created file during rollback", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  const runStore = new FileRunStore(workspaceRoot, {
+    runIdGenerator: () => "run_backend_create_rollback_001"
+  });
+
+  try {
+    const newFile = "apps/orchestrator-runner/src/backend-live-created-rollback.ts";
+    const missingFile = "apps/orchestrator-runner/src/backend-live-missing-update.ts";
+
+    const failingResponse = createLiveBackendResponseWithMetrics(
+      "task-backend-create-rollback-failure",
+      newFile,
+      {
+        targetFiles: [newFile, missingFile],
+        changeType: "new_file",
+        proposedDiffs: [
+          {
+            filePath: newFile,
+            operation: "create",
+            content: "export const createdBeforeFailure = true;\n"
+          },
+          {
+            filePath: missingFile,
+            operation: "update",
+            content: "export const missingUpdate = true;\n"
+          }
+        ]
+      }
+    );
+
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "backend=live",
+          "--backend-write",
+          "apply",
+          "--backend-rollback",
+          "restore_written_files",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-backend-create-rollback-failure"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(failingResponse),
+          runStore
+        }
+      ),
+      /create operation requires non-existing file|update operation requires existing file|apply_failure/
+    );
+
+    await assert.rejects(() => access(join(workspaceRoot, newFile)));
+
+    const rollbackResult = await readJsonFile<
+      Array<{
+        rollbackAttempted: boolean;
+        triggerReason: string | null;
+        status: string;
+        deletedCreatedFiles: string[];
+      }>
+    >(join(workspaceRoot, "runtime/runs/run_backend_create_rollback_001/rollback-result.json"));
+    assert.equal(rollbackResult.length, 1);
+    assert.equal(rollbackResult[0]?.rollbackAttempted, true);
+    assert.equal(rollbackResult[0]?.triggerReason, "apply_failed");
+    assert.equal(rollbackResult[0]?.status, "succeeded");
+    assert.ok(rollbackResult[0]?.deletedCreatedFiles.includes(newFile));
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1629,11 +1857,43 @@ test("mode mock with backend live override rejects invalid backend patch plans",
           })
       },
       {
-        id: "forbidden-change-type",
-        expected: /changeType 'new_file' is not allowed/,
+        id: "too-many-create-ops",
+        expected: /create operation count 2 exceeds limit 1/,
         response: (taskId) =>
           createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
-            changeType: "new_file"
+            changeType: "new_file",
+            targetFiles: [
+              "apps/orchestrator-runner/src/new-a.ts",
+              "apps/orchestrator-runner/src/new-b.ts"
+            ],
+            proposedDiffs: [
+              {
+                filePath: "apps/orchestrator-runner/src/new-a.ts",
+                operation: "create",
+                content: "export const a = true;\n"
+              },
+              {
+                filePath: "apps/orchestrator-runner/src/new-b.ts",
+                operation: "create",
+                content: "export const b = true;\n"
+              }
+            ]
+          })
+      },
+      {
+        id: "forbidden-create-path",
+        expected: /outside create allowlist/,
+        response: (taskId) =>
+          createLiveBackendResponseWithMetrics(taskId, backendTargetFile, {
+            changeType: "new_file",
+            targetFiles: ["docs/project/new-from-backend.md"],
+            proposedDiffs: [
+              {
+                filePath: "docs/project/new-from-backend.md",
+                operation: "create",
+                content: "# forbidden create path\n"
+              }
+            ]
           })
       },
       {
