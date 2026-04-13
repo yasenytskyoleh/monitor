@@ -7,6 +7,7 @@ import { createLiveBackendAgentHandler } from "../adapters/live/backend-agent.js
 import { createLiveDocsReviewerAgentHandler } from "../adapters/live/docs-reviewer-agent.js";
 import { createLiveProductAgentHandler } from "../adapters/live/product-agent.js";
 import { createLiveQuantPatternAgentHandler } from "../adapters/live/quant-pattern-agent.js";
+import type { BackendVerificationMode } from "../backend-verification/types.js";
 import { createMockHandlers } from "../mock-handlers.js";
 import { hasLiveAgents, SUPPORTED_AGENT_IDS } from "./agent-modes.js";
 import type { AgentExecutionMap } from "../types.js";
@@ -16,6 +17,7 @@ export type ResolveHandlersOptions = {
   agentModes: AgentExecutionMap;
   openAiApiKey?: string;
   backendDryRun?: boolean;
+  backendVerificationMode?: BackendVerificationMode;
   model?: string;
   temperature?: number;
   timeoutMs?: number;
@@ -110,6 +112,7 @@ export function resolveHandlers(options: ResolveHandlersOptions): ResolvedHandle
         promptsRootDir: join(options.rootDir, "configs/agents/prompts"),
         rootDir: options.rootDir,
         dryRun: options.backendDryRun ?? true,
+        verificationMode: options.backendVerificationMode ?? "none",
         model: options.model,
         temperature: options.temperature,
         timeoutMs: options.timeoutMs,

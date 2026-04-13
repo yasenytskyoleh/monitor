@@ -6,7 +6,11 @@ export type BackendPatchFailureCategory =
   | "forbidden_path"
   | "forbidden_change_type"
   | "apply_failure"
-  | "post_apply_validation_failure";
+  | "post_apply_validation_failure"
+  | "lint_failed"
+  | "typecheck_failed"
+  | "test_failed"
+  | "verification_timeout";
 
 export class BackendPatchError extends AgentSpecificValidationError {
   public readonly failureCategory: BackendPatchFailureCategory;

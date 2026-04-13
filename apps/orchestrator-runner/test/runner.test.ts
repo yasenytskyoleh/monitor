@@ -256,6 +256,7 @@ test("parseArgs defaults to live mode", () => {
   assert.equal(args.mode, "live");
   assert.equal(args.output, "text");
   assert.equal(args.backendWrite, "dry-run");
+  assert.equal(args.backendVerificationMode, "none");
   assert.deepEqual(args.agentModeOverrides, {});
   assert.equal(args.environment, "local");
   assert.equal(args.scenario, undefined);
@@ -275,6 +276,9 @@ test("parseArgs validates mode and scenario values", () => {
   const applyWrite = parseArgs(["--backend-write", "apply"]);
   assert.equal(applyWrite.backendWrite, "apply");
 
+  const verifyMode = parseArgs(["--backend-verify", "lint+typecheck"]);
+  assert.equal(verifyMode.backendVerificationMode, "lint+typecheck");
+
   const overrides = parseArgs(["--agent-mode", "product=live,architect=mock"]);
   assert.equal(overrides.agentModeOverrides["product-agent"], "live");
   assert.equal(overrides.agentModeOverrides["architect-agent"], "mock");
@@ -283,6 +287,7 @@ test("parseArgs validates mode and scenario values", () => {
   assert.throws(() => parseArgs(["--scenario", "invalid"]), /Invalid --scenario/);
   assert.throws(() => parseArgs(["--output", "yaml"]), /Invalid --output/);
   assert.throws(() => parseArgs(["--backend-write", "unsafe"]), /Invalid --backend-write/);
+  assert.throws(() => parseArgs(["--backend-verify", "all"]), /Invalid --backend-verify/);
   assert.throws(() => parseArgs(["--agent-mode", "foo=live"]), /Invalid --agent-mode agent/);
   assert.throws(() => parseArgs(["--agent-mode", "product=weird"]), /Invalid --agent-mode value/);
   assert.throws(
@@ -601,6 +606,14 @@ test("live mode runs Product, Architect, Quant Pattern, Backend, and Docs Review
     assert.equal(patchResult[0]?.applied, false);
     assert.deepEqual(patchResult[0]?.changedFiles, []);
     assert.equal(patchResult[0]?.postApplyValidationPassed, true);
+
+    const verificationResult = await readJsonFile<
+      Array<{ overallStatus: string; hooksExecuted: unknown[] }>
+    >(join(artifactsDir, "verification-result.json"));
+    assert.equal(verificationResult.length, 1);
+    assert.equal(verificationResult[0]?.overallStatus, "skipped");
+    assert.equal(Array.isArray(verificationResult[0]?.hooksExecuted), true);
+    assert.equal((verificationResult[0]?.hooksExecuted as unknown[]).length, 0);
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -1354,6 +1367,13 @@ test("mode mock with backend live override applies constrained backend patch", a
     assert.equal(patchResult[0]?.applied, true);
     assert.ok(patchResult[0]?.changedFiles.includes(backendTargetFile));
     assert.equal(patchResult[0]?.postApplyValidationPassed, true);
+
+    const verificationResult = await readJsonFile<
+      Array<{ overallStatus: string; hooksRequested: string[] }>
+    >(join(artifactsDir, "verification-result.json"));
+    assert.equal(verificationResult.length, 1);
+    assert.equal(verificationResult[0]?.overallStatus, "skipped");
+    assert.deepEqual(verificationResult[0]?.hooksRequested, []);
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;

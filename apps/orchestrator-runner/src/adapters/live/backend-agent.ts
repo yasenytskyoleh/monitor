@@ -3,6 +3,8 @@ import type { AgentHandlerContext, AgentOutputEnvelope } from "@monitor/orchestr
 import { applyBackendPatchPlan } from "../../backend-patch/apply-patch-plan.js";
 import { validatePostApplyResult } from "../../backend-patch/post-apply-validate.js";
 import { validateBackendPatchPlan } from "../../backend-patch/validate-patch-plan.js";
+import { runBackendVerificationHooks } from "../../backend-verification/run-verification-hooks.js";
+import type { BackendVerificationMode } from "../../backend-verification/types.js";
 import { createLiveAgentHandler } from "./core/execute-live-agent.js";
 import type { LiveAdapterOptions } from "./core/types.js";
 import { BACKEND_RESPONSE_SCHEMA } from "./schemas/backend-agent-response-schema.js";
@@ -11,6 +13,7 @@ import { assertBackendOutput } from "./validators/assert-backend-output.js";
 export type LiveBackendAgentOptions = LiveAdapterOptions & {
   rootDir: string;
   dryRun?: boolean;
+  verificationMode?: BackendVerificationMode;
 };
 
 export function createLiveBackendAgentHandler(options: LiveBackendAgentOptions) {
@@ -82,6 +85,11 @@ async function finalizeBackendOutput(
     patchPlan,
     applyResult
   });
+  const verificationResult = await runBackendVerificationHooks({
+    mode: options.verificationMode ?? "none",
+    cwd: options.rootDir,
+    applied: applyResult.applied
+  });
 
   const metrics =
     output.metrics && typeof output.metrics === "object" && !Array.isArray(output.metrics)
@@ -117,7 +125,8 @@ async function finalizeBackendOutput(
         postApplyChecks: postApplyResult.checks,
         failureCategory: null,
         failureReason: null
-      }
+      },
+      verificationResult
     }
   };
 }

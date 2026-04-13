@@ -31,6 +31,11 @@ Backend write mode:
 - default is `--backend-write dry-run` (no filesystem mutation)
 - use `--backend-write apply` to allow constrained patch application for `backend-agent`
 
+Backend verification mode:
+- default is `--backend-verify none`
+- available modes: `none`, `lint`, `lint+typecheck`, `lint+typecheck+test`
+- verification hooks run only when backend apply mode is active
+
 Execution mode precedence:
 1. Start from `--mode`.
 2. Resolve defaults for all agents.
@@ -71,6 +76,7 @@ pnpm runner run \
   --mode mock \
   --agent-mode product=live,architect=live,quant-pattern=live,backend=live,docs-reviewer=live \
   --backend-write dry-run \
+  --backend-verify none \
   --scenario happy \
   --env local \
   --version v1 \
@@ -149,6 +155,7 @@ Persisted run artifacts are written to:
 - `runtime/runs/<runId>/artifacts.json`
 - optional: `runtime/runs/<runId>/patch-plan.json`
 - optional: `runtime/runs/<runId>/patch-result.json`
+- optional: `runtime/runs/<runId>/verification-result.json`
 - optional: `runtime/runs/<runId>/input-task.json`
 - optional: `runtime/runs/<runId>/compiled-snapshot-meta.json`
 
@@ -175,6 +182,7 @@ Run default live path (Product + Architect + Quant Pattern + Backend + Docs Revi
 pnpm runner run \
   --mode live \
   --backend-write dry-run \
+  --backend-verify none \
   --env local \
   --version v1 \
   --task-id task-live-001 \
@@ -188,6 +196,7 @@ Allow constrained backend writes explicitly:
 pnpm runner run \
   --mode live \
   --backend-write apply \
+  --backend-verify lint+typecheck+test \
   --env local \
   --version v1 \
   --task-id task-live-apply-001 \
@@ -274,6 +283,13 @@ Live Backend Agent constrained mode:
 - backend patch evidence files:
   - `patch-plan.json`
   - `patch-result.json`
+- backend verification evidence file:
+  - `verification-result.json`
+- verification hook pipeline (allowlisted commands only):
+  - `lint`: `pnpm --filter @monitor/orchestrator-runner lint`
+  - `typecheck`: `pnpm --filter @monitor/orchestrator-runner typecheck`
+  - `test`: `pnpm --filter @monitor/orchestrator-runner test`
+- verification is fail-fast and runs only after successful backend apply
 - backend patch failure categories are explicit:
   - `patch_validation_failure`
   - `patch_limit_exceeded`
@@ -281,3 +297,7 @@ Live Backend Agent constrained mode:
   - `forbidden_change_type`
   - `apply_failure`
   - `post_apply_validation_failure`
+  - `lint_failed`
+  - `typecheck_failed`
+  - `test_failed`
+  - `verification_timeout`
