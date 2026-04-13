@@ -112,7 +112,22 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
         fromState: "IMPLEMENT",
         toState: "REVIEW",
         changeType: "patch_only",
+        applyMode: "apply",
+        singleRootKey: "apps/orchestrator-runner",
+        totalContentBytes: 128,
+        limitChecks: {
+          maxFilesPassed: true,
+          maxSizePassed: true,
+          maxPerFileSizePassed: true,
+          singleRootPassed: true
+        },
         targetFiles: ["apps/orchestrator-runner/src/runner.ts"],
+        operations: [
+          {
+            filePath: "apps/orchestrator-runner/src/runner.ts",
+            operation: "update"
+          }
+        ],
         proposedDiffCount: 1,
         testsPlan: ["pnpm --filter @monitor/orchestrator-runner test"],
         knownLimitations: ["Constrained patch mode only."],
@@ -124,6 +139,21 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
           }
         ],
         dryRun: false
+      }
+    ],
+    patchResults: [
+      {
+        taskId: "task-001",
+        scenario: "happy",
+        transitionChecksum: "checksum-1",
+        fromState: "IMPLEMENT",
+        toState: "REVIEW",
+        applyMode: "apply",
+        applied: true,
+        changedFiles: ["apps/orchestrator-runner/src/runner.ts"],
+        postApplyValidationPassed: true,
+        failureCategory: null,
+        failureReason: null
       }
     ]
   });
@@ -153,4 +183,11 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
   ) as Array<Record<string, unknown>>;
   assert.equal(patchPlanJson.length, 1);
   assert.equal(patchPlanJson[0]?.changeType, "patch_only");
+  assert.equal(patchPlanJson[0]?.applyMode, "apply");
+
+  const patchResultJson = JSON.parse(
+    await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/patch-result.json"), "utf8")
+  ) as Array<Record<string, unknown>>;
+  assert.equal(patchResultJson.length, 1);
+  assert.equal(patchResultJson[0]?.applied, true);
 });

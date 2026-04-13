@@ -2,7 +2,7 @@ import type { EnvironmentName } from "@monitor/agent-config";
 import type { AgentOutputEnvelope, TransitionRecord } from "@monitor/orchestrator-core";
 import type { ApprovalTransitionEvidence, WorkflowApproval } from "./approvals/types.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
-import type { PatchPlanEvidence } from "./backend-patch/types.js";
+import type { PatchPlanEvidence, PatchResultEvidence } from "./backend-patch/types.js";
 import type { RunOutcome } from "./persistence/types.js";
 
 export type RunnerMode = "live" | "mock";
@@ -36,6 +36,7 @@ export type MockScenarioResult = {
   approvals: WorkflowApproval[];
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
+  patchResults: PatchResultEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   transitionLogPath: string;
@@ -56,6 +57,7 @@ export type RunnerOutput = {
   approvals: WorkflowApproval[];
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
+  patchResults: PatchResultEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
   scenarios?: MockScenarioResult[];

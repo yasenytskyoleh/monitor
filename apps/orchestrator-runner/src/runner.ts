@@ -10,6 +10,8 @@ import { isPolicyApprovalError } from "./approvals/types.js";
 import { parseArgs } from "./cli.js";
 import { loadDotEnv, requireOpenAiApiKey } from "./env.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
+import { isBackendPatchError } from "./backend-patch/errors.js";
+import type { PatchResultEvidence } from "./backend-patch/types.js";
 import {
   hasLiveAgents,
   resolveAgentExecutionMap,
@@ -226,6 +228,7 @@ async function persistSuccessRun(options: PersistSuccessOptions): Promise<Persis
     approvals: options.result.approvals,
     artifacts: options.result.artifacts,
     patchPlans: options.result.patchPlans,
+    patchResults: options.result.patchResults,
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
   });
@@ -281,6 +284,8 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     snapshotChecksum: options.snapshotMeta?.checksum ?? "unknown"
   };
 
+  const patchResults = options.partialResult?.patchResults ?? inferFailurePatchResults(options.error, options.args.taskId);
+
   const persisted = await options.runStore.persist({
     runId: options.runId,
     runRecord,
@@ -289,6 +294,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     approvals: options.partialResult?.approvals ?? [],
     artifacts: options.partialResult?.artifacts ?? [],
     patchPlans: options.partialResult?.patchPlans ?? [],
+    patchResults,
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
   });
@@ -535,6 +541,24 @@ function appendErrorDetails(error: unknown, details: string[]): void {
     ? record.details.filter((item): item is string => typeof item === "string")
     : [];
   record.details = [...existing, ...details];
+}
+
+function inferFailurePatchResults(error: unknown, taskId: string): PatchResultEvidence[] {
+  if (!isBackendPatchError(error)) {
+    return [];
+  }
+
+  return [
+    {
+      taskId,
+      applyMode: "dry-run",
+      applied: false,
+      changedFiles: [],
+      postApplyValidationPassed: false,
+      failureCategory: error.failureCategory,
+      failureReason: error.message
+    }
+  ];
 }
 
 async function resolveSnapshotMeta(snapshotPath: string, fallbackVersion: string): Promise<SnapshotMeta> {

@@ -148,6 +148,7 @@ Persisted run artifacts are written to:
 - `runtime/runs/<runId>/approvals.json`
 - `runtime/runs/<runId>/artifacts.json`
 - optional: `runtime/runs/<runId>/patch-plan.json`
+- optional: `runtime/runs/<runId>/patch-result.json`
 - optional: `runtime/runs/<runId>/input-task.json`
 - optional: `runtime/runs/<runId>/compiled-snapshot-meta.json`
 
@@ -261,4 +262,22 @@ Live Backend Agent constrained mode:
   - `patch_only`
   - `test_only`
   - `docs_only`
-- `patch-plan.json` is persisted when backend patch plans are present
+- patch scope limits are enforced:
+  - max target file count
+  - max total content bytes
+  - max per-file content bytes
+  - single-root target set
+- post-apply validation is enforced:
+  - dry-run must not mutate files
+  - apply mode must only mutate validated target files
+  - all expected target files must exist after apply mode
+- backend patch evidence files:
+  - `patch-plan.json`
+  - `patch-result.json`
+- backend patch failure categories are explicit:
+  - `patch_validation_failure`
+  - `patch_limit_exceeded`
+  - `forbidden_path`
+  - `forbidden_change_type`
+  - `apply_failure`
+  - `post_apply_validation_failure`

@@ -14,6 +14,7 @@ export function formatRunnerOutput(result: RunnerOutput, format: OutputFormat = 
         transitionLogPath: result.transitionLogPath,
         transitionsCount: result.transitions.length,
         patchPlansCount: result.patchPlans.length,
+        patchResultsCount: result.patchResults.length,
         scenarios:
           result.scenarios?.map((scenario) => ({
             scenario: scenario.scenario,
