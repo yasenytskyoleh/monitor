@@ -35,7 +35,7 @@ function buildUserPrompt(context: AgentHandlerContext): string {
       nextAction:
         "Use one valid action from the schema. For successful formalization handoff use handoff_to_backend.",
       artifacts:
-        "Return an array of non-empty string artifact refs. Include pattern-definition and metrics-plan artifacts.",
+        "Return only allowed Quant artifact types: pattern-definition, metrics-plan.",
       quantFormalization:
         "When status=completed include metrics.patternDefinition, measurableConditions[], metricsPlan[], evaluationHorizon, invalidationAssumptions[], edgeHypothesis, testScenarios[], and phaseScope with SPOT_ONLY boundaries.",
       phase1Boundaries:

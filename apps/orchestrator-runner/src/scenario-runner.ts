@@ -21,6 +21,12 @@ import {
   type PatchPlanEvidence,
   type PatchResultEvidence
 } from "./backend-patch/types.js";
+import {
+  extractRollbackPlanEvidenceFromBackendOutput,
+  extractRollbackResultEvidenceFromBackendOutput,
+  type RollbackPlanEvidence,
+  type RollbackResultEvidence
+} from "./backend-rollback/types.js";
 import { extractVerificationResultEvidenceFromBackendOutput } from "./backend-verification/extract-verification-result.js";
 import type { VerificationResultEvidence } from "./backend-verification/types.js";
 import { ApprovalRegistry } from "./approvals/registry.js";
@@ -89,6 +95,8 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       approvalEvidenceByTransitionChecksum: {},
       patchPlans: [],
       patchResults: [],
+      rollbackPlans: [],
+      rollbackResults: [],
       verificationResults: [],
       transitions: [],
       results: []
@@ -101,6 +109,8 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
       patchPlans: PatchPlanEvidence[];
       patchResults: PatchResultEvidence[];
+      rollbackPlans: RollbackPlanEvidence[];
+      rollbackResults: RollbackResultEvidence[];
       verificationResults: VerificationResultEvidence[];
       artifacts: WorkflowArtifact[];
       transitions: TransitionRecord[];
@@ -128,6 +138,8 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
       approvalEvidenceByTransitionChecksum: scenarioResult.approvalEvidenceByTransitionChecksum,
       patchPlans: scenarioResult.patchPlans,
       patchResults: scenarioResult.patchResults,
+      rollbackPlans: scenarioResult.rollbackPlans,
+      rollbackResults: scenarioResult.rollbackResults,
       verificationResults: scenarioResult.verificationResults,
       artifacts: scenarioResult.artifacts,
       transitions: scenarioResult.transitions,
@@ -154,6 +166,8 @@ export async function runScenarioMode(options: RunModeOptions): Promise<RunnerOu
     ),
     patchPlans: scenarioResults.flatMap((scenarioResult) => scenarioResult.patchPlans),
     patchResults: scenarioResults.flatMap((scenarioResult) => scenarioResult.patchResults),
+    rollbackPlans: scenarioResults.flatMap((scenarioResult) => scenarioResult.rollbackPlans),
+    rollbackResults: scenarioResults.flatMap((scenarioResult) => scenarioResult.rollbackResults),
     verificationResults: scenarioResults.flatMap((scenarioResult) => scenarioResult.verificationResults),
     artifacts: scenarioResults.flatMap((scenarioResult) => scenarioResult.artifacts),
     transitions: lastScenario.transitions,
@@ -200,6 +214,8 @@ export async function runHappyWorkflow(
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
   patchResults: PatchResultEvidence[];
+  rollbackPlans: RollbackPlanEvidence[];
+  rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
@@ -256,6 +272,8 @@ export async function runHappyWorkflow(
     approvalEvidenceByTransitionChecksum: scenarioContext.approvalEvidenceByTransitionChecksum,
     patchPlans: scenarioContext.patchPlans,
     patchResults: scenarioContext.patchResults,
+    rollbackPlans: scenarioContext.rollbackPlans,
+    rollbackResults: scenarioContext.rollbackResults,
     verificationResults: scenarioContext.verificationResults,
     artifacts: scenarioContext.registry.listArtifacts(),
     transitions: scenarioContext.transitions
@@ -273,6 +291,8 @@ async function runMockMissingApprovalScenario(
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
   patchResults: PatchResultEvidence[];
+  rollbackPlans: RollbackPlanEvidence[];
+  rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
   artifacts: WorkflowArtifact[];
   transitions: TransitionRecord[];
@@ -318,6 +338,8 @@ async function runMockMissingApprovalScenario(
     approvalEvidenceByTransitionChecksum: scenarioContext.approvalEvidenceByTransitionChecksum,
     patchPlans: scenarioContext.patchPlans,
     patchResults: scenarioContext.patchResults,
+    rollbackPlans: scenarioContext.rollbackPlans,
+    rollbackResults: scenarioContext.rollbackResults,
     verificationResults: scenarioContext.verificationResults,
     artifacts: scenarioContext.registry.listArtifacts(),
     transitions: scenarioContext.transitions,
@@ -364,6 +386,8 @@ type ScenarioExecutionContext = {
   approvalEvidenceByTransitionChecksum: Record<string, ApprovalTransitionEvidence>;
   patchPlans: PatchPlanEvidence[];
   patchResults: PatchResultEvidence[];
+  rollbackPlans: RollbackPlanEvidence[];
+  rollbackResults: RollbackResultEvidence[];
   verificationResults: VerificationResultEvidence[];
   transitions: TransitionRecord[];
   results: TransitionResult[];
@@ -434,6 +458,28 @@ async function executeAndCollectTransition(
   });
   if (patchResult) {
     context.patchResults.push(patchResult);
+  }
+
+  const rollbackPlan = extractRollbackPlanEvidenceFromBackendOutput({
+    output: result.output,
+    transitionChecksum: result.transition.transitionChecksum,
+    fromState: result.transition.from,
+    toState: result.transition.to,
+    scenario: context.scenario
+  });
+  if (rollbackPlan) {
+    context.rollbackPlans.push(rollbackPlan);
+  }
+
+  const rollbackResult = extractRollbackResultEvidenceFromBackendOutput({
+    output: result.output,
+    transitionChecksum: result.transition.transitionChecksum,
+    fromState: result.transition.from,
+    toState: result.transition.to,
+    scenario: context.scenario
+  });
+  if (rollbackResult) {
+    context.rollbackResults.push(rollbackResult);
   }
 
   const verificationResult = extractVerificationResultEvidenceFromBackendOutput({

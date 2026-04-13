@@ -8,7 +8,8 @@ export const BACKEND_RESPONSE_SCHEMA: Record<string, unknown> = strictObjectSche
   artifacts: {
     type: "array",
     minItems: 1,
-    items: { type: "string", minLength: 1 }
+    uniqueItems: true,
+    items: { type: "string", enum: ["code-change", "tests", "implementation-notes"] }
   },
   nextAction: {
     type: "string",

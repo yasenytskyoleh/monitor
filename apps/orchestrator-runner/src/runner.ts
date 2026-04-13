@@ -12,6 +12,7 @@ import { loadDotEnv, requireOpenAiApiKey } from "./env.js";
 import type { WorkflowArtifact } from "./artifacts/types.js";
 import { isBackendPatchError } from "./backend-patch/errors.js";
 import type { PatchResultEvidence } from "./backend-patch/types.js";
+import type { RollbackPlanEvidence, RollbackResultEvidence } from "./backend-rollback/types.js";
 import type { VerificationResultEvidence } from "./backend-verification/types.js";
 import {
   hasLiveAgents,
@@ -73,6 +74,7 @@ export async function runWithArgv(
       agentModes,
       openAiApiKey,
       backendDryRun: args.backendWrite === "dry-run",
+      backendRollbackMode: args.backendRollbackMode,
       backendVerificationMode: args.backendVerificationMode,
       model: args.model,
       temperature: args.temperature,
@@ -231,6 +233,8 @@ async function persistSuccessRun(options: PersistSuccessOptions): Promise<Persis
     artifacts: options.result.artifacts,
     patchPlans: options.result.patchPlans,
     patchResults: options.result.patchResults,
+    rollbackPlans: options.result.rollbackPlans,
+    rollbackResults: options.result.rollbackResults,
     verificationResults: options.result.verificationResults,
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
@@ -288,6 +292,9 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
   };
 
   const patchResults = options.partialResult?.patchResults ?? inferFailurePatchResults(options.error, options.args.taskId);
+  const rollbackPlans = options.partialResult?.rollbackPlans ?? inferFailureRollbackPlans(options.error, options.args.taskId);
+  const rollbackResults =
+    options.partialResult?.rollbackResults ?? inferFailureRollbackResults(options.error, options.args.taskId);
   const verificationResults =
     options.partialResult?.verificationResults ??
     inferFailureVerificationResults(options.error, options.args.taskId);
@@ -301,6 +308,8 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     artifacts: options.partialResult?.artifacts ?? [],
     patchPlans: options.partialResult?.patchPlans ?? [],
     patchResults,
+    rollbackPlans,
+    rollbackResults,
     verificationResults,
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
@@ -551,6 +560,12 @@ function appendErrorDetails(error: unknown, details: string[]): void {
 }
 
 function inferFailurePatchResults(error: unknown, taskId: string): PatchResultEvidence[] {
+  const metadata = extractBackendPatchMetadata(error);
+  const result = metadata?.patchResult as PatchResultEvidence | undefined;
+  if (result) {
+    return [result];
+  }
+
   if (!isBackendPatchError(error)) {
     return [];
   }
@@ -572,6 +587,12 @@ function inferFailureVerificationResults(
   error: unknown,
   taskId: string
 ): VerificationResultEvidence[] {
+  const metadata = extractBackendPatchMetadata(error);
+  const result = metadata?.verificationResult as VerificationResultEvidence | undefined;
+  if (result) {
+    return [result];
+  }
+
   if (!isBackendPatchError(error)) {
     return [];
   }
@@ -585,6 +606,50 @@ function inferFailureVerificationResults(
       overallStatus: "failed"
     }
   ];
+}
+
+function inferFailureRollbackPlans(error: unknown, _taskId: string): RollbackPlanEvidence[] {
+  const metadata = extractBackendPatchMetadata(error);
+  const plan = metadata?.rollbackPlan as RollbackPlanEvidence | undefined;
+  if (plan) {
+    return [plan];
+  }
+  return [];
+}
+
+function inferFailureRollbackResults(error: unknown, taskId: string): RollbackResultEvidence[] {
+  const metadata = extractBackendPatchMetadata(error);
+  const result = metadata?.rollbackResult as RollbackResultEvidence | undefined;
+  if (result) {
+    return [result];
+  }
+
+  if (!isBackendPatchError(error)) {
+    return [];
+  }
+
+  return [
+    {
+      taskId,
+      rollbackAttempted: false,
+      triggerReason: null,
+      restoredFiles: [],
+      deletedCreatedFiles: [],
+      status: "skipped",
+      failureReason: null
+    }
+  ];
+}
+
+function extractBackendPatchMetadata(error: unknown): Record<string, unknown> | undefined {
+  if (!isBackendPatchError(error)) {
+    return undefined;
+  }
+  const metadata = (error as { metadata?: unknown }).metadata;
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return undefined;
+  }
+  return metadata as Record<string, unknown>;
 }
 
 async function resolveSnapshotMeta(snapshotPath: string, fallbackVersion: string): Promise<SnapshotMeta> {

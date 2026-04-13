@@ -32,7 +32,7 @@ function buildUserPrompt(context: AgentHandlerContext): string {
       nextAction:
         "Use one valid action from the schema. For DESIGN -> FORMALIZE handoff use handoff_to_quant or await_approval.",
       artifacts:
-        "Return an array of non-empty string artifact refs. Include architecture artifacts and target-state required artifacts.",
+        "Return only allowed Architect artifact types: architecture-design, adr-draft.",
       architectDesignFields:
         "When status=completed include metrics.moduleBoundaries[], metrics.dataFlow[], metrics.contractDefinitions[], metrics.adrDraft, metrics.riskNotes[].",
       requiredArtifactsForTargetState

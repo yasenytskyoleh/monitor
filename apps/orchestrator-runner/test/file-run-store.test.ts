@@ -156,6 +156,38 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
         failureReason: null
       }
     ],
+    rollbackPlans: [
+      {
+        taskId: "task-001",
+        scenario: "happy",
+        transitionChecksum: "checksum-1",
+        fromState: "IMPLEMENT",
+        toState: "REVIEW",
+        applyMode: "apply",
+        entries: [
+          {
+            filePath: "apps/orchestrator-runner/src/runner.ts",
+            existedBefore: true,
+            previousContent: "export const before = true;\n"
+          }
+        ]
+      }
+    ],
+    rollbackResults: [
+      {
+        taskId: "task-001",
+        scenario: "happy",
+        transitionChecksum: "checksum-1",
+        fromState: "IMPLEMENT",
+        toState: "REVIEW",
+        rollbackAttempted: false,
+        triggerReason: null,
+        restoredFiles: [],
+        deletedCreatedFiles: [],
+        status: "skipped",
+        failureReason: null
+      }
+    ],
     verificationResults: [
       {
         taskId: "task-001",
@@ -218,6 +250,18 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
   ) as Array<Record<string, unknown>>;
   assert.equal(patchResultJson.length, 1);
   assert.equal(patchResultJson[0]?.applied, true);
+
+  const rollbackPlanJson = JSON.parse(
+    await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/rollback-plan.json"), "utf8")
+  ) as Array<Record<string, unknown>>;
+  assert.equal(rollbackPlanJson.length, 1);
+  assert.equal(rollbackPlanJson[0]?.applyMode, "apply");
+
+  const rollbackResultJson = JSON.parse(
+    await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/rollback-result.json"), "utf8")
+  ) as Array<Record<string, unknown>>;
+  assert.equal(rollbackResultJson.length, 1);
+  assert.equal(rollbackResultJson[0]?.status, "skipped");
 
   const verificationResultJson = JSON.parse(
     await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/verification-result.json"), "utf8")

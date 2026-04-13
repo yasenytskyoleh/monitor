@@ -36,7 +36,7 @@ function buildUserPrompt(context: AgentHandlerContext): string {
       nextAction:
         "Use one valid action from the schema. Prefer await_approval when review evidence is complete.",
       artifacts:
-        "Return an array of non-empty string artifact refs. Include docs-update and review-report when status is completed.",
+        "Return only allowed Docs Reviewer artifact types: docs-update, review-report.",
       docsReviewFields:
         "When status=completed include metrics.docsUpdates[], metrics.reviewFindings[], metrics.changelogNotes[], metrics.traceabilityConfirmation.{isTraceable,notes[]}, metrics.missingArtifactWarnings[], metrics.driftWarnings[].",
       requiredArtifactsForTargetState
