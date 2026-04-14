@@ -22,6 +22,7 @@ Implemented concrete repositories in this PR:
 - `InMemorySetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-repository.impl.ts`)
 - `InMemoryResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-repository.impl.ts`)
 - `InMemorySignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-repository.impl.ts`)
+- `InMemoryEvaluationResultRepository` (`packages/domain-model/src/repositories/evaluation-result-repository.impl.ts`)
 
 Repository responsibilities:
 - persist and load domain-shaped records
@@ -47,6 +48,7 @@ Implemented concrete service factories in this PR:
 - `createSetupDefinitionService` (`packages/domain-model/src/services/setup-definition-service.ts`)
 - `createResearchService` (`packages/domain-model/src/services/research-service.ts`)
 - `createSignalCandidateService` (`packages/domain-model/src/services/signal-candidate-service.ts`)
+- `createEvaluationService` (`packages/domain-model/src/services/evaluation-service.ts`)
 
 Service responsibilities:
 - own write-path semantics
@@ -67,6 +69,11 @@ First persisted slice write-path rules now implemented:
   - validates required fields (`id`, `setupDefinitionId`, `monitoredSymbolId`, `detectedAt`, `status`, `evidenceSummary`)
   - validates referenced setup definition and monitored symbol boundaries
   - enforces strict candidate lifecycle transitions before evaluation
+- `EvaluationService`
+  - validates required fields (`id`, `signalCandidateId`, `evaluationWindowId`, `status`)
+  - validates referenced signal candidate existence
+  - enforces strict evaluation lifecycle transitions
+  - validates completed metrics consistency and duplicate candidate/window prevention
 
 Service non-goals:
 - no direct runner-artifact writes
@@ -90,7 +97,7 @@ Ownership direction:
 2. persistence metadata (`originRunId`, `traceId`) may be attached through metadata contracts
 3. runtime evidence files remain separate from product-domain storage
 4. one domain contract does not force one-table implementation in this slice
-5. first concrete persistence is intentionally narrow to setup definitions and research hypotheses only
+5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, and evaluation results
 
 ## Orchestrator handoff boundary
 - orchestrator workflows may trigger future product-domain services

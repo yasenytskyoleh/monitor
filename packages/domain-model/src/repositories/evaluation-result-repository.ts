@@ -13,16 +13,21 @@ export type EvaluationResultUpdateRequest = {
 };
 
 export type EvaluationResultStatusUpdateRequest = {
-  resultId: string;
+  evaluationResultId: string;
   status: EvaluationStatus;
   metadata: ProductRecordMetadata;
   expectedVersion: number | null;
 };
 
 export type EvaluationResultRepository = {
-  getById(resultId: string): Promise<EvaluationResult | null>;
+  getById(evaluationResultId: string): Promise<EvaluationResult | null>;
+  getBySignalCandidateAndWindow(
+    signalCandidateId: string,
+    evaluationWindowId: string
+  ): Promise<EvaluationResult | null>;
   listBySignalCandidateId(signalCandidateId: string): Promise<EvaluationResult[]>;
   listByEvaluationWindowId(evaluationWindowId: string): Promise<EvaluationResult[]>;
+  listByStatus(statuses: EvaluationStatus[]): Promise<EvaluationResult[]>;
   create(request: EvaluationResultCreateRequest): Promise<EvaluationResult>;
   update(request: EvaluationResultUpdateRequest): Promise<EvaluationResult>;
   updateStatus(request: EvaluationResultStatusUpdateRequest): Promise<EvaluationResult | null>;
