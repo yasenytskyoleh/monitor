@@ -25,7 +25,7 @@ It is **not yet**:
 - or an autonomous trading bot.
 
 ## Current implementation status
-The orchestration foundation is functional and test-backed, and the first product-domain contracts now exist.
+The orchestration foundation is functional and test-backed, and the first product-domain contracts now include monitoring ingestion architecture contracts.
 
 Implemented today:
 - config + schema + semantic-validation platform (`packages/agent-config`)
@@ -43,6 +43,8 @@ Implemented today:
   - Docs Reviewer
 - first product-side contracts package (`packages/domain-model`) with explicit entities:
   - `MonitoredSymbol`
+  - `MarketDataSource`
+  - `NormalizedMarketEvent` (`PriceTickEvent`, `CandleClosedEvent`, `VolumeUpdateEvent`, `MonitoringHeartbeatEvent`)
   - `SetupDefinition`
   - `SignalCandidate`
   - `EvaluationWindow`
@@ -52,7 +54,10 @@ Implemented today:
 - product-domain docs and ADR:
   - `docs/project/domain-model.md`
   - `docs/project/research-model.md`
+  - `docs/project/monitoring-model.md`
+  - `docs/project/normalized-events.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
+  - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -86,7 +91,7 @@ without losing:
 - and architectural discipline.
 
 The new product-domain contracts are intentionally thin:
-- no ingestion engine yet,
+- no ingestion runtime engine yet,
 - no statistics engine yet,
 - no exchange integration yet.
 

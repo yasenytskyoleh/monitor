@@ -59,3 +59,6 @@ Boundary rule:
 - no backend capability expansion in this ADR
 - no cross-package architectural rewrite
 - no implementation logic that infers product behavior beyond defined contracts
+
+## Follow-up ADRs
+- ADR-002 defines the first monitoring ingestion architecture and normalized event model on top of this slice.

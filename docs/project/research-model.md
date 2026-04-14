@@ -64,6 +64,7 @@ Current purpose:
 - signal candidates must include evidence references
 - evaluation windows must be explicit horizon values/units
 - evaluation results must expose comparable numeric placeholders where available
+- future setup detection inputs are expected to come from `NormalizedMarketEvent` contracts
 
 ## Postponed decisions
 - advanced statistics catalog

@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.5 — Orchestration foundation plus first product-domain contracts**
+**Phase 1.6 — Orchestration foundation plus first monitoring-ingestion contracts**
 
 ## What this phase is about
 This phase is focused on:
@@ -57,6 +57,11 @@ The orchestration side proves that the project can:
   - `docs/project/domain-model.md`
   - `docs/project/research-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
+- first monitoring-ingestion architecture contracts (still no runtime ingestion):
+  - `docs/project/monitoring-model.md`
+  - `docs/project/normalized-events.md`
+  - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
+  - `packages/domain-model/src/monitoring/*`
 
 ## What this phase is not
 This phase is **not** about building a full crypto trading platform.

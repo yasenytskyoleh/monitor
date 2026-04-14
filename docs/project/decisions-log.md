@@ -20,6 +20,7 @@
 - live agents should be introduced **incrementally**, one by one
 - orchestration-domain and product-domain concerns must be separated explicitly
 - first product-domain contracts live in a dedicated package (`packages/domain-model`)
+- monitoring ingestion is contract-first with normalized events before setup-detection logic
 
 ## Agent/workflow decisions
 - current core agents:
@@ -47,6 +48,8 @@
 - backend stability reassessment artifact exists for dedicated runs (`stability-reassessment.json`)
 - first product-domain entity contracts exist:
   - `MonitoredSymbol`
+  - `MarketDataSource`
+  - `NormalizedMarketEvent` (`PriceTickEvent`, `CandleClosedEvent`, `VolumeUpdateEvent`, `MonitoringHeartbeatEvent`)
   - `SetupDefinition`
   - `SignalCandidate`
   - `EvaluationWindow`
@@ -54,6 +57,7 @@
   - `ResearchHypothesis`
   - `ResearchRun`
 - first product-domain ADR exists (`docs/architecture/adr/ADR-001-first-product-domain-slice.md`)
+- first monitoring-ingestion ADR exists (`docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`)
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -63,4 +67,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **monitoring ingestion architecture definition against the new domain contracts (without full implementation)**
+- the currently recommended next step is **setup-detection architecture definition consuming normalized monitoring events (without full implementation)**

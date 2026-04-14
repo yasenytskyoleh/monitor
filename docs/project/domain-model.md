@@ -13,6 +13,8 @@ This is a design-and-contracts slice only. It does not implement ingestion, exec
 
 ## Included in this slice
 - `MonitoredSymbol`
+- `MarketDataSource`
+- `NormalizedMarketEvent` (`PriceTickEvent`, `CandleClosedEvent`, `VolumeUpdateEvent`, `MonitoringHeartbeatEvent`)
 - `SetupDefinition`
 - `SignalCandidate`
 - `EvaluationWindow`
@@ -26,6 +28,7 @@ Code contracts live in:
 Related product docs:
 - `docs/project/research-model.md`
 - `docs/project/monitoring-model.md`
+- `docs/project/normalized-events.md`
 
 ## Out of scope
 - exchange connectors and live websocket ingestion
@@ -61,6 +64,8 @@ Rule: orchestration executes workflows; product domain defines market/research m
 
 ## Entity relationships
 - `MonitoredSymbol` is the tracked market instrument context.
+- `MarketDataSource` defines provider/symbol mapping/reliability assumptions.
+- `NormalizedMarketEvent` provides stable observations from monitoring ingestion boundaries.
 - `SetupDefinition` expresses measurable conditions and assumptions.
 - `SignalCandidate` is a detected candidate tied to one setup and one monitored symbol.
 - `EvaluationWindow` defines when/how long a signal candidate is evaluated.
