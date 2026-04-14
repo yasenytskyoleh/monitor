@@ -54,6 +54,7 @@ export type PatchPlanEvidence = {
   limitChecks: PatchLimitChecks;
   targetFiles: string[];
   createdFiles: string[];
+  helperCreatedFiles?: string[];
   updatedFiles: string[];
   operations: Array<{
     filePath: string;
@@ -76,6 +77,7 @@ export type PatchResultEvidence = {
   applied: boolean;
   changedFiles: string[];
   createdFiles: string[];
+  helperCreatedFiles?: string[];
   updatedFiles: string[];
   postApplyValidationPassed: boolean;
   failureCategory: BackendPatchFailureCategory | null;
@@ -148,6 +150,7 @@ export function extractPatchPlanEvidenceFromBackendOutput(input: {
   const createdFiles = operations
     .filter((operation) => operation.operation === "create")
     .map((operation) => operation.filePath);
+  const helperCreatedFiles = parseOptionalStringArray(patchPlan?.helperCreatedFiles) ?? createdFiles;
   const updatedFiles = operations
     .filter((operation) => operation.operation === "update")
     .map((operation) => operation.filePath);
@@ -170,6 +173,7 @@ export function extractPatchPlanEvidenceFromBackendOutput(input: {
     limitChecks,
     targetFiles,
     createdFiles,
+    helperCreatedFiles,
     updatedFiles,
     operations,
     proposedDiffCount,
@@ -217,6 +221,7 @@ export function extractPatchResultEvidenceFromBackendOutput(input: {
   const createdFiles = appliedOperations
     .filter((operation) => operation.operation === "create")
     .map((operation) => operation.filePath);
+  const helperCreatedFiles = parseOptionalStringArray(patchApplyResult.helperCreatedFiles) ?? createdFiles;
   const updatedFiles = appliedOperations
     .filter((operation) => operation.operation === "update")
     .map((operation) => operation.filePath);
@@ -243,6 +248,7 @@ export function extractPatchResultEvidenceFromBackendOutput(input: {
     applied,
     changedFiles,
     createdFiles,
+    helperCreatedFiles,
     updatedFiles,
     postApplyValidationPassed,
     failureCategory,
@@ -258,6 +264,13 @@ function toStringArray(value: unknown): string[] {
     .map((item) => (typeof item === "string" ? item.trim() : ""))
     .filter((item) => item.length > 0);
   return Array.from(new Set(normalized));
+}
+
+function parseOptionalStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  return toStringArray(value);
 }
 
 function toAppliedOperations(value: unknown): AppliedPatchOperation[] {

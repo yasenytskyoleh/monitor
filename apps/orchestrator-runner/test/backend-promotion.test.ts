@@ -191,6 +191,68 @@ test("validatePromotion blocks unexpected apply file sets with clear reason", as
   assert.match(validation.failureReason ?? "", /outside validated plan/);
 });
 
+test("validatePromotion blocks promotion when isolated verification failed", async (context) => {
+  const workspaceRoot = await mkdtemp(join(tmpdir(), "backend-promotion-verify-failed-"));
+  const isolatedRoot = await mkdtemp(join(tmpdir(), "backend-promotion-verify-failed-iso-"));
+  context.after(async () => {
+    await rm(workspaceRoot, { recursive: true, force: true });
+    await rm(isolatedRoot, { recursive: true, force: true });
+  });
+
+  const targetFile = "apps/orchestrator-runner/src/promotion-verify-fail.ts";
+  await writeFileWithParents(join(workspaceRoot, targetFile), "export const v = false;\n");
+  await writeFileWithParents(join(isolatedRoot, targetFile), "export const v = true;\n");
+
+  const patchPlan = createPatchPlan({
+    taskId: "task-promotion-verification-failed",
+    rootDir: workspaceRoot,
+    targetFile,
+    content: "export const v = true;\n"
+  });
+  const preparedPromotion = await preparePromotion({
+    rootDir: workspaceRoot,
+    patchPlan
+  });
+
+  const validation = await validatePromotion({
+    mode: "promote_verified",
+    rootDir: workspaceRoot,
+    isolatedWorkspaceRoot: isolatedRoot,
+    patchPlan,
+    applyResult: {
+      appliedOperations: [
+        {
+          filePath: targetFile,
+          operation: "update",
+          applied: true
+        }
+      ],
+      applyMode: "apply",
+      applied: true,
+      changedFiles: [targetFile],
+      dryRun: false
+    },
+    verificationResult: {
+      applied: true,
+      hooksRequested: ["lint"],
+      hooksExecuted: [
+        {
+          name: "lint",
+          status: "failed",
+          command: "pnpm lint",
+          exitCode: 1,
+          durationMs: 1
+        }
+      ],
+      overallStatus: "failed"
+    },
+    preparedPromotion
+  });
+
+  assert.equal(validation.eligible, false);
+  assert.match(validation.failureReason ?? "", /requires successful verification result/);
+});
+
 function createPatchPlan(input: {
   taskId: string;
   rootDir: string;

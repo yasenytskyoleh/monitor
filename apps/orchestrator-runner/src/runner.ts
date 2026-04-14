@@ -619,6 +619,7 @@ function inferFailurePatchResults(error: unknown, taskId: string): PatchResultEv
       applied: false,
       changedFiles: [],
       createdFiles: [],
+      helperCreatedFiles: [],
       updatedFiles: [],
       postApplyValidationPassed: false,
       failureCategory: error.failureCategory,

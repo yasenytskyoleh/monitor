@@ -309,6 +309,13 @@ Live Backend Agent constrained mode:
     - `.ts`
     - `.tsx`
     - `.md`
+    - `.json` (helper-only; strict path and size limits)
+  - json helper creates are only allowed under:
+    - `apps/orchestrator-runner/test/fixtures/`
+  - create content size caps:
+    - general create max: 8,000 bytes
+    - json helper max: 2,000 bytes
+  - helper create paths that look like config/schema/migration are blocked
   - root-level and hidden-file creation are rejected
   - create operation fails if target file already exists
   - rollback deletes created files when apply/post-apply/verification fails
@@ -331,6 +338,7 @@ Live Backend Agent constrained mode:
 - backend patch evidence files:
   - `patch-plan.json`
   - `patch-result.json`
+  - include `helperCreatedFiles` when helper-file creation is present
 - backend isolation evidence file:
   - `workspace-summary.json`
   - includes isolation status, workspace id/path metadata, copied entry count, patched files, and cleanup status
@@ -342,6 +350,7 @@ Live Backend Agent constrained mode:
 - backend promotion evidence file:
   - `promotion-result.json`
   - includes promotion mode, attempt status, planned/promoted/blocked files, conflict checks, and final status
+  - includes `helperPromotedFiles`/`helperBlockedFiles` for helper-file auditability
 - verification hook pipeline (allowlisted commands only):
   - `lint`: `pnpm --filter @monitor/orchestrator-runner lint`
   - `typecheck`: `pnpm --filter @monitor/orchestrator-runner typecheck`

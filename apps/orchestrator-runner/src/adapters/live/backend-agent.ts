@@ -321,6 +321,7 @@ async function finalizeBackendOutput(
   const createdFiles = operations
     .filter((operation) => operation.operation === "create")
     .map((operation) => operation.filePath);
+  const helperCreatedFiles = [...createdFiles];
   const updatedFiles = operations
     .filter((operation) => operation.operation === "update")
     .map((operation) => operation.filePath);
@@ -340,6 +341,7 @@ async function finalizeBackendOutput(
         rollbackMode,
         targetFiles: executionPatchPlan.targetFiles,
         createdFiles,
+        helperCreatedFiles,
         updatedFiles,
         operations,
         singleRootKey: executionPatchPlan.singleRootKey,
@@ -351,6 +353,7 @@ async function finalizeBackendOutput(
         applied: applyResult!.applied,
         changedFiles: applyResult!.changedFiles,
         createdFiles,
+        helperCreatedFiles,
         updatedFiles,
         appliedOperations: applyResult!.appliedOperations,
         appliedCount: applyResult!.appliedOperations.length,
@@ -392,6 +395,11 @@ async function runPromotionStep(input: {
   preparedPromotion: PreparedPromotion | null;
 }): Promise<PromotionResultEvidence> {
   const filesPlannedForPromotion = uniqueStrings(input.patchPlan.proposedDiffs.map((diff) => diff.filePath));
+  const helperCreatedFiles = uniqueStrings(
+    input.patchPlan.proposedDiffs
+      .filter((diff) => diff.operation === "create")
+      .map((diff) => diff.filePath)
+  );
 
   if (input.promotionMode === "none") {
     return buildSkippedPromotionResult({
@@ -438,6 +446,8 @@ async function runPromotionStep(input: {
       filesPlannedForPromotion: validation.filesPlannedForPromotion,
       filesPromoted: [],
       filesBlocked: validation.filesBlocked,
+      helperPromotedFiles: [],
+      helperBlockedFiles: validation.filesBlocked.filter((filePath) => helperCreatedFiles.includes(filePath)),
       conflictDetected: validation.conflictDetected,
       conflicts: validation.conflicts,
       status: "failed",
@@ -468,6 +478,8 @@ async function runPromotionStep(input: {
       filesPlannedForPromotion: validation.filesPlannedForPromotion,
       filesPromoted: applyResult.filesPromoted,
       filesBlocked: [],
+      helperPromotedFiles: applyResult.filesPromoted.filter((filePath) => helperCreatedFiles.includes(filePath)),
+      helperBlockedFiles: [],
       conflictDetected: false,
       conflicts: [],
       status: "succeeded",
@@ -482,6 +494,10 @@ async function runPromotionStep(input: {
       filesPlannedForPromotion: validation.filesPlannedForPromotion,
       filesPromoted: [],
       filesBlocked: validation.filesPlannedForPromotion,
+      helperPromotedFiles: [],
+      helperBlockedFiles: validation.filesPlannedForPromotion.filter((filePath) =>
+        helperCreatedFiles.includes(filePath)
+      ),
       conflictDetected: false,
       conflicts: [],
       status: "failed",
@@ -510,6 +526,8 @@ function buildSkippedPromotionResult(input: {
     filesPlannedForPromotion: uniqueStrings(input.filesPlannedForPromotion),
     filesPromoted: [],
     filesBlocked: [],
+    helperPromotedFiles: [],
+    helperBlockedFiles: [],
     conflictDetected: false,
     conflicts: [],
     status: "skipped",
@@ -540,6 +558,8 @@ function extractPromotionResultFromError(
     filesPlannedForPromotion: uniqueStrings(filesPlannedForPromotion),
     filesPromoted: [],
     filesBlocked: uniqueStrings(filesPlannedForPromotion),
+    helperPromotedFiles: [],
+    helperBlockedFiles: [],
     conflictDetected: false,
     conflicts: [],
     status: "failed",
@@ -650,6 +670,10 @@ function buildFailurePatchResult(input: {
     applied: input.applyMode === "apply" && input.rollbackResult.status !== "succeeded",
     changedFiles: input.applyResult?.changedFiles ?? [],
     createdFiles:
+      input.applyResult?.appliedOperations
+        .filter((operation) => operation.operation === "create")
+        .map((operation) => operation.filePath) ?? [],
+    helperCreatedFiles:
       input.applyResult?.appliedOperations
         .filter((operation) => operation.operation === "create")
         .map((operation) => operation.filePath) ?? [],
