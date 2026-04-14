@@ -62,13 +62,8 @@ export type {
   SetupDefinitionStatus,
   SetupDefinitionTraceMetadata
 } from "./setup-definition.js";
-export { SIGNAL_CANDIDATE_STATUSES, SIGNAL_EVIDENCE_SOURCES } from "./signal-candidate.js";
-export type {
-  SignalCandidate,
-  SignalCandidateStatus,
-  SignalEvidence,
-  SignalEvidenceSource
-} from "./signal-candidate.js";
+export { SIGNAL_CANDIDATE_STATUSES } from "./signal-candidate.js";
+export type { SignalCandidate, SignalCandidateStatus } from "./signal-candidate.js";
 export {
   EVALUATION_OUTCOMES,
   EVALUATION_OUTCOME_SUMMARIES,
@@ -182,6 +177,7 @@ export type {
   SignalCandidateStatusUpdateRequest,
   SignalCandidateUpdateRequest
 } from "./repositories/signal-candidate-repository.js";
+export { InMemorySignalCandidateRepository } from "./repositories/signal-candidate-repository.impl.js";
 export {
   FIRST_PERSISTED_PRODUCT_SLICE,
   PRODUCT_SERVICE_NAMES,
@@ -215,6 +211,10 @@ export type {
   SignalCandidateService,
   SignalCandidateServiceDependencies,
   UpdateSignalCandidateStatusRequest
+} from "./services/signal-candidate-service.js";
+export {
+  SignalCandidateValidationError,
+  createSignalCandidateService
 } from "./services/signal-candidate-service.js";
 export type {
   CreateEvaluationResultRequest,

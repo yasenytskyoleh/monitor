@@ -10,7 +10,12 @@ The goal of this slice is to provide explicit contracts for:
 - research hypotheses and run tracking,
 - aggregation and setup comparison evidence.
 
-This is a design-and-contracts slice only. It does not implement ingestion, execution, or statistics engines.
+The package remains intentionally narrow, and now includes concrete persisted service/repository paths for:
+- `SetupDefinition`
+- `ResearchHypothesis`
+- `SignalCandidate`
+
+It still does not implement ingestion, execution, or statistics engines.
 
 ## Included in this slice
 - `MonitoredSymbol`
@@ -42,6 +47,7 @@ Related product docs:
 - `docs/project/persistence-boundaries.md`
 - `docs/project/persistence-implementation-architecture.md`
 - `docs/project/first-persisted-slice.md`
+- `docs/project/signal-candidate-model.md`
 
 ## Out of scope
 - exchange connectors and live websocket ingestion
@@ -80,7 +86,8 @@ Rule: orchestration executes workflows; product domain defines market/research m
 - `MarketDataSource` defines provider/symbol mapping/reliability assumptions.
 - `NormalizedMarketEvent` provides stable observations from monitoring ingestion boundaries.
 - `SetupDefinition` expresses measurable conditions and assumptions.
-- `SignalCandidate` is a detected candidate tied to one setup and one monitored symbol.
+- `SignalCandidate` is the first persisted detected product object, tied to one setup and one monitored symbol.
+- `SignalCandidate` is not a raw detection hit and not an evaluation result; it is the product-domain handoff record between detection and evaluation.
 - `EvaluationWindow` defines when/how long a signal candidate is evaluated.
 - `EvaluationInput` defines what observations/context are used for one evaluation pass.
 - `EvaluationResult` captures what happened for one signal candidate in one evaluation window.
@@ -99,7 +106,8 @@ Storage boundaries are now explicitly defined:
 Current package provides contract-level storage types in `packages/domain-model/src/storage/*`.
 
 Deferred to later slices:
-- repository interfaces
+- full detection runtime engine and event processing
+- evaluation-result persistence implementation details
 - schema/migration implementation
 - data retention policies
 
@@ -107,4 +115,4 @@ Deferred to later slices:
 - product entities are explicit and typed
 - orchestration/product boundary is written and enforceable by structure
 - setup/signal/evaluation concepts are measurable, not prose-only
-- implementation remains intentionally thin (contracts/docs only)
+- persisted product objects are introduced incrementally through narrow repository/service slices

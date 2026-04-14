@@ -35,6 +35,10 @@ export type {
   SignalCandidateServiceDependencies,
   UpdateSignalCandidateStatusRequest
 } from "./signal-candidate-service.js";
+export {
+  SignalCandidateValidationError,
+  createSignalCandidateService
+} from "./signal-candidate-service.js";
 
 export type {
   CreateEvaluationResultRequest,
