@@ -268,16 +268,24 @@ export type {
   SetupToAggregateFlowResult
 } from "./application/index.js";
 export {
+  AGGREGATION_REFRESH_STATUSES,
   EVALUATION_TRIGGER_STATUSES,
   RUNTIME_HANDOFF_STATUSES,
+  createEvaluationToAggregationRefreshHandoff,
   createSignalCandidateFromDetectionHandoff,
   createSignalCandidateToEvaluationHandoff
 } from "./runtime-handoff/index.js";
 export type {
+  AggregationRefreshResult,
+  AggregationRefreshStatus,
+  AggregationScopeDescriptor,
   DetectionToCandidateCommand,
+  EvaluationAggregationRefreshTrigger,
+  EvaluationToAggregationRefreshDependencies,
   EvaluationTriggerResult,
   EvaluationTriggerStatus,
   EvaluationWindowDescriptor,
+  RefreshAggregateFromEvaluationCommand,
   SignalCandidateEvaluationTrigger,
   StartEvaluationCommand,
   RuntimeHandoffResult,
