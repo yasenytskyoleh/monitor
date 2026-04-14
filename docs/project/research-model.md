@@ -59,12 +59,28 @@ Current purpose:
 - tie hypothesis + setup + candidate ids together
 - track run lifecycle and generated evaluation result ids
 
+### SetupAggregateResult
+Aggregated evidence summary for one setup under one aggregation scope.
+
+Purpose:
+- group multiple `EvaluationResult` records
+- produce first minimum aggregate metrics
+- expose research limitations explicitly
+
+### SetupComparison
+Descriptive comparison object for two or more setup aggregates under aligned scope semantics.
+
+Purpose:
+- compare setup evidence in the same evaluation/symbol/time context
+- avoid vague cross-scope comparisons
+
 ## Measurability requirements
 - setup conditions must be machine-readable (`field`, `operator`, `value`)
 - invalidation assumptions must be explicit text entries
 - signal candidates must include evidence references
 - evaluation windows must expose explicit mode/start rule/duration semantics
 - evaluation results must expose minimum comparable outcome metrics
+- aggregation must include explicit scope semantics before metrics are interpreted
 - future setup detection inputs are expected to come from `NormalizedMarketEvent` contracts
 
 ## Postponed decisions
@@ -79,5 +95,6 @@ Reference implementation contracts for this document:
 - `packages/domain-model/src/setup-definition.ts`
 - `packages/domain-model/src/signal-candidate.ts`
 - `packages/domain-model/src/evaluation/*`
+- `packages/domain-model/src/research/*`
 - `packages/domain-model/src/research-hypothesis.ts`
 - `packages/domain-model/src/research-run.ts`

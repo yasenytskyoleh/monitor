@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  AGGREGATE_COMPUTATION_STATUSES,
+  AGGREGATION_SYMBOL_SCOPE_KINDS,
   EVALUATION_OUTCOMES,
   EVALUATION_OUTCOME_SUMMARIES,
   EVALUATION_START_REFERENCE_RULES,
   EVALUATION_STATUSES,
   EVALUATION_WINDOW_MODES,
   EVALUATION_WINDOW_UNITS,
+  HYPOTHESIS_EVIDENCE_STATUSES,
   MARKET_DATA_PROVIDER_KINDS,
   MARKET_DATA_SOURCE_STATUSES,
   MONITORING_HEARTBEAT_STATUSES,
@@ -18,6 +21,8 @@ import {
   SETUP_DEFINITION_STATUSES,
   SIGNAL_CANDIDATE_STATUSES,
   TIMEFRAME_LABELS,
+  type AggregateMetrics,
+  type AggregationScope,
   type EvaluationInput,
   type EvaluationMetrics,
   type EvaluationResult,
@@ -26,9 +31,13 @@ import {
   type MonitoredSymbol,
   type NormalizedMarketEvent,
   type PriceTickEvent,
+  type ResearchAggregationInput,
+  type ResearchHypothesisEvidenceLink,
   type ResearchHypothesis,
   type ResearchRun,
   type SetupDefinition,
+  type SetupAggregateResult,
+  type SetupComparison,
   type SignalCandidate
 } from "../src/index.js";
 
@@ -42,6 +51,9 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
   assert.deepEqual(EVALUATION_STATUSES, ["pending", "in_progress", "completed", "expired", "invalidated"]);
   assert.deepEqual(EVALUATION_OUTCOME_SUMMARIES, ["up", "down", "flat", "mixed", "insufficient_data"]);
   assert.deepEqual(EVALUATION_OUTCOMES, ["up", "down", "flat", "mixed", "insufficient_data"]);
+  assert.deepEqual(AGGREGATE_COMPUTATION_STATUSES, ["pending", "completed", "partial", "invalid"]);
+  assert.deepEqual(HYPOTHESIS_EVIDENCE_STATUSES, ["supports", "weakens", "inconclusive"]);
+  assert.deepEqual(AGGREGATION_SYMBOL_SCOPE_KINDS, ["single_symbol", "symbol_set", "all_monitored"]);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
   assert.deepEqual(MARKET_DATA_PROVIDER_KINDS, ["exchange_adapter"]);
   assert.deepEqual(MARKET_DATA_SOURCE_STATUSES, ["active", "degraded", "paused"]);
@@ -239,4 +251,116 @@ test("supports monitoring source and normalized event contracts", () => {
   const normalized: NormalizedMarketEvent = event;
   assert.equal(normalized.eventType, "price_tick");
   assert.equal(normalized.sourceId, source.sourceId);
+});
+
+test("supports research aggregation and setup comparison contracts", () => {
+  const scope: AggregationScope = {
+    setupDefinitionId: "setup-breakout-001",
+    evaluationWindowId: "window-001",
+    symbolScope: {
+      kind: "single_symbol",
+      symbolIds: ["BTC-USDT"]
+    },
+    timeRange: {
+      startAtUtc: "2026-04-01T00:00:00.000Z",
+      endAtUtc: "2026-04-14T23:59:59.000Z"
+    },
+    hypothesisId: "hypothesis-001"
+  };
+
+  const input: ResearchAggregationInput = {
+    inputId: "agg-input-001",
+    setupDefinitionId: scope.setupDefinitionId,
+    evaluationResultIds: ["result-001", "result-002"],
+    scope,
+    hypothesisId: "hypothesis-001",
+    createdAtUtc: "2026-04-15T10:00:00.000Z",
+    updatedAtUtc: "2026-04-15T10:00:00.000Z"
+  };
+
+  const metrics: AggregateMetrics = {
+    totalEvaluatedCandidates: 12,
+    completedEvaluationsCount: 10,
+    invalidatedEvaluationsCount: 2,
+    positiveOutcomeCount: 6,
+    nonPositiveOutcomeCount: 4,
+    averagePercentageMove: 1.14,
+    averageAbsoluteMove: 742,
+    averageFinalOutcomeScore: 0.2,
+    averageMaxFavorableExcursion: 2.31,
+    averageMaxAdverseExcursion: -1.41,
+    simpleHitRate: 0.6
+  };
+
+  const aggregate: SetupAggregateResult = {
+    aggregateId: "agg-001",
+    setupDefinitionId: scope.setupDefinitionId,
+    scope,
+    includedEvaluationResultIds: input.evaluationResultIds,
+    metrics,
+    computationStatus: "completed",
+    computedAtUtc: "2026-04-15T10:05:00.000Z",
+    limitations: ["single-source evidence only"],
+    createdAtUtc: "2026-04-15T10:05:00.000Z",
+    updatedAtUtc: "2026-04-15T10:05:00.000Z"
+  };
+
+  const comparison: SetupComparison = {
+    comparisonId: "cmp-001",
+    setupDefinitionIds: ["setup-breakout-001", "setup-pullback-001"],
+    scope: {
+      evaluationWindowId: "window-001",
+      symbolScope: scope.symbolScope,
+      timeRange: scope.timeRange,
+      hypothesisId: "hypothesis-001"
+    },
+    metricSnapshots: [
+      {
+        setupDefinitionId: "setup-breakout-001",
+        aggregateResultId: aggregate.aggregateId,
+        totalEvaluatedCandidates: 12,
+        completedEvaluationsCount: 10,
+        invalidatedEvaluationsCount: 2,
+        averagePercentageMove: 1.14,
+        averageAbsoluteMove: 742,
+        averageFinalOutcomeScore: 0.2,
+        averageMaxFavorableExcursion: 2.31,
+        averageMaxAdverseExcursion: -1.41,
+        simpleHitRate: 0.6
+      },
+      {
+        setupDefinitionId: "setup-pullback-001",
+        aggregateResultId: "agg-002",
+        totalEvaluatedCandidates: 9,
+        completedEvaluationsCount: 8,
+        invalidatedEvaluationsCount: 1,
+        averagePercentageMove: 0.73,
+        averageAbsoluteMove: 401,
+        averageFinalOutcomeScore: 0.1,
+        averageMaxFavorableExcursion: 1.52,
+        averageMaxAdverseExcursion: -1.02,
+        simpleHitRate: 0.5
+      }
+    ],
+    comparedAtUtc: "2026-04-15T10:10:00.000Z",
+    limitations: ["no regime partitioning in first comparison model"],
+    createdAtUtc: "2026-04-15T10:10:00.000Z",
+    updatedAtUtc: "2026-04-15T10:10:00.000Z"
+  };
+
+  const evidenceLink: ResearchHypothesisEvidenceLink = {
+    linkId: "link-001",
+    hypothesisId: "hypothesis-001",
+    aggregateResultId: aggregate.aggregateId,
+    evidenceStatus: "supports",
+    assessedAtUtc: "2026-04-15T10:15:00.000Z",
+    rationale: "Positive hit rate and average move within the selected scope.",
+    limitations: ["sample size remains small"],
+    createdAtUtc: "2026-04-15T10:15:00.000Z",
+    updatedAtUtc: "2026-04-15T10:15:00.000Z"
+  };
+
+  assert.equal(aggregate.computationStatus, "completed");
+  assert.equal(comparison.metricSnapshots.length, 2);
+  assert.equal(evidenceLink.evidenceStatus, "supports");
 });

@@ -63,3 +63,4 @@ Boundary rule:
 ## Follow-up ADRs
 - ADR-002 defines the first monitoring ingestion architecture and normalized event model on top of this slice.
 - ADR-003 defines the first post-detection evaluation and outcome contracts on top of this slice.
+- ADR-004 defines the first aggregation/comparison research-evidence contracts on top of this slice.

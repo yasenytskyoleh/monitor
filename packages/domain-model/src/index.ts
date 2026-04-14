@@ -96,3 +96,27 @@ export { RESEARCH_HYPOTHESIS_STATUSES } from "./research-hypothesis.js";
 export type { ResearchHypothesis, ResearchHypothesisStatus } from "./research-hypothesis.js";
 export { RESEARCH_RUN_STATUSES } from "./research-run.js";
 export type { ResearchRun, ResearchRunStatus } from "./research-run.js";
+export { AGGREGATION_SYMBOL_SCOPE_KINDS } from "./research/aggregation-scope.js";
+export type {
+  AggregationScope,
+  AggregationSymbolScope,
+  AggregationSymbolScopeKind,
+  AggregationTimeRange
+} from "./research/aggregation-scope.js";
+export type { AggregateMetrics } from "./research/aggregate-metrics.js";
+export { AGGREGATE_COMPUTATION_STATUSES } from "./research/setup-aggregate-result.js";
+export type {
+  AggregateComputationStatus,
+  ResearchAggregationInput,
+  SetupAggregateResult
+} from "./research/setup-aggregate-result.js";
+export type {
+  SetupComparison,
+  SetupComparisonMetricSnapshot,
+  SetupComparisonScope
+} from "./research/setup-comparison.js";
+export { HYPOTHESIS_EVIDENCE_STATUSES } from "./research/research-hypothesis-link.js";
+export type {
+  HypothesisEvidenceStatus,
+  ResearchHypothesisEvidenceLink
+} from "./research/research-hypothesis-link.js";

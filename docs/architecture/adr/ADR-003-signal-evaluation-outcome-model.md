@@ -42,3 +42,6 @@ First scope:
 - no ingestion runtime work in this ADR
 - no DB migration work in this ADR
 - no trading execution logic in this ADR
+
+## Follow-up ADRs
+- ADR-004 defines the first aggregation and setup-comparison evidence layer that consumes `EvaluationResult` records.
