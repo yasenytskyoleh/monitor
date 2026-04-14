@@ -255,3 +255,15 @@ export {
   SetupAggregateResultValidationError,
   createResearchAggregationService
 } from "./services/research-aggregation-service.js";
+export {
+  FLOW_STATUSES,
+  FLOW_STEP_NAMES,
+  createSetupToAggregateFlow
+} from "./application/index.js";
+export type {
+  FlowStatus,
+  FlowStepName,
+  SetupToAggregateFlowDependencies,
+  SetupToAggregateFlowInput,
+  SetupToAggregateFlowResult
+} from "./application/index.js";

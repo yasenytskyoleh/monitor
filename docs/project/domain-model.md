@@ -52,6 +52,8 @@ Related product docs:
 - `docs/project/persistence-implementation-architecture.md`
 - `docs/project/first-persisted-slice.md`
 - `docs/project/signal-candidate-model.md`
+- `docs/project/first-application-flow.md`
+- `docs/project/product-service-flow.md`
 
 ## Out of scope
 - exchange connectors and live websocket ingestion
