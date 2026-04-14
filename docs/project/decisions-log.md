@@ -2,7 +2,8 @@
 
 ## Core product and scope decisions
 - Monitor is an **agent-assisted crypto monitoring and research platform**
-- Phase 1 is about the **orchestration foundation**, not a trading platform
+- Phase 1 established the orchestration foundation, not a trading platform
+- after backend safety hardening, the next strategic move is **product-domain definition before more backend power**
 - current market scope is **spot only**
 - news enrichment should come **after** signal/statistics foundation
 - the project uses a **monorepo from the start**
@@ -17,6 +18,8 @@
 - approval-gated transitions must not be bypassed
 - persisted workflow artifacts are part of the platform foundation
 - live agents should be introduced **incrementally**, one by one
+- orchestration-domain and product-domain concerns must be separated explicitly
+- first product-domain contracts live in a dedicated package (`packages/domain-model`)
 
 ## Agent/workflow decisions
 - current core agents:
@@ -42,6 +45,15 @@
 - backend controlled promotion flow exists (`promote_verified`)
 - narrow helper-file creation constraints exist (including json helper fixtures)
 - backend stability reassessment artifact exists for dedicated runs (`stability-reassessment.json`)
+- first product-domain entity contracts exist:
+  - `MonitoredSymbol`
+  - `SetupDefinition`
+  - `SignalCandidate`
+  - `EvaluationWindow`
+  - `EvaluationResult`
+  - `ResearchHypothesis`
+  - `ResearchRun`
+- first product-domain ADR exists (`docs/architecture/adr/ADR-001-first-product-domain-slice.md`)
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -51,4 +63,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **post-reassessment consolidation before any further Backend scope expansion**
+- the currently recommended next step is **monitoring ingestion architecture definition against the new domain contracts (without full implementation)**

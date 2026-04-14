@@ -16,7 +16,7 @@ In the long term, it is intended to become a structured system for:
 ## Current product positioning
 At the current stage, Monitor should be described as:
 
-> **An agent-driven orchestration and research foundation for a future crypto monitoring platform**
+> **An agent-driven orchestration foundation with an initial product-domain model for a future crypto monitoring platform**
 
 It is **not yet**:
 - a trading system,
@@ -25,7 +25,7 @@ It is **not yet**:
 - or an autonomous trading bot.
 
 ## Current implementation status
-The orchestration foundation is already functional and test-backed.
+The orchestration foundation is functional and test-backed, and the first product-domain contracts now exist.
 
 Implemented today:
 - config + schema + semantic-validation platform (`packages/agent-config`)
@@ -41,6 +41,18 @@ Implemented today:
   - Quant Pattern
   - Backend (constrained patch mode)
   - Docs Reviewer
+- first product-side contracts package (`packages/domain-model`) with explicit entities:
+  - `MonitoredSymbol`
+  - `SetupDefinition`
+  - `SignalCandidate`
+  - `EvaluationWindow`
+  - `EvaluationResult`
+  - `ResearchHypothesis`
+  - `ResearchRun`
+- product-domain docs and ADR:
+  - `docs/project/domain-model.md`
+  - `docs/project/research-model.md`
+  - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -72,6 +84,11 @@ without losing:
 - validation,
 - reproducibility,
 - and architectural discipline.
+
+The new product-domain contracts are intentionally thin:
+- no ingestion engine yet,
+- no statistics engine yet,
+- no exchange integration yet.
 
 ## Long-term product idea
 In its fuller form, Monitor is meant to become a **crypto market monitoring, signal research, and decision-support platform**.
