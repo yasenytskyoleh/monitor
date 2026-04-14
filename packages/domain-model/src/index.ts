@@ -268,12 +268,20 @@ export type {
   SetupToAggregateFlowResult
 } from "./application/index.js";
 export {
+  EVALUATION_TRIGGER_STATUSES,
   RUNTIME_HANDOFF_STATUSES,
-  createSignalCandidateFromDetectionHandoff
+  createSignalCandidateFromDetectionHandoff,
+  createSignalCandidateToEvaluationHandoff
 } from "./runtime-handoff/index.js";
 export type {
   DetectionToCandidateCommand,
+  EvaluationTriggerResult,
+  EvaluationTriggerStatus,
+  EvaluationWindowDescriptor,
+  SignalCandidateEvaluationTrigger,
+  StartEvaluationCommand,
   RuntimeHandoffResult,
   RuntimeHandoffStatus,
-  SignalCandidateFromDetectionDependencies
+  SignalCandidateFromDetectionDependencies,
+  SignalCandidateToEvaluationDependencies
 } from "./runtime-handoff/index.js";
