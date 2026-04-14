@@ -24,6 +24,7 @@ export type {
   EvaluationResultStatusUpdateRequest,
   EvaluationResultUpdateRequest
 } from "./evaluation-result-repository.js";
+export { InMemoryEvaluationResultRepository } from "./evaluation-result-repository.impl.js";
 export type {
   ResearchHypothesisCreateRequest,
   ResearchHypothesisRepository,

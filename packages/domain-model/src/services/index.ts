@@ -41,10 +41,17 @@ export {
 } from "./signal-candidate-service.js";
 
 export type {
-  CreateEvaluationResultRequest,
+  CreatePendingEvaluationResultRequest,
   EvaluationService,
   EvaluationServiceDependencies,
-  UpdateEvaluationResultStatusRequest
+  ExpireEvaluationResultRequest,
+  FinalizeEvaluationResultRequest,
+  InvalidateEvaluationResultRequest,
+  StartEvaluationResultRequest
+} from "./evaluation-service.js";
+export {
+  EvaluationResultValidationError,
+  createEvaluationService
 } from "./evaluation-service.js";
 
 export type {

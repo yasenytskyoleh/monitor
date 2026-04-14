@@ -3,7 +3,8 @@
 ## Purpose
 Define the first post-detection evaluation model for Monitor.
 
-This slice defines contracts only. It does not implement replay, storage, aggregation, or scoring engines.
+This slice now includes the first persisted evaluation-result implementation with explicit service and repository ownership.
+It still does not implement replay, aggregation, or scoring engines.
 
 ## Evaluation flow boundary
 1. setup detection creates `SignalCandidate`
@@ -38,13 +39,27 @@ First version rules:
 Contract:
 - `EvaluationResult` (`packages/domain-model/src/evaluation/evaluation-result.ts`)
 
-Required shape:
-- candidate and window references
-- evaluation status
-- outcome summary
-- minimum evaluation metrics bundle
-- evaluated timestamp
-- limitations and notes
+Persisted shape (minimum):
+- `id`
+- `signalCandidateId`
+- `evaluationWindowId`
+- `status`
+- `referencePrice`
+- `finalPrice`
+- `highInWindow`
+- `lowInWindow`
+- `absoluteMove`
+- `percentageMove`
+- `maxFavorableExcursion`
+- `maxAdverseExcursion`
+- `evaluatedAt`
+- optional `notes`
+- `createdAt`
+- `updatedAt`
+
+Implementation references:
+- `packages/domain-model/src/repositories/evaluation-result-repository.impl.ts`
+- `packages/domain-model/src/services/evaluation-service.ts`
 
 ## Evaluation statuses
 - `pending`
@@ -53,9 +68,26 @@ Required shape:
 - `expired`
 - `invalidated`
 
+## Lifecycle rules (implemented)
+- evaluation result starts as `pending`
+- `pending` -> `in_progress` | `expired` | `invalidated`
+- `in_progress` -> `completed` | `expired` | `invalidated`
+- `completed` -> `invalidated` (explicit correction path only)
+- invalid transitions are rejected by service validation
+
+## Consistency and reference validation (implemented)
+- `signalCandidateId` must reference an existing persisted `SignalCandidate`
+- duplicate `(signalCandidateId, evaluationWindowId)` creation is rejected
+- `completed` requires full metric inputs
+- metric consistency checks include:
+  - `highInWindow >= lowInWindow`
+  - `referencePrice` and `finalPrice` must be within `[lowInWindow, highInWindow]`
+  - `maxFavorableExcursion >= 0`
+  - `maxAdverseExcursion <= 0`
+
 ## Explicitly postponed
 - runtime evaluation engine
 - candle replay and sampling implementation
-- persistence model and DB migrations
+- DB migrations and relational adapter implementation
 - aggregation/scoring runtime engines
 - ranking/reporting/UI behavior

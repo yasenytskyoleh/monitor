@@ -146,6 +146,7 @@ export type {
   EvaluationResultStatusUpdateRequest,
   EvaluationResultUpdateRequest
 } from "./repositories/evaluation-result-repository.js";
+export { InMemoryEvaluationResultRepository } from "./repositories/evaluation-result-repository.impl.js";
 export type {
   MonitoredSymbolCreateRequest,
   MonitoredSymbolRepository,
@@ -217,10 +218,17 @@ export {
   createSignalCandidateService
 } from "./services/signal-candidate-service.js";
 export type {
-  CreateEvaluationResultRequest,
+  CreatePendingEvaluationResultRequest,
   EvaluationService,
   EvaluationServiceDependencies,
-  UpdateEvaluationResultStatusRequest
+  ExpireEvaluationResultRequest,
+  FinalizeEvaluationResultRequest,
+  InvalidateEvaluationResultRequest,
+  StartEvaluationResultRequest
+} from "./services/evaluation-service.js";
+export {
+  EvaluationResultValidationError,
+  createEvaluationService
 } from "./services/evaluation-service.js";
 export type {
   AttachHypothesisToSetupDefinitionsRequest,

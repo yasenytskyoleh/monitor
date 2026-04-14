@@ -35,7 +35,6 @@ import {
   type AggregateMetrics,
   type AggregationScope,
   type EvaluationInput,
-  type EvaluationMetrics,
   type EvaluationResult,
   type EvaluationWindow,
   type MarketDataSource,
@@ -200,30 +199,23 @@ test("supports constructing typed contracts without implementation logic", () =>
     updatedAtUtc: "2026-04-14T10:30:00.000Z"
   };
 
-  const metrics: EvaluationMetrics = {
-    referencePriceAtDetection: 65000,
-    highestObservedPriceInWindow: 66400,
-    lowestObservedPriceInWindow: 64100,
-    finalObservedPriceAtWindowEnd: 65800,
+  const result: EvaluationResult = {
+    id: "result-001",
+    signalCandidateId: candidate.id,
+    evaluationWindowId: window.windowId,
+    status: "completed",
+    referencePrice: 65000,
+    finalPrice: 65800,
+    highInWindow: 66400,
+    lowInWindow: 64100,
     absoluteMove: 800,
     percentageMove: 1.23,
     maxFavorableExcursion: 2.15,
-    maxAdverseExcursion: -1.38
-  };
-
-  const result: EvaluationResult = {
-    resultId: "result-001",
-    signalCandidateId: candidate.id,
-    evaluationWindowId: window.windowId,
-    evaluationInputId: input.inputId,
-    status: "completed",
-    outcomeSummary: "up",
-    metrics,
-    evaluatedAtUtc: "2026-04-15T10:45:00.000Z",
-    limitations: ["no cross-exchange validation"],
+    maxAdverseExcursion: -1.38,
+    evaluatedAt: "2026-04-15T10:45:00.000Z",
     notes: "No clean trend continuation",
-    createdAtUtc: "2026-04-15T10:45:00.000Z",
-    updatedAtUtc: "2026-04-15T10:45:00.000Z"
+    createdAt: "2026-04-15T10:45:00.000Z",
+    updatedAt: "2026-04-15T10:45:00.000Z"
   };
 
   const hypothesis: ResearchHypothesis = {
@@ -244,7 +236,7 @@ test("supports constructing typed contracts without implementation logic", () =>
     setupId: setup.id,
     candidateIds: [candidate.id],
     evaluationWindowIds: [window.windowId],
-    evaluationResultIds: [result.resultId],
+    evaluationResultIds: [result.id],
     status: "planned",
     startedAtUtc: "2026-04-14T11:00:00.000Z",
     createdAtUtc: "2026-04-14T11:00:00.000Z",
@@ -252,7 +244,7 @@ test("supports constructing typed contracts without implementation logic", () =>
   };
 
   assert.equal(run.evaluationResultIds.length, 1);
-  assert.equal(result.outcomeSummary, "up");
+  assert.equal(result.absoluteMove, 800);
   assert.equal(result.status, "completed");
 });
 

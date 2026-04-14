@@ -14,6 +14,7 @@ The package remains intentionally narrow, and now includes concrete persisted se
 - `SetupDefinition`
 - `ResearchHypothesis`
 - `SignalCandidate`
+- `EvaluationResult`
 
 It still does not implement ingestion, execution, or statistics engines.
 
@@ -40,6 +41,7 @@ Related product docs:
 - `docs/project/monitoring-model.md`
 - `docs/project/normalized-events.md`
 - `docs/project/evaluation-model.md`
+- `docs/project/evaluation-result-model.md`
 - `docs/project/outcome-metrics.md`
 - `docs/project/research-aggregation-model.md`
 - `docs/project/setup-comparison-model.md`
