@@ -3,18 +3,24 @@
 ## Purpose
 Define the first implementation architecture for product-domain persistence without introducing DB runtime code.
 
-This slice introduces repository and service boundaries only.
+This document now reflects both:
+- boundary contracts
+- first concrete implementation for the initial persisted product slice
 
 ## Repository boundaries
 Repository interfaces are defined in `packages/domain-model/src/repositories/*`.
 
-Planned first repository abstractions:
+Repository abstractions:
 - `MonitoredSymbolRepository`
 - `SetupDefinitionRepository`
 - `SignalCandidateRepository`
 - `EvaluationResultRepository`
 - `ResearchHypothesisRepository`
 - `SetupAggregateResultRepository`
+
+Implemented concrete repositories in this PR:
+- `InMemorySetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-repository.impl.ts`)
+- `InMemoryResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-repository.impl.ts`)
 
 Repository responsibilities:
 - persist and load domain-shaped records
@@ -36,10 +42,25 @@ Service layer:
 - `EvaluationService`
 - `ResearchService`
 
+Implemented concrete service factories in this PR:
+- `createSetupDefinitionService` (`packages/domain-model/src/services/setup-definition-service.ts`)
+- `createResearchService` (`packages/domain-model/src/services/research-service.ts`)
+
 Service responsibilities:
 - own write-path semantics
 - coordinate repository calls
 - enforce application-level boundary rules
+
+First persisted slice write-path rules now implemented:
+- `SetupDefinitionService`
+  - validates required setup fields (`id`, `name`, `description`, `measurableConditions`, `status`)
+  - controls activation/archive transitions
+  - rejects status changes through generic update path
+- `ResearchService`
+  - validates required hypothesis fields (`id`, `title`, `description`, `assumptions`, `status`)
+  - validates referenced setup definition ids before create/update/link
+  - controls hypothesis status transitions
+  - owns controlled setup linkage for hypotheses
 
 Service non-goals:
 - no direct runner-artifact writes
@@ -63,6 +84,7 @@ Ownership direction:
 2. persistence metadata (`originRunId`, `traceId`) may be attached through metadata contracts
 3. runtime evidence files remain separate from product-domain storage
 4. one domain contract does not force one-table implementation in this slice
+5. first concrete persistence is intentionally narrow to setup definitions and research hypotheses only
 
 ## Orchestrator handoff boundary
 - orchestrator workflows may trigger future product-domain services

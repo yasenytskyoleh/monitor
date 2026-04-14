@@ -56,12 +56,11 @@ export type {
 } from "./monitoring/monitoring-heartbeat.js";
 export type { PriceTickEvent, PriceTickPayload } from "./monitoring/price-tick.js";
 export type { VolumeUpdateEvent, VolumeUpdatePayload } from "./monitoring/volume-update.js";
-export { SETUP_CONDITION_OPERATORS, SETUP_DEFINITION_STATUSES } from "./setup-definition.js";
+export { SETUP_DEFINITION_STATUSES } from "./setup-definition.js";
 export type {
-  SetupCondition,
-  SetupConditionOperator,
   SetupDefinition,
-  SetupDefinitionStatus
+  SetupDefinitionStatus,
+  SetupDefinitionTraceMetadata
 } from "./setup-definition.js";
 export { SIGNAL_CANDIDATE_STATUSES, SIGNAL_EVIDENCE_SOURCES } from "./signal-candidate.js";
 export type {
@@ -164,6 +163,7 @@ export type {
   ResearchHypothesisStatusUpdateRequest,
   ResearchHypothesisUpdateRequest
 } from "./repositories/research-hypothesis-repository.js";
+export { InMemoryResearchHypothesisRepository } from "./repositories/research-hypothesis-repository.impl.js";
 export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,
@@ -175,6 +175,7 @@ export type {
   SetupDefinitionStatusUpdateRequest,
   SetupDefinitionUpdateRequest
 } from "./repositories/setup-definition-repository.js";
+export { InMemorySetupDefinitionRepository } from "./repositories/setup-definition-repository.impl.js";
 export type {
   SignalCandidateCreateRequest,
   SignalCandidateRepository,
@@ -198,11 +199,16 @@ export type {
   UpdateMonitoredSymbolStatusRequest
 } from "./services/monitoring-catalog-service.js";
 export type {
+  ActivateSetupDefinitionRequest,
   ArchiveSetupDefinitionRequest,
   CreateSetupDefinitionRequest,
   SetupDefinitionService,
   SetupDefinitionServiceDependencies,
   UpdateSetupDefinitionRequest
+} from "./services/setup-definition-service.js";
+export {
+  SetupDefinitionValidationError,
+  createSetupDefinitionService
 } from "./services/setup-definition-service.js";
 export type {
   CreateSignalCandidateRequest,
@@ -217,9 +223,14 @@ export type {
   UpdateEvaluationResultStatusRequest
 } from "./services/evaluation-service.js";
 export type {
+  AttachHypothesisToSetupDefinitionsRequest,
   CreateResearchHypothesisRequest,
   ResearchService,
   ResearchServiceDependencies,
-  StoreSetupAggregateResultRequest,
-  UpdateResearchHypothesisRequest
+  UpdateResearchHypothesisRequest,
+  UpdateResearchHypothesisStatusRequest
+} from "./services/research-service.js";
+export {
+  ResearchHypothesisValidationError,
+  createResearchService
 } from "./services/research-service.js";

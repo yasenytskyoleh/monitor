@@ -13,14 +13,14 @@ export type ResearchHypothesisUpdateRequest = {
 };
 
 export type ResearchHypothesisStatusUpdateRequest = {
-  hypothesisId: string;
+  researchHypothesisId: string;
   status: ResearchHypothesisStatus;
   metadata: ProductRecordMetadata;
   expectedVersion: number | null;
 };
 
 export type ResearchHypothesisRepository = {
-  getById(hypothesisId: string): Promise<ResearchHypothesis | null>;
+  getById(researchHypothesisId: string): Promise<ResearchHypothesis | null>;
   listByStatus(statuses: ResearchHypothesisStatus[]): Promise<ResearchHypothesis[]>;
   create(request: ResearchHypothesisCreateRequest): Promise<ResearchHypothesis>;
   update(request: ResearchHypothesisUpdateRequest): Promise<ResearchHypothesis>;
