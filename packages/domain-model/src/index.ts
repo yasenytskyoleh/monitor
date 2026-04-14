@@ -235,8 +235,11 @@ export {
 export type {
   AttachHypothesisToSetupDefinitionsRequest,
   CreateResearchHypothesisRequest,
+  HypothesisEvidenceScopeDescriptor,
+  HypothesisEvidenceUpdate,
   ResearchService,
   ResearchServiceDependencies,
+  UpdateHypothesisEvidenceRequest,
   UpdateResearchHypothesisRequest,
   UpdateResearchHypothesisStatusRequest
 } from "./services/research-service.js";
@@ -270,22 +273,30 @@ export type {
 export {
   AGGREGATION_REFRESH_STATUSES,
   EVALUATION_TRIGGER_STATUSES,
+  HYPOTHESIS_EVIDENCE_UPDATE_STATUSES,
   RUNTIME_HANDOFF_STATUSES,
+  createAggregateToHypothesisEvidenceHandoff,
   createEvaluationToAggregationRefreshHandoff,
   createSignalCandidateFromDetectionHandoff,
   createSignalCandidateToEvaluationHandoff
 } from "./runtime-handoff/index.js";
 export type {
+  AggregateHypothesisEvidenceTrigger,
+  AggregateToHypothesisEvidenceDependencies,
   AggregationRefreshResult,
   AggregationRefreshStatus,
   AggregationScopeDescriptor,
   DetectionToCandidateCommand,
+  EvidenceScopeDescriptor,
   EvaluationAggregationRefreshTrigger,
   EvaluationToAggregationRefreshDependencies,
+  HypothesisEvidenceUpdateResult,
+  HypothesisEvidenceUpdateStatus,
   EvaluationTriggerResult,
   EvaluationTriggerStatus,
   EvaluationWindowDescriptor,
   RefreshAggregateFromEvaluationCommand,
+  UpdateHypothesisFromAggregateCommand,
   SignalCandidateEvaluationTrigger,
   StartEvaluationCommand,
   RuntimeHandoffResult,

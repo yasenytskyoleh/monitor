@@ -131,15 +131,6 @@ export const createSignalCandidateToEvaluationHandoff = (
       }
 
       try {
-        if (candidate.status === "detected") {
-          await signalCandidateService.updateSignalCandidateStatus({
-            signalCandidateId: candidate.id,
-            status: "under_review",
-            metadata,
-            expectedVersion: null
-          });
-        }
-
         const pending = await evaluationService.createPendingEvaluationResult({
           result: {
             id: buildEvaluationResultId(command),
@@ -162,17 +153,41 @@ export const createSignalCandidateToEvaluationHandoff = (
           metadata
         });
 
-        await evaluationService.startEvaluationResult({
+        const started = await evaluationService.startEvaluationResult({
           evaluationResultId: pending.id,
           metadata,
           expectedVersion: null
         });
+        if (!started) {
+          throw new Error(`evaluation_result start returned null for ${pending.id}`);
+        }
+
+        const warnings: string[] = [];
+        if (candidate.status === "detected") {
+          try {
+            const updatedCandidate = await signalCandidateService.updateSignalCandidateStatus({
+              signalCandidateId: candidate.id,
+              status: "under_review",
+              metadata,
+              expectedVersion: null
+            });
+            if (!updatedCandidate) {
+              warnings.push(
+                `evaluation started but signal_candidate status update returned null: ${candidate.id}`
+              );
+            }
+          } catch (error: unknown) {
+            warnings.push(
+              `evaluation started but signal_candidate status update failed: ${asErrorMessage(error)}`
+            );
+          }
+        }
 
         return {
           status: "started",
           evaluationResultId: pending.id,
           evaluationWindowId: command.evaluationWindowId,
-          warnings: []
+          warnings
         };
       } catch (error: unknown) {
         if (error instanceof EvaluationResultValidationError) {

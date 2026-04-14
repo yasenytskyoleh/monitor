@@ -57,8 +57,11 @@ export {
 export type {
   AttachHypothesisToSetupDefinitionsRequest,
   CreateResearchHypothesisRequest,
+  HypothesisEvidenceScopeDescriptor,
+  HypothesisEvidenceUpdate,
   ResearchService,
   ResearchServiceDependencies,
+  UpdateHypothesisEvidenceRequest,
   UpdateResearchHypothesisRequest,
   UpdateResearchHypothesisStatusRequest
 } from "./research-service.js";

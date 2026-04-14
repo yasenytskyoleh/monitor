@@ -14,6 +14,7 @@ import {
   FIRST_CLASS_PERSISTED_ENTITY_PROFILES,
   FIRST_PERSISTED_PRODUCT_SLICE,
   HYPOTHESIS_EVIDENCE_STATUSES,
+  HYPOTHESIS_EVIDENCE_UPDATE_STATUSES,
   MARKET_DATA_PROVIDER_KINDS,
   MARKET_DATA_SOURCE_STATUSES,
   MONITORING_HEARTBEAT_STATUSES,
@@ -69,6 +70,13 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
   assert.deepEqual(EVALUATION_OUTCOMES, ["up", "down", "flat", "mixed", "insufficient_data"]);
   assert.deepEqual(AGGREGATE_COMPUTATION_STATUSES, ["pending", "completed", "partial", "invalid"]);
   assert.deepEqual(HYPOTHESIS_EVIDENCE_STATUSES, ["supports", "weakens", "inconclusive"]);
+  assert.deepEqual(HYPOTHESIS_EVIDENCE_UPDATE_STATUSES, [
+    "updated",
+    "rejected_validation",
+    "rejected_lifecycle",
+    "rejected_linkage",
+    "failed"
+  ]);
   assert.deepEqual(AGGREGATION_SYMBOL_SCOPE_KINDS, ["single_symbol", "symbol_set", "all_monitored"]);
   assert.deepEqual(STORAGE_BOUNDARIES, ["runtime_evidence", "product_domain", "derived_analytics"]);
   assert.deepEqual(RUNTIME_EVIDENCE_ARTIFACT_TYPES, [
@@ -468,7 +476,8 @@ test("supports repository and service boundary contracts", async () => {
         expectedVersion: request.expectedVersion
       }),
     updateResearchHypothesisStatus: async () => null,
-    attachHypothesisToSetupDefinitions: async () => null
+    attachHypothesisToSetupDefinitions: async () => null,
+    updateHypothesisEvidence: async () => null
   };
 
   const setup = await setupService.createSetupDefinition({

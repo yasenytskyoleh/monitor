@@ -81,6 +81,14 @@ const assertFiniteNullableNumber = (value: number | null, fieldName: string): vo
   }
 };
 
+const parseTimestamp = (value: string, fieldName: string): number => {
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) {
+    throw new SetupAggregateResultValidationError(`${fieldName} must be a valid UTC timestamp`);
+  }
+  return parsed;
+};
+
 const buildUpdateTimestamp = (metadata: ProductRecordMetadata): string =>
   metadata.sourceObservedAtUtc ?? new Date().toISOString();
 
@@ -99,6 +107,19 @@ const validateAggregateShape = (aggregate: SetupAggregateResult): void => {
     aggregate.aggregationScope.timeRange.endAtUtc,
     "aggregationScope.timeRange.endAtUtc"
   );
+  const timeRangeStart = parseTimestamp(
+    aggregate.aggregationScope.timeRange.startAtUtc,
+    "aggregationScope.timeRange.startAtUtc"
+  );
+  const timeRangeEnd = parseTimestamp(
+    aggregate.aggregationScope.timeRange.endAtUtc,
+    "aggregationScope.timeRange.endAtUtc"
+  );
+  if (timeRangeStart > timeRangeEnd) {
+    throw new SetupAggregateResultValidationError(
+      "aggregationScope.timeRange.startAtUtc must be before or equal to endAtUtc"
+    );
+  }
   assertNonNegativeInteger(aggregate.totalCandidates, "totalCandidates");
   assertNonNegativeInteger(aggregate.completedEvaluations, "completedEvaluations");
   assertNonNegativeInteger(aggregate.invalidatedEvaluations, "invalidatedEvaluations");
@@ -250,6 +271,15 @@ export const createResearchAggregationService = (
         return null;
       }
 
+      const scopeStartAt = parseTimestamp(
+        current.aggregationScope.timeRange.startAtUtc,
+        "aggregationScope.timeRange.startAtUtc"
+      );
+      const scopeEndAt = parseTimestamp(
+        current.aggregationScope.timeRange.endAtUtc,
+        "aggregationScope.timeRange.endAtUtc"
+      );
+
       const evaluationResults = [];
       for (const evaluationResultId of request.evaluationResultIds) {
         const evaluationResult = await evaluationResultRepository.getById(evaluationResultId);
@@ -263,6 +293,35 @@ export const createResearchAggregationService = (
             `evaluation_result ${evaluationResult.id} does not belong to setup_definition ${current.setupDefinitionId}`
           );
         }
+
+        if (
+          current.aggregationScope.evaluationWindowId !== null &&
+          evaluationResult.evaluationWindowId !== current.aggregationScope.evaluationWindowId
+        ) {
+          throw new SetupAggregateResultValidationError(
+            `evaluation_result ${evaluationResult.id} is outside aggregationScope.evaluationWindowId ${current.aggregationScope.evaluationWindowId}`
+          );
+        }
+
+        if (current.aggregationScope.symbolScope.kind !== "all_monitored") {
+          const allowedSymbols = new Set(current.aggregationScope.symbolScope.symbolIds);
+          if (!allowedSymbols.has(signalCandidate.monitoredSymbolId)) {
+            throw new SetupAggregateResultValidationError(
+              `evaluation_result ${evaluationResult.id} symbol ${signalCandidate.monitoredSymbolId} is outside aggregationScope.symbolScope`
+            );
+          }
+        }
+
+        const candidateDetectedAt = parseTimestamp(
+          signalCandidate.detectedAt,
+          `signal_candidate ${signalCandidate.id}.detectedAt`
+        );
+        if (candidateDetectedAt < scopeStartAt || candidateDetectedAt > scopeEndAt) {
+          throw new SetupAggregateResultValidationError(
+            `evaluation_result ${evaluationResult.id} detectedAt is outside aggregationScope.timeRange`
+          );
+        }
+
         evaluationResults.push(evaluationResult);
       }
 

@@ -46,6 +46,7 @@ export const createSetupToAggregateFlow = (
       const ids: SetupToAggregateFlowResult["ids"] = {};
       const completedSteps: FlowStepName[] = [];
       const warnings: string[] = [];
+      let evaluationResultId: string | null = null;
 
       try {
         const setupDefinition = await setupDefinitionService.createSetupDefinition({
@@ -70,12 +71,17 @@ export const createSetupToAggregateFlow = (
       }
 
       try {
-        await researchService.attachHypothesisToSetupDefinitions({
+        const linkedHypothesis = await researchService.attachHypothesisToSetupDefinitions({
           researchHypothesisId: input.researchHypothesis.id,
           setupDefinitionIds: [input.setupDefinition.id],
           metadata: input.metadata,
           expectedVersion: null
         });
+        if (!linkedHypothesis) {
+          throw new Error(
+            `research_hypothesis link returned null for ${input.researchHypothesis.id}`
+          );
+        }
         completedSteps.push("research_hypothesis_link");
       } catch (error: unknown) {
         return failResult("research_hypothesis_link", error, { ids, completedSteps, warnings });
@@ -97,22 +103,44 @@ export const createSetupToAggregateFlow = (
           result: input.evaluation.pendingResult,
           metadata: input.metadata
         });
-        ids.evaluationResultId = pendingEvaluationResult.id;
+        evaluationResultId = pendingEvaluationResult.id;
+        ids.evaluationResultId = evaluationResultId;
         completedSteps.push("evaluation_result_create");
+      } catch (error: unknown) {
+        return failResult("evaluation_result_create", error, { ids, completedSteps, warnings });
+      }
+      if (!evaluationResultId) {
+        return failResult(
+          "evaluation_result_create",
+          new Error("evaluation_result id missing after create"),
+          { ids, completedSteps, warnings }
+        );
+      }
 
-        await evaluationService.startEvaluationResult({
-          evaluationResultId: pendingEvaluationResult.id,
+      try {
+        const startedEvaluationResult = await evaluationService.startEvaluationResult({
+          evaluationResultId: evaluationResultId,
           metadata: input.metadata,
           expectedVersion: null
         });
+        if (!startedEvaluationResult) {
+          throw new Error(`evaluation_result start returned null for ${evaluationResultId}`);
+        }
         completedSteps.push("evaluation_result_start");
+      } catch (error: unknown) {
+        return failResult("evaluation_result_start", error, { ids, completedSteps, warnings });
+      }
 
-        await evaluationService.finalizeEvaluationResult({
-          evaluationResultId: pendingEvaluationResult.id,
+      try {
+        const finalizedEvaluationResult = await evaluationService.finalizeEvaluationResult({
+          evaluationResultId: evaluationResultId,
           ...input.evaluation.finalization,
           metadata: input.metadata,
           expectedVersion: null
         });
+        if (!finalizedEvaluationResult) {
+          throw new Error(`evaluation_result finalize returned null for ${evaluationResultId}`);
+        }
         completedSteps.push("evaluation_result_finalize");
       } catch (error: unknown) {
         return failResult("evaluation_result_finalize", error, { ids, completedSteps, warnings });
@@ -126,12 +154,15 @@ export const createSetupToAggregateFlow = (
         ids.setupAggregateResultId = pendingAggregate.id;
         completedSteps.push("setup_aggregate_result_create");
 
-        await researchAggregationService.recomputeSetupAggregateResult({
+        const recomputedAggregate = await researchAggregationService.recomputeSetupAggregateResult({
           setupAggregateResultId: pendingAggregate.id,
           evaluationResultIds: input.aggregation.recomputeEvaluationResultIds,
           metadata: input.metadata,
           expectedVersion: null
         });
+        if (!recomputedAggregate) {
+          throw new Error(`setup_aggregate_result recompute returned null for ${pendingAggregate.id}`);
+        }
         completedSteps.push("setup_aggregate_result_recompute");
       } catch (error: unknown) {
         warnings.push(
