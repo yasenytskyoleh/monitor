@@ -1,5 +1,13 @@
 import type { SetupDefinition } from "../setup-definition.js";
+import type { TimestampUtc } from "../common.js";
+import type { ResearchDecisionApprovalRepository } from "../repositories/research-decision-approval-repository.js";
+import type { SetupLifecycleMutationRecordRepository } from "../repositories/setup-lifecycle-mutation-record-repository.js";
 import type { SetupDefinitionRepository } from "../repositories/setup-definition-repository.js";
+import {
+  APPROVED_SETUP_LIFECYCLE_ACTIONS,
+  type ApprovedSetupLifecycleAction,
+  type SetupLifecycleMutationRecord
+} from "../review/index.js";
 import type { ProductRecordMetadata } from "../storage/product-record-metadata.js";
 import { SETUP_DEFINITION_STATUSES } from "../setup-definition.js";
 
@@ -26,8 +34,30 @@ export type ActivateSetupDefinitionRequest = {
   expectedVersion: number | null;
 };
 
+export type ApplyApprovedMutationRequest = {
+  researchDecisionApprovalId: string;
+  researchFeedbackDecisionId: string;
+  setupDefinitionId: string;
+  approvedAction: ApprovedSetupLifecycleAction;
+  mutatedBy: string;
+  mutatedAt: TimestampUtc;
+  notes?: string;
+  originRunId?: string;
+  metadata: ProductRecordMetadata;
+  expectedVersion: number | null;
+};
+
+export type SetupLifecycleMutationApplied = {
+  updatedSetupDefinition: SetupDefinition;
+  mutationRecord: SetupLifecycleMutationRecord;
+  previousStatus: SetupDefinition["status"];
+  newStatus: SetupDefinition["status"];
+};
+
 export type SetupDefinitionServiceDependencies = {
   setupDefinitionRepository: SetupDefinitionRepository;
+  researchDecisionApprovalRepository?: Pick<ResearchDecisionApprovalRepository, "getById">;
+  setupLifecycleMutationRecordRepository?: SetupLifecycleMutationRecordRepository;
 };
 
 export type SetupDefinitionService = {
@@ -35,6 +65,9 @@ export type SetupDefinitionService = {
   updateSetupDefinition(request: UpdateSetupDefinitionRequest): Promise<SetupDefinition>;
   activateSetupDefinition(request: ActivateSetupDefinitionRequest): Promise<SetupDefinition | null>;
   archiveSetupDefinition(request: ArchiveSetupDefinitionRequest): Promise<SetupDefinition | null>;
+  applyApprovedMutation(
+    request: ApplyApprovedMutationRequest
+  ): Promise<SetupLifecycleMutationApplied | null>;
 };
 
 export class SetupDefinitionValidationError extends Error {
@@ -78,7 +111,11 @@ const assertStatusTransitionAllowed = (
     return;
   }
 
-  if ((currentStatus === "draft" || currentStatus === "active") && nextStatus === "archived") {
+  if (currentStatus === "active" && (nextStatus === "paused" || nextStatus === "archived")) {
+    return;
+  }
+
+  if (currentStatus === "paused" && (nextStatus === "active" || nextStatus === "archived")) {
     return;
   }
 
@@ -90,10 +127,31 @@ const assertStatusTransitionAllowed = (
 const buildUpdateTimestamp = (metadata: ProductRecordMetadata): string =>
   metadata.sourceObservedAtUtc ?? new Date().toISOString();
 
+const resolveTargetStatus = (
+  approvedAction: ApprovedSetupLifecycleAction
+): SetupDefinition["status"] => {
+  if (approvedAction === "keep_active") {
+    return "active";
+  }
+
+  if (approvedAction === "pause_setup") {
+    return "paused";
+  }
+
+  return "archived";
+};
+
+const buildMutationId = (request: ApplyApprovedMutationRequest): string =>
+  `setup-mutation-${request.setupDefinitionId}-${Date.parse(request.mutatedAt)}`;
+
 export const createSetupDefinitionService = (
   dependencies: SetupDefinitionServiceDependencies
 ): SetupDefinitionService => {
-  const { setupDefinitionRepository } = dependencies;
+  const {
+    setupDefinitionRepository,
+    researchDecisionApprovalRepository,
+    setupLifecycleMutationRecordRepository
+  } = dependencies;
 
   return {
     async createSetupDefinition(request) {
@@ -159,6 +217,107 @@ export const createSetupDefinitionService = (
         metadata: request.metadata,
         expectedVersion: request.expectedVersion
       });
+    },
+    async applyApprovedMutation(request) {
+      if (!APPROVED_SETUP_LIFECYCLE_ACTIONS.includes(request.approvedAction)) {
+        throw new SetupDefinitionValidationError(
+          `invalid approvedAction for setup lifecycle mutation: ${request.approvedAction}`
+        );
+      }
+
+      assertNonEmptyString(request.researchDecisionApprovalId, "researchDecisionApprovalId");
+      assertNonEmptyString(request.researchFeedbackDecisionId, "researchFeedbackDecisionId");
+      assertNonEmptyString(request.setupDefinitionId, "setupDefinitionId");
+      assertNonEmptyString(request.mutatedBy, "mutatedBy");
+      assertNonEmptyString(request.mutatedAt, "mutatedAt");
+
+      if (!researchDecisionApprovalRepository) {
+        throw new SetupDefinitionValidationError(
+          "research_decision_approval repository is required for approved mutation path"
+        );
+      }
+
+      if (!setupLifecycleMutationRecordRepository) {
+        throw new SetupDefinitionValidationError(
+          "setup_lifecycle_mutation_record repository is required for approved mutation path"
+        );
+      }
+
+      const approval = await researchDecisionApprovalRepository.getById(
+        request.researchDecisionApprovalId
+      );
+      if (!approval) {
+        return null;
+      }
+
+      if (approval.researchFeedbackDecisionId !== request.researchFeedbackDecisionId) {
+        throw new SetupDefinitionValidationError(
+          `research_decision_approval ${approval.id} does not belong to research_feedback_decision ${request.researchFeedbackDecisionId}`
+        );
+      }
+
+      if (approval.setupDefinitionId !== request.setupDefinitionId) {
+        throw new SetupDefinitionValidationError(
+          `research_decision_approval ${approval.id} does not belong to setup_definition ${request.setupDefinitionId}`
+        );
+      }
+
+      if (approval.approvalOutcome !== "approved") {
+        throw new SetupDefinitionValidationError(
+          `research_decision_approval outcome does not authorize setup mutation: ${approval.approvalOutcome}`
+        );
+      }
+
+      if (approval.authorizedNextAction !== request.approvedAction) {
+        throw new SetupDefinitionValidationError(
+          `approved action mismatch: approval authorizes ${approval.authorizedNextAction ?? "none"}, command requested ${request.approvedAction}`
+        );
+      }
+
+      const current = await setupDefinitionRepository.getById(request.setupDefinitionId);
+      if (!current) {
+        return null;
+      }
+
+      const nextStatus = resolveTargetStatus(request.approvedAction);
+      assertStatusTransitionAllowed(current.status, nextStatus);
+
+      const updatedSetupDefinition = await setupDefinitionRepository.updateStatus({
+        setupDefinitionId: request.setupDefinitionId,
+        status: nextStatus,
+        metadata: request.metadata,
+        expectedVersion: request.expectedVersion
+      });
+      if (!updatedSetupDefinition) {
+        throw new SetupDefinitionValidationError(
+          `setup_definition not found during approved mutation: ${request.setupDefinitionId}`
+        );
+      }
+
+      const mutationRecord = await setupLifecycleMutationRecordRepository.create({
+        mutation: {
+          id: buildMutationId(request),
+          setupDefinitionId: request.setupDefinitionId,
+          researchDecisionApprovalId: request.researchDecisionApprovalId,
+          researchFeedbackDecisionId: request.researchFeedbackDecisionId,
+          previousStatus: current.status,
+          newStatus: nextStatus,
+          approvedAction: request.approvedAction,
+          mutatedBy: request.mutatedBy,
+          mutatedAt: request.mutatedAt,
+          notes: request.notes,
+          createdAt: request.mutatedAt,
+          updatedAt: request.mutatedAt
+        },
+        metadata: request.metadata
+      });
+
+      return {
+        updatedSetupDefinition,
+        mutationRecord,
+        previousStatus: current.status,
+        newStatus: nextStatus
+      };
     }
   };
 };

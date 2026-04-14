@@ -116,5 +116,16 @@ export const FIRST_CLASS_PERSISTED_ENTITY_PROFILES: PersistedEntityProfile[] = [
       mutableFields: ["metadata", "updatedAtUtc"],
       canBeArchived: true
     }
+  },
+  {
+    entityType: "setup_lifecycle_mutation_record",
+    firstClassPersisted: true,
+    timing: {
+      createdWhen: "created when approved setup lifecycle mutation is applied",
+      updatedWhen: "updated only for controlled mutation audit corrections",
+      immutableFields: ["identity.entityId"],
+      mutableFields: ["metadata", "updatedAtUtc"],
+      canBeArchived: true
+    }
   }
 ];

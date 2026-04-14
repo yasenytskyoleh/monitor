@@ -17,9 +17,11 @@ export type {
 } from "./monitoring-catalog-service.js";
 
 export type {
+  ApplyApprovedMutationRequest,
   ActivateSetupDefinitionRequest,
   ArchiveSetupDefinitionRequest,
   CreateSetupDefinitionRequest,
+  SetupLifecycleMutationApplied,
   SetupDefinitionService,
   SetupDefinitionServiceDependencies,
   UpdateSetupDefinitionRequest

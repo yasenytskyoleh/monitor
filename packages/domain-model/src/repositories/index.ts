@@ -50,3 +50,10 @@ export type {
   SetupAggregateResultUpdateRequest
 } from "./setup-aggregate-result-repository.js";
 export { InMemorySetupAggregateResultRepository } from "./setup-aggregate-result-repository.impl.js";
+export type {
+  SetupLifecycleMutationRecordCreateRequest,
+  SetupLifecycleMutationRecordRepository
+} from "./setup-lifecycle-mutation-record-repository.js";
+export {
+  InMemorySetupLifecycleMutationRecordRepository
+} from "./setup-lifecycle-mutation-record-repository.impl.js";

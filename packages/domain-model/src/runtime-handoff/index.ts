@@ -87,3 +87,9 @@ export {
 export type {
   ResearchDecisionApprovalHandoffDependencies
 } from "./research-decision-approval.js";
+export {
+  createApprovedSetupLifecycleMutationHandoff
+} from "./approved-setup-lifecycle-mutation.js";
+export type {
+  ApprovedSetupLifecycleMutationDependencies
+} from "./approved-setup-lifecycle-mutation.js";

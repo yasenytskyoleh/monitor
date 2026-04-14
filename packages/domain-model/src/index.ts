@@ -124,17 +124,24 @@ export type {
   ResearchFeedbackDecisionStatus
 } from "./research/research-feedback-decision.js";
 export {
+  APPROVED_SETUP_LIFECYCLE_ACTIONS,
   RESEARCH_DECISION_APPROVAL_OUTCOMES,
   RESEARCH_DECISION_APPROVAL_RESULT_STATUSES,
-  RESEARCH_DECISION_APPROVAL_STATUSES
+  RESEARCH_DECISION_APPROVAL_STATUSES,
+  SETUP_LIFECYCLE_MUTATION_RESULT_STATUSES
 } from "./review/index.js";
 export type {
+  ApplyApprovedSetupMutationCommand,
+  ApprovedSetupLifecycleAction,
   ResearchDecisionApproval,
   ResearchDecisionApprovalOutcome,
   ResearchDecisionApprovalResult,
   ResearchDecisionApprovalResultStatus,
   ResearchDecisionApprovalStatus,
-  ReviewResearchDecisionCommand
+  ReviewResearchDecisionCommand,
+  SetupLifecycleMutationRecord,
+  SetupLifecycleMutationResult,
+  SetupLifecycleMutationResultStatus
 } from "./review/index.js";
 export {
   DEFAULT_STORAGE_TECHNOLOGY_DIRECTION,
@@ -198,6 +205,13 @@ export {
   InMemoryResearchDecisionApprovalRepository
 } from "./repositories/research-decision-approval-repository.impl.js";
 export type {
+  SetupLifecycleMutationRecordCreateRequest,
+  SetupLifecycleMutationRecordRepository
+} from "./repositories/setup-lifecycle-mutation-record-repository.js";
+export {
+  InMemorySetupLifecycleMutationRecordRepository
+} from "./repositories/setup-lifecycle-mutation-record-repository.impl.js";
+export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,
   SetupAggregateResultStatusUpdateRequest,
@@ -235,9 +249,11 @@ export type {
   UpdateMonitoredSymbolStatusRequest
 } from "./services/monitoring-catalog-service.js";
 export type {
+  ApplyApprovedMutationRequest,
   ActivateSetupDefinitionRequest,
   ArchiveSetupDefinitionRequest,
   CreateSetupDefinitionRequest,
+  SetupLifecycleMutationApplied,
   SetupDefinitionService,
   SetupDefinitionServiceDependencies,
   UpdateSetupDefinitionRequest
@@ -318,6 +334,7 @@ export {
   HYPOTHESIS_EVIDENCE_UPDATE_STATUSES,
   RUNTIME_HANDOFF_STATUSES,
   createAggregateToHypothesisEvidenceHandoff,
+  createApprovedSetupLifecycleMutationHandoff,
   createEvaluationToAggregationRefreshHandoff,
   createHypothesisEvidenceToSetupFeedbackHandoff,
   createResearchDecisionApprovalHandoff,
@@ -340,6 +357,7 @@ export type {
   HypothesisEvidenceUpdateResult,
   HypothesisEvidenceUpdateStatus,
   HypothesisEvidenceToSetupFeedbackDependencies,
+  ApprovedSetupLifecycleMutationDependencies,
   ResearchDecisionApprovalHandoffDependencies,
   EvaluationTriggerResult,
   EvaluationTriggerStatus,
