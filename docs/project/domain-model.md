@@ -38,6 +38,8 @@ Related product docs:
 - `docs/project/outcome-metrics.md`
 - `docs/project/research-aggregation-model.md`
 - `docs/project/setup-comparison-model.md`
+- `docs/project/storage-architecture.md`
+- `docs/project/persistence-boundaries.md`
 
 ## Out of scope
 - exchange connectors and live websocket ingestion
@@ -87,12 +89,16 @@ Rule: orchestration executes workflows; product domain defines market/research m
 - `ResearchRun` tracks one bounded execution of a hypothesis evaluation cycle.
 
 ## Storage direction (initial)
-Current package provides only TypeScript contracts and enums.
+Storage boundaries are now explicitly defined:
+- `runtime_evidence` (orchestrator file-based evidence)
+- `product_domain` (relational persistence planned)
+- `derived_analytics` (deferred)
+
+Current package provides contract-level storage types in `packages/domain-model/src/storage/*`.
 
 Deferred to later slices:
-- persistence model selection
 - repository interfaces
-- schema/migration strategy
+- schema/migration implementation
 - data retention policies
 
 ## Acceptance criteria for this slice

@@ -21,6 +21,8 @@ The runner is orchestration-focused. Product-domain entities are defined separat
 - `docs/project/outcome-metrics.md`
 - `docs/project/research-aggregation-model.md`
 - `docs/project/setup-comparison-model.md`
+- `docs/project/storage-architecture.md`
+- `docs/project/persistence-boundaries.md`
 
 ## Environment setup
 Create `.env` in repo root from the template. Runner auto-loads it on start:

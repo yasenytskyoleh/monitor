@@ -25,7 +25,7 @@ It is **not yet**:
 - or an autonomous trading bot.
 
 ## Current implementation status
-The orchestration foundation is functional and test-backed, and the first product-domain contracts now include monitoring, evaluation, and research-aggregation architecture contracts.
+The orchestration foundation is functional and test-backed, and the first product-domain contracts now include monitoring, evaluation, research-aggregation, and storage-boundary architecture contracts.
 
 Implemented today:
 - config + schema + semantic-validation platform (`packages/agent-config`)
@@ -54,6 +54,7 @@ Implemented today:
   - `SetupAggregateResult`
   - `SetupComparison`
   - `ResearchHypothesisEvidenceLink`
+  - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
   - `ResearchHypothesis`
   - `ResearchRun`
 - product-domain docs and ADR:
@@ -65,10 +66,13 @@ Implemented today:
   - `docs/project/outcome-metrics.md`
   - `docs/project/research-aggregation-model.md`
   - `docs/project/setup-comparison-model.md`
+  - `docs/project/storage-architecture.md`
+  - `docs/project/persistence-boundaries.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
   - `docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`
+  - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -106,6 +110,7 @@ The new product-domain contracts are intentionally thin:
 - no evaluation runtime engine yet,
 - no aggregation runtime engine yet,
 - no statistics/scoring engine yet,
+- no database/repository runtime implementation yet,
 - no exchange integration yet.
 
 ## Long-term product idea

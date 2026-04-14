@@ -4,12 +4,14 @@ import test from "node:test";
 import {
   AGGREGATE_COMPUTATION_STATUSES,
   AGGREGATION_SYMBOL_SCOPE_KINDS,
+  DEFAULT_STORAGE_TECHNOLOGY_DIRECTION,
   EVALUATION_OUTCOMES,
   EVALUATION_OUTCOME_SUMMARIES,
   EVALUATION_START_REFERENCE_RULES,
   EVALUATION_STATUSES,
   EVALUATION_WINDOW_MODES,
   EVALUATION_WINDOW_UNITS,
+  FIRST_CLASS_PERSISTED_ENTITY_PROFILES,
   HYPOTHESIS_EVIDENCE_STATUSES,
   MARKET_DATA_PROVIDER_KINDS,
   MARKET_DATA_SOURCE_STATUSES,
@@ -17,9 +19,15 @@ import {
   MONITORING_SCHEMA_VERSIONS,
   MONITORED_SYMBOL_STATUSES,
   NORMALIZED_EVENT_TYPES,
+  PERSISTED_ENTITY_LIFECYCLE_STATUSES,
+  PRODUCT_EPHEMERAL_ENTITY_TYPES,
+  PRODUCT_PERSISTED_ENTITY_TYPES,
+  PRODUCT_RECORD_SOURCES,
   RESEARCH_HYPOTHESIS_STATUSES,
+  RUNTIME_EVIDENCE_ARTIFACT_TYPES,
   SETUP_DEFINITION_STATUSES,
   SIGNAL_CANDIDATE_STATUSES,
+  STORAGE_BOUNDARIES,
   TIMEFRAME_LABELS,
   type AggregateMetrics,
   type AggregationScope,
@@ -30,7 +38,10 @@ import {
   type MarketDataSource,
   type MonitoredSymbol,
   type NormalizedMarketEvent,
+  type PersistedEntity,
   type PriceTickEvent,
+  type ProductEntityIdentity,
+  type ProductRecordMetadata,
   type ResearchAggregationInput,
   type ResearchHypothesisEvidenceLink,
   type ResearchHypothesis,
@@ -54,6 +65,38 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
   assert.deepEqual(AGGREGATE_COMPUTATION_STATUSES, ["pending", "completed", "partial", "invalid"]);
   assert.deepEqual(HYPOTHESIS_EVIDENCE_STATUSES, ["supports", "weakens", "inconclusive"]);
   assert.deepEqual(AGGREGATION_SYMBOL_SCOPE_KINDS, ["single_symbol", "symbol_set", "all_monitored"]);
+  assert.deepEqual(STORAGE_BOUNDARIES, ["runtime_evidence", "product_domain", "derived_analytics"]);
+  assert.deepEqual(RUNTIME_EVIDENCE_ARTIFACT_TYPES, [
+    "run_record",
+    "transition_record",
+    "approval_record",
+    "artifact_record",
+    "backend_execution_evidence"
+  ]);
+  assert.deepEqual(PRODUCT_PERSISTED_ENTITY_TYPES, [
+    "monitored_symbol",
+    "setup_definition",
+    "signal_candidate",
+    "evaluation_result",
+    "research_hypothesis",
+    "setup_aggregate_result"
+  ]);
+  assert.deepEqual(PRODUCT_EPHEMERAL_ENTITY_TYPES, [
+    "detection_input_transient",
+    "setup_comparison_view",
+    "orchestration_task_envelope"
+  ]);
+  assert.deepEqual(PRODUCT_RECORD_SOURCES, [
+    "monitoring_pipeline",
+    "detection_pipeline",
+    "evaluation_pipeline",
+    "research_aggregation_pipeline",
+    "manual_curation",
+    "migration_backfill"
+  ]);
+  assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
+  assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
+  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 6);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
   assert.deepEqual(MARKET_DATA_PROVIDER_KINDS, ["exchange_adapter"]);
   assert.deepEqual(MARKET_DATA_SOURCE_STATUSES, ["active", "degraded", "paused"]);
@@ -363,4 +406,36 @@ test("supports research aggregation and setup comparison contracts", () => {
   assert.equal(aggregate.computationStatus, "completed");
   assert.equal(comparison.metricSnapshots.length, 2);
   assert.equal(evidenceLink.evidenceStatus, "supports");
+});
+
+test("supports storage-boundary and persisted-entity contracts", () => {
+  const identity: ProductEntityIdentity = {
+    boundary: "product_domain",
+    entityType: "setup_definition",
+    entityId: "setup-breakout-001",
+    version: 3,
+    parentEntityId: null,
+    relatedEntityIds: ["hypothesis-001"]
+  };
+
+  const metadata: ProductRecordMetadata = {
+    originRunId: "run-001",
+    originTransitionId: "transition-001",
+    createdBySource: "manual_curation",
+    lastUpdatedBySource: "manual_curation",
+    traceId: "trace-setup-001",
+    sourceObservedAtUtc: null
+  };
+
+  const persisted: PersistedEntity = {
+    identity,
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-04-15T12:00:00.000Z",
+    updatedAtUtc: "2026-04-15T12:00:00.000Z",
+    metadata
+  };
+
+  assert.equal(persisted.identity.boundary, "product_domain");
+  assert.equal(persisted.identity.version, 3);
+  assert.equal(persisted.metadata.originRunId, "run-001");
 });

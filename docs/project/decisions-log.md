@@ -23,6 +23,7 @@
 - monitoring ingestion is contract-first with normalized events before setup-detection logic
 - evaluation is contract-first with explicit window/status/metrics before statistics/scoring
 - research evidence is contract-first with explicit aggregation scopes and setup comparison before ranking
+- persistence is contract-first with explicit storage boundaries before DB/repository implementation
 
 ## Agent/workflow decisions
 - current core agents:
@@ -67,6 +68,8 @@
 - first monitoring-ingestion ADR exists (`docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`)
 - first evaluation-model ADR exists (`docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`)
 - first research-aggregation ADR exists (`docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`)
+- first storage-architecture ADR exists (`docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`)
+- first storage-boundary contracts exist (`packages/domain-model/src/storage/*`)
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -76,4 +79,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **aggregation/scoring interpretation architecture on top of setup aggregate contracts (without runtime engine implementation)**
+- the currently recommended next step is **product-domain repository contract and schema-planning architecture (without DB/runtime implementation)**
