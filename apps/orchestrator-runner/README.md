@@ -309,7 +309,7 @@ Live Backend Agent constrained mode:
 - strict file-path allowlists apply (no unrestricted writes)
 - schema/architecture/migration changes are forbidden in default safety policy and must escalate
 - forbidden paths (configs/core packages/lockfiles/env files) are rejected
-- allowed change types in first live backend mode:
+- allowed change types in current constrained backend mode:
   - `patch_only`
   - `new_file` (narrow, constrained)
   - `test_focused_multi_file` (expanded but still constrained)
@@ -403,5 +403,8 @@ Live Backend Agent constrained mode:
   - overall pass/fail
 - reassessment checklist:
   - `docs/agents/backend-live-stability-reassessment.md`
-- PR #16 is audit-first: no backend scope expansion is enabled in this step.
-- PR #17 enables only one tiny expansion: narrow single-file creation under strict constraints.
+- Recent backend milestones:
+  - isolated execution + verification + rollback hardening
+  - controlled promotion (`promote_verified`)
+  - narrow helper-file expansion (including json helper fixtures under strict limits)
+  - dedicated stability reassessment artifact for audit runs (`stability-reassessment.json`)

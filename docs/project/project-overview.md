@@ -35,7 +35,7 @@ Implemented today:
 - strict transition guardrails with approval-gated edges
 - artifact/reference enforcement with role allowlists
 - run persistence for transitions, artifacts, approvals, and terminal outcomes
-- live-capable non-implementation chain:
+- live-capable agent chain:
   - Product
   - Architect
   - Quant Pattern
@@ -43,7 +43,10 @@ Implemented today:
   - Docs Reviewer
 
 Current limitation:
-- Backend live is constrained to strict allowlisted patch mode (no broad refactors, schema/migration/architecture changes).
+- Backend live remains constrained to strict allowlisted patch mode:
+  - isolated apply + verification + rollback + controlled promotion
+  - narrow helper-file creation only
+  - no broad refactors, schema/migration/architecture changes, or cross-package scope
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

@@ -1,41 +1,26 @@
 # Backend Live Safety Contract
 
 ## Purpose
-Define the safety contract that governs live `backend-agent` execution in constrained patch mode.
+Define the active safety contract for live `backend-agent` execution in constrained patch mode.
 
-This document defines:
+The contract covers:
 - allowed patch boundaries,
 - required structured output shape,
 - validation and escalation rules,
-- forbidden mutations.
+- isolated execution, rollback, and promotion safety.
 
-This contract is active in runtime validation for backend live constrained mode.
+## Execution model
+When backend runs in `apply` mode:
+- patching runs in an isolated temporary workspace,
+- verification hooks (`lint` / `typecheck` / `test`) run in isolated workspace,
+- rollback is applied on failure paths when enabled,
+- promotion back to main workspace is opt-in and validated (`promote_verified`),
+- isolated workspace cleanup runs by default.
 
-## Isolated execution model
-When backend runs in `apply` mode, patch application and verification execute in an isolated temporary workspace.
-
-Rules:
-- validate plan against repo-relative paths first,
-- materialize an isolated workspace copy,
-- apply only validated operations inside the isolated workspace,
-- run verification hooks (`lint` / `typecheck` / `test`) against the isolated workspace,
-- persist workspace execution evidence,
-- cleanup isolated workspace by default.
-
-This keeps the main workspace protected during live backend execution.
-
-## Status
-- backend live model execution: **implemented in constrained patch mode**
-- backend live safety contract: **defined and enforced**
-- backend live validator modules: **implemented**
-
-## Why this exists
-Backend is a code-writing role. It can introduce hidden scope expansion and contract drift if unbounded.
-The system must enforce deterministic boundaries before applying any generated patch.
+Main workspace mutations are only allowed through validated promotion.
 
 ## Required structured output
-Backend output must still satisfy `Agent Output Envelope`, plus backend metrics contract fields:
-
+Backend output must satisfy `Agent Output Envelope` plus backend metrics fields:
 - `metrics.changePlan[]`
 - `metrics.targetFiles[]`
 - `metrics.changeType`
@@ -46,14 +31,12 @@ Backend output must still satisfy `Agent Output Envelope`, plus backend metrics 
 - `metrics.testsPlan[]`
 - `metrics.knownLimitations[]`
 
-`metrics.proposedDiffs[]` entries must include:
+Each `metrics.proposedDiffs[]` entry must include:
 - `filePath`
 - `operation` (`create` | `update`)
 - `content`
 
-No freeform “I changed things” output is acceptable.
-
-## Allowed change boundaries (initial policy)
+## Allowed change boundaries
 Allowed target path prefixes:
 - `apps/orchestrator-runner/src/`
 - `apps/orchestrator-runner/test/`
@@ -62,27 +45,40 @@ Allowed target path prefixes:
 
 Allowed change types:
 - `patch_only`
-- `new_file` (narrow constrained mode)
-- `test_focused_multi_file` (small multi-file expansion)
+- `new_file`
+- `test_focused_multi_file`
 - `test_only`
 - `docs_only`
 
-Narrow `new_file` rules:
+Create constraints:
 - at most one `create` operation per run,
 - create path must be inside:
   - `apps/orchestrator-runner/src/`
-  - `apps/orchestrator-runner/test/`,
-- create extension must be allowlisted (`.ts`, `.tsx`, `.md`),
-- root-level and hidden-file creation are forbidden.
+  - `apps/orchestrator-runner/test/`
+- create extension allowlist:
+  - `.ts`
+  - `.tsx`
+  - `.md`
+  - `.json` (helper-only constraints apply)
+- create content size limits:
+  - max `8000` bytes for any create file
+  - max `2000` bytes for json helper files
+- root-level and hidden-file creation are forbidden,
+- config/schema/migration-like create filenames are forbidden,
+- create operation fails if target already exists.
 
-`test_focused_multi_file` rules:
+Json helper-file constraints:
+- json helper create paths are only allowed under:
+  - `apps/orchestrator-runner/test/fixtures/`
+
+`test_focused_multi_file` constraints:
 - max 3 target files,
 - max 1 create operation,
 - at least one test-related target file,
 - at least one non-test implementation target file,
 - single-root constraint remains mandatory.
 
-## Forbidden mutations (initial policy)
+## Forbidden mutations
 Forbidden path prefixes:
 - `configs/`
 - `packages/agent-config/`
@@ -97,48 +93,55 @@ Forbidden exact paths:
 - `.env`
 - `.env.example`
 
-Also forbidden in current policy:
+Also forbidden:
 - schema changes (`requiresSchemaChange=true`)
 - architecture changes (`requiresArchitectureChange=true`)
 - migrations (`requiresMigration=true`)
 
-If any forbidden change is needed, backend must escalate instead of producing a patch plan.
-
 ## Safety validation rules
 For completed backend output:
-
 1. `metrics.targetFiles[]` must be present and non-empty.
 2. Every target file must be in allowlisted paths.
 3. `metrics.testsPlan[]` must be non-empty.
 4. `metrics.proposedDiffs[]` must be non-empty and path-valid.
 5. Every proposed diff file must exist in `targetFiles[]`.
-6. `patch_only` may only use `update` operations.
-7. Non-`new_file` change types may not use `create`.
-8. `new_file` must include exactly one `create` operation.
-9. create target path and extension must pass allowlists.
-10. create operation must fail if target already exists.
-11. `test_focused_multi_file` must include test + non-test files and stay under max 3 files.
-8. Safety booleans must respect policy (`requiresSchemaChange`, `requiresArchitectureChange`, `requiresMigration`).
+6. `patch_only` may only use `update`.
+7. `new_file` must include exactly one `create` and no extra updates.
+8. `test_focused_multi_file` may include at most one `create`.
+9. Create path/extension/name/size rules must pass policy checks.
+10. Safety booleans must respect policy (`requiresSchemaChange`, `requiresArchitectureChange`, `requiresMigration`).
+
+## Failure categories
+Runtime failure categories include:
+- `patch_validation_failure`
+- `patch_limit_exceeded`
+- `forbidden_path`
+- `forbidden_change_type`
+- `apply_failure`
+- `post_apply_validation_failure`
+- `lint_failed`
+- `typecheck_failed`
+- `test_failed`
+- `verification_timeout`
+- `promotion_failure`
+- `rollback_failed`
 
 ## Escalation rules
-Backend must return `needs_escalation` when task requires:
+Backend must return `needs_escalation` when work requires:
 - writing outside allowlisted paths,
 - schema/model changes,
 - architecture boundary changes,
 - migrations,
 - multi-package scope expansion,
-- broader refactor beyond allowed change type.
-
-For `needs_escalation`, standard escalation envelope is mandatory.
+- broader refactor outside allowed change types.
 
 ## Machine-readable contract locations
-- Backend response schema:
+- Backend schema:
   - `apps/orchestrator-runner/src/adapters/live/schemas/backend-agent-response-schema.ts`
-- Backend safety rules and validator:
+- Backend validation:
   - `apps/orchestrator-runner/src/adapters/live/validators/backend-safety-rules.ts`
   - `apps/orchestrator-runner/src/adapters/live/validators/assert-backend-output.ts`
-
-## Current implementation boundary
-Backend live execution is enabled only in constrained patch mode.
-It is still intentionally limited and does not permit broad refactors, schema/migration work, or cross-package changes.
-`new_file` support is intentionally narrow and remains inside the same validation, verification, and rollback safeguards.
+- Stability checklist:
+  - `docs/agents/backend-live-stability-checklist.md`
+- Stability reassessment checklist:
+  - `docs/agents/backend-live-stability-reassessment.md`

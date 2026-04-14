@@ -19,7 +19,7 @@ Phase 1 is focused on proving that the project can:
   - `mock` (deterministic scenarios)
   - `live` (OpenAI-backed where implemented)
   - per-agent overrides via `--agent-mode`
-- live-capable non-implementation chain:
+- live-capable agent chain:
   - Product Agent
   - Architect Agent
   - Quant Pattern Agent
@@ -41,6 +41,12 @@ Phase 1 is focused on proving that the project can:
   - `terminal-outcome.json`
   - `artifacts.json`
   - `approvals.json`
+- backend constrained implementation safety (current baseline):
+  - isolated apply + verification in temp workspace
+  - rollback plan/result persistence
+  - controlled promotion to main workspace (`promote_verified`)
+  - narrow helper-file creation constraints (including json helper fixtures)
+  - dedicated stability reassessment artifact for audit runs (`stability-reassessment.json`)
 - standardized shared live-adapter pipeline for all current live agents
 
 ## What this phase is not

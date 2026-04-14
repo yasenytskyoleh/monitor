@@ -38,6 +38,10 @@
 - live Quant Pattern Agent path exists
 - live Docs Reviewer Agent path exists
 - first constrained live Backend Agent path exists
+- backend isolated apply + verification + cleanup flow exists
+- backend controlled promotion flow exists (`promote_verified`)
+- narrow helper-file creation constraints exist (including json helper fixtures)
+- backend stability reassessment artifact exists for dedicated runs (`stability-reassessment.json`)
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -47,4 +51,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **backend constrained-mode hardening and observability polish**
+- the currently recommended next step is **post-reassessment consolidation before any further Backend scope expansion**
