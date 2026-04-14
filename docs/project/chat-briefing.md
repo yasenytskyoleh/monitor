@@ -38,9 +38,12 @@ Current status:
 - persisted workflow artifacts exist
 - approval and artifact/reference enforcement is active in runtime
 - shared live-adapter execution pipeline exists
+- backend isolated apply + verification + rollback + controlled promotion exists
+- narrow helper-file creation constraints exist
+- dedicated stability reassessment artifact exists for reassessment runs
 
 The next likely step is:
-- **backend constrained-mode hardening and observability polish**
+- **post-reassessment consolidation before any further Backend scope expansion**
 
 Please preserve this project direction and avoid broad redesign unless clearly justified.
 

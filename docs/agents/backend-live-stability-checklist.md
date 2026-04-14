@@ -1,10 +1,10 @@
-# Backend Live Stability Checklist (PR #16)
+# Backend Live Stability Checklist
 
-Purpose: decide whether constrained `backend-agent` live execution is stable enough for any scope expansion.
+Purpose: keep constrained `backend-agent` live execution stable while preserving strict safety boundaries.
 
 ## Scope
 - Applies only to constrained backend live mode in `@monitor/orchestrator-runner`.
-- Does not change workflow, approval, or artifact contracts.
+- Covers isolated execution, verification, rollback, promotion, and narrow helper-file creation.
 - Does not unlock broad backend autonomy.
 
 ## Stability Gate Criteria
@@ -15,34 +15,40 @@ Purpose: decide whether constrained `backend-agent` live execution is stable eno
 
 2. Verification safety
 - Verification hooks are explicit and allowlisted.
-- Failure categories are explicit (`lint_failed`, `typecheck_failed`, `test_failed`, `verification_timeout`).
-- Verification failure is surfaced as run failure, not silent success.
+- Verification failures are surfaced as run failures (not silent success).
 
 3. Rollback safety
 - Rollback plan is captured before first write in apply mode.
-- Apply/post-apply/verification failure triggers rollback when rollback mode is enabled.
-- Rollback restores modified files and removes created files from the validated plan.
-- Rollback result is persisted.
+- Apply/post-apply/verification failures trigger rollback when rollback mode is enabled.
+- Rollback restores modified files and removes created files from validated plan.
+- Helper files created during failed runs are deleted by rollback.
 
-4. Artifact and evidence persistence
-- Run folder contains `patch-plan.json`, `patch-result.json`, and when relevant rollback artifacts.
+4. Promotion safety
+- Promotion is opt-in (`promote_verified`) and never implicit.
+- Promotion includes only validated + applied target files.
+- Promotion conflict checks block overwrite when main workspace changed during isolation.
+- Promotion remains all-or-nothing.
+
+5. Artifact and evidence persistence
+- Run folder contains `patch-plan.json`, `patch-result.json`, `workspace-summary.json`, and relevant rollback/promotion artifacts.
 - `stability-summary.json` exists and reflects apply/verification/rollback status.
+- `stability-reassessment.json` exists for dedicated reassessment runs.
 
-5. Determinism and repeatability
+6. Determinism and repeatability
 - Repeated identical runner inputs produce the same transition path and terminal state.
-- Stability matrix tests pass consistently.
+- Reassessment matrix tests pass consistently.
 
 ## Required Matrix Scenarios
-- safe apply success
+- safe isolated apply success
+- helper-file create + verify + promote success
 - lint failure after apply
-- typecheck failure after apply
-- test failure after apply
 - rollback after verification failure
+- helper-file rollback deletion
+- promotion conflict block
 - repeated identical run determinism
-- forbidden path rejection
-- forbidden change type rejection
+- forbidden helper path rejection
+- forbidden extension rejection
 
-## PR #16 Decision
-- Decision: **no scope expansion in this PR**.
-- Reason: this PR is audit-first. It adds checklist + matrix evidence + persisted stability summary.
-- Expansion (for example controlled `new_file`) is deferred to a follow-up PR after repeated green audit runs.
+## Related docs
+- detailed reassessment checklist:
+  - `docs/agents/backend-live-stability-reassessment.md`

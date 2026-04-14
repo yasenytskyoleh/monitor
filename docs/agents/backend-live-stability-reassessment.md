@@ -1,4 +1,4 @@
-# Backend Live Stability Reassessment (Post PR #21)
+# Backend Live Stability Reassessment (Current Baseline)
 
 This checklist is for reassessing current constrained Backend live behavior after helper-file expansion.
 
@@ -56,3 +56,9 @@ This checklist is for reassessing current constrained Backend live behavior afte
   - `determinismPassed`
   - `workspaceCleanlinessPassed`
   - `overallStatus`
+
+## How to run
+Use dedicated reassessment runs with:
+- `--stability-reassessment <scenario>`
+- `--backend-write apply`
+- `--backend-promotion promote_verified` (for promotion scenarios)
