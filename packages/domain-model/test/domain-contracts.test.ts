@@ -157,25 +157,19 @@ test("supports constructing typed contracts without implementation logic", () =>
   };
 
   const candidate: SignalCandidate = {
-    candidateId: "candidate-001",
-    setupId: setup.id,
-    symbolId: symbol.symbolId,
-    detectedAtUtc: "2026-04-14T10:30:00.000Z",
+    id: "candidate-001",
+    setupDefinitionId: setup.id,
+    monitoredSymbolId: symbol.symbolId,
+    detectedAt: "2026-04-14T10:30:00.000Z",
     status: "detected",
-    evidence: [
-      {
-        evidenceId: "evt-001",
-        source: "monitor_event",
-        description: "range break with elevated volume"
-      }
-    ],
-    createdAtUtc: "2026-04-14T10:30:00.000Z",
-    updatedAtUtc: "2026-04-14T10:30:00.000Z"
+    evidenceSummary: "range break with elevated volume",
+    createdAt: "2026-04-14T10:30:00.000Z",
+    updatedAt: "2026-04-14T10:30:00.000Z"
   };
 
   const window: EvaluationWindow = {
     windowId: "window-001",
-    signalCandidateId: candidate.candidateId,
+    signalCandidateId: candidate.id,
     mode: "time_based",
     purpose: "post_detection_outcome",
     startReferenceRule: "signal_detected_at",
@@ -189,7 +183,7 @@ test("supports constructing typed contracts without implementation logic", () =>
 
   const input: EvaluationInput = {
     inputId: "input-001",
-    signalCandidateId: candidate.candidateId,
+    signalCandidateId: candidate.id,
     evaluationWindowId: window.windowId,
     observationReferences: [
       {
@@ -219,7 +213,7 @@ test("supports constructing typed contracts without implementation logic", () =>
 
   const result: EvaluationResult = {
     resultId: "result-001",
-    signalCandidateId: candidate.candidateId,
+    signalCandidateId: candidate.id,
     evaluationWindowId: window.windowId,
     evaluationInputId: input.inputId,
     status: "completed",
@@ -248,7 +242,7 @@ test("supports constructing typed contracts without implementation logic", () =>
     runId: "run-001",
     hypothesisId: hypothesis.id,
     setupId: setup.id,
-    candidateIds: [candidate.candidateId],
+    candidateIds: [candidate.id],
     evaluationWindowIds: [window.windowId],
     evaluationResultIds: [result.resultId],
     status: "planned",

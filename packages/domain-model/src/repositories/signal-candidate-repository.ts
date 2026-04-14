@@ -13,17 +13,17 @@ export type SignalCandidateUpdateRequest = {
 };
 
 export type SignalCandidateStatusUpdateRequest = {
-  candidateId: string;
+  signalCandidateId: string;
   status: SignalCandidateStatus;
-  statusReason?: string;
   metadata: ProductRecordMetadata;
   expectedVersion: number | null;
 };
 
 export type SignalCandidateRepository = {
-  getById(candidateId: string): Promise<SignalCandidate | null>;
-  listBySetupId(setupId: string): Promise<SignalCandidate[]>;
-  listBySymbolId(symbolId: string): Promise<SignalCandidate[]>;
+  getById(signalCandidateId: string): Promise<SignalCandidate | null>;
+  listBySetupDefinitionId(setupDefinitionId: string): Promise<SignalCandidate[]>;
+  listByMonitoredSymbolId(monitoredSymbolId: string): Promise<SignalCandidate[]>;
+  listByStatus(statuses: SignalCandidateStatus[]): Promise<SignalCandidate[]>;
   create(request: SignalCandidateCreateRequest): Promise<SignalCandidate>;
   update(request: SignalCandidateUpdateRequest): Promise<SignalCandidate>;
   updateStatus(request: SignalCandidateStatusUpdateRequest): Promise<SignalCandidate | null>;

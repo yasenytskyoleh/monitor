@@ -21,6 +21,7 @@ Repository abstractions:
 Implemented concrete repositories in this PR:
 - `InMemorySetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-repository.impl.ts`)
 - `InMemoryResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-repository.impl.ts`)
+- `InMemorySignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-repository.impl.ts`)
 
 Repository responsibilities:
 - persist and load domain-shaped records
@@ -45,6 +46,7 @@ Service layer:
 Implemented concrete service factories in this PR:
 - `createSetupDefinitionService` (`packages/domain-model/src/services/setup-definition-service.ts`)
 - `createResearchService` (`packages/domain-model/src/services/research-service.ts`)
+- `createSignalCandidateService` (`packages/domain-model/src/services/signal-candidate-service.ts`)
 
 Service responsibilities:
 - own write-path semantics
@@ -61,6 +63,10 @@ First persisted slice write-path rules now implemented:
   - validates referenced setup definition ids before create/update/link
   - controls hypothesis status transitions
   - owns controlled setup linkage for hypotheses
+- `SignalCandidateService`
+  - validates required fields (`id`, `setupDefinitionId`, `monitoredSymbolId`, `detectedAt`, `status`, `evidenceSummary`)
+  - validates referenced setup definition and monitored symbol boundaries
+  - enforces strict candidate lifecycle transitions before evaluation
 
 Service non-goals:
 - no direct runner-artifact writes

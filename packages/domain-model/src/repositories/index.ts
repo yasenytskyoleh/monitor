@@ -17,6 +17,7 @@ export type {
   SignalCandidateStatusUpdateRequest,
   SignalCandidateUpdateRequest
 } from "./signal-candidate-repository.js";
+export { InMemorySignalCandidateRepository } from "./signal-candidate-repository.impl.js";
 export type {
   EvaluationResultCreateRequest,
   EvaluationResultRepository,
