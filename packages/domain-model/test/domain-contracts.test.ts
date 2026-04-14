@@ -28,6 +28,9 @@ import {
   PRODUCT_RECORD_SOURCES,
   PRODUCT_SERVICE_NAMES,
   PRODUCT_WRITE_PATH_OWNERSHIP,
+  RESEARCH_DECISION_APPROVAL_OUTCOMES,
+  RESEARCH_DECISION_APPROVAL_RESULT_STATUSES,
+  RESEARCH_DECISION_APPROVAL_STATUSES,
   RESEARCH_FEEDBACK_DECISION_ACTIONS,
   RESEARCH_FEEDBACK_DECISION_STATUSES,
   RESEARCH_HYPOTHESIS_STATUSES,
@@ -48,6 +51,7 @@ import {
   type ProductEntityIdentity,
   type ProductRecordMetadata,
   type ResearchHypothesisRepository,
+  type ResearchDecisionApproval,
   type ResearchFeedbackDecision,
   type ResearchAggregationInput,
   type ResearchHypothesisEvidenceLink,
@@ -100,6 +104,14 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "accepted",
     "rejected"
   ]);
+  assert.deepEqual(RESEARCH_DECISION_APPROVAL_OUTCOMES, ["approved", "rejected", "needs_changes"]);
+  assert.deepEqual(RESEARCH_DECISION_APPROVAL_STATUSES, ["recorded"]);
+  assert.deepEqual(RESEARCH_DECISION_APPROVAL_RESULT_STATUSES, [
+    "recorded",
+    "rejected_validation",
+    "rejected_lifecycle",
+    "failed"
+  ]);
   assert.deepEqual(AGGREGATION_SYMBOL_SCOPE_KINDS, ["single_symbol", "symbol_set", "all_monitored"]);
   assert.deepEqual(STORAGE_BOUNDARIES, ["runtime_evidence", "product_domain", "derived_analytics"]);
   assert.deepEqual(RUNTIME_EVIDENCE_ARTIFACT_TYPES, [
@@ -116,7 +128,8 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "evaluation_result",
     "research_hypothesis",
     "setup_aggregate_result",
-    "research_feedback_decision"
+    "research_feedback_decision",
+    "research_decision_approval"
   ]);
   assert.deepEqual(PRODUCT_EPHEMERAL_ENTITY_TYPES, [
     "detection_input_transient",
@@ -140,10 +153,10 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "research_aggregation_service"
   ]);
   assert.deepEqual(FIRST_PERSISTED_PRODUCT_SLICE, ["setup_definition", "research_hypothesis"]);
-  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 7);
+  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 8);
   assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
   assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
-  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 7);
+  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 8);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
   assert.deepEqual(MARKET_DATA_PROVIDER_KINDS, ["exchange_adapter"]);
   assert.deepEqual(MARKET_DATA_SOURCE_STATUSES, ["active", "degraded", "paused"]);
@@ -438,10 +451,25 @@ test("supports research aggregation and setup comparison contracts", () => {
     updatedAt: "2026-04-15T10:20:00.000Z"
   };
 
+  const decisionApproval: ResearchDecisionApproval = {
+    id: "approval-001",
+    researchFeedbackDecisionId: feedbackDecision.id,
+    setupDefinitionId: scope.setupDefinitionId,
+    reviewedBy: "research_reviewer_1",
+    reviewedAt: "2026-04-15T10:25:00.000Z",
+    approvalOutcome: "approved",
+    reviewerNotes: "Approved to pause setup pending follow-up review.",
+    approvalStatus: "recorded",
+    authorizedNextAction: "pause_setup",
+    createdAt: "2026-04-15T10:25:00.000Z",
+    updatedAt: "2026-04-15T10:25:00.000Z"
+  };
+
   assert.equal(aggregate.status, "completed");
   assert.equal(comparison.metricSnapshots.length, 2);
   assert.equal(evidenceLink.evidenceStatus, "supports");
   assert.equal(feedbackDecision.recommendedAction, "keep_active");
+  assert.equal(decisionApproval.approvalOutcome, "approved");
 });
 
 test("supports storage-boundary and persisted-entity contracts", () => {
@@ -518,7 +546,8 @@ test("supports repository and service boundary contracts", async () => {
     updateResearchHypothesisStatus: async () => null,
     attachHypothesisToSetupDefinitions: async () => null,
     updateHypothesisEvidence: async () => null,
-    reviewSetupFromEvidence: async () => null
+    reviewSetupFromEvidence: async () => null,
+    approveFeedbackDecision: async () => null
   };
 
   const setup = await setupService.createSetupDefinition({

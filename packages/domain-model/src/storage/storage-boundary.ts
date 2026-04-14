@@ -21,7 +21,8 @@ export const PRODUCT_PERSISTED_ENTITY_TYPES = [
   "evaluation_result",
   "research_hypothesis",
   "setup_aggregate_result",
-  "research_feedback_decision"
+  "research_feedback_decision",
+  "research_decision_approval"
 ] as const;
 export type ProductPersistedEntityType = (typeof PRODUCT_PERSISTED_ENTITY_TYPES)[number];
 

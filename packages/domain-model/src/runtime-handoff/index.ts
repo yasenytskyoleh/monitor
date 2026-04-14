@@ -81,3 +81,9 @@ export {
 export type {
   HypothesisEvidenceToSetupFeedbackDependencies
 } from "./hypothesis-evidence-to-setup-feedback.js";
+export {
+  createResearchDecisionApprovalHandoff
+} from "./research-decision-approval.js";
+export type {
+  ResearchDecisionApprovalHandoffDependencies
+} from "./research-decision-approval.js";

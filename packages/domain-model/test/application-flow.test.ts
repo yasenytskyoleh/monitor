@@ -144,7 +144,8 @@ test("happy path service sequence", async () => {
       return buildInput().researchHypothesis;
     },
     updateHypothesisEvidence: async () => null,
-    reviewSetupFromEvidence: async () => null
+    reviewSetupFromEvidence: async () => null,
+    approveFeedbackDecision: async () => null
   };
 
   const signalCandidateService: SignalCandidateService = {
@@ -230,7 +231,8 @@ test("failure at candidate stage stops downstream steps", async () => {
       updateResearchHypothesisStatus: async () => null,
       attachHypothesisToSetupDefinitions: async () => buildInput().researchHypothesis,
       updateHypothesisEvidence: async () => null,
-      reviewSetupFromEvidence: async () => null
+      reviewSetupFromEvidence: async () => null,
+      approveFeedbackDecision: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async () => {
@@ -288,7 +290,8 @@ test("failure at evaluation stage stops before aggregation", async () => {
       updateResearchHypothesisStatus: async () => null,
       attachHypothesisToSetupDefinitions: async () => buildInput().researchHypothesis,
       updateHypothesisEvidence: async () => null,
-      reviewSetupFromEvidence: async () => null
+      reviewSetupFromEvidence: async () => null,
+      approveFeedbackDecision: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,
@@ -337,7 +340,8 @@ test("aggregation refresh failure returns partial flow result", async () => {
       updateResearchHypothesisStatus: async () => null,
       attachHypothesisToSetupDefinitions: async () => buildInput().researchHypothesis,
       updateHypothesisEvidence: async () => null,
-      reviewSetupFromEvidence: async () => null
+      reviewSetupFromEvidence: async () => null,
+      approveFeedbackDecision: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,
@@ -382,7 +386,8 @@ test("null research-hypothesis link result fails flow", async () => {
       updateResearchHypothesisStatus: async () => null,
       attachHypothesisToSetupDefinitions: async () => null,
       updateHypothesisEvidence: async () => null,
-      reviewSetupFromEvidence: async () => null
+      reviewSetupFromEvidence: async () => null,
+      approveFeedbackDecision: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,
@@ -427,7 +432,8 @@ test("null evaluation start result fails flow at start step", async () => {
       updateResearchHypothesisStatus: async () => null,
       attachHypothesisToSetupDefinitions: async () => buildInput().researchHypothesis,
       updateHypothesisEvidence: async () => null,
-      reviewSetupFromEvidence: async () => null
+      reviewSetupFromEvidence: async () => null,
+      approveFeedbackDecision: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,
@@ -472,7 +478,8 @@ test("null aggregation recompute result returns partial with warning", async () 
       updateResearchHypothesisStatus: async () => null,
       attachHypothesisToSetupDefinitions: async () => buildInput().researchHypothesis,
       updateHypothesisEvidence: async () => null,
-      reviewSetupFromEvidence: async () => null
+      reviewSetupFromEvidence: async () => null,
+      approveFeedbackDecision: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,

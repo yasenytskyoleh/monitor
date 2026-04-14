@@ -55,8 +55,10 @@ export {
 } from "./evaluation-service.js";
 
 export type {
+  ApproveFeedbackDecisionRequest,
   AttachHypothesisToSetupDefinitionsRequest,
   CreateResearchHypothesisRequest,
+  FeedbackDecisionApproval,
   HypothesisEvidenceScopeDescriptor,
   HypothesisEvidenceUpdate,
   ReviewSetupFromEvidenceRequest,

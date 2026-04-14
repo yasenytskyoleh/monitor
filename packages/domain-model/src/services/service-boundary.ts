@@ -59,6 +59,12 @@ export const PRODUCT_WRITE_PATH_OWNERSHIP: ProductWritePathOwnership[] = [
     ownerService: "research_service",
     createPath: "hypothesis-evidence to setup-review feedback flow",
     updatePath: "feedback decision review lifecycle updates"
+  },
+  {
+    entityType: "research_decision_approval",
+    ownerService: "research_service",
+    createPath: "manual review approval submission flow",
+    updatePath: "approval artifact metadata corrections in controlled review path"
   }
 ];
 
