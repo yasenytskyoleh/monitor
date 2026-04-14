@@ -141,8 +141,9 @@ test("happy path service sequence", async () => {
     updateResearchHypothesisStatus: async () => null,
     attachHypothesisToSetupDefinitions: async () => {
       calls.push("research_hypothesis_link");
-      return null;
-    }
+      return buildInput().researchHypothesis;
+    },
+    updateHypothesisEvidence: async () => null
   };
 
   const signalCandidateService: SignalCandidateService = {
@@ -160,11 +161,14 @@ test("happy path service sequence", async () => {
     },
     startEvaluationResult: async () => {
       calls.push("evaluation_result_start");
-      return null;
+      return buildInput().evaluation.pendingResult;
     },
     finalizeEvaluationResult: async () => {
       calls.push("evaluation_result_finalize");
-      return null;
+      return {
+        ...buildInput().evaluation.pendingResult,
+        status: "completed"
+      };
     },
     expireEvaluationResult: async () => null,
     invalidateEvaluationResult: async () => null
@@ -177,7 +181,10 @@ test("happy path service sequence", async () => {
     },
     recomputeSetupAggregateResult: async () => {
       calls.push("setup_aggregate_result_recompute");
-      return null;
+      return {
+        ...buildInput().aggregation.pendingAggregate,
+        status: "completed"
+      };
     },
     updateSetupAggregateResultStatus: async () => null
   };
@@ -220,7 +227,8 @@ test("failure at candidate stage stops downstream steps", async () => {
       createResearchHypothesis: async (request) => request.hypothesis,
       updateResearchHypothesis: async (request) => request.hypothesis,
       updateResearchHypothesisStatus: async () => null,
-      attachHypothesisToSetupDefinitions: async () => null
+      attachHypothesisToSetupDefinitions: async () => buildInput().researchHypothesis,
+      updateHypothesisEvidence: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async () => {
@@ -233,8 +241,11 @@ test("failure at candidate stage stops downstream steps", async () => {
         evaluationCalled = true;
         return request.result;
       },
-      startEvaluationResult: async () => null,
-      finalizeEvaluationResult: async () => null,
+      startEvaluationResult: async () => buildInput().evaluation.pendingResult,
+      finalizeEvaluationResult: async () => ({
+        ...buildInput().evaluation.pendingResult,
+        status: "completed"
+      }),
       expireEvaluationResult: async () => null,
       invalidateEvaluationResult: async () => null
     },
@@ -243,7 +254,10 @@ test("failure at candidate stage stops downstream steps", async () => {
         aggregationCalled = true;
         return request.aggregate;
       },
-      recomputeSetupAggregateResult: async () => null,
+      recomputeSetupAggregateResult: async () => ({
+        ...buildInput().aggregation.pendingAggregate,
+        status: "completed"
+      }),
       updateSetupAggregateResultStatus: async () => null
     }
   });
@@ -270,7 +284,8 @@ test("failure at evaluation stage stops before aggregation", async () => {
       createResearchHypothesis: async (request) => request.hypothesis,
       updateResearchHypothesis: async (request) => request.hypothesis,
       updateResearchHypothesisStatus: async () => null,
-      attachHypothesisToSetupDefinitions: async () => null
+      attachHypothesisToSetupDefinitions: async () => buildInput().researchHypothesis,
+      updateHypothesisEvidence: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,
@@ -278,7 +293,7 @@ test("failure at evaluation stage stops before aggregation", async () => {
     },
     evaluationService: {
       createPendingEvaluationResult: async (request) => request.result,
-      startEvaluationResult: async () => null,
+      startEvaluationResult: async () => buildInput().evaluation.pendingResult,
       finalizeEvaluationResult: async () => {
         throw new Error("evaluation finalize failed");
       },
@@ -317,7 +332,8 @@ test("aggregation refresh failure returns partial flow result", async () => {
       createResearchHypothesis: async (request) => request.hypothesis,
       updateResearchHypothesis: async (request) => request.hypothesis,
       updateResearchHypothesisStatus: async () => null,
-      attachHypothesisToSetupDefinitions: async () => null
+      attachHypothesisToSetupDefinitions: async () => buildInput().researchHypothesis,
+      updateHypothesisEvidence: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,
@@ -325,8 +341,11 @@ test("aggregation refresh failure returns partial flow result", async () => {
     },
     evaluationService: {
       createPendingEvaluationResult: async (request) => request.result,
-      startEvaluationResult: async () => null,
-      finalizeEvaluationResult: async () => null,
+      startEvaluationResult: async () => buildInput().evaluation.pendingResult,
+      finalizeEvaluationResult: async () => ({
+        ...buildInput().evaluation.pendingResult,
+        status: "completed"
+      }),
       expireEvaluationResult: async () => null,
       invalidateEvaluationResult: async () => null
     },
@@ -343,4 +362,134 @@ test("aggregation refresh failure returns partial flow result", async () => {
   assert.equal(result.status, "partial");
   assert.equal(result.warnings.length, 1);
   assert.equal(result.completedSteps.includes("evaluation_result_finalize"), true);
+});
+
+test("null research-hypothesis link result fails flow", async () => {
+  const flow = createSetupToAggregateFlow({
+    setupDefinitionService: {
+      createSetupDefinition: async (request) => request.definition,
+      updateSetupDefinition: async (request) => request.definition,
+      activateSetupDefinition: async () => null,
+      archiveSetupDefinition: async () => null
+    },
+    researchService: {
+      createResearchHypothesis: async (request) => request.hypothesis,
+      updateResearchHypothesis: async (request) => request.hypothesis,
+      updateResearchHypothesisStatus: async () => null,
+      attachHypothesisToSetupDefinitions: async () => null,
+      updateHypothesisEvidence: async () => null
+    },
+    signalCandidateService: {
+      createSignalCandidate: async (request) => request.candidate,
+      updateSignalCandidateStatus: async () => null
+    },
+    evaluationService: {
+      createPendingEvaluationResult: async (request) => request.result,
+      startEvaluationResult: async () => buildInput().evaluation.pendingResult,
+      finalizeEvaluationResult: async () => ({
+        ...buildInput().evaluation.pendingResult,
+        status: "completed"
+      }),
+      expireEvaluationResult: async () => null,
+      invalidateEvaluationResult: async () => null
+    },
+    researchAggregationService: {
+      createPendingSetupAggregateResult: async (request) => request.aggregate,
+      recomputeSetupAggregateResult: async () => ({
+        ...buildInput().aggregation.pendingAggregate,
+        status: "completed"
+      }),
+      updateSetupAggregateResultStatus: async () => null
+    }
+  });
+
+  const result = await flow.run(buildInput());
+  assert.equal(result.status, "failed");
+  assert.equal(result.failedStep, "research_hypothesis_link");
+});
+
+test("null evaluation start result fails flow at start step", async () => {
+  const flow = createSetupToAggregateFlow({
+    setupDefinitionService: {
+      createSetupDefinition: async (request) => request.definition,
+      updateSetupDefinition: async (request) => request.definition,
+      activateSetupDefinition: async () => null,
+      archiveSetupDefinition: async () => null
+    },
+    researchService: {
+      createResearchHypothesis: async (request) => request.hypothesis,
+      updateResearchHypothesis: async (request) => request.hypothesis,
+      updateResearchHypothesisStatus: async () => null,
+      attachHypothesisToSetupDefinitions: async () => buildInput().researchHypothesis,
+      updateHypothesisEvidence: async () => null
+    },
+    signalCandidateService: {
+      createSignalCandidate: async (request) => request.candidate,
+      updateSignalCandidateStatus: async () => null
+    },
+    evaluationService: {
+      createPendingEvaluationResult: async (request) => request.result,
+      startEvaluationResult: async () => null,
+      finalizeEvaluationResult: async () => ({
+        ...buildInput().evaluation.pendingResult,
+        status: "completed"
+      }),
+      expireEvaluationResult: async () => null,
+      invalidateEvaluationResult: async () => null
+    },
+    researchAggregationService: {
+      createPendingSetupAggregateResult: async (request) => request.aggregate,
+      recomputeSetupAggregateResult: async () => ({
+        ...buildInput().aggregation.pendingAggregate,
+        status: "completed"
+      }),
+      updateSetupAggregateResultStatus: async () => null
+    }
+  });
+
+  const result = await flow.run(buildInput());
+  assert.equal(result.status, "failed");
+  assert.equal(result.failedStep, "evaluation_result_start");
+});
+
+test("null aggregation recompute result returns partial with warning", async () => {
+  const flow = createSetupToAggregateFlow({
+    setupDefinitionService: {
+      createSetupDefinition: async (request) => request.definition,
+      updateSetupDefinition: async (request) => request.definition,
+      activateSetupDefinition: async () => null,
+      archiveSetupDefinition: async () => null
+    },
+    researchService: {
+      createResearchHypothesis: async (request) => request.hypothesis,
+      updateResearchHypothesis: async (request) => request.hypothesis,
+      updateResearchHypothesisStatus: async () => null,
+      attachHypothesisToSetupDefinitions: async () => buildInput().researchHypothesis,
+      updateHypothesisEvidence: async () => null
+    },
+    signalCandidateService: {
+      createSignalCandidate: async (request) => request.candidate,
+      updateSignalCandidateStatus: async () => null
+    },
+    evaluationService: {
+      createPendingEvaluationResult: async (request) => request.result,
+      startEvaluationResult: async () => buildInput().evaluation.pendingResult,
+      finalizeEvaluationResult: async () => ({
+        ...buildInput().evaluation.pendingResult,
+        status: "completed"
+      }),
+      expireEvaluationResult: async () => null,
+      invalidateEvaluationResult: async () => null
+    },
+    researchAggregationService: {
+      createPendingSetupAggregateResult: async (request) => request.aggregate,
+      recomputeSetupAggregateResult: async () => null,
+      updateSetupAggregateResultStatus: async () => null
+    }
+  });
+
+  const result = await flow.run(buildInput());
+  assert.equal(result.status, "partial");
+  assert.equal(result.completedSteps.includes("setup_aggregate_result_recompute"), false);
+  assert.equal(result.warnings.length, 1);
 });

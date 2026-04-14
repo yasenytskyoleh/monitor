@@ -53,16 +53,17 @@ const buildHypothesis = (id: string, setupDefinitionId: string): ResearchHypothe
 const buildSignalCandidate = (
   id: string,
   setupDefinitionId: string,
-  monitoredSymbolId: string
+  monitoredSymbolId: string,
+  detectedAt = "2026-04-17T10:30:00.000Z"
 ): SignalCandidate => ({
   id,
   setupDefinitionId,
   monitoredSymbolId,
   status: "evaluated",
-  detectedAt: "2026-04-17T10:30:00.000Z",
+  detectedAt,
   evidenceSummary: "Detected breakout candidate",
-  createdAt: "2026-04-17T10:30:00.000Z",
-  updatedAt: "2026-04-17T10:30:00.000Z"
+  createdAt: detectedAt,
+  updatedAt: detectedAt
 });
 
 const buildEvaluationResult = (
@@ -300,6 +301,125 @@ test("optional hypothesis linkage succeeds and fails correctly", async () => {
     (error: unknown) =>
       error instanceof SetupAggregateResultValidationError &&
       error.message.includes("research_hypothesis not found")
+  );
+});
+
+test("reject recompute when evaluation window is outside aggregation scope", async () => {
+  const {
+    service,
+    setupDefinitionRepository,
+    evaluationResultRepository,
+    signalCandidateRepository
+  } = createFixture();
+  await setupDefinitionRepository.create({
+    definition: buildSetupDefinition("setup-107"),
+    metadata
+  });
+  await signalCandidateRepository.create({
+    candidate: buildSignalCandidate("candidate-107a", "setup-107", "BTC-USDT"),
+    metadata
+  });
+  await evaluationResultRepository.create({
+    result: buildEvaluationResult("result-107a", "candidate-107a", "window-4h", 1.5),
+    metadata
+  });
+  await service.createPendingSetupAggregateResult({
+    aggregate: buildPendingAggregate("aggregate-107", "setup-107"),
+    metadata
+  });
+
+  await assert.rejects(
+    async () =>
+      service.recomputeSetupAggregateResult({
+        setupAggregateResultId: "aggregate-107",
+        evaluationResultIds: ["result-107a"],
+        metadata,
+        expectedVersion: null
+      }),
+    (error: unknown) =>
+      error instanceof SetupAggregateResultValidationError &&
+      error.message.includes("outside aggregationScope.evaluationWindowId")
+  );
+});
+
+test("reject recompute when candidate symbol is outside aggregation symbol scope", async () => {
+  const {
+    service,
+    setupDefinitionRepository,
+    evaluationResultRepository,
+    signalCandidateRepository
+  } = createFixture();
+  await setupDefinitionRepository.create({
+    definition: buildSetupDefinition("setup-108"),
+    metadata
+  });
+  await signalCandidateRepository.create({
+    candidate: buildSignalCandidate("candidate-108a", "setup-108", "SOL-USDT"),
+    metadata
+  });
+  await evaluationResultRepository.create({
+    result: buildEvaluationResult("result-108a", "candidate-108a", "window-24h", 1.5),
+    metadata
+  });
+  await service.createPendingSetupAggregateResult({
+    aggregate: buildPendingAggregate("aggregate-108", "setup-108"),
+    metadata
+  });
+
+  await assert.rejects(
+    async () =>
+      service.recomputeSetupAggregateResult({
+        setupAggregateResultId: "aggregate-108",
+        evaluationResultIds: ["result-108a"],
+        metadata,
+        expectedVersion: null
+      }),
+    (error: unknown) =>
+      error instanceof SetupAggregateResultValidationError &&
+      error.message.includes("outside aggregationScope.symbolScope")
+  );
+});
+
+test("reject recompute when candidate detection time is outside aggregation range", async () => {
+  const {
+    service,
+    setupDefinitionRepository,
+    evaluationResultRepository,
+    signalCandidateRepository
+  } = createFixture();
+  await setupDefinitionRepository.create({
+    definition: buildSetupDefinition("setup-109"),
+    metadata
+  });
+  await signalCandidateRepository.create({
+    candidate: buildSignalCandidate(
+      "candidate-109a",
+      "setup-109",
+      "BTC-USDT",
+      "2026-05-01T00:00:00.000Z"
+    ),
+    metadata
+  });
+  await evaluationResultRepository.create({
+    result: buildEvaluationResult("result-109a", "candidate-109a", "window-24h", 1.5),
+    metadata
+  });
+  await service.createPendingSetupAggregateResult({
+    aggregate: buildPendingAggregate("aggregate-109", "setup-109"),
+    metadata
+  });
+
+  await assert.rejects(
+    async () =>
+      service.recomputeSetupAggregateResult({
+        setupAggregateResultId: "aggregate-109",
+        evaluationResultIds: ["result-109a"],
+        metadata,
+        expectedVersion: null
+      }),
+    (error: unknown) =>
+      error instanceof SetupAggregateResultValidationError &&
+      error.message.includes("outside aggregationScope.timeRange")
   );
 });
 

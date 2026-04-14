@@ -81,6 +81,8 @@ const createFixture = () => {
   return {
     setupDefinitionRepository,
     signalCandidateService,
+    evaluationService,
+    signalCandidateRepository,
     evaluationTriggerHandoff
   };
 };
@@ -253,4 +255,81 @@ test("evaluation-trigger result shape stays explicit", async () => {
   assert.equal(result.status, "rejected_validation");
   assert.equal(Array.isArray(result.warnings), true);
   assert.equal(typeof result.reason, "string");
+});
+
+test("failed trigger does not advance candidate lifecycle before evaluation starts", async () => {
+  const {
+    setupDefinitionRepository,
+    signalCandidateService,
+    signalCandidateRepository,
+    evaluationService,
+    evaluationTriggerHandoff
+  } = createFixture();
+  await setupDefinitionRepository.create({
+    definition: buildSetupDefinition("setup-eval-006"),
+    metadata
+  });
+
+  await signalCandidateService.createSignalCandidate({
+    candidate: {
+      id: "candidate-eval-006a",
+      setupDefinitionId: "setup-eval-006",
+      monitoredSymbolId: "BTC-USDT",
+      status: "detected",
+      detectedAt: "2026-04-20T11:00:00.000Z",
+      evidenceSummary: "candidate that should remain detected on failed trigger",
+      createdAt: "2026-04-20T11:00:00.000Z",
+      updatedAt: "2026-04-20T11:00:00.000Z"
+    },
+    metadata
+  });
+  await signalCandidateService.createSignalCandidate({
+    candidate: {
+      id: "candidate-eval-006b",
+      setupDefinitionId: "setup-eval-006",
+      monitoredSymbolId: "BTC-USDT",
+      status: "detected",
+      detectedAt: "2026-04-20T11:01:00.000Z",
+      evidenceSummary: "candidate used to reserve colliding result id",
+      createdAt: "2026-04-20T11:01:00.000Z",
+      updatedAt: "2026-04-20T11:01:00.000Z"
+    },
+    metadata
+  });
+  await evaluationService.createPendingEvaluationResult({
+    result: {
+      id: "result-collision-006",
+      signalCandidateId: "candidate-eval-006b",
+      evaluationWindowId: "window-4h",
+      status: "pending",
+      referencePrice: null,
+      finalPrice: null,
+      highInWindow: null,
+      lowInWindow: null,
+      absoluteMove: null,
+      percentageMove: null,
+      maxFavorableExcursion: null,
+      maxAdverseExcursion: null,
+      evaluatedAt: null,
+      createdAt: "2026-04-20T11:05:00.000Z",
+      updatedAt: "2026-04-20T11:05:00.000Z"
+    },
+    metadata
+  });
+
+  const result = await evaluationTriggerHandoff.trigger(
+    {
+      signalCandidateId: "candidate-eval-006a",
+      setupDefinitionId: "setup-eval-006",
+      monitoredSymbolId: "BTC-USDT",
+      triggeredAt: "2026-04-20T11:30:00.000Z",
+      evaluationWindowId: "window-24h",
+      evaluationResultId: "result-collision-006"
+    },
+    metadata
+  );
+
+  const candidate = await signalCandidateRepository.getById("candidate-eval-006a");
+  assert.equal(result.status, "failed");
+  assert.equal(candidate?.status, "detected");
 });

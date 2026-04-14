@@ -8,7 +8,12 @@ export type {
   AggregationScopeDescriptor,
   EvaluationAggregationRefreshTrigger
 } from "./evaluation-aggregation-refresh-trigger.js";
+export type {
+  AggregateHypothesisEvidenceTrigger,
+  EvidenceScopeDescriptor
+} from "./aggregate-hypothesis-evidence-trigger.js";
 export type { RefreshAggregateFromEvaluationCommand } from "./refresh-aggregate-from-evaluation-command.js";
+export type { UpdateHypothesisFromAggregateCommand } from "./update-hypothesis-from-aggregate-command.js";
 export {
   EVALUATION_TRIGGER_STATUSES
 } from "./evaluation-trigger-result.js";
@@ -23,6 +28,13 @@ export type {
   AggregationRefreshResult,
   AggregationRefreshStatus
 } from "./aggregation-refresh-result.js";
+export {
+  HYPOTHESIS_EVIDENCE_UPDATE_STATUSES
+} from "./hypothesis-evidence-update-result.js";
+export type {
+  HypothesisEvidenceUpdateResult,
+  HypothesisEvidenceUpdateStatus
+} from "./hypothesis-evidence-update-result.js";
 export {
   RUNTIME_HANDOFF_STATUSES
 } from "./runtime-handoff-result.js";
@@ -48,3 +60,9 @@ export {
 export type {
   EvaluationToAggregationRefreshDependencies
 } from "./evaluation-to-aggregation-refresh.js";
+export {
+  createAggregateToHypothesisEvidenceHandoff
+} from "./aggregate-to-hypothesis-evidence.js";
+export type {
+  AggregateToHypothesisEvidenceDependencies
+} from "./aggregate-to-hypothesis-evidence.js";

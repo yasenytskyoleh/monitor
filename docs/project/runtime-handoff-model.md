@@ -108,3 +108,20 @@ This boundary is deterministic and service-driven:
 - resolves aggregation scope explicitly
 - applies explicit create-vs-recompute aggregate policy
 - returns explicit refresh result statuses
+
+## Aggregate-to-hypothesis evidence boundary
+Fourth runtime handoff in this phase:
+- from completed `SetupAggregateResult` to hypothesis evidence updates
+- through explicit `AggregateHypothesisEvidenceTrigger` payload
+
+Contracts:
+- `packages/domain-model/src/runtime-handoff/aggregate-hypothesis-evidence-trigger.ts`
+- `packages/domain-model/src/runtime-handoff/update-hypothesis-from-aggregate-command.ts`
+- `packages/domain-model/src/runtime-handoff/hypothesis-evidence-update-result.ts`
+- `packages/domain-model/src/runtime-handoff/aggregate-to-hypothesis-evidence.ts`
+
+This boundary is deterministic and service-driven:
+- accepts updates only from completed aggregate results
+- resolves one target hypothesis id explicitly
+- delegates support/weakens/inconclusive interpretation to `ResearchService.updateHypothesisEvidence(...)`
+- returns explicit hypothesis-evidence update result statuses

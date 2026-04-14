@@ -37,5 +37,5 @@ Coordinator:
 ## Postponed work
 - scheduled or batched aggregation runtime
 - fanout to multiple scopes
-- hypothesis evidence update engine
+- advanced hypothesis evidence scoring/lifecycle engine
 - scoring/ranking/statistical significance runtime

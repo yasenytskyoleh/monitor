@@ -1,3 +1,9 @@
+import type { JsonObject, TimestampUtc } from "../common.js";
+import type {
+  HypothesisEvidenceStatus
+} from "../research/research-hypothesis-link.js";
+import { HYPOTHESIS_EVIDENCE_STATUSES } from "../research/research-hypothesis-link.js";
+import type { SetupAggregateResult } from "../research/setup-aggregate-result.js";
 import type { ResearchHypothesis } from "../research-hypothesis.js";
 import type {
   ResearchHypothesisRepository
@@ -31,6 +37,36 @@ export type AttachHypothesisToSetupDefinitionsRequest = {
   expectedVersion: number | null;
 };
 
+export type HypothesisEvidenceScopeDescriptor = {
+  evaluationWindowId?: string | null;
+  symbolScope?: SetupAggregateResult["aggregationScope"]["symbolScope"];
+  timeRange?: SetupAggregateResult["aggregationScope"]["timeRange"];
+};
+
+export type UpdateHypothesisEvidenceRequest = {
+  researchHypothesisId: string;
+  setupAggregateResultId: string;
+  setupDefinitionId: string;
+  aggregateStatus: SetupAggregateResult["status"];
+  completedEvaluations: number;
+  positiveOutcomeCount: number;
+  averageFinalOutcome: number | null;
+  averagePercentageMove: number | null;
+  assessedAt: TimestampUtc;
+  evidenceScopeDescriptor?: HypothesisEvidenceScopeDescriptor;
+  originRunId?: string;
+  sourceMetadata?: JsonObject;
+  metadata: ProductRecordMetadata;
+  expectedVersion: number | null;
+};
+
+export type HypothesisEvidenceUpdate = {
+  hypothesis: ResearchHypothesis;
+  setupAggregateResultId: string;
+  evidenceStatus: HypothesisEvidenceStatus;
+  evidenceSummary: string;
+};
+
 export type ResearchServiceDependencies = {
   researchHypothesisRepository: ResearchHypothesisRepository;
   setupDefinitionRepository: SetupDefinitionRepository;
@@ -45,6 +81,9 @@ export type ResearchService = {
   attachHypothesisToSetupDefinitions(
     request: AttachHypothesisToSetupDefinitionsRequest
   ): Promise<ResearchHypothesis | null>;
+  updateHypothesisEvidence(
+    request: UpdateHypothesisEvidenceRequest
+  ): Promise<HypothesisEvidenceUpdate | null>;
 };
 
 export class ResearchHypothesisValidationError extends Error {
@@ -63,6 +102,29 @@ const assertNonEmptyString = (value: string, fieldName: string): void => {
 const assertValidStatus = (status: ResearchHypothesis["status"]): void => {
   if (!RESEARCH_HYPOTHESIS_STATUSES.includes(status)) {
     throw new ResearchHypothesisValidationError(`invalid research_hypothesis status: ${status}`);
+  }
+};
+
+const assertValidEvidenceStatus = (evidenceStatus: HypothesisEvidenceStatus): void => {
+  if (!HYPOTHESIS_EVIDENCE_STATUSES.includes(evidenceStatus)) {
+    throw new ResearchHypothesisValidationError(
+      `invalid research_hypothesis evidence_status: ${evidenceStatus}`
+    );
+  }
+};
+
+const assertNonNegativeInteger = (value: number, fieldName: string): void => {
+  if (!Number.isInteger(value) || value < 0) {
+    throw new ResearchHypothesisValidationError(`${fieldName} must be a non-negative integer`);
+  }
+};
+
+const assertNullableFiniteNumber = (
+  value: number | null,
+  fieldName: string
+): void => {
+  if (value !== null && !Number.isFinite(value)) {
+    throw new ResearchHypothesisValidationError(`${fieldName} must be a finite number or null`);
   }
 };
 
@@ -99,6 +161,9 @@ const validateResearchHypothesis = (hypothesis: ResearchHypothesis): void => {
   assertNonEmptyString(hypothesis.title, "title");
   assertNonEmptyString(hypothesis.description, "description");
   assertValidStatus(hypothesis.status);
+  if (hypothesis.evidenceStatus) {
+    assertValidEvidenceStatus(hypothesis.evidenceStatus);
+  }
   if (hypothesis.assumptions.length === 0) {
     throw new ResearchHypothesisValidationError("assumptions is required");
   }
@@ -119,6 +184,51 @@ const validateRelatedSetupIds = async (
       );
     }
   }
+};
+
+const interpretEvidenceStatus = (
+  completedEvaluations: number,
+  positiveOutcomeCount: number,
+  averageFinalOutcome: number | null,
+  averagePercentageMove: number | null
+): HypothesisEvidenceStatus => {
+  if (
+    completedEvaluations === 0 ||
+    averageFinalOutcome === null ||
+    averagePercentageMove === null
+  ) {
+    return "inconclusive";
+  }
+
+  const positiveRate = positiveOutcomeCount / completedEvaluations;
+  if (averageFinalOutcome > 0 && averagePercentageMove > 0 && positiveRate >= 0.6) {
+    return "supports";
+  }
+
+  if (averageFinalOutcome < 0 && averagePercentageMove < 0 && positiveRate <= 0.4) {
+    return "weakens";
+  }
+
+  return "inconclusive";
+};
+
+const formatMetric = (value: number | null): string => (value === null ? "null" : `${value}`);
+
+const buildEvidenceSummary = (
+  request: UpdateHypothesisEvidenceRequest,
+  evidenceStatus: HypothesisEvidenceStatus
+): string => {
+  const scopeWindow = request.evidenceScopeDescriptor?.evaluationWindowId ?? "all_windows";
+  return [
+    `aggregate=${request.setupAggregateResultId}`,
+    `setup=${request.setupDefinitionId}`,
+    `window=${scopeWindow}`,
+    `status=${evidenceStatus}`,
+    `completed=${request.completedEvaluations}`,
+    `positive=${request.positiveOutcomeCount}`,
+    `avgFinalOutcome=${formatMetric(request.averageFinalOutcome)}`,
+    `avgPercentageMove=${formatMetric(request.averagePercentageMove)}`
+  ].join("; ");
 };
 
 export const createResearchService = (dependencies: ResearchServiceDependencies): ResearchService => {
@@ -211,6 +321,68 @@ export const createResearchService = (dependencies: ResearchServiceDependencies)
         metadata: request.metadata,
         expectedVersion: request.expectedVersion
       });
+    },
+    async updateHypothesisEvidence(request) {
+      assertNonEmptyString(request.researchHypothesisId, "researchHypothesisId");
+      assertNonEmptyString(request.setupAggregateResultId, "setupAggregateResultId");
+      assertNonEmptyString(request.setupDefinitionId, "setupDefinitionId");
+      assertNonEmptyString(request.assessedAt, "assessedAt");
+      assertNonNegativeInteger(request.completedEvaluations, "completedEvaluations");
+      assertNonNegativeInteger(request.positiveOutcomeCount, "positiveOutcomeCount");
+      assertNullableFiniteNumber(request.averageFinalOutcome, "averageFinalOutcome");
+      assertNullableFiniteNumber(request.averagePercentageMove, "averagePercentageMove");
+
+      if (request.positiveOutcomeCount > request.completedEvaluations) {
+        throw new ResearchHypothesisValidationError(
+          "positiveOutcomeCount cannot exceed completedEvaluations"
+        );
+      }
+
+      if (request.aggregateStatus !== "completed") {
+        throw new ResearchHypothesisValidationError(
+          `setup_aggregate_result status does not allow hypothesis evidence update: ${request.aggregateStatus}`
+        );
+      }
+
+      const hypothesis = await researchHypothesisRepository.getById(request.researchHypothesisId);
+      if (!hypothesis) {
+        return null;
+      }
+
+      if (!hypothesis.relatedSetupDefinitionIds.includes(request.setupDefinitionId)) {
+        throw new ResearchHypothesisValidationError(
+          `hypothesis ${request.researchHypothesisId} is not linked to setup_definition ${request.setupDefinitionId}`
+        );
+      }
+
+      const evidenceStatus = interpretEvidenceStatus(
+        request.completedEvaluations,
+        request.positiveOutcomeCount,
+        request.averageFinalOutcome,
+        request.averagePercentageMove
+      );
+      const evidenceSummary = buildEvidenceSummary(request, evidenceStatus);
+
+      const updatedHypothesis = await researchHypothesisRepository.update({
+        hypothesis: {
+          ...hypothesis,
+          notes: [...hypothesis.notes, evidenceSummary],
+          evidenceStatus,
+          evidenceSummary,
+          lastEvidenceAggregateResultId: request.setupAggregateResultId,
+          lastEvidenceAssessedAt: request.assessedAt,
+          updatedAt: buildUpdateTimestamp(request.metadata)
+        },
+        metadata: request.metadata,
+        expectedVersion: request.expectedVersion
+      });
+
+      return {
+        hypothesis: updatedHypothesis,
+        setupAggregateResultId: request.setupAggregateResultId,
+        evidenceStatus,
+        evidenceSummary
+      };
     }
   };
 };
