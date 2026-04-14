@@ -11,10 +11,16 @@ import type { SetupAggregateResult } from "../research/setup-aggregate-result.js
 import type { ResearchHypothesis } from "../research-hypothesis.js";
 import type { ResearchHypothesisRepository } from "../repositories/research-hypothesis-repository.js";
 import type { ResearchFeedbackDecisionRepository } from "../repositories/research-feedback-decision-repository.js";
+import type { ResearchDecisionApprovalRepository } from "../repositories/research-decision-approval-repository.js";
 import type { SetupDefinitionRepository } from "../repositories/setup-definition-repository.js";
 import type { SetupAggregateResultRepository } from "../repositories/setup-aggregate-result-repository.js";
 import type { ProductRecordMetadata } from "../storage/product-record-metadata.js";
 import { RESEARCH_HYPOTHESIS_STATUSES } from "../research-hypothesis.js";
+import {
+  RESEARCH_DECISION_APPROVAL_OUTCOMES,
+  type ResearchDecisionApprovalOutcome
+} from "../review/approval-outcome.js";
+import type { ResearchDecisionApproval } from "../review/research-decision-approval.js";
 
 export type CreateResearchHypothesisRequest = {
   hypothesis: ResearchHypothesis;
@@ -88,10 +94,29 @@ export type SetupFeedbackReview = {
   decision: ResearchFeedbackDecision;
 };
 
+export type ApproveFeedbackDecisionRequest = {
+  researchFeedbackDecisionId: string;
+  setupDefinitionId: string;
+  reviewedBy: string;
+  reviewedAt: TimestampUtc;
+  decisionOutcome: ResearchDecisionApprovalOutcome;
+  reviewerNotes?: string;
+  originRunId?: string;
+  sourceMetadata?: JsonObject;
+  metadata: ProductRecordMetadata;
+  expectedVersion: number | null;
+};
+
+export type FeedbackDecisionApproval = {
+  approval: ResearchDecisionApproval;
+  decision: ResearchFeedbackDecision;
+};
+
 export type ResearchServiceDependencies = {
   researchHypothesisRepository: ResearchHypothesisRepository;
   setupDefinitionRepository: SetupDefinitionRepository;
   researchFeedbackDecisionRepository?: ResearchFeedbackDecisionRepository;
+  researchDecisionApprovalRepository?: ResearchDecisionApprovalRepository;
   setupAggregateResultRepository?: Pick<SetupAggregateResultRepository, "getById">;
 };
 
@@ -110,6 +135,9 @@ export type ResearchService = {
   reviewSetupFromEvidence(
     request: ReviewSetupFromEvidenceRequest
   ): Promise<SetupFeedbackReview | null>;
+  approveFeedbackDecision(
+    request: ApproveFeedbackDecisionRequest
+  ): Promise<FeedbackDecisionApproval | null>;
 };
 
 export class ResearchHypothesisValidationError extends Error {
@@ -135,6 +163,14 @@ const assertValidEvidenceStatus = (evidenceStatus: HypothesisEvidenceStatus): vo
   if (!HYPOTHESIS_EVIDENCE_STATUSES.includes(evidenceStatus)) {
     throw new ResearchHypothesisValidationError(
       `invalid research_hypothesis evidence_status: ${evidenceStatus}`
+    );
+  }
+};
+
+const assertValidApprovalOutcome = (approvalOutcome: ResearchDecisionApprovalOutcome): void => {
+  if (!RESEARCH_DECISION_APPROVAL_OUTCOMES.includes(approvalOutcome)) {
+    throw new ResearchHypothesisValidationError(
+      `invalid research_decision approval outcome: ${approvalOutcome}`
     );
   }
 };
@@ -305,11 +341,39 @@ const buildFeedbackDecisionId = (
   return `feedback-${request.setupDefinitionId}-${request.researchHypothesisId}-${timestampToken}`;
 };
 
+const buildApprovalId = (
+  request: ApproveFeedbackDecisionRequest
+): string => {
+  const timestampToken = String(Date.parse(request.reviewedAt));
+  return `approval-${request.researchFeedbackDecisionId}-${timestampToken}`;
+};
+
+const mapApprovalOutcomeToDecisionStatus = (
+  approvalOutcome: ResearchDecisionApprovalOutcome
+): ResearchFeedbackDecision["decisionStatus"] => {
+  if (approvalOutcome === "approved") {
+    return "accepted";
+  }
+
+  if (approvalOutcome === "rejected") {
+    return "rejected";
+  }
+
+  return "reviewed";
+};
+
+const resolveAuthorizedNextAction = (
+  approvalOutcome: ResearchDecisionApprovalOutcome,
+  recommendedAction: ResearchFeedbackDecisionAction
+): ResearchFeedbackDecisionAction | undefined =>
+  approvalOutcome === "approved" ? recommendedAction : undefined;
+
 export const createResearchService = (dependencies: ResearchServiceDependencies): ResearchService => {
   const {
     researchHypothesisRepository,
     setupDefinitionRepository,
     researchFeedbackDecisionRepository,
+    researchDecisionApprovalRepository,
     setupAggregateResultRepository
   } = dependencies;
 
@@ -561,6 +625,100 @@ export const createResearchService = (dependencies: ResearchServiceDependencies)
       });
 
       return { decision };
+    },
+    async approveFeedbackDecision(request) {
+      assertNonEmptyString(request.researchFeedbackDecisionId, "researchFeedbackDecisionId");
+      assertNonEmptyString(request.setupDefinitionId, "setupDefinitionId");
+      assertNonEmptyString(request.reviewedBy, "reviewedBy");
+      assertNonEmptyString(request.reviewedAt, "reviewedAt");
+      assertValidApprovalOutcome(request.decisionOutcome);
+
+      if (!researchFeedbackDecisionRepository) {
+        throw new ResearchHypothesisValidationError(
+          "research_feedback_decision repository is required for approval review"
+        );
+      }
+
+      if (!researchDecisionApprovalRepository) {
+        throw new ResearchHypothesisValidationError(
+          "research_decision_approval repository is required for approval review"
+        );
+      }
+
+      const decision = await researchFeedbackDecisionRepository.getById(
+        request.researchFeedbackDecisionId
+      );
+      if (!decision) {
+        return null;
+      }
+
+      if (decision.setupDefinitionId !== request.setupDefinitionId) {
+        throw new ResearchHypothesisValidationError(
+          `research_feedback_decision ${decision.id} does not belong to setup_definition ${request.setupDefinitionId}`
+        );
+      }
+
+      if (decision.decisionStatus !== "proposed") {
+        throw new ResearchHypothesisValidationError(
+          `research_feedback_decision is not eligible for approval in status: ${decision.decisionStatus}`
+        );
+      }
+
+      const setupDefinition = await setupDefinitionRepository.getById(request.setupDefinitionId);
+      if (!setupDefinition) {
+        throw new ResearchHypothesisValidationError(
+          `setup_definition not found: ${request.setupDefinitionId}`
+        );
+      }
+
+      const nextDecisionStatus = mapApprovalOutcomeToDecisionStatus(request.decisionOutcome);
+      const authorizedNextAction = resolveAuthorizedNextAction(
+        request.decisionOutcome,
+        decision.recommendedAction
+      );
+
+      const reviewerMetadata: JsonObject = {
+        reviewedBy: request.reviewedBy,
+        reviewedAt: request.reviewedAt,
+        approvalOutcome: request.decisionOutcome,
+        ...(request.reviewerNotes ? { reviewerNotes: request.reviewerNotes } : {})
+      };
+
+      const updatedDecision = await researchFeedbackDecisionRepository.updateStatus({
+        researchFeedbackDecisionId: decision.id,
+        status: nextDecisionStatus,
+        reviewerMetadata,
+        metadata: request.metadata,
+        expectedVersion: request.expectedVersion
+      });
+
+      if (!updatedDecision) {
+        throw new ResearchHypothesisValidationError(
+          `research_feedback_decision not found during approval update: ${decision.id}`
+        );
+      }
+
+      const approval = await researchDecisionApprovalRepository.create({
+        approval: {
+          id: buildApprovalId(request),
+          researchFeedbackDecisionId: decision.id,
+          setupDefinitionId: setupDefinition.id,
+          reviewedBy: request.reviewedBy,
+          reviewedAt: request.reviewedAt,
+          approvalOutcome: request.decisionOutcome,
+          reviewerNotes: request.reviewerNotes,
+          approvalStatus: "recorded",
+          authorizedNextAction,
+          createdAt: request.reviewedAt,
+          updatedAt: request.reviewedAt
+        },
+        metadata: request.metadata
+      });
+
+      return {
+        approval,
+        decision: updatedDecision
+      };
     }
   };
 };

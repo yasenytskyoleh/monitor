@@ -39,6 +39,11 @@ export type {
 } from "./research-feedback-decision-repository.js";
 export { InMemoryResearchFeedbackDecisionRepository } from "./research-feedback-decision-repository.impl.js";
 export type {
+  ResearchDecisionApprovalCreateRequest,
+  ResearchDecisionApprovalRepository
+} from "./research-decision-approval-repository.js";
+export { InMemoryResearchDecisionApprovalRepository } from "./research-decision-approval-repository.impl.js";
+export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,
   SetupAggregateResultStatusUpdateRequest,

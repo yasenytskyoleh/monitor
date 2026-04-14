@@ -124,6 +124,19 @@ export type {
   ResearchFeedbackDecisionStatus
 } from "./research/research-feedback-decision.js";
 export {
+  RESEARCH_DECISION_APPROVAL_OUTCOMES,
+  RESEARCH_DECISION_APPROVAL_RESULT_STATUSES,
+  RESEARCH_DECISION_APPROVAL_STATUSES
+} from "./review/index.js";
+export type {
+  ResearchDecisionApproval,
+  ResearchDecisionApprovalOutcome,
+  ResearchDecisionApprovalResult,
+  ResearchDecisionApprovalResultStatus,
+  ResearchDecisionApprovalStatus,
+  ReviewResearchDecisionCommand
+} from "./review/index.js";
+export {
   DEFAULT_STORAGE_TECHNOLOGY_DIRECTION,
   FIRST_CLASS_PERSISTED_ENTITY_PROFILES,
   PRODUCT_EPHEMERAL_ENTITY_TYPES,
@@ -177,6 +190,13 @@ export type {
 export {
   InMemoryResearchFeedbackDecisionRepository
 } from "./repositories/research-feedback-decision-repository.impl.js";
+export type {
+  ResearchDecisionApprovalCreateRequest,
+  ResearchDecisionApprovalRepository
+} from "./repositories/research-decision-approval-repository.js";
+export {
+  InMemoryResearchDecisionApprovalRepository
+} from "./repositories/research-decision-approval-repository.impl.js";
 export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,
@@ -254,6 +274,8 @@ export type {
   CreateResearchHypothesisRequest,
   HypothesisEvidenceScopeDescriptor,
   HypothesisEvidenceUpdate,
+  ApproveFeedbackDecisionRequest,
+  FeedbackDecisionApproval,
   ReviewSetupFromEvidenceRequest,
   ResearchService,
   ResearchServiceDependencies,
@@ -298,6 +320,7 @@ export {
   createAggregateToHypothesisEvidenceHandoff,
   createEvaluationToAggregationRefreshHandoff,
   createHypothesisEvidenceToSetupFeedbackHandoff,
+  createResearchDecisionApprovalHandoff,
   createSignalCandidateFromDetectionHandoff,
   createSignalCandidateToEvaluationHandoff
 } from "./runtime-handoff/index.js";
@@ -317,6 +340,7 @@ export type {
   HypothesisEvidenceUpdateResult,
   HypothesisEvidenceUpdateStatus,
   HypothesisEvidenceToSetupFeedbackDependencies,
+  ResearchDecisionApprovalHandoffDependencies,
   EvaluationTriggerResult,
   EvaluationTriggerStatus,
   EvaluationWindowDescriptor,

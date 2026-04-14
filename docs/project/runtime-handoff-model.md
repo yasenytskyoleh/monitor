@@ -142,3 +142,21 @@ This boundary is deterministic and service-driven:
 - delegates recommendation semantics to `ResearchService.reviewSetupFromEvidence(...)`
 - records `ResearchFeedbackDecision` in `proposed` status
 - returns explicit recommendation outcomes without auto-mutating setup definitions
+
+## Research-decision manual approval boundary
+Sixth runtime handoff in this phase:
+- from proposed `ResearchFeedbackDecision` to explicit reviewer approval outcome
+- through explicit `ReviewResearchDecisionCommand` payload
+
+Contracts:
+- `packages/domain-model/src/review/review-research-decision-command.ts`
+- `packages/domain-model/src/review/research-decision-approval.ts`
+- `packages/domain-model/src/review/research-decision-approval-result.ts`
+- `packages/domain-model/src/runtime-handoff/research-decision-approval.ts`
+
+This boundary is deterministic and service-driven:
+- validates reviewer identity, decision eligibility, and setup linkage explicitly
+- delegates approval semantics to `ResearchService.approveFeedbackDecision(...)`
+- records `ResearchDecisionApproval` artifacts for auditability
+- authorizes future setup action only when outcome is `approved`
+- does not automatically mutate setup lifecycle in this slice
