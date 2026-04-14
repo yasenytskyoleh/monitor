@@ -11,6 +11,7 @@ import {
   EVALUATION_STATUSES,
   EVALUATION_WINDOW_MODES,
   EVALUATION_WINDOW_UNITS,
+  FEEDBACK_DECISION_RESULT_STATUSES,
   FIRST_CLASS_PERSISTED_ENTITY_PROFILES,
   FIRST_PERSISTED_PRODUCT_SLICE,
   HYPOTHESIS_EVIDENCE_STATUSES,
@@ -27,6 +28,8 @@ import {
   PRODUCT_RECORD_SOURCES,
   PRODUCT_SERVICE_NAMES,
   PRODUCT_WRITE_PATH_OWNERSHIP,
+  RESEARCH_FEEDBACK_DECISION_ACTIONS,
+  RESEARCH_FEEDBACK_DECISION_STATUSES,
   RESEARCH_HYPOTHESIS_STATUSES,
   RUNTIME_EVIDENCE_ARTIFACT_TYPES,
   SETUP_DEFINITION_STATUSES,
@@ -45,6 +48,7 @@ import {
   type ProductEntityIdentity,
   type ProductRecordMetadata,
   type ResearchHypothesisRepository,
+  type ResearchFeedbackDecision,
   type ResearchAggregationInput,
   type ResearchHypothesisEvidenceLink,
   type ResearchHypothesis,
@@ -77,6 +81,25 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "rejected_linkage",
     "failed"
   ]);
+  assert.deepEqual(FEEDBACK_DECISION_RESULT_STATUSES, [
+    "recorded",
+    "rejected_validation",
+    "rejected_linkage",
+    "failed"
+  ]);
+  assert.deepEqual(RESEARCH_FEEDBACK_DECISION_ACTIONS, [
+    "keep_active",
+    "refine_definition",
+    "pause_setup",
+    "archive_setup",
+    "manual_review_required"
+  ]);
+  assert.deepEqual(RESEARCH_FEEDBACK_DECISION_STATUSES, [
+    "proposed",
+    "reviewed",
+    "accepted",
+    "rejected"
+  ]);
   assert.deepEqual(AGGREGATION_SYMBOL_SCOPE_KINDS, ["single_symbol", "symbol_set", "all_monitored"]);
   assert.deepEqual(STORAGE_BOUNDARIES, ["runtime_evidence", "product_domain", "derived_analytics"]);
   assert.deepEqual(RUNTIME_EVIDENCE_ARTIFACT_TYPES, [
@@ -92,7 +115,8 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "signal_candidate",
     "evaluation_result",
     "research_hypothesis",
-    "setup_aggregate_result"
+    "setup_aggregate_result",
+    "research_feedback_decision"
   ]);
   assert.deepEqual(PRODUCT_EPHEMERAL_ENTITY_TYPES, [
     "detection_input_transient",
@@ -116,10 +140,10 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "research_aggregation_service"
   ]);
   assert.deepEqual(FIRST_PERSISTED_PRODUCT_SLICE, ["setup_definition", "research_hypothesis"]);
-  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 6);
+  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 7);
   assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
   assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
-  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 6);
+  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 7);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
   assert.deepEqual(MARKET_DATA_PROVIDER_KINDS, ["exchange_adapter"]);
   assert.deepEqual(MARKET_DATA_SOURCE_STATUSES, ["active", "degraded", "paused"]);
@@ -399,9 +423,25 @@ test("supports research aggregation and setup comparison contracts", () => {
     updatedAtUtc: "2026-04-15T10:15:00.000Z"
   };
 
+  const feedbackDecision: ResearchFeedbackDecision = {
+    id: "feedback-001",
+    setupDefinitionId: scope.setupDefinitionId,
+    researchHypothesisId: "hypothesis-001",
+    setupAggregateResultId: aggregate.id,
+    evidenceStatus: "supports",
+    recommendedAction: "keep_active",
+    rationaleSummary: "Evidence supports the hypothesis and setup remains valid.",
+    decisionStatus: "proposed",
+    requiresManualReview: true,
+    evidenceSummary: "aggregate evidence supports hypothesis",
+    createdAt: "2026-04-15T10:20:00.000Z",
+    updatedAt: "2026-04-15T10:20:00.000Z"
+  };
+
   assert.equal(aggregate.status, "completed");
   assert.equal(comparison.metricSnapshots.length, 2);
   assert.equal(evidenceLink.evidenceStatus, "supports");
+  assert.equal(feedbackDecision.recommendedAction, "keep_active");
 });
 
 test("supports storage-boundary and persisted-entity contracts", () => {
@@ -477,7 +517,8 @@ test("supports repository and service boundary contracts", async () => {
       }),
     updateResearchHypothesisStatus: async () => null,
     attachHypothesisToSetupDefinitions: async () => null,
-    updateHypothesisEvidence: async () => null
+    updateHypothesisEvidence: async () => null,
+    reviewSetupFromEvidence: async () => null
   };
 
   const setup = await setupService.createSetupDefinition({

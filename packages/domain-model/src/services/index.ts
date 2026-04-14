@@ -59,8 +59,10 @@ export type {
   CreateResearchHypothesisRequest,
   HypothesisEvidenceScopeDescriptor,
   HypothesisEvidenceUpdate,
+  ReviewSetupFromEvidenceRequest,
   ResearchService,
   ResearchServiceDependencies,
+  SetupFeedbackReview,
   UpdateHypothesisEvidenceRequest,
   UpdateResearchHypothesisRequest,
   UpdateResearchHypothesisStatusRequest

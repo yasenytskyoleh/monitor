@@ -125,3 +125,20 @@ This boundary is deterministic and service-driven:
 - resolves one target hypothesis id explicitly
 - delegates support/weakens/inconclusive interpretation to `ResearchService.updateHypothesisEvidence(...)`
 - returns explicit hypothesis-evidence update result statuses
+
+## Hypothesis-evidence to setup-feedback boundary
+Fifth runtime handoff in this phase:
+- from updated `ResearchHypothesis` evidence to setup-review recommendations
+- through explicit `HypothesisFeedbackDecisionTrigger` payload
+
+Contracts:
+- `packages/domain-model/src/runtime-handoff/hypothesis-feedback-decision-trigger.ts`
+- `packages/domain-model/src/runtime-handoff/review-setup-from-evidence-command.ts`
+- `packages/domain-model/src/runtime-handoff/feedback-decision-result.ts`
+- `packages/domain-model/src/runtime-handoff/hypothesis-evidence-to-setup-feedback.ts`
+
+This boundary is deterministic and service-driven:
+- validates hypothesis/setup/evidence references explicitly
+- delegates recommendation semantics to `ResearchService.reviewSetupFromEvidence(...)`
+- records `ResearchFeedbackDecision` in `proposed` status
+- returns explicit recommendation outcomes without auto-mutating setup definitions

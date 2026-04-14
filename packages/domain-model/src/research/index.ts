@@ -26,3 +26,13 @@ export type {
   HypothesisEvidenceStatus,
   ResearchHypothesisEvidenceLink
 } from "./research-hypothesis-link.js";
+
+export {
+  RESEARCH_FEEDBACK_DECISION_ACTIONS,
+  RESEARCH_FEEDBACK_DECISION_STATUSES
+} from "./research-feedback-decision.js";
+export type {
+  ResearchFeedbackDecision,
+  ResearchFeedbackDecisionAction,
+  ResearchFeedbackDecisionStatus
+} from "./research-feedback-decision.js";

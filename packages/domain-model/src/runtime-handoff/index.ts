@@ -14,6 +14,8 @@ export type {
 } from "./aggregate-hypothesis-evidence-trigger.js";
 export type { RefreshAggregateFromEvaluationCommand } from "./refresh-aggregate-from-evaluation-command.js";
 export type { UpdateHypothesisFromAggregateCommand } from "./update-hypothesis-from-aggregate-command.js";
+export type { HypothesisFeedbackDecisionTrigger } from "./hypothesis-feedback-decision-trigger.js";
+export type { ReviewSetupFromEvidenceCommand } from "./review-setup-from-evidence-command.js";
 export {
   EVALUATION_TRIGGER_STATUSES
 } from "./evaluation-trigger-result.js";
@@ -35,6 +37,13 @@ export type {
   HypothesisEvidenceUpdateResult,
   HypothesisEvidenceUpdateStatus
 } from "./hypothesis-evidence-update-result.js";
+export {
+  FEEDBACK_DECISION_RESULT_STATUSES
+} from "./feedback-decision-result.js";
+export type {
+  FeedbackDecisionResult,
+  FeedbackDecisionResultStatus
+} from "./feedback-decision-result.js";
 export {
   RUNTIME_HANDOFF_STATUSES
 } from "./runtime-handoff-result.js";
@@ -66,3 +75,9 @@ export {
 export type {
   AggregateToHypothesisEvidenceDependencies
 } from "./aggregate-to-hypothesis-evidence.js";
+export {
+  createHypothesisEvidenceToSetupFeedbackHandoff
+} from "./hypothesis-evidence-to-setup-feedback.js";
+export type {
+  HypothesisEvidenceToSetupFeedbackDependencies
+} from "./hypothesis-evidence-to-setup-feedback.js";

@@ -94,5 +94,16 @@ export const FIRST_CLASS_PERSISTED_ENTITY_PROFILES: PersistedEntityProfile[] = [
       mutableFields: ["metadata", "updatedAtUtc"],
       canBeArchived: true
     }
+  },
+  {
+    entityType: "research_feedback_decision",
+    firstClassPersisted: true,
+    timing: {
+      createdWhen: "created when hypothesis evidence is reviewed into setup recommendation",
+      updatedWhen: "updated when recommendation review status changes",
+      immutableFields: ["identity.entityId"],
+      mutableFields: ["metadata", "updatedAtUtc"],
+      canBeArchived: true
+    }
   }
 ];
