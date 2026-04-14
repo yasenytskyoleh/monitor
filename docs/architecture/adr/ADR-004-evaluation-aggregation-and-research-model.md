@@ -45,3 +45,6 @@ First scope:
 - no runtime analytics engine in this ADR
 - no DB migration work in this ADR
 - no trading execution behavior in this ADR
+
+## Follow-up ADRs
+- ADR-005 defines persistence/storage boundaries for aggregate evidence and other product-domain records.

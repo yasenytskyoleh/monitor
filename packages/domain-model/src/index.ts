@@ -120,3 +120,29 @@ export type {
   HypothesisEvidenceStatus,
   ResearchHypothesisEvidenceLink
 } from "./research/research-hypothesis-link.js";
+export {
+  DEFAULT_STORAGE_TECHNOLOGY_DIRECTION,
+  FIRST_CLASS_PERSISTED_ENTITY_PROFILES,
+  PRODUCT_EPHEMERAL_ENTITY_TYPES,
+  PRODUCT_PERSISTED_ENTITY_TYPES,
+  PRODUCT_RECORD_SOURCES,
+  PERSISTED_ENTITY_LIFECYCLE_STATUSES,
+  RUNTIME_EVIDENCE_ARTIFACT_TYPES,
+  STORAGE_BOUNDARIES
+} from "./storage/index.js";
+export type {
+  EntityIdentity,
+  PersistedEntity,
+  PersistedEntityLifecycleStatus,
+  PersistedEntityProfile,
+  PersistenceTimingSemantics,
+  ProductEntityIdentity,
+  ProductEphemeralEntityType,
+  ProductPersistedEntityType,
+  ProductRecordMetadata,
+  ProductRecordSource,
+  RuntimeEvidenceArtifactType,
+  RuntimeEvidenceIdentity,
+  StorageBoundary,
+  StorageTechnologyDirection
+} from "./storage/index.js";

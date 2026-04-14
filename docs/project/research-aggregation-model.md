@@ -75,4 +75,4 @@ This linkage allows a hypothesis to reference aggregate evidence without requiri
 - aggregation execution runtime
 - advanced quant metric catalog
 - ranking/scoring pipeline
-- persistence/schema decisions
+- persistence implementation details (schema/repository runtime)
