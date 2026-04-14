@@ -160,3 +160,21 @@ This boundary is deterministic and service-driven:
 - records `ResearchDecisionApproval` artifacts for auditability
 - authorizes future setup action only when outcome is `approved`
 - does not automatically mutate setup lifecycle in this slice
+
+## Approved setup lifecycle mutation boundary
+Seventh runtime handoff in this phase:
+- from approved `ResearchDecisionApproval` to controlled `SetupDefinition` status mutation
+- through explicit `ApplyApprovedSetupMutationCommand` payload
+
+Contracts:
+- `packages/domain-model/src/review/apply-approved-setup-mutation-command.ts`
+- `packages/domain-model/src/review/setup-lifecycle-mutation-record.ts`
+- `packages/domain-model/src/review/setup-lifecycle-mutation-result.ts`
+- `packages/domain-model/src/runtime-handoff/approved-setup-lifecycle-mutation.ts`
+
+This boundary is deterministic and service-driven:
+- requires explicit `approved` approval outcome before mutation
+- validates approval/setup/feedback linkage and authorized action matching
+- delegates lifecycle legality checks and status application to `SetupDefinitionService.applyApprovedMutation(...)`
+- persists `SetupLifecycleMutationRecord` as durable audit artifact
+- returns explicit mutation result statuses

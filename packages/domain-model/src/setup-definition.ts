@@ -1,6 +1,6 @@
 import type { TimestampUtc } from "./common.js";
 
-export const SETUP_DEFINITION_STATUSES = ["draft", "active", "archived"] as const;
+export const SETUP_DEFINITION_STATUSES = ["draft", "active", "paused", "archived"] as const;
 export type SetupDefinitionStatus = (typeof SETUP_DEFINITION_STATUSES)[number];
 
 export type SetupDefinitionTraceMetadata = {
