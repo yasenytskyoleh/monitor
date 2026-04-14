@@ -102,6 +102,7 @@ export type CliArgs = {
   model?: string;
   temperature?: number;
   timeoutMs?: number;
+  stabilityReassessmentScenario?: string;
   inputFile?: string;
   inputJson?: string;
   logPath?: string;

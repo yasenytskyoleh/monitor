@@ -31,6 +31,7 @@ import type {
   RunOutcome
 } from "./persistence/types.js";
 import { runScenarioMode } from "./scenario-runner.js";
+import { buildStabilityReassessment } from "./stability/build-stability-reassessment.js";
 import { buildStabilitySummary } from "./stability/build-stability-summary.js";
 import type { AgentExecutionMap, CliArgs, RunnerOutput } from "./types.js";
 
@@ -223,6 +224,20 @@ async function persistSuccessRun(options: PersistSuccessOptions): Promise<Persis
     verificationResults: options.result.verificationResults,
     rollbackResults: options.result.rollbackResults
   });
+  const stabilityReassessment =
+    options.args.stabilityReassessmentScenario
+      ? buildStabilityReassessment({
+          runId: options.runId,
+          scenario: options.args.stabilityReassessmentScenario,
+          finalState: options.result.taskState,
+          outcome,
+          patchResults: options.result.patchResults,
+          verificationResults: options.result.verificationResults,
+          rollbackResults: options.result.rollbackResults,
+          promotionResults: options.result.promotionResults,
+          workspaceSummaries: options.result.workspaceSummaries
+        })
+      : undefined;
 
   const runRecord: PersistedRunRecord = {
     runId: options.runId,
@@ -256,6 +271,7 @@ async function persistSuccessRun(options: PersistSuccessOptions): Promise<Persis
     verificationResults: options.result.verificationResults,
     promotionResults: options.result.promotionResults,
     stabilitySummary,
+    ...(stabilityReassessment ? { stabilityReassessment } : {}),
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
   });
@@ -337,6 +353,20 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     verificationResults,
     rollbackResults
   });
+  const stabilityReassessment =
+    options.args.stabilityReassessmentScenario
+      ? buildStabilityReassessment({
+          runId: options.runId,
+          scenario: options.args.stabilityReassessmentScenario,
+          finalState,
+          outcome: failureOutcome,
+          patchResults,
+          verificationResults,
+          rollbackResults,
+          promotionResults,
+          workspaceSummaries
+        })
+      : undefined;
 
   const persisted = await options.runStore.persist({
     runId: options.runId,
@@ -353,6 +383,7 @@ async function persistFailureRun(options: PersistFailureOptions): Promise<Persis
     verificationResults,
     promotionResults,
     stabilitySummary,
+    ...(stabilityReassessment ? { stabilityReassessment } : {}),
     ...(options.taskInput ? { inputTask: options.taskInput } : {}),
     ...(options.snapshotMeta ? { compiledSnapshotMeta: options.snapshotMeta.raw } : {})
   });

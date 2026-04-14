@@ -281,6 +281,17 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
           failureCategories: []
         }
       ]
+    },
+    stabilityReassessment: {
+      runId: "run_fixed_001",
+      scenario: "helper_file_create_and_promote",
+      isolatedExecutionPassed: true,
+      verificationPassed: true,
+      rollbackPassed: true,
+      promotionPassed: true,
+      determinismPassed: true,
+      workspaceCleanlinessPassed: true,
+      overallStatus: "passed"
     }
   });
 
@@ -353,4 +364,10 @@ test("FileRunStore supports deterministic clock and run-id generator", async (co
   ) as Record<string, unknown>;
   assert.equal(stabilitySummaryJson.overallStatus, "passed");
   assert.equal(stabilitySummaryJson.mode, "mock");
+
+  const stabilityReassessmentJson = JSON.parse(
+    await readFile(join(workspaceRoot, "runtime/runs/run_fixed_001/stability-reassessment.json"), "utf8")
+  ) as Record<string, unknown>;
+  assert.equal(stabilityReassessmentJson.overallStatus, "passed");
+  assert.equal(stabilityReassessmentJson.scenario, "helper_file_create_and_promote");
 });
