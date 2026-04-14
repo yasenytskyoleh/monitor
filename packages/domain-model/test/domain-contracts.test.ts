@@ -32,7 +32,6 @@ import {
   SIGNAL_CANDIDATE_STATUSES,
   STORAGE_BOUNDARIES,
   TIMEFRAME_LABELS,
-  type AggregateMetrics,
   type AggregationScope,
   type EvaluationInput,
   type EvaluationResult,
@@ -105,7 +104,8 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "setup_definition_service",
     "signal_candidate_service",
     "evaluation_service",
-    "research_service"
+    "research_service",
+    "research_aggregation_service"
   ]);
   assert.deepEqual(FIRST_PERSISTED_PRODUCT_SLICE, ["setup_definition", "research_hypothesis"]);
   assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 6);
@@ -311,35 +311,29 @@ test("supports research aggregation and setup comparison contracts", () => {
     evaluationResultIds: ["result-001", "result-002"],
     scope,
     hypothesisId: "hypothesis-001",
-    createdAtUtc: "2026-04-15T10:00:00.000Z",
-    updatedAtUtc: "2026-04-15T10:00:00.000Z"
-  };
-
-  const metrics: AggregateMetrics = {
-    totalEvaluatedCandidates: 12,
-    completedEvaluationsCount: 10,
-    invalidatedEvaluationsCount: 2,
-    positiveOutcomeCount: 6,
-    nonPositiveOutcomeCount: 4,
-    averagePercentageMove: 1.14,
-    averageAbsoluteMove: 742,
-    averageFinalOutcomeScore: 0.2,
-    averageMaxFavorableExcursion: 2.31,
-    averageMaxAdverseExcursion: -1.41,
-    simpleHitRate: 0.6
+    createdAt: "2026-04-15T10:00:00.000Z",
+    updatedAt: "2026-04-15T10:00:00.000Z"
   };
 
   const aggregate: SetupAggregateResult = {
-    aggregateId: "agg-001",
+    id: "agg-001",
     setupDefinitionId: scope.setupDefinitionId,
-    scope,
-    includedEvaluationResultIds: input.evaluationResultIds,
-    metrics,
-    computationStatus: "completed",
-    computedAtUtc: "2026-04-15T10:05:00.000Z",
-    limitations: ["single-source evidence only"],
-    createdAtUtc: "2026-04-15T10:05:00.000Z",
-    updatedAtUtc: "2026-04-15T10:05:00.000Z"
+    researchHypothesisId: "hypothesis-001",
+    aggregationScope: scope,
+    status: "completed",
+    totalCandidates: 12,
+    completedEvaluations: 10,
+    invalidatedEvaluations: 2,
+    averagePercentageMove: 1.14,
+    averageAbsoluteMove: 742,
+    averageFinalOutcome: 0.2,
+    averageMaxFavorableExcursion: 2.31,
+    averageMaxAdverseExcursion: -1.41,
+    positiveOutcomeCount: 6,
+    computedAt: "2026-04-15T10:05:00.000Z",
+    notes: "single-source evidence only",
+    createdAt: "2026-04-15T10:05:00.000Z",
+    updatedAt: "2026-04-15T10:05:00.000Z"
   };
 
   const comparison: SetupComparison = {
@@ -354,7 +348,7 @@ test("supports research aggregation and setup comparison contracts", () => {
     metricSnapshots: [
       {
         setupDefinitionId: "setup-breakout-001",
-        aggregateResultId: aggregate.aggregateId,
+        aggregateResultId: aggregate.id,
         totalEvaluatedCandidates: 12,
         completedEvaluationsCount: 10,
         invalidatedEvaluationsCount: 2,
@@ -388,7 +382,7 @@ test("supports research aggregation and setup comparison contracts", () => {
   const evidenceLink: ResearchHypothesisEvidenceLink = {
     linkId: "link-001",
     hypothesisId: "hypothesis-001",
-    aggregateResultId: aggregate.aggregateId,
+    aggregateResultId: aggregate.id,
     evidenceStatus: "supports",
     assessedAtUtc: "2026-04-15T10:15:00.000Z",
     rationale: "Positive hit rate and average move within the selected scope.",
@@ -397,7 +391,7 @@ test("supports research aggregation and setup comparison contracts", () => {
     updatedAtUtc: "2026-04-15T10:15:00.000Z"
   };
 
-  assert.equal(aggregate.computationStatus, "completed");
+  assert.equal(aggregate.status, "completed");
   assert.equal(comparison.metricSnapshots.length, 2);
   assert.equal(evidenceLink.evidenceStatus, "supports");
 });

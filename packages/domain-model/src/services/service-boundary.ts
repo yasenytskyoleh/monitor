@@ -1,11 +1,12 @@
-import type { ProductPersistedEntityType } from "../storage/storage-boundary.js";
+import type { ProductPersistedEntityType } from "../storage/index.js";
 
 export const PRODUCT_SERVICE_NAMES = [
   "monitoring_catalog_service",
   "setup_definition_service",
   "signal_candidate_service",
   "evaluation_service",
-  "research_service"
+  "research_service",
+  "research_aggregation_service"
 ] as const;
 export type ProductServiceName = (typeof PRODUCT_SERVICE_NAMES)[number];
 
@@ -49,7 +50,7 @@ export const PRODUCT_WRITE_PATH_OWNERSHIP: ProductWritePathOwnership[] = [
   },
   {
     entityType: "setup_aggregate_result",
-    ownerService: "research_service",
+    ownerService: "research_aggregation_service",
     createPath: "aggregation computation flow",
     updatePath: "aggregation recomputation/revision flow"
   }

@@ -35,5 +35,7 @@ export { InMemoryResearchHypothesisRepository } from "./research-hypothesis-repo
 export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,
+  SetupAggregateResultStatusUpdateRequest,
   SetupAggregateResultUpdateRequest
 } from "./setup-aggregate-result-repository.js";
+export { InMemorySetupAggregateResultRepository } from "./setup-aggregate-result-repository.impl.js";

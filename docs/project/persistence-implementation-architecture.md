@@ -23,6 +23,7 @@ Implemented concrete repositories in this PR:
 - `InMemoryResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-repository.impl.ts`)
 - `InMemorySignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-repository.impl.ts`)
 - `InMemoryEvaluationResultRepository` (`packages/domain-model/src/repositories/evaluation-result-repository.impl.ts`)
+- `InMemorySetupAggregateResultRepository` (`packages/domain-model/src/repositories/setup-aggregate-result-repository.impl.ts`)
 
 Repository responsibilities:
 - persist and load domain-shaped records
@@ -43,12 +44,14 @@ Service layer:
 - `SignalCandidateService`
 - `EvaluationService`
 - `ResearchService`
+- `ResearchAggregationService`
 
 Implemented concrete service factories in this PR:
 - `createSetupDefinitionService` (`packages/domain-model/src/services/setup-definition-service.ts`)
 - `createResearchService` (`packages/domain-model/src/services/research-service.ts`)
 - `createSignalCandidateService` (`packages/domain-model/src/services/signal-candidate-service.ts`)
 - `createEvaluationService` (`packages/domain-model/src/services/evaluation-service.ts`)
+- `createResearchAggregationService` (`packages/domain-model/src/services/research-aggregation-service.ts`)
 
 Service responsibilities:
 - own write-path semantics
@@ -74,6 +77,11 @@ First persisted slice write-path rules now implemented:
   - validates referenced signal candidate existence
   - enforces strict evaluation lifecycle transitions
   - validates completed metrics consistency and duplicate candidate/window prevention
+- `ResearchAggregationService`
+  - validates aggregate references (`setupDefinitionId`, optional `researchHypothesisId`)
+  - validates setup/scope uniqueness
+  - recomputes minimum aggregate evidence from evaluation results
+  - enforces aggregate lifecycle transitions (`pending`, `completed`, `partial`, `invalid`)
 
 Service non-goals:
 - no direct runner-artifact writes
@@ -90,14 +98,14 @@ Ownership direction:
 - `signal_candidate` -> `signal_candidate_service`
 - `evaluation_result` -> `evaluation_service`
 - `research_hypothesis` -> `research_service`
-- `setup_aggregate_result` -> `research_service`
+- `setup_aggregate_result` -> `research_aggregation_service`
 
 ## Mapping rules
 1. repositories return domain-shaped records (not runner artifact shapes)
 2. persistence metadata (`originRunId`, `traceId`) may be attached through metadata contracts
 3. runtime evidence files remain separate from product-domain storage
 4. one domain contract does not force one-table implementation in this slice
-5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, and evaluation results
+5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, evaluation results, and setup aggregate results
 
 ## Orchestrator handoff boundary
 - orchestrator workflows may trigger future product-domain services

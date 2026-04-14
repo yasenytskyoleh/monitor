@@ -163,8 +163,10 @@ export { InMemoryResearchHypothesisRepository } from "./repositories/research-hy
 export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,
+  SetupAggregateResultStatusUpdateRequest,
   SetupAggregateResultUpdateRequest
 } from "./repositories/setup-aggregate-result-repository.js";
+export { InMemorySetupAggregateResultRepository } from "./repositories/setup-aggregate-result-repository.impl.js";
 export type {
   SetupDefinitionCreateRequest,
   SetupDefinitionRepository,
@@ -242,3 +244,14 @@ export {
   ResearchHypothesisValidationError,
   createResearchService
 } from "./services/research-service.js";
+export type {
+  CreatePendingSetupAggregateResultRequest,
+  RecomputeSetupAggregateResultRequest,
+  ResearchAggregationService,
+  ResearchAggregationServiceDependencies,
+  UpdateSetupAggregateResultStatusRequest
+} from "./services/research-aggregation-service.js";
+export {
+  SetupAggregateResultValidationError,
+  createResearchAggregationService
+} from "./services/research-aggregation-service.js";

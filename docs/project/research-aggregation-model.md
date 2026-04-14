@@ -3,7 +3,8 @@
 ## Purpose
 Define the first research-evidence aggregation model that turns many `EvaluationResult` records into setup-level evidence.
 
-This slice is contracts and architecture only. It does not implement aggregation jobs or analytics runtime engines.
+This slice now includes a first persisted aggregate-result implementation and service ownership.
+It does not implement aggregation jobs or analytics runtime engines.
 
 ## Aggregation input model
 Contract:
@@ -30,13 +31,25 @@ Scope dimensions:
 Contract:
 - `SetupAggregateResult` (`packages/domain-model/src/research/setup-aggregate-result.ts`)
 
-Required structure:
-- setup reference + scope
-- included evaluation result ids
-- aggregate metrics bundle
-- computation status
-- computed timestamp
-- limitations and optional notes
+Persisted structure:
+- `id`
+- `setupDefinitionId`
+- optional `researchHypothesisId`
+- `aggregationScope`
+- `status`
+- `totalCandidates`
+- `completedEvaluations`
+- `invalidatedEvaluations`
+- `averagePercentageMove`
+- `averageAbsoluteMove`
+- `averageFinalOutcome`
+- `averageMaxFavorableExcursion`
+- `averageMaxAdverseExcursion`
+- `positiveOutcomeCount`
+- `computedAt`
+- optional `notes`
+- `createdAt`
+- `updatedAt`
 
 Computation statuses:
 - `pending`
@@ -71,8 +84,23 @@ Evidence statuses:
 
 This linkage allows a hypothesis to reference aggregate evidence without requiring a scoring engine in this slice.
 
+## Persisted repository and service flow (implemented)
+- repository:
+  - `InMemorySetupAggregateResultRepository`
+  - `packages/domain-model/src/repositories/setup-aggregate-result-repository.impl.ts`
+- service:
+  - `createResearchAggregationService`
+  - `packages/domain-model/src/services/research-aggregation-service.ts`
+
+Implemented service behavior:
+- create pending aggregate records with strict reference validation
+- recompute aggregate metrics from evaluation-result ids
+- enforce aggregate lifecycle transitions (`pending`, `completed`, `partial`, `invalid`)
+- reject duplicate aggregate creation for the same `(setupDefinitionId, aggregationScope)`
+- validate optional hypothesis linkage
+
 ## Explicitly postponed
 - aggregation execution runtime
 - advanced quant metric catalog
 - ranking/scoring pipeline
-- persistence implementation details (schema/repository runtime)
+- relational schema/migration implementation
