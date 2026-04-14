@@ -51,3 +51,6 @@ Technology direction:
 - no database implementation in this ADR
 - no orchestration artifact redesign in this ADR
 - no runtime ingestion/detection/evaluation engine work in this ADR
+
+## Follow-up ADRs
+- ADR-006 defines repository/service boundaries and write ownership before DB implementation.

@@ -58,5 +58,10 @@ Examples:
 - product domain: relational persistence planned (PostgreSQL + Prisma direction)
 - derived analytics: deferred until aggregation/scoring architecture matures
 
+## Implementation-architecture boundary
+- repository contracts own persistence abstraction (`packages/domain-model/src/repositories/*`)
+- service contracts own write-path semantics (`packages/domain-model/src/services/*`)
+- orchestrator runtime components should call product-domain services, not write product records directly
+
 ## Contract source
 - `packages/domain-model/src/storage/*`

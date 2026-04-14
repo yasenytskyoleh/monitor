@@ -146,3 +146,80 @@ export type {
   StorageBoundary,
   StorageTechnologyDirection
 } from "./storage/index.js";
+export type {
+  EvaluationResultCreateRequest,
+  EvaluationResultRepository,
+  EvaluationResultStatusUpdateRequest,
+  EvaluationResultUpdateRequest
+} from "./repositories/evaluation-result-repository.js";
+export type {
+  MonitoredSymbolCreateRequest,
+  MonitoredSymbolRepository,
+  MonitoredSymbolStatusUpdateRequest,
+  MonitoredSymbolUpdateRequest
+} from "./repositories/monitored-symbol-repository.js";
+export type {
+  ResearchHypothesisCreateRequest,
+  ResearchHypothesisRepository,
+  ResearchHypothesisStatusUpdateRequest,
+  ResearchHypothesisUpdateRequest
+} from "./repositories/research-hypothesis-repository.js";
+export type {
+  SetupAggregateResultCreateRequest,
+  SetupAggregateResultRepository,
+  SetupAggregateResultUpdateRequest
+} from "./repositories/setup-aggregate-result-repository.js";
+export type {
+  SetupDefinitionCreateRequest,
+  SetupDefinitionRepository,
+  SetupDefinitionStatusUpdateRequest,
+  SetupDefinitionUpdateRequest
+} from "./repositories/setup-definition-repository.js";
+export type {
+  SignalCandidateCreateRequest,
+  SignalCandidateRepository,
+  SignalCandidateStatusUpdateRequest,
+  SignalCandidateUpdateRequest
+} from "./repositories/signal-candidate-repository.js";
+export {
+  FIRST_PERSISTED_PRODUCT_SLICE,
+  PRODUCT_SERVICE_NAMES,
+  PRODUCT_WRITE_PATH_OWNERSHIP
+} from "./services/service-boundary.js";
+export type {
+  FirstPersistedProductSliceEntity,
+  ProductServiceName,
+  ProductWritePathOwnership
+} from "./services/service-boundary.js";
+export type {
+  MonitoringCatalogService,
+  MonitoringCatalogServiceDependencies,
+  RegisterMonitoredSymbolRequest,
+  UpdateMonitoredSymbolStatusRequest
+} from "./services/monitoring-catalog-service.js";
+export type {
+  ArchiveSetupDefinitionRequest,
+  CreateSetupDefinitionRequest,
+  SetupDefinitionService,
+  SetupDefinitionServiceDependencies,
+  UpdateSetupDefinitionRequest
+} from "./services/setup-definition-service.js";
+export type {
+  CreateSignalCandidateRequest,
+  SignalCandidateService,
+  SignalCandidateServiceDependencies,
+  UpdateSignalCandidateStatusRequest
+} from "./services/signal-candidate-service.js";
+export type {
+  CreateEvaluationResultRequest,
+  EvaluationService,
+  EvaluationServiceDependencies,
+  UpdateEvaluationResultStatusRequest
+} from "./services/evaluation-service.js";
+export type {
+  CreateResearchHypothesisRequest,
+  ResearchService,
+  ResearchServiceDependencies,
+  StoreSetupAggregateResultRequest,
+  UpdateResearchHypothesisRequest
+} from "./services/research-service.js";

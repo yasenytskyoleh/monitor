@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.9 — Orchestration foundation plus first monitoring/evaluation/aggregation/storage contracts**
+**Phase 1.10 — Orchestration foundation plus first product persistence implementation contracts**
 
 ## What this phase is about
 This phase is focused on:
@@ -77,6 +77,12 @@ The orchestration side proves that the project can:
   - `docs/project/persistence-boundaries.md`
   - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
   - `packages/domain-model/src/storage/*`
+- first repository/service implementation architecture contracts (still no DB/service runtime implementation):
+  - `docs/project/persistence-implementation-architecture.md`
+  - `docs/project/first-persisted-slice.md`
+  - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
+  - `packages/domain-model/src/repositories/*`
+  - `packages/domain-model/src/services/*`
 
 ## What this phase is not
 This phase is **not** about building a full crypto trading platform.

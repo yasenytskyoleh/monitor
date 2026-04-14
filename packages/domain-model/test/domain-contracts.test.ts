@@ -12,6 +12,7 @@ import {
   EVALUATION_WINDOW_MODES,
   EVALUATION_WINDOW_UNITS,
   FIRST_CLASS_PERSISTED_ENTITY_PROFILES,
+  FIRST_PERSISTED_PRODUCT_SLICE,
   HYPOTHESIS_EVIDENCE_STATUSES,
   MARKET_DATA_PROVIDER_KINDS,
   MARKET_DATA_SOURCE_STATUSES,
@@ -23,6 +24,8 @@ import {
   PRODUCT_EPHEMERAL_ENTITY_TYPES,
   PRODUCT_PERSISTED_ENTITY_TYPES,
   PRODUCT_RECORD_SOURCES,
+  PRODUCT_SERVICE_NAMES,
+  PRODUCT_WRITE_PATH_OWNERSHIP,
   RESEARCH_HYPOTHESIS_STATUSES,
   RUNTIME_EVIDENCE_ARTIFACT_TYPES,
   SETUP_DEFINITION_STATUSES,
@@ -42,10 +45,14 @@ import {
   type PriceTickEvent,
   type ProductEntityIdentity,
   type ProductRecordMetadata,
+  type ResearchHypothesisRepository,
   type ResearchAggregationInput,
   type ResearchHypothesisEvidenceLink,
   type ResearchHypothesis,
+  type ResearchService,
   type ResearchRun,
+  type SetupDefinitionRepository,
+  type SetupDefinitionService,
   type SetupDefinition,
   type SetupAggregateResult,
   type SetupComparison,
@@ -94,6 +101,15 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "manual_curation",
     "migration_backfill"
   ]);
+  assert.deepEqual(PRODUCT_SERVICE_NAMES, [
+    "monitoring_catalog_service",
+    "setup_definition_service",
+    "signal_candidate_service",
+    "evaluation_service",
+    "research_service"
+  ]);
+  assert.deepEqual(FIRST_PERSISTED_PRODUCT_SLICE, ["setup_definition", "research_hypothesis"]);
+  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 6);
   assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
   assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
   assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 6);
@@ -438,4 +454,94 @@ test("supports storage-boundary and persisted-entity contracts", () => {
   assert.equal(persisted.identity.boundary, "product_domain");
   assert.equal(persisted.identity.version, 3);
   assert.equal(persisted.metadata.originRunId, "run-001");
+});
+
+test("supports repository and service boundary contracts", async () => {
+  const setupRepository: SetupDefinitionRepository = {
+    getById: async () => null,
+    listByStatus: async () => [],
+    create: async (request) => request.definition,
+    update: async (request) => request.definition,
+    updateStatus: async () => null
+  };
+
+  const hypothesisRepository: ResearchHypothesisRepository = {
+    getById: async () => null,
+    listByStatus: async () => [],
+    create: async (request) => request.hypothesis,
+    update: async (request) => request.hypothesis,
+    updateStatus: async () => null
+  };
+
+  const setupService: SetupDefinitionService = {
+    createSetupDefinition: async (request) =>
+      setupRepository.create({ definition: request.definition, metadata: request.metadata }),
+    updateSetupDefinition: async (request) =>
+      setupRepository.update({
+        definition: request.definition,
+        metadata: request.metadata,
+        expectedVersion: request.expectedVersion
+      }),
+    archiveSetupDefinition: async () => null
+  };
+
+  const researchService: ResearchService = {
+    createResearchHypothesis: async (request) =>
+      hypothesisRepository.create({ hypothesis: request.hypothesis, metadata: request.metadata }),
+    updateResearchHypothesis: async (request) =>
+      hypothesisRepository.update({
+        hypothesis: request.hypothesis,
+        metadata: request.metadata,
+        expectedVersion: request.expectedVersion
+      }),
+    storeSetupAggregateResult: async (request) => request.aggregate
+  };
+
+  const setup = await setupService.createSetupDefinition({
+    definition: {
+      setupId: "setup-service-001",
+      name: "Service setup",
+      description: "Repository/service boundary test setup",
+      status: "draft",
+      monitoredSymbolIds: [],
+      conditions: [],
+      evaluationAssumptions: [],
+      invalidationAssumptions: [],
+      tags: [],
+      createdAtUtc: "2026-04-16T10:00:00.000Z",
+      updatedAtUtc: "2026-04-16T10:00:00.000Z"
+    },
+    metadata: {
+      originRunId: null,
+      originTransitionId: null,
+      createdBySource: "manual_curation",
+      lastUpdatedBySource: "manual_curation",
+      traceId: "trace-service-setup",
+      sourceObservedAtUtc: null
+    }
+  });
+
+  const hypothesis = await researchService.createResearchHypothesis({
+    hypothesis: {
+      hypothesisId: "hypothesis-service-001",
+      title: "Service hypothesis",
+      statement: "Service boundary test hypothesis",
+      relatedSetupIds: [setup.setupId],
+      successCriteria: ["exists"],
+      status: "draft",
+      createdAtUtc: "2026-04-16T10:00:00.000Z",
+      updatedAtUtc: "2026-04-16T10:00:00.000Z"
+    },
+    metadata: {
+      originRunId: null,
+      originTransitionId: null,
+      createdBySource: "manual_curation",
+      lastUpdatedBySource: "manual_curation",
+      traceId: "trace-service-hypothesis",
+      sourceObservedAtUtc: null
+    }
+  });
+
+  assert.equal(setup.setupId, "setup-service-001");
+  assert.equal(hypothesis.hypothesisId, "hypothesis-service-001");
 });

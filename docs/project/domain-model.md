@@ -40,6 +40,8 @@ Related product docs:
 - `docs/project/setup-comparison-model.md`
 - `docs/project/storage-architecture.md`
 - `docs/project/persistence-boundaries.md`
+- `docs/project/persistence-implementation-architecture.md`
+- `docs/project/first-persisted-slice.md`
 
 ## Out of scope
 - exchange connectors and live websocket ingestion

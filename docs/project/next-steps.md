@@ -1,24 +1,24 @@
 # Next Steps
 
 ## Current recommended next step
-### PR #29 — product-domain repository contracts and schema-planning architecture
+### PR #30 — schema-planning and repository-runtime rollout design for first persisted slice
 
 Reason:
-- PR #28 defines storage layers and persistence boundaries
-- first-class persisted entity set is explicit, but repository/schema planning contracts are not
-- the next high-value gap is defining storage access contracts without implementing DB writes
+- PR #29 defines repository and service boundaries
+- write ownership is explicit and the first persisted slice is chosen
+- the next high-value gap is schema/repository rollout planning for `setup_definition` and `research_hypothesis`
 
 ## Recommended near-future sequence
-1. define repository interface contracts per persisted entity type
-2. define schema-planning conventions (naming/versioning/migration boundaries) without migrations
-3. define traceability conventions from `originRunId` metadata to product records
-4. keep database/runtime implementation out of scope until contract layer is stable
+1. define schema-planning contracts for `setup_definition` and `research_hypothesis` (no migrations yet)
+2. define repository runtime rollout order and failure/retry boundaries
+3. define compatibility strategy between domain contract versions and storage record versions
+4. keep concrete DB writes/migrations out of scope until schema contracts are reviewed
 
 ## Things to avoid while moving forward
-- implementing Prisma models/migrations before repository contracts are explicit
-- mixing orchestrator evidence files with product-source-of-truth records
-- adding analytics engine logic in repository-planning PRs
-- scope creep into execution/trading behavior
+- direct product writes from orchestrator runtime paths
+- implementing migrations before schema-planning contracts are explicit
+- expanding first implementation slice prematurely
+- mixing analytics runtime logic into repository rollout planning
 
 ## Baseline verification commands
 Use these commands before and after implementation work:
