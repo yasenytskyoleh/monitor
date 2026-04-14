@@ -56,6 +56,8 @@ Related product docs:
 - `docs/project/product-service-flow.md`
 - `docs/project/runtime-handoff-model.md`
 - `docs/project/detection-to-candidate-flow.md`
+- `docs/project/evaluation-trigger-model.md`
+- `docs/project/candidate-to-evaluation-flow.md`
 
 ## Out of scope
 - exchange connectors and live websocket ingestion

@@ -74,3 +74,20 @@ Failure cases:
 - unexpected service/runtime error -> `failed` + retry warning
 
 No distributed transactions are introduced in this slice.
+
+## Candidate-to-evaluation trigger boundary
+Second runtime handoff in this phase:
+- from persisted `SignalCandidate` to evaluation initiation
+- through explicit `SignalCandidateEvaluationTrigger` payload
+
+Contracts:
+- `packages/domain-model/src/runtime-handoff/signal-candidate-evaluation-trigger.ts`
+- `packages/domain-model/src/runtime-handoff/start-evaluation-command.ts`
+- `packages/domain-model/src/runtime-handoff/evaluation-trigger-result.ts`
+- `packages/domain-model/src/runtime-handoff/signal-candidate-to-evaluation.ts`
+
+This boundary is deterministic and service-driven:
+- validates candidate lifecycle eligibility
+- resolves evaluation window id explicitly
+- initializes pending evaluation result and starts evaluation
+- returns explicit trigger result statuses
