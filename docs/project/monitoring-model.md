@@ -1,34 +1,60 @@
 # Monitoring Model
 
 ## Purpose
-Define the first conceptual monitoring-side model without implementing ingestion engines.
+Define the first monitoring ingestion architecture for Monitor, with stable contracts and explicit boundaries.
 
-## Core entities
+This slice is contracts and architecture only. It does not implement connectors, schedulers, or persistence engines.
 
-### MonitoredSymbol
-Represents a market symbol currently under monitoring.
+## Source model (first scope)
+Current scope is intentionally narrow:
+- spot market only
+- single provider abstraction in first version
+- provider-specific payloads are normalized before entering product domain contracts
 
-Required fields:
-- symbol id (`BTC-USDT` style identifier)
-- base/quote assets
-- scope (`spot` only for now)
-- status (`active`, `paused`, `archived`)
-- provider hint placeholder
+Primary entity:
+- `MarketDataSource` (`packages/domain-model/src/monitoring/market-data-source.ts`)
 
-### MonitoredEvent
-Represents a normalized event that may later feed signal-candidate generation.
+Source model covers:
+- provider identity (`providerKind`, `providerName`, `providerInstance`)
+- symbol mapping assumptions (`symbolMappingMode`, `symbolMappingAssumptions`)
+- reliability assumptions (`reliabilityTier`, `reliabilityAssumptions`)
+- market scope (`spot`)
 
-Current event kinds:
-- `price_tick`
-- `volume_spike`
-- `volatility_spike`
-- `manual_watch_event`
+## Monitoring entities
+- `MonitoredSymbol` is the configured subject being watched.
+- `MarketDataSource` is where raw observations are sourced.
+- `NormalizedMarketEvent` is the product-domain contract consumed by future setup detection.
 
-## Boundaries
-- this model defines shape and vocabulary only
-- it does not define exchange adapters
-- it does not define live stream processing
-- it does not define persistence strategy
+## Ingestion pipeline boundaries
+1. source fetch/stream layer (future implementation)
+2. provider raw payload layer (provider-specific, out of product domain)
+3. normalization layer (maps raw payload to stable contracts)
+4. normalized event layer (`NormalizedMarketEvent`)
+5. handoff layer to future setup detection/evaluation flows
 
-## Contract source
-- `packages/domain-model/src/monitored-symbol.ts`
+Rule:
+- only normalized events cross into product-domain monitoring contracts
+- provider-specific payload details stay outside domain entities
+
+## Monitoring to product-domain relationship
+- `MonitoredSymbol` defines which symbols are in scope.
+- normalized events describe observations for those symbols.
+- future setup detection consumes normalized events + setup definitions.
+- setup hits may create `SignalCandidate`.
+- evaluation remains a separate downstream layer.
+
+## Explicitly postponed
+- real exchange/websocket integration
+- polling/scheduling logic
+- ingestion worker lifecycle
+- persistence and replay model
+- alerting and execution actions
+
+## Contract sources
+- `packages/domain-model/src/monitoring/monitored-symbol.ts`
+- `packages/domain-model/src/monitoring/market-data-source.ts`
+- `packages/domain-model/src/monitoring/normalized-event.ts`
+- `packages/domain-model/src/monitoring/price-tick.ts`
+- `packages/domain-model/src/monitoring/candle-closed.ts`
+- `packages/domain-model/src/monitoring/volume-update.ts`
+- `packages/domain-model/src/monitoring/monitoring-heartbeat.ts`

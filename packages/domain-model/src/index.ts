@@ -18,8 +18,44 @@ export type {
   MonitoredEventKind,
   MonitoredSymbol,
   MonitoredSymbolStatus,
-  MonitorProviderHint
+  MonitorProviderHint,
+  SourceSymbolBinding
 } from "./monitored-symbol.js";
+export {
+  MARKET_DATA_PROVIDER_KINDS,
+  MARKET_DATA_SOURCE_STATUSES,
+  SOURCE_RELIABILITY_TIERS,
+  SYMBOL_MAPPING_MODES
+} from "./monitoring/market-data-source.js";
+export type {
+  MarketDataProviderKind,
+  MarketDataSource,
+  MarketDataSourceStatus,
+  SourceReliabilityTier,
+  SymbolMappingMode
+} from "./monitoring/market-data-source.js";
+export {
+  MONITORING_SCHEMA_VERSIONS,
+  NORMALIZED_EVENT_TYPES,
+  TIMEFRAME_LABELS
+} from "./monitoring/normalized-event.js";
+export { MONITORING_HEARTBEAT_STATUSES } from "./monitoring/monitoring-heartbeat.js";
+export type {
+  MonitoringSchemaVersion,
+  NormalizationMetadata,
+  NormalizedEventBase,
+  NormalizedEventType,
+  NormalizedMarketEvent,
+  TimeframeLabel
+} from "./monitoring/normalized-event.js";
+export type { CandleClosedEvent, CandleClosedPayload } from "./monitoring/candle-closed.js";
+export type {
+  MonitoringHeartbeatEvent,
+  MonitoringHeartbeatPayload,
+  MonitoringHeartbeatStatus
+} from "./monitoring/monitoring-heartbeat.js";
+export type { PriceTickEvent, PriceTickPayload } from "./monitoring/price-tick.js";
+export type { VolumeUpdateEvent, VolumeUpdatePayload } from "./monitoring/volume-update.js";
 export { SETUP_CONDITION_OPERATORS, SETUP_DEFINITION_STATUSES } from "./setup-definition.js";
 export type {
   SetupCondition,

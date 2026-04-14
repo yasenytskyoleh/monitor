@@ -16,6 +16,7 @@ The runner is orchestration-focused. Product-domain entities are defined separat
 - `docs/project/domain-model.md`
 - `docs/project/research-model.md`
 - `docs/project/monitoring-model.md`
+- `docs/project/normalized-events.md`
 
 ## Environment setup
 Create `.env` in repo root from the template. Runner auto-loads it on start:

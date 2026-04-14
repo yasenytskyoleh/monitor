@@ -4,13 +4,22 @@ import test from "node:test";
 import {
   EVALUATION_OUTCOMES,
   EVALUATION_WINDOW_UNITS,
+  MARKET_DATA_PROVIDER_KINDS,
+  MARKET_DATA_SOURCE_STATUSES,
+  MONITORING_HEARTBEAT_STATUSES,
+  MONITORING_SCHEMA_VERSIONS,
   MONITORED_SYMBOL_STATUSES,
+  NORMALIZED_EVENT_TYPES,
   RESEARCH_HYPOTHESIS_STATUSES,
   SETUP_DEFINITION_STATUSES,
   SIGNAL_CANDIDATE_STATUSES,
+  TIMEFRAME_LABELS,
   type EvaluationResult,
   type EvaluationWindow,
+  type MarketDataSource,
   type MonitoredSymbol,
+  type NormalizedMarketEvent,
+  type PriceTickEvent,
   type ResearchHypothesis,
   type ResearchRun,
   type SetupDefinition,
@@ -24,6 +33,12 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
   assert.deepEqual(EVALUATION_WINDOW_UNITS, ["minutes", "hours", "days"]);
   assert.deepEqual(EVALUATION_OUTCOMES, ["win", "loss", "neutral", "invalidated", "no_data"]);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
+  assert.deepEqual(MARKET_DATA_PROVIDER_KINDS, ["exchange_adapter"]);
+  assert.deepEqual(MARKET_DATA_SOURCE_STATUSES, ["active", "degraded", "paused"]);
+  assert.deepEqual(MONITORING_SCHEMA_VERSIONS, ["monitoring.v1"]);
+  assert.deepEqual(NORMALIZED_EVENT_TYPES, ["price_tick", "candle_closed", "volume_update", "monitoring_heartbeat"]);
+  assert.deepEqual(TIMEFRAME_LABELS, ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "1d"]);
+  assert.deepEqual(MONITORING_HEARTBEAT_STATUSES, ["ok", "degraded", "stalled"]);
 });
 
 test("supports constructing typed contracts without implementation logic", () => {
@@ -36,6 +51,14 @@ test("supports constructing typed contracts without implementation logic", () =>
     status: "active",
     providerHint: "unknown",
     tags: ["core"],
+    sourceBindings: [
+      {
+        sourceId: "source-primary",
+        providerSymbol: "BTCUSDT",
+        canonicalSymbol: "BTC-USDT",
+        isPrimary: true
+      }
+    ],
     createdAtUtc: "2026-04-14T10:00:00.000Z",
     updatedAtUtc: "2026-04-14T10:00:00.000Z"
   };
@@ -129,4 +152,46 @@ test("supports constructing typed contracts without implementation logic", () =>
 
   assert.equal(run.evaluationResultIds.length, 1);
   assert.equal(result.outcome, "neutral");
+});
+
+test("supports monitoring source and normalized event contracts", () => {
+  const source: MarketDataSource = {
+    sourceId: "source-primary",
+    providerKind: "exchange_adapter",
+    providerName: "example-exchange",
+    providerInstance: "example-exchange-spot",
+    marketScope: "spot",
+    status: "active",
+    symbolMappingMode: "provider_native",
+    symbolMappingAssumptions: ["provider symbol BTCUSDT maps to canonical BTC-USDT"],
+    reliabilityTier: "best_effort",
+    reliabilityAssumptions: ["single-provider mode", "heartbeat monitored"],
+    createdAtUtc: "2026-04-14T09:59:00.000Z",
+    updatedAtUtc: "2026-04-14T09:59:00.000Z"
+  };
+
+  const event: PriceTickEvent = {
+    eventId: "evt-price-001",
+    sourceId: source.sourceId,
+    symbolId: "BTC-USDT",
+    eventType: "price_tick",
+    eventTimestampUtc: "2026-04-14T10:30:00.000Z",
+    payload: {
+      price: 65000.12,
+      bid: 64999.95,
+      ask: 65000.2,
+      tradeCount: 124
+    },
+    metadata: {
+      schemaVersion: "monitoring.v1",
+      normalizationVersion: "1.0.0",
+      ingestedAtUtc: "2026-04-14T10:30:00.020Z",
+      providerPayloadVersion: "spot-stream-v1",
+      traceId: "trace-evt-price-001"
+    }
+  };
+
+  const normalized: NormalizedMarketEvent = event;
+  assert.equal(normalized.eventType, "price_tick");
+  assert.equal(normalized.sourceId, source.sourceId);
 });
