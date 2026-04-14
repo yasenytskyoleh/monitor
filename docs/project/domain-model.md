@@ -54,6 +54,8 @@ Related product docs:
 - `docs/project/signal-candidate-model.md`
 - `docs/project/first-application-flow.md`
 - `docs/project/product-service-flow.md`
+- `docs/project/runtime-handoff-model.md`
+- `docs/project/detection-to-candidate-flow.md`
 
 ## Out of scope
 - exchange connectors and live websocket ingestion
