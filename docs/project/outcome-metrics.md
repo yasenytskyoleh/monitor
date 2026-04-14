@@ -21,7 +21,8 @@ All fields are nullable in the first version to support explicit partial data ha
 ## Usage notes
 - metrics are descriptive and comparable, not predictive by themselves
 - metrics are attached per `SignalCandidate` + `EvaluationWindow`
-- future aggregation layers can group by setup, symbol, and window type
+- aggregation contracts consume these metrics via `AggregateMetrics` summaries
+- setup comparisons should only be interpreted under aligned aggregation scope
 
 ## Explicitly postponed
 - win-rate and expectancy computation

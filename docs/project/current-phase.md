@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.7 — Orchestration foundation plus first monitoring and evaluation contracts**
+**Phase 1.8 — Orchestration foundation plus first monitoring/evaluation/aggregation contracts**
 
 ## What this phase is about
 This phase is focused on:
@@ -67,6 +67,11 @@ The orchestration side proves that the project can:
   - `docs/project/outcome-metrics.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
   - `packages/domain-model/src/evaluation/*`
+- first research-aggregation/comparison contracts (still no runtime analytics engine):
+  - `docs/project/research-aggregation-model.md`
+  - `docs/project/setup-comparison-model.md`
+  - `docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`
+  - `packages/domain-model/src/research/*`
 
 ## What this phase is not
 This phase is **not** about building a full crypto trading platform.

@@ -7,7 +7,8 @@ The goal of this slice is to provide explicit contracts for:
 - market monitoring scope metadata,
 - setup and signal research entities,
 - evaluation windows and outcomes,
-- research hypotheses and run tracking.
+- research hypotheses and run tracking,
+- aggregation and setup comparison evidence.
 
 This is a design-and-contracts slice only. It does not implement ingestion, execution, or statistics engines.
 
@@ -17,8 +18,12 @@ This is a design-and-contracts slice only. It does not implement ingestion, exec
 - `NormalizedMarketEvent` (`PriceTickEvent`, `CandleClosedEvent`, `VolumeUpdateEvent`, `MonitoringHeartbeatEvent`)
 - `SetupDefinition`
 - `SignalCandidate`
+- `EvaluationInput`
 - `EvaluationWindow`
 - `EvaluationResult`
+- `SetupAggregateResult`
+- `SetupComparison`
+- `ResearchHypothesisEvidenceLink`
 - `ResearchHypothesis`
 - `ResearchRun`
 
@@ -31,6 +36,8 @@ Related product docs:
 - `docs/project/normalized-events.md`
 - `docs/project/evaluation-model.md`
 - `docs/project/outcome-metrics.md`
+- `docs/project/research-aggregation-model.md`
+- `docs/project/setup-comparison-model.md`
 
 ## Out of scope
 - exchange connectors and live websocket ingestion
@@ -73,6 +80,9 @@ Rule: orchestration executes workflows; product domain defines market/research m
 - `EvaluationWindow` defines when/how long a signal candidate is evaluated.
 - `EvaluationInput` defines what observations/context are used for one evaluation pass.
 - `EvaluationResult` captures what happened for one signal candidate in one evaluation window.
+- `SetupAggregateResult` summarizes multiple evaluation results for one setup + scope.
+- `SetupComparison` aligns setup aggregates under a shared scope for descriptive comparison.
+- `ResearchHypothesisEvidenceLink` ties aggregate evidence back to hypothesis status updates.
 - `ResearchHypothesis` expresses the research idea behind one or more setup definitions.
 - `ResearchRun` tracks one bounded execution of a hypothesis evaluation cycle.
 

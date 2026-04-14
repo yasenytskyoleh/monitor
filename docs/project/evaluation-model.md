@@ -9,7 +9,8 @@ This slice defines contracts only. It does not implement replay, storage, aggreg
 1. setup detection creates `SignalCandidate`
 2. evaluation consumes `SignalCandidate` + `EvaluationWindow` + observation references
 3. evaluation produces `EvaluationResult`
-4. future statistics/scoring layers aggregate multiple `EvaluationResult` records
+4. research aggregation consumes many `EvaluationResult` records into setup evidence
+5. future statistics/scoring layers may build on that aggregate evidence
 
 ## Evaluation input model
 Contract:
@@ -56,5 +57,5 @@ Required shape:
 - runtime evaluation engine
 - candle replay and sampling implementation
 - persistence model and DB migrations
-- aggregation and scoring model
+- aggregation/scoring runtime engines
 - ranking/reporting/UI behavior
