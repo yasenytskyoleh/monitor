@@ -66,3 +66,15 @@ export {
   ResearchHypothesisValidationError,
   createResearchService
 } from "./research-service.js";
+
+export type {
+  CreatePendingSetupAggregateResultRequest,
+  RecomputeSetupAggregateResultRequest,
+  ResearchAggregationService,
+  ResearchAggregationServiceDependencies,
+  UpdateSetupAggregateResultStatusRequest
+} from "./research-aggregation-service.js";
+export {
+  SetupAggregateResultValidationError,
+  createResearchAggregationService
+} from "./research-aggregation-service.js";

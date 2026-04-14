@@ -15,6 +15,7 @@ The package remains intentionally narrow, and now includes concrete persisted se
 - `ResearchHypothesis`
 - `SignalCandidate`
 - `EvaluationResult`
+- `SetupAggregateResult`
 
 It still does not implement ingestion, execution, or statistics engines.
 
@@ -44,6 +45,7 @@ Related product docs:
 - `docs/project/evaluation-result-model.md`
 - `docs/project/outcome-metrics.md`
 - `docs/project/research-aggregation-model.md`
+- `docs/project/setup-aggregate-result-model.md`
 - `docs/project/setup-comparison-model.md`
 - `docs/project/storage-architecture.md`
 - `docs/project/persistence-boundaries.md`
@@ -109,7 +111,7 @@ Current package provides contract-level storage types in `packages/domain-model/
 
 Deferred to later slices:
 - full detection runtime engine and event processing
-- evaluation-result persistence implementation details
+- aggregation runtime/job orchestration and advanced evidence analytics
 - schema/migration implementation
 - data retention policies
 
