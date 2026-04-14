@@ -21,6 +21,7 @@
 - orchestration-domain and product-domain concerns must be separated explicitly
 - first product-domain contracts live in a dedicated package (`packages/domain-model`)
 - monitoring ingestion is contract-first with normalized events before setup-detection logic
+- evaluation is contract-first with explicit window/status/metrics before statistics/scoring
 
 ## Agent/workflow decisions
 - current core agents:
@@ -52,12 +53,15 @@
   - `NormalizedMarketEvent` (`PriceTickEvent`, `CandleClosedEvent`, `VolumeUpdateEvent`, `MonitoringHeartbeatEvent`)
   - `SetupDefinition`
   - `SignalCandidate`
+  - `EvaluationInput`
   - `EvaluationWindow`
   - `EvaluationResult`
+  - `EvaluationMetrics`
   - `ResearchHypothesis`
   - `ResearchRun`
 - first product-domain ADR exists (`docs/architecture/adr/ADR-001-first-product-domain-slice.md`)
 - first monitoring-ingestion ADR exists (`docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`)
+- first evaluation-model ADR exists (`docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`)
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -67,4 +71,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **setup-detection architecture definition consuming normalized monitoring events (without full implementation)**
+- the currently recommended next step is **evaluation aggregation/statistics architecture on top of `EvaluationResult` contracts (without runtime engine implementation)**

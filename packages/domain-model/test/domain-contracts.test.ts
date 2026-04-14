@@ -3,6 +3,10 @@ import test from "node:test";
 
 import {
   EVALUATION_OUTCOMES,
+  EVALUATION_OUTCOME_SUMMARIES,
+  EVALUATION_START_REFERENCE_RULES,
+  EVALUATION_STATUSES,
+  EVALUATION_WINDOW_MODES,
   EVALUATION_WINDOW_UNITS,
   MARKET_DATA_PROVIDER_KINDS,
   MARKET_DATA_SOURCE_STATUSES,
@@ -14,6 +18,8 @@ import {
   SETUP_DEFINITION_STATUSES,
   SIGNAL_CANDIDATE_STATUSES,
   TIMEFRAME_LABELS,
+  type EvaluationInput,
+  type EvaluationMetrics,
   type EvaluationResult,
   type EvaluationWindow,
   type MarketDataSource,
@@ -30,8 +36,12 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
   assert.deepEqual(MONITORED_SYMBOL_STATUSES, ["active", "paused", "archived"]);
   assert.deepEqual(SETUP_DEFINITION_STATUSES, ["draft", "active", "archived"]);
   assert.deepEqual(SIGNAL_CANDIDATE_STATUSES, ["detected", "under_review", "evaluated", "discarded"]);
+  assert.deepEqual(EVALUATION_WINDOW_MODES, ["time_based"]);
   assert.deepEqual(EVALUATION_WINDOW_UNITS, ["minutes", "hours", "days"]);
-  assert.deepEqual(EVALUATION_OUTCOMES, ["win", "loss", "neutral", "invalidated", "no_data"]);
+  assert.deepEqual(EVALUATION_START_REFERENCE_RULES, ["signal_detected_at"]);
+  assert.deepEqual(EVALUATION_STATUSES, ["pending", "in_progress", "completed", "expired", "invalidated"]);
+  assert.deepEqual(EVALUATION_OUTCOME_SUMMARIES, ["up", "down", "flat", "mixed", "insufficient_data"]);
+  assert.deepEqual(EVALUATION_OUTCOMES, ["up", "down", "flat", "mixed", "insufficient_data"]);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
   assert.deepEqual(MARKET_DATA_PROVIDER_KINDS, ["exchange_adapter"]);
   assert.deepEqual(MARKET_DATA_SOURCE_STATUSES, ["active", "degraded", "paused"]);
@@ -103,24 +113,58 @@ test("supports constructing typed contracts without implementation logic", () =>
 
   const window: EvaluationWindow = {
     windowId: "window-001",
-    candidateId: candidate.candidateId,
-    horizonValue: 24,
-    horizonUnit: "hours",
+    signalCandidateId: candidate.candidateId,
+    mode: "time_based",
+    purpose: "post_detection_outcome",
+    startReferenceRule: "signal_detected_at",
     startAtUtc: "2026-04-14T10:30:00.000Z",
     endAtUtc: "2026-04-15T10:30:00.000Z",
+    durationValue: 24,
+    durationUnit: "hours",
     createdAtUtc: "2026-04-14T10:30:00.000Z",
     updatedAtUtc: "2026-04-14T10:30:00.000Z"
   };
 
+  const input: EvaluationInput = {
+    inputId: "input-001",
+    signalCandidateId: candidate.candidateId,
+    evaluationWindowId: window.windowId,
+    observationReferences: [
+      {
+        sourceId: "source-primary",
+        expectedEventTypes: ["price_tick", "candle_closed"],
+        note: "use normalized observation streams only"
+      }
+    ],
+    context: {
+      contextLabel: "baseline",
+      limitations: ["single-provider observation only"]
+    },
+    createdAtUtc: "2026-04-14T10:30:00.000Z",
+    updatedAtUtc: "2026-04-14T10:30:00.000Z"
+  };
+
+  const metrics: EvaluationMetrics = {
+    referencePriceAtDetection: 65000,
+    highestObservedPriceInWindow: 66400,
+    lowestObservedPriceInWindow: 64100,
+    finalObservedPriceAtWindowEnd: 65800,
+    absoluteMove: 800,
+    percentageMove: 1.23,
+    maxFavorableExcursion: 2.15,
+    maxAdverseExcursion: -1.38
+  };
+
   const result: EvaluationResult = {
     resultId: "result-001",
-    candidateId: candidate.candidateId,
-    windowId: window.windowId,
-    outcome: "neutral",
+    signalCandidateId: candidate.candidateId,
+    evaluationWindowId: window.windowId,
+    evaluationInputId: input.inputId,
+    status: "completed",
+    outcomeSummary: "up",
+    metrics,
     evaluatedAtUtc: "2026-04-15T10:45:00.000Z",
-    returnPct: 0.8,
-    maxFavorableExcursionPct: 2.4,
-    maxAdverseExcursionPct: -1.3,
+    limitations: ["no cross-exchange validation"],
     notes: "No clean trend continuation",
     createdAtUtc: "2026-04-15T10:45:00.000Z",
     updatedAtUtc: "2026-04-15T10:45:00.000Z"
@@ -151,7 +195,8 @@ test("supports constructing typed contracts without implementation logic", () =>
   };
 
   assert.equal(run.evaluationResultIds.length, 1);
-  assert.equal(result.outcome, "neutral");
+  assert.equal(result.outcomeSummary, "up");
+  assert.equal(result.status, "completed");
 });
 
 test("supports monitoring source and normalized event contracts", () => {

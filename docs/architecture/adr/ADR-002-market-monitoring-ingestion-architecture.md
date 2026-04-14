@@ -55,3 +55,6 @@ Boundary decision:
 - no DB migrations in this slice
 - no signal-evaluation engine implementation in this slice
 - no execution/trading behavior
+
+## Follow-up ADRs
+- ADR-003 defines the first post-detection evaluation contracts that consume monitoring and signal-candidate outputs.
