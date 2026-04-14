@@ -267,3 +267,13 @@ export type {
   SetupToAggregateFlowInput,
   SetupToAggregateFlowResult
 } from "./application/index.js";
+export {
+  RUNTIME_HANDOFF_STATUSES,
+  createSignalCandidateFromDetectionHandoff
+} from "./runtime-handoff/index.js";
+export type {
+  DetectionToCandidateCommand,
+  RuntimeHandoffResult,
+  RuntimeHandoffStatus,
+  SignalCandidateFromDetectionDependencies
+} from "./runtime-handoff/index.js";
