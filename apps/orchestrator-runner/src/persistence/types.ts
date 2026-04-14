@@ -7,7 +7,7 @@ import type { RollbackPlanEvidence, RollbackResultEvidence } from "../backend-ro
 import type { VerificationResultEvidence } from "../backend-verification/types.js";
 import type { AgentExecutionMap } from "../types.js";
 import type { WorkflowArtifact } from "../artifacts/types.js";
-import type { StabilitySummary } from "../stability/types.js";
+import type { StabilityReassessment, StabilitySummary } from "../stability/types.js";
 
 export type RunOutcome = "success" | "policy_rejection" | "runtime_failure";
 
@@ -76,6 +76,7 @@ export type PersistRunArtifactInput = {
   verificationResults?: VerificationResultEvidence[];
   promotionResults?: PromotionResultEvidence[];
   stabilitySummary?: StabilitySummary;
+  stabilityReassessment?: StabilityReassessment;
   inputTask?: Record<string, unknown>;
   compiledSnapshotMeta?: Record<string, unknown>;
 };

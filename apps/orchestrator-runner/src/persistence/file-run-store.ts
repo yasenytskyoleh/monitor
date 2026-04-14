@@ -69,6 +69,9 @@ export class FileRunStore {
     if (input.stabilitySummary) {
       await writeJson(join(runDir, "stability-summary.json"), input.stabilitySummary);
     }
+    if (input.stabilityReassessment) {
+      await writeJson(join(runDir, "stability-reassessment.json"), input.stabilityReassessment);
+    }
 
     if (input.inputTask) {
       await writeJson(join(runDir, "input-task.json"), input.inputTask);

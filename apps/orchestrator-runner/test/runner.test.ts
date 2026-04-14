@@ -280,6 +280,7 @@ test("parseArgs defaults to live mode", () => {
   assert.deepEqual(args.agentModeOverrides, {});
   assert.equal(args.environment, "local");
   assert.equal(args.scenario, undefined);
+  assert.equal(args.stabilityReassessmentScenario, undefined);
 });
 
 test("parseArgs validates mode and scenario values", () => {
@@ -305,6 +306,9 @@ test("parseArgs validates mode and scenario values", () => {
   const promotionMode = parseArgs(["--backend-promotion", "promote_verified"]);
   assert.equal(promotionMode.backendPromotionMode, "promote_verified");
 
+  const reassessment = parseArgs(["--stability-reassessment", "helper_file_create_and_promote"]);
+  assert.equal(reassessment.stabilityReassessmentScenario, "helper_file_create_and_promote");
+
   const overrides = parseArgs(["--agent-mode", "product=live,architect=mock"]);
   assert.equal(overrides.agentModeOverrides["product-agent"], "live");
   assert.equal(overrides.agentModeOverrides["architect-agent"], "mock");
@@ -316,6 +320,7 @@ test("parseArgs validates mode and scenario values", () => {
   assert.throws(() => parseArgs(["--backend-rollback", "always"]), /Invalid --backend-rollback/);
   assert.throws(() => parseArgs(["--backend-verify", "all"]), /Invalid --backend-verify/);
   assert.throws(() => parseArgs(["--backend-promotion", "copy"]), /Invalid --backend-promotion/);
+  assert.throws(() => parseArgs(["--stability-reassessment", "   "]), /non-empty scenario name/);
   assert.throws(() => parseArgs(["--agent-mode", "foo=live"]), /Invalid --agent-mode agent/);
   assert.throws(() => parseArgs(["--agent-mode", "product=weird"]), /Invalid --agent-mode value/);
   assert.throws(
@@ -1419,6 +1424,10 @@ test("mode mock with backend live override applies constrained backend patch", a
     assert.equal(promotionResult[0]?.promotionAttempted, false);
     assert.deepEqual(promotionResult[0]?.filesPromoted, []);
 
+    await assert.rejects(() =>
+      readFile(join(artifactsDir, "stability-reassessment.json"), "utf8")
+    );
+
     const workspaceSummary = await readJsonFile<
       Array<{
         isolationEnabled: boolean;
@@ -1605,6 +1614,148 @@ test("mode mock with backend live override creates and promotes json helper fixt
     assert.equal(promotionResult[0]?.status, "succeeded");
     assert.ok(promotionResult[0]?.filesPromoted.includes(helperFile));
     assert.ok((promotionResult[0]?.helperPromotedFiles ?? []).includes(helperFile));
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("backend reassessment run persists stability-reassessment artifact on success", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+
+  try {
+    const helperFile = "apps/orchestrator-runner/test/fixtures/reassessment-helper.json";
+    const result = await runWithArgv(
+      [
+        "--mode",
+        "mock",
+        "--agent-mode",
+        "backend=live",
+        "--backend-write",
+        "apply",
+        "--backend-promotion",
+        "promote_verified",
+        "--stability-reassessment",
+        "helper_file_create_and_promote",
+        "--scenario",
+        "happy",
+        "--env",
+        "local",
+        "--version",
+        "v1",
+        "--task-id",
+        "task-backend-reassessment-success"
+      ],
+      workspaceRoot,
+      {
+        liveProductFetchImpl: createChatCompletionFetch(
+          createLiveBackendNewFileResponseContent(
+            "task-backend-reassessment-success",
+            helperFile,
+            "{\"helper\":true}\n"
+          )
+        )
+      }
+    );
+
+    const artifactsDir = resolveArtifactsDir(workspaceRoot, result);
+    const reassessment = await readJsonFile<{
+      scenario: string;
+      isolatedExecutionPassed: boolean;
+      verificationPassed: boolean;
+      rollbackPassed: boolean;
+      promotionPassed: boolean;
+      determinismPassed: boolean;
+      workspaceCleanlinessPassed: boolean;
+      overallStatus: string;
+    }>(join(artifactsDir, "stability-reassessment.json"));
+    assert.equal(reassessment.scenario, "helper_file_create_and_promote");
+    assert.equal(reassessment.isolatedExecutionPassed, true);
+    assert.equal(reassessment.verificationPassed, true);
+    assert.equal(reassessment.rollbackPassed, true);
+    assert.equal(reassessment.promotionPassed, true);
+    assert.equal(reassessment.determinismPassed, true);
+    assert.equal(reassessment.workspaceCleanlinessPassed, true);
+    assert.equal(reassessment.overallStatus, "passed");
+  } finally {
+    if (oldKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = oldKey;
+    }
+  }
+});
+
+test("backend reassessment run persists stability-reassessment artifact on failure", async (context) => {
+  const workspaceRoot = await createRunnerWorkspace();
+  context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
+
+  const oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-live-key";
+  const runStore = new FileRunStore(workspaceRoot, {
+    runIdGenerator: () => "run_backend_reassessment_failure_001"
+  });
+
+  try {
+    const helperFile = "apps/orchestrator-runner/test/fixtures/reassessment-fail-helper.json";
+    const helperPath = join(workspaceRoot, helperFile);
+    await mkdir(dirname(helperPath), { recursive: true });
+    await writeFile(helperPath, "{\"helper\":false}\n", "utf8");
+
+    await assert.rejects(
+      runWithArgv(
+        [
+          "--mode",
+          "mock",
+          "--agent-mode",
+          "backend=live",
+          "--backend-write",
+          "apply",
+          "--stability-reassessment",
+          "helper_file_create_and_promote",
+          "--scenario",
+          "happy",
+          "--env",
+          "local",
+          "--version",
+          "v1",
+          "--task-id",
+          "task-backend-reassessment-failure"
+        ],
+        workspaceRoot,
+        {
+          liveProductFetchImpl: createChatCompletionFetch(
+            createLiveBackendNewFileResponseContent(
+              "task-backend-reassessment-failure",
+              helperFile,
+              "{\"helper\":true}\n"
+            )
+          ),
+          runStore
+        }
+      ),
+      /create operation requires non-existing file/
+    );
+
+    const reassessment = await readJsonFile<{
+      scenario: string;
+      overallStatus: string;
+      determinismPassed: boolean;
+      workspaceCleanlinessPassed: boolean;
+    }>(
+      join(workspaceRoot, "runtime/runs/run_backend_reassessment_failure_001/stability-reassessment.json")
+    );
+    assert.equal(reassessment.scenario, "helper_file_create_and_promote");
+    assert.equal(reassessment.overallStatus, "failed");
+    assert.equal(reassessment.determinismPassed, false);
+    assert.equal(reassessment.workspaceCleanlinessPassed, true);
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;
@@ -2229,7 +2380,7 @@ test("backend apply failure deletes created json helper file during rollback", a
   }
 });
 
-test("backend live repeated identical dry-run inputs keep deterministic transition path", async (context) => {
+test("backend live repeated identical isolated apply inputs keep deterministic transition path", async (context) => {
   const workspaceRoot = await createRunnerWorkspace();
   context.after(async () => rm(workspaceRoot, { recursive: true, force: true }));
 
@@ -2250,7 +2401,9 @@ test("backend live repeated identical dry-run inputs keep deterministic transiti
           "--agent-mode",
           "backend=live",
           "--backend-write",
-          "dry-run",
+          "apply",
+          "--stability-reassessment",
+          "determinism_dry_run_patch_only",
           "--scenario",
           "happy",
           "--env",
@@ -2295,6 +2448,32 @@ test("backend live repeated identical dry-run inputs keep deterministic transiti
         targetFiles: item.targetFiles
       }))
     );
+
+    const firstArtifactsDir = resolveArtifactsDir(workspaceRoot, first);
+    const secondArtifactsDir = resolveArtifactsDir(workspaceRoot, second);
+    const firstReassessment = await readJsonFile<{
+      scenario: string;
+      overallStatus: string;
+      determinismPassed: boolean;
+      workspaceCleanlinessPassed: boolean;
+    }>(join(firstArtifactsDir, "stability-reassessment.json"));
+    const secondReassessment = await readJsonFile<{
+      scenario: string;
+      overallStatus: string;
+      determinismPassed: boolean;
+      workspaceCleanlinessPassed: boolean;
+    }>(join(secondArtifactsDir, "stability-reassessment.json"));
+    assert.equal(firstReassessment.scenario, "determinism_dry_run_patch_only");
+    assert.equal(secondReassessment.scenario, "determinism_dry_run_patch_only");
+    assert.equal(firstReassessment.overallStatus, "passed");
+    assert.equal(secondReassessment.overallStatus, "passed");
+    assert.equal(firstReassessment.determinismPassed, true);
+    assert.equal(secondReassessment.determinismPassed, true);
+    assert.equal(firstReassessment.workspaceCleanlinessPassed, true);
+    assert.equal(secondReassessment.workspaceCleanlinessPassed, true);
+
+    const contentAfterRuns = await readFile(join(workspaceRoot, backendTargetFile), "utf8");
+    assert.equal(contentAfterRuns, "export const backendPatched = false;\n");
   } finally {
     if (oldKey === undefined) {
       delete process.env.OPENAI_API_KEY;

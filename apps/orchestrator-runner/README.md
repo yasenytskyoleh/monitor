@@ -179,6 +179,7 @@ Persisted run artifacts are written to:
 - optional: `runtime/runs/<runId>/verification-result.json`
 - optional: `runtime/runs/<runId>/promotion-result.json`
 - `runtime/runs/<runId>/stability-summary.json`
+- optional: `runtime/runs/<runId>/stability-reassessment.json` (only when `--stability-reassessment <scenario>` is provided)
 - optional: `runtime/runs/<runId>/input-task.json`
 - optional: `runtime/runs/<runId>/compiled-snapshot-meta.json`
 
@@ -229,6 +230,20 @@ pnpm runner run \
   --task-id task-live-apply-001 \
   --requested-by oleh \
   --task-title "Detect BTC entry points"
+```
+
+Run dedicated backend stability reassessment:
+```bash
+pnpm runner run \
+  --mode mock \
+  --agent-mode backend=live \
+  --backend-write apply \
+  --backend-promotion promote_verified \
+  --stability-reassessment helper_file_create_and_promote \
+  --scenario happy \
+  --env local \
+  --version v1 \
+  --task-id task-backend-reassess-001
 ```
 
 `--agent-mode` format:
@@ -378,5 +393,15 @@ Live Backend Agent constrained mode:
   - rollback status
   - failure categories
   - per-scenario status rollup
+- backend stability reassessment (`stability-reassessment.json`) is persisted for dedicated reassessment runs:
+  - isolated execution pass/fail
+  - verification pass/fail
+  - rollback pass/fail
+  - promotion pass/fail
+  - determinism pass/fail
+  - workspace cleanliness pass/fail
+  - overall pass/fail
+- reassessment checklist:
+  - `docs/agents/backend-live-stability-reassessment.md`
 - PR #16 is audit-first: no backend scope expansion is enabled in this step.
 - PR #17 enables only one tiny expansion: narrow single-file creation under strict constraints.

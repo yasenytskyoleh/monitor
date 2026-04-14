@@ -158,6 +158,15 @@ export function parseArgs(argv: string[]): CliArgs {
       continue;
     }
 
+    if (arg === "--stability-reassessment") {
+      const scenario = requiredValue(argv, ++index, "--stability-reassessment").trim();
+      if (scenario.length === 0) {
+        throw new Error("--stability-reassessment must be a non-empty scenario name");
+      }
+      args.stabilityReassessmentScenario = scenario;
+      continue;
+    }
+
     if (arg === "--input-file") {
       args.inputFile = requiredValue(argv, ++index, "--input-file");
       continue;
@@ -254,6 +263,7 @@ function printHelpAndExit(exitCode: number): never {
     "  --task-id <id>          Task id (default: task-<timestamp>)",
     "  --requested-by <name>   Requested by (default: orchestrator-runner)",
     "  --task-title <text>     Default task title when no input JSON/file is provided",
+    "  --stability-reassessment <name> Persist stability-reassessment.json for dedicated reassessment runs",
     "  --input-file <path>     JSON object file for task input",
     "  --input-json <json>     Inline JSON object for task input",
     "  --log-path <path>       Transition JSONL output path",
