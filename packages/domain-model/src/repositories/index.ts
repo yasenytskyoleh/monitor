@@ -33,6 +33,12 @@ export type {
 } from "./research-hypothesis-repository.js";
 export { InMemoryResearchHypothesisRepository } from "./research-hypothesis-repository.impl.js";
 export type {
+  ResearchFeedbackDecisionCreateRequest,
+  ResearchFeedbackDecisionRepository,
+  ResearchFeedbackDecisionStatusUpdateRequest
+} from "./research-feedback-decision-repository.js";
+export { InMemoryResearchFeedbackDecisionRepository } from "./research-feedback-decision-repository.impl.js";
+export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,
   SetupAggregateResultStatusUpdateRequest,

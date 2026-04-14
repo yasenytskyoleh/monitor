@@ -20,7 +20,8 @@ export const PRODUCT_PERSISTED_ENTITY_TYPES = [
   "signal_candidate",
   "evaluation_result",
   "research_hypothesis",
-  "setup_aggregate_result"
+  "setup_aggregate_result",
+  "research_feedback_decision"
 ] as const;
 export type ProductPersistedEntityType = (typeof PRODUCT_PERSISTED_ENTITY_TYPES)[number];
 

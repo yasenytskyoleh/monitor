@@ -3,12 +3,16 @@ import type {
   HypothesisEvidenceStatus
 } from "../research/research-hypothesis-link.js";
 import { HYPOTHESIS_EVIDENCE_STATUSES } from "../research/research-hypothesis-link.js";
+import type {
+  ResearchFeedbackDecision,
+  ResearchFeedbackDecisionAction
+} from "../research/research-feedback-decision.js";
 import type { SetupAggregateResult } from "../research/setup-aggregate-result.js";
 import type { ResearchHypothesis } from "../research-hypothesis.js";
-import type {
-  ResearchHypothesisRepository
-} from "../repositories/research-hypothesis-repository.js";
+import type { ResearchHypothesisRepository } from "../repositories/research-hypothesis-repository.js";
+import type { ResearchFeedbackDecisionRepository } from "../repositories/research-feedback-decision-repository.js";
 import type { SetupDefinitionRepository } from "../repositories/setup-definition-repository.js";
+import type { SetupAggregateResultRepository } from "../repositories/setup-aggregate-result-repository.js";
 import type { ProductRecordMetadata } from "../storage/product-record-metadata.js";
 import { RESEARCH_HYPOTHESIS_STATUSES } from "../research-hypothesis.js";
 
@@ -67,9 +71,28 @@ export type HypothesisEvidenceUpdate = {
   evidenceSummary: string;
 };
 
+export type ReviewSetupFromEvidenceRequest = {
+  researchHypothesisId: string;
+  setupDefinitionId: string;
+  latestEvidenceStatus: HypothesisEvidenceStatus;
+  setupAggregateResultId?: string;
+  triggeredAt: TimestampUtc;
+  evidenceSummary?: string;
+  originRunId?: string;
+  sourceMetadata?: JsonObject;
+  metadata: ProductRecordMetadata;
+  expectedVersion: number | null;
+};
+
+export type SetupFeedbackReview = {
+  decision: ResearchFeedbackDecision;
+};
+
 export type ResearchServiceDependencies = {
   researchHypothesisRepository: ResearchHypothesisRepository;
   setupDefinitionRepository: SetupDefinitionRepository;
+  researchFeedbackDecisionRepository?: ResearchFeedbackDecisionRepository;
+  setupAggregateResultRepository?: Pick<SetupAggregateResultRepository, "getById">;
 };
 
 export type ResearchService = {
@@ -84,6 +107,9 @@ export type ResearchService = {
   updateHypothesisEvidence(
     request: UpdateHypothesisEvidenceRequest
   ): Promise<HypothesisEvidenceUpdate | null>;
+  reviewSetupFromEvidence(
+    request: ReviewSetupFromEvidenceRequest
+  ): Promise<SetupFeedbackReview | null>;
 };
 
 export class ResearchHypothesisValidationError extends Error {
@@ -231,8 +257,61 @@ const buildEvidenceSummary = (
   ].join("; ");
 };
 
+const resolveFeedbackDecisionAction = (
+  latestEvidenceStatus: HypothesisEvidenceStatus,
+  hypothesisStatus: ResearchHypothesis["status"]
+): ResearchFeedbackDecisionAction => {
+  if (latestEvidenceStatus === "supports") {
+    return "keep_active";
+  }
+
+  if (latestEvidenceStatus === "inconclusive") {
+    return "manual_review_required";
+  }
+
+  if (hypothesisStatus === "draft") {
+    return "refine_definition";
+  }
+
+  if (hypothesisStatus === "active") {
+    return "pause_setup";
+  }
+
+  if (hypothesisStatus === "paused") {
+    return "archive_setup";
+  }
+
+  return "manual_review_required";
+};
+
+const buildFeedbackRationale = (
+  request: ReviewSetupFromEvidenceRequest,
+  hypothesisStatus: ResearchHypothesis["status"],
+  recommendedAction: ResearchFeedbackDecisionAction
+): string =>
+  [
+    `evidence_status=${request.latestEvidenceStatus}`,
+    `hypothesis_status=${hypothesisStatus}`,
+    `recommended_action=${recommendedAction}`,
+    `setup=${request.setupDefinitionId}`,
+    `aggregate=${request.setupAggregateResultId ?? "none"}`,
+    `evidence_summary=${request.evidenceSummary ?? "none"}`
+  ].join("; ");
+
+const buildFeedbackDecisionId = (
+  request: ReviewSetupFromEvidenceRequest
+): string => {
+  const timestampToken = String(Date.parse(request.triggeredAt));
+  return `feedback-${request.setupDefinitionId}-${request.researchHypothesisId}-${timestampToken}`;
+};
+
 export const createResearchService = (dependencies: ResearchServiceDependencies): ResearchService => {
-  const { researchHypothesisRepository, setupDefinitionRepository } = dependencies;
+  const {
+    researchHypothesisRepository,
+    setupDefinitionRepository,
+    researchFeedbackDecisionRepository,
+    setupAggregateResultRepository
+  } = dependencies;
 
   return {
     async createResearchHypothesis(request) {
@@ -383,6 +462,105 @@ export const createResearchService = (dependencies: ResearchServiceDependencies)
         evidenceStatus,
         evidenceSummary
       };
+    },
+    async reviewSetupFromEvidence(request) {
+      assertNonEmptyString(request.researchHypothesisId, "researchHypothesisId");
+      assertNonEmptyString(request.setupDefinitionId, "setupDefinitionId");
+      assertNonEmptyString(request.triggeredAt, "triggeredAt");
+      assertValidEvidenceStatus(request.latestEvidenceStatus);
+
+      const hypothesis = await researchHypothesisRepository.getById(request.researchHypothesisId);
+      if (!hypothesis) {
+        return null;
+      }
+
+      const setupDefinition = await setupDefinitionRepository.getById(request.setupDefinitionId);
+      if (!setupDefinition) {
+        throw new ResearchHypothesisValidationError(
+          `setup_definition not found: ${request.setupDefinitionId}`
+        );
+      }
+
+      if (!hypothesis.relatedSetupDefinitionIds.includes(setupDefinition.id)) {
+        throw new ResearchHypothesisValidationError(
+          `hypothesis ${request.researchHypothesisId} is not linked to setup_definition ${setupDefinition.id}`
+        );
+      }
+
+      if (!hypothesis.evidenceStatus) {
+        throw new ResearchHypothesisValidationError(
+          `research_hypothesis has no evidence status to review: ${hypothesis.id}`
+        );
+      }
+
+      if (hypothesis.evidenceStatus !== request.latestEvidenceStatus) {
+        throw new ResearchHypothesisValidationError(
+          `latestEvidenceStatus does not match research_hypothesis evidenceStatus: ${request.latestEvidenceStatus} vs ${hypothesis.evidenceStatus}`
+        );
+      }
+
+      if (request.setupAggregateResultId) {
+        if (!setupAggregateResultRepository) {
+          throw new ResearchHypothesisValidationError(
+            "setup_aggregate_result repository is required for aggregate-linked feedback review"
+          );
+        }
+
+        const aggregateResult = await setupAggregateResultRepository.getById(
+          request.setupAggregateResultId
+        );
+        if (!aggregateResult) {
+          throw new ResearchHypothesisValidationError(
+            `setup_aggregate_result not found: ${request.setupAggregateResultId}`
+          );
+        }
+
+        if (aggregateResult.setupDefinitionId !== setupDefinition.id) {
+          throw new ResearchHypothesisValidationError(
+            `setup_aggregate_result ${aggregateResult.id} does not belong to setup_definition ${setupDefinition.id}`
+          );
+        }
+
+        if (
+          aggregateResult.researchHypothesisId &&
+          aggregateResult.researchHypothesisId !== hypothesis.id
+        ) {
+          throw new ResearchHypothesisValidationError(
+            `setup_aggregate_result ${aggregateResult.id} does not belong to research_hypothesis ${hypothesis.id}`
+          );
+        }
+      }
+
+      if (!researchFeedbackDecisionRepository) {
+        throw new ResearchHypothesisValidationError(
+          "research_feedback_decision repository is required for setup feedback review"
+        );
+      }
+
+      const recommendedAction = resolveFeedbackDecisionAction(
+        request.latestEvidenceStatus,
+        hypothesis.status
+      );
+
+      const decision = await researchFeedbackDecisionRepository.create({
+        decision: {
+          id: buildFeedbackDecisionId(request),
+          setupDefinitionId: setupDefinition.id,
+          researchHypothesisId: hypothesis.id,
+          setupAggregateResultId: request.setupAggregateResultId,
+          evidenceStatus: request.latestEvidenceStatus,
+          recommendedAction,
+          rationaleSummary: buildFeedbackRationale(request, hypothesis.status, recommendedAction),
+          decisionStatus: "proposed",
+          requiresManualReview: true,
+          evidenceSummary: request.evidenceSummary,
+          createdAt: request.triggeredAt,
+          updatedAt: request.triggeredAt
+        },
+        metadata: request.metadata
+      });
+
+      return { decision };
     }
   };
 };

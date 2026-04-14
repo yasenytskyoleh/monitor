@@ -115,6 +115,15 @@ export type {
   ResearchHypothesisEvidenceLink
 } from "./research/research-hypothesis-link.js";
 export {
+  RESEARCH_FEEDBACK_DECISION_ACTIONS,
+  RESEARCH_FEEDBACK_DECISION_STATUSES
+} from "./research/research-feedback-decision.js";
+export type {
+  ResearchFeedbackDecision,
+  ResearchFeedbackDecisionAction,
+  ResearchFeedbackDecisionStatus
+} from "./research/research-feedback-decision.js";
+export {
   DEFAULT_STORAGE_TECHNOLOGY_DIRECTION,
   FIRST_CLASS_PERSISTED_ENTITY_PROFILES,
   PRODUCT_EPHEMERAL_ENTITY_TYPES,
@@ -160,6 +169,14 @@ export type {
   ResearchHypothesisUpdateRequest
 } from "./repositories/research-hypothesis-repository.js";
 export { InMemoryResearchHypothesisRepository } from "./repositories/research-hypothesis-repository.impl.js";
+export type {
+  ResearchFeedbackDecisionCreateRequest,
+  ResearchFeedbackDecisionRepository,
+  ResearchFeedbackDecisionStatusUpdateRequest
+} from "./repositories/research-feedback-decision-repository.js";
+export {
+  InMemoryResearchFeedbackDecisionRepository
+} from "./repositories/research-feedback-decision-repository.impl.js";
 export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,
@@ -237,8 +254,10 @@ export type {
   CreateResearchHypothesisRequest,
   HypothesisEvidenceScopeDescriptor,
   HypothesisEvidenceUpdate,
+  ReviewSetupFromEvidenceRequest,
   ResearchService,
   ResearchServiceDependencies,
+  SetupFeedbackReview,
   UpdateHypothesisEvidenceRequest,
   UpdateResearchHypothesisRequest,
   UpdateResearchHypothesisStatusRequest
@@ -273,10 +292,12 @@ export type {
 export {
   AGGREGATION_REFRESH_STATUSES,
   EVALUATION_TRIGGER_STATUSES,
+  FEEDBACK_DECISION_RESULT_STATUSES,
   HYPOTHESIS_EVIDENCE_UPDATE_STATUSES,
   RUNTIME_HANDOFF_STATUSES,
   createAggregateToHypothesisEvidenceHandoff,
   createEvaluationToAggregationRefreshHandoff,
+  createHypothesisEvidenceToSetupFeedbackHandoff,
   createSignalCandidateFromDetectionHandoff,
   createSignalCandidateToEvaluationHandoff
 } from "./runtime-handoff/index.js";
@@ -290,12 +311,17 @@ export type {
   EvidenceScopeDescriptor,
   EvaluationAggregationRefreshTrigger,
   EvaluationToAggregationRefreshDependencies,
+  FeedbackDecisionResult,
+  FeedbackDecisionResultStatus,
+  HypothesisFeedbackDecisionTrigger,
   HypothesisEvidenceUpdateResult,
   HypothesisEvidenceUpdateStatus,
+  HypothesisEvidenceToSetupFeedbackDependencies,
   EvaluationTriggerResult,
   EvaluationTriggerStatus,
   EvaluationWindowDescriptor,
   RefreshAggregateFromEvaluationCommand,
+  ReviewSetupFromEvidenceCommand,
   UpdateHypothesisFromAggregateCommand,
   SignalCandidateEvaluationTrigger,
   StartEvaluationCommand,
