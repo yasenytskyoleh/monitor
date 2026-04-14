@@ -13,14 +13,14 @@ export type SetupDefinitionUpdateRequest = {
 };
 
 export type SetupDefinitionStatusUpdateRequest = {
-  setupId: string;
+  setupDefinitionId: string;
   status: SetupDefinitionStatus;
   metadata: ProductRecordMetadata;
   expectedVersion: number | null;
 };
 
 export type SetupDefinitionRepository = {
-  getById(setupId: string): Promise<SetupDefinition | null>;
+  getById(setupDefinitionId: string): Promise<SetupDefinition | null>;
   listByStatus(statuses: SetupDefinitionStatus[]): Promise<SetupDefinition[]>;
   create(request: SetupDefinitionCreateRequest): Promise<SetupDefinition>;
   update(request: SetupDefinitionUpdateRequest): Promise<SetupDefinition>;

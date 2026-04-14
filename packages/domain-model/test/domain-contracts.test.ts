@@ -145,29 +145,20 @@ test("supports constructing typed contracts without implementation logic", () =>
   };
 
   const setup: SetupDefinition = {
-    setupId: "setup-breakout-001",
+    id: "setup-breakout-001",
     name: "Breakout Retest",
     description: "Retest after breakout with volume confirmation",
     status: "active",
-    monitoredSymbolIds: [symbol.symbolId],
-    conditions: [
-      {
-        field: "close_above_range_high",
-        operator: "eq",
-        value: true,
-        timeframe: "4h"
-      }
-    ],
+    measurableConditions: ["close_above_range_high on 4h"],
     evaluationAssumptions: ["evaluate over fixed 24h horizon"],
     invalidationAssumptions: ["discard if immediate breakdown below retest level"],
-    tags: ["breakout", "trend"],
-    createdAtUtc: "2026-04-14T10:00:00.000Z",
-    updatedAtUtc: "2026-04-14T10:00:00.000Z"
+    createdAt: "2026-04-14T10:00:00.000Z",
+    updatedAt: "2026-04-14T10:00:00.000Z"
   };
 
   const candidate: SignalCandidate = {
     candidateId: "candidate-001",
-    setupId: setup.setupId,
+    setupId: setup.id,
     symbolId: symbol.symbolId,
     detectedAtUtc: "2026-04-14T10:30:00.000Z",
     status: "detected",
@@ -242,20 +233,21 @@ test("supports constructing typed contracts without implementation logic", () =>
   };
 
   const hypothesis: ResearchHypothesis = {
-    hypothesisId: "hypothesis-001",
+    id: "hypothesis-001",
     title: "Breakout retest has positive asymmetry in trend regime",
-    statement: "When setup-breakout-001 triggers in trend regime, MFE should exceed MAE on average.",
-    relatedSetupIds: [setup.setupId],
-    successCriteria: ["median MFE > median |MAE| after 50 evaluated samples"],
+    description: "When setup-breakout-001 triggers in trend regime, MFE should exceed MAE on average.",
+    relatedSetupDefinitionIds: [setup.id],
+    assumptions: ["median MFE > median |MAE| after 50 evaluated samples"],
+    notes: [],
     status: "draft",
-    createdAtUtc: "2026-04-14T10:00:00.000Z",
-    updatedAtUtc: "2026-04-14T10:00:00.000Z"
+    createdAt: "2026-04-14T10:00:00.000Z",
+    updatedAt: "2026-04-14T10:00:00.000Z"
   };
 
   const run: ResearchRun = {
     runId: "run-001",
-    hypothesisId: hypothesis.hypothesisId,
-    setupId: setup.setupId,
+    hypothesisId: hypothesis.id,
+    setupId: setup.id,
     candidateIds: [candidate.candidateId],
     evaluationWindowIds: [window.windowId],
     evaluationResultIds: [result.resultId],
@@ -482,6 +474,7 @@ test("supports repository and service boundary contracts", async () => {
         metadata: request.metadata,
         expectedVersion: request.expectedVersion
       }),
+    activateSetupDefinition: async () => null,
     archiveSetupDefinition: async () => null
   };
 
@@ -494,22 +487,21 @@ test("supports repository and service boundary contracts", async () => {
         metadata: request.metadata,
         expectedVersion: request.expectedVersion
       }),
-    storeSetupAggregateResult: async (request) => request.aggregate
+    updateResearchHypothesisStatus: async () => null,
+    attachHypothesisToSetupDefinitions: async () => null
   };
 
   const setup = await setupService.createSetupDefinition({
     definition: {
-      setupId: "setup-service-001",
+      id: "setup-service-001",
       name: "Service setup",
       description: "Repository/service boundary test setup",
       status: "draft",
-      monitoredSymbolIds: [],
-      conditions: [],
+      measurableConditions: ["exists"],
       evaluationAssumptions: [],
       invalidationAssumptions: [],
-      tags: [],
-      createdAtUtc: "2026-04-16T10:00:00.000Z",
-      updatedAtUtc: "2026-04-16T10:00:00.000Z"
+      createdAt: "2026-04-16T10:00:00.000Z",
+      updatedAt: "2026-04-16T10:00:00.000Z"
     },
     metadata: {
       originRunId: null,
@@ -523,14 +515,15 @@ test("supports repository and service boundary contracts", async () => {
 
   const hypothesis = await researchService.createResearchHypothesis({
     hypothesis: {
-      hypothesisId: "hypothesis-service-001",
+      id: "hypothesis-service-001",
       title: "Service hypothesis",
-      statement: "Service boundary test hypothesis",
-      relatedSetupIds: [setup.setupId],
-      successCriteria: ["exists"],
+      description: "Service boundary test hypothesis",
+      relatedSetupDefinitionIds: [setup.id],
+      assumptions: ["exists"],
+      notes: [],
       status: "draft",
-      createdAtUtc: "2026-04-16T10:00:00.000Z",
-      updatedAtUtc: "2026-04-16T10:00:00.000Z"
+      createdAt: "2026-04-16T10:00:00.000Z",
+      updatedAt: "2026-04-16T10:00:00.000Z"
     },
     metadata: {
       originRunId: null,
@@ -542,6 +535,6 @@ test("supports repository and service boundary contracts", async () => {
     }
   });
 
-  assert.equal(setup.setupId, "setup-service-001");
-  assert.equal(hypothesis.hypothesisId, "hypothesis-service-001");
+  assert.equal(setup.id, "setup-service-001");
+  assert.equal(hypothesis.id, "hypothesis-service-001");
 });

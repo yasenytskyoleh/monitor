@@ -10,6 +10,7 @@ export type {
   SetupDefinitionStatusUpdateRequest,
   SetupDefinitionUpdateRequest
 } from "./setup-definition-repository.js";
+export { InMemorySetupDefinitionRepository } from "./setup-definition-repository.impl.js";
 export type {
   SignalCandidateCreateRequest,
   SignalCandidateRepository,
@@ -28,6 +29,7 @@ export type {
   ResearchHypothesisStatusUpdateRequest,
   ResearchHypothesisUpdateRequest
 } from "./research-hypothesis-repository.js";
+export { InMemoryResearchHypothesisRepository } from "./research-hypothesis-repository.impl.js";
 export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,

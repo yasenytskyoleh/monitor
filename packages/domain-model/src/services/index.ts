@@ -17,11 +17,16 @@ export type {
 } from "./monitoring-catalog-service.js";
 
 export type {
+  ActivateSetupDefinitionRequest,
   ArchiveSetupDefinitionRequest,
   CreateSetupDefinitionRequest,
   SetupDefinitionService,
   SetupDefinitionServiceDependencies,
   UpdateSetupDefinitionRequest
+} from "./setup-definition-service.js";
+export {
+  SetupDefinitionValidationError,
+  createSetupDefinitionService
 } from "./setup-definition-service.js";
 
 export type {
@@ -39,9 +44,14 @@ export type {
 } from "./evaluation-service.js";
 
 export type {
+  AttachHypothesisToSetupDefinitionsRequest,
   CreateResearchHypothesisRequest,
   ResearchService,
   ResearchServiceDependencies,
-  StoreSetupAggregateResultRequest,
-  UpdateResearchHypothesisRequest
+  UpdateResearchHypothesisRequest,
+  UpdateResearchHypothesisStatusRequest
+} from "./research-service.js";
+export {
+  ResearchHypothesisValidationError,
+  createResearchService
 } from "./research-service.js";
