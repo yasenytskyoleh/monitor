@@ -25,7 +25,7 @@ It is **not yet**:
 - or an autonomous trading bot.
 
 ## Current implementation status
-The orchestration foundation is functional and test-backed, and the first product-domain contracts now include monitoring, evaluation, research-aggregation, and storage-boundary architecture contracts.
+The orchestration foundation is functional and test-backed, and the first product-domain contracts now include monitoring, evaluation, research-aggregation, storage-boundary, and repository/service architecture contracts.
 
 Implemented today:
 - config + schema + semantic-validation platform (`packages/agent-config`)
@@ -55,6 +55,8 @@ Implemented today:
   - `SetupComparison`
   - `ResearchHypothesisEvidenceLink`
   - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
+  - repository contracts (`*Repository`)
+  - service contracts (`*Service`) with explicit write ownership
   - `ResearchHypothesis`
   - `ResearchRun`
 - product-domain docs and ADR:
@@ -68,11 +70,14 @@ Implemented today:
   - `docs/project/setup-comparison-model.md`
   - `docs/project/storage-architecture.md`
   - `docs/project/persistence-boundaries.md`
+  - `docs/project/persistence-implementation-architecture.md`
+  - `docs/project/first-persisted-slice.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
   - `docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`
   - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
+  - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:

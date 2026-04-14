@@ -65,3 +65,4 @@ Boundary rule:
 - ADR-003 defines the first post-detection evaluation and outcome contracts on top of this slice.
 - ADR-004 defines the first aggregation/comparison research-evidence contracts on top of this slice.
 - ADR-005 defines first persistence/storage boundaries for product-domain records on top of this slice.
+- ADR-006 defines first repository/service implementation architecture on top of these storage boundaries.

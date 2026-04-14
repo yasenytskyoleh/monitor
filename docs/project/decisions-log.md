@@ -24,6 +24,7 @@
 - evaluation is contract-first with explicit window/status/metrics before statistics/scoring
 - research evidence is contract-first with explicit aggregation scopes and setup comparison before ranking
 - persistence is contract-first with explicit storage boundaries before DB/repository implementation
+- repository/service architecture is contract-first before schema and runtime persistence code
 
 ## Agent/workflow decisions
 - current core agents:
@@ -70,6 +71,9 @@
 - first research-aggregation ADR exists (`docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`)
 - first storage-architecture ADR exists (`docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`)
 - first storage-boundary contracts exist (`packages/domain-model/src/storage/*`)
+- first repository/service architecture ADR exists (`docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`)
+- first repository/service contracts exist (`packages/domain-model/src/repositories/*`, `packages/domain-model/src/services/*`)
+- first persisted implementation slice chosen (`setup_definition`, `research_hypothesis`)
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -79,4 +83,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **product-domain repository contract and schema-planning architecture (without DB/runtime implementation)**
+- the currently recommended next step is **schema-planning and repository-runtime rollout design for the first persisted slice (without DB migrations yet)**

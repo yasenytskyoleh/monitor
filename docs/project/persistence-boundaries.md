@@ -60,3 +60,10 @@ Not allowed:
 - identity fields are stable after creation
 - mutable fields are entity-specific and tracked through `updatedAtUtc`
 - lifecycle status supports active/archive behavior for first persisted entities
+
+## Write-path ownership guidance
+- services own write-path semantics
+- repositories own persistence abstraction
+- first implementation slice is intentionally narrow:
+  - `setup_definition`
+  - `research_hypothesis`

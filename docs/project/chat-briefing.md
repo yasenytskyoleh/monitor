@@ -3,7 +3,7 @@
 ## Reusable project briefing
 I am working on **Monitor**, a monorepo TypeScript project that combines:
 - a controlled agent orchestration foundation, and
-- product-domain contracts for monitoring, evaluation, research evidence, and storage boundaries.
+- product-domain contracts for monitoring, evaluation, research evidence, storage, and persistence implementation boundaries.
 
 Current foundation scope includes:
 - docs + configs + schemas + runtime guardrails
@@ -17,6 +17,8 @@ Current product-domain scope includes:
   - evaluation contracts (`EvaluationInput`, `EvaluationWindow`, `EvaluationResult`, `EvaluationMetrics`, `EvaluationStatus`)
   - research evidence contracts (`AggregationScope`, `SetupAggregateResult`, `SetupComparison`, `ResearchHypothesisEvidenceLink`)
   - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
+  - repository contracts (`*Repository` interfaces)
+  - service contracts (`*Service` interfaces + write-path ownership)
   - hypothesis/run contracts (`ResearchHypothesis`, `ResearchRun`)
 - docs and ADRs:
   - `docs/project/domain-model.md`
@@ -28,11 +30,14 @@ Current product-domain scope includes:
   - `docs/project/setup-comparison-model.md`
   - `docs/project/storage-architecture.md`
   - `docs/project/persistence-boundaries.md`
+  - `docs/project/persistence-implementation-architecture.md`
+  - `docs/project/first-persisted-slice.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
   - `docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`
   - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
+  - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
 
 ## Current constraints
 - spot-only scope
@@ -44,12 +49,12 @@ Current product-domain scope includes:
 - no automated trading logic
 
 ## Recommended next step
-- define product-domain repository and schema-planning contracts without DB implementation
+- define schema-planning and repository-runtime rollout for the first persisted slice (`setup_definition`, `research_hypothesis`)
 
 ## Behavioral instructions for future assistants
 When continuing this project:
 1. preserve orchestration safety constraints while product-domain implementation grows
 2. keep orchestrator runtime evidence and product-domain persistence separate
-3. keep runtime engines out of scope until architecture contracts are explicit
-4. keep provider payload handling outside domain contracts
+3. enforce service-owned write paths and repository-owned persistence abstraction
+4. keep runtime engines and DB implementation out of scope until architecture contracts are explicit
 5. prefer small, explicit, reviewable PR-sized steps
