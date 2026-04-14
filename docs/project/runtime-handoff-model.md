@@ -91,3 +91,20 @@ This boundary is deterministic and service-driven:
 - resolves evaluation window id explicitly
 - initializes pending evaluation result and starts evaluation
 - returns explicit trigger result statuses
+
+## Evaluation-to-aggregation refresh boundary
+Third runtime handoff in this phase:
+- from completed `EvaluationResult` to aggregate evidence refresh
+- through explicit `EvaluationAggregationRefreshTrigger` payload
+
+Contracts:
+- `packages/domain-model/src/runtime-handoff/evaluation-aggregation-refresh-trigger.ts`
+- `packages/domain-model/src/runtime-handoff/refresh-aggregate-from-evaluation-command.ts`
+- `packages/domain-model/src/runtime-handoff/aggregation-refresh-result.ts`
+- `packages/domain-model/src/runtime-handoff/evaluation-to-aggregation-refresh.ts`
+
+This boundary is deterministic and service-driven:
+- accepts refresh only from completed evaluation results
+- resolves aggregation scope explicitly
+- applies explicit create-vs-recompute aggregate policy
+- returns explicit refresh result statuses

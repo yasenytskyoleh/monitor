@@ -58,6 +58,8 @@ Related product docs:
 - `docs/project/detection-to-candidate-flow.md`
 - `docs/project/evaluation-trigger-model.md`
 - `docs/project/candidate-to-evaluation-flow.md`
+- `docs/project/aggregation-refresh-model.md`
+- `docs/project/evaluation-to-aggregate-flow.md`
 
 ## Out of scope
 - exchange connectors and live websocket ingestion
