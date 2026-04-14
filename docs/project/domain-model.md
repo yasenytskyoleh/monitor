@@ -29,6 +29,8 @@ Related product docs:
 - `docs/project/research-model.md`
 - `docs/project/monitoring-model.md`
 - `docs/project/normalized-events.md`
+- `docs/project/evaluation-model.md`
+- `docs/project/outcome-metrics.md`
 
 ## Out of scope
 - exchange connectors and live websocket ingestion
@@ -69,6 +71,7 @@ Rule: orchestration executes workflows; product domain defines market/research m
 - `SetupDefinition` expresses measurable conditions and assumptions.
 - `SignalCandidate` is a detected candidate tied to one setup and one monitored symbol.
 - `EvaluationWindow` defines when/how long a signal candidate is evaluated.
+- `EvaluationInput` defines what observations/context are used for one evaluation pass.
 - `EvaluationResult` captures what happened for one signal candidate in one evaluation window.
 - `ResearchHypothesis` expresses the research idea behind one or more setup definitions.
 - `ResearchRun` tracks one bounded execution of a hypothesis evaluation cycle.

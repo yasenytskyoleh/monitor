@@ -70,11 +70,26 @@ export type {
   SignalEvidence,
   SignalEvidenceSource
 } from "./signal-candidate.js";
-export { EVALUATION_OUTCOMES, EVALUATION_WINDOW_UNITS } from "./evaluation.js";
+export {
+  EVALUATION_OUTCOMES,
+  EVALUATION_OUTCOME_SUMMARIES,
+  EVALUATION_START_REFERENCE_RULES,
+  EVALUATION_STATUSES,
+  EVALUATION_WINDOW_MODES,
+  EVALUATION_WINDOW_UNITS
+} from "./evaluation.js";
 export type {
+  EvaluationContext,
+  EvaluationInput,
+  EvaluationMetrics,
+  EvaluationObservationReference,
   EvaluationOutcome,
+  EvaluationOutcomeSummary,
   EvaluationResult,
+  EvaluationStartReferenceRule,
+  EvaluationStatus,
   EvaluationWindow,
+  EvaluationWindowMode,
   EvaluationWindowUnit
 } from "./evaluation.js";
 export { RESEARCH_HYPOTHESIS_STATUSES } from "./research-hypothesis.js";
