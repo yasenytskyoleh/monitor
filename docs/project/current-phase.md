@@ -1,10 +1,14 @@
 # Current Phase
 
 ## Phase
-**Phase 1 — Agent operating system / orchestration foundation**
+**Phase 1.5 — Orchestration foundation plus first product-domain contracts**
 
 ## What this phase is about
-Phase 1 is focused on proving that the project can:
+This phase is focused on:
+- keeping the orchestration foundation stable and constrained, and
+- defining the first explicit product-domain contracts for monitoring/research.
+
+The orchestration side proves that the project can:
 - define agent roles clearly,
 - validate configs and schemas,
 - orchestrate state-based workflows,
@@ -48,9 +52,14 @@ Phase 1 is focused on proving that the project can:
   - narrow helper-file creation constraints (including json helper fixtures)
   - dedicated stability reassessment artifact for audit runs (`stability-reassessment.json`)
 - standardized shared live-adapter pipeline for all current live agents
+- first product-domain slice contracts (no runtime engines yet):
+  - `packages/domain-model`
+  - `docs/project/domain-model.md`
+  - `docs/project/research-model.md`
+  - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
 
 ## What this phase is not
-Phase 1 is **not** about building a full crypto trading platform.
+This phase is **not** about building a full crypto trading platform.
 
 Explicitly out of scope:
 - automated trading execution,
@@ -79,6 +88,6 @@ Without a stable operating system for:
 
 the future market and signal layers would become chaotic very quickly.
 
-Phase 1 is therefore not a distraction from the real product.
+This phase is therefore not a distraction from the real product.
 
-It is the **foundation that makes the real product possible**.
+It is the **foundation plus first product-domain contracts that make the real product implementable**.

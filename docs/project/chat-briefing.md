@@ -1,23 +1,30 @@
 # Chat Briefing
 
 ## Reusable project briefing
-I am working on **Monitor**, a monorepo TypeScript project that is currently focused on an **agent orchestration foundation** for a future crypto monitoring/research platform.
+I am working on **Monitor**, a monorepo TypeScript project that combines:
+- a controlled agent orchestration foundation, and
+- an initial product-domain contracts slice for monitoring/research.
 
-Phase 1 is **not** about trading execution or market-data features yet. It is about:
-- docs,
-- contracts,
-- configs,
-- schemas,
-- orchestration,
-- runtime validation.
+Current foundation scope includes:
+- docs + configs + schemas + runtime guardrails
+- orchestrated workflow execution with approvals and artifact enforcement
+- constrained backend live mode with isolated apply/verify/rollback/promotion
 
-The repo already has:
-- `docs/agents`
-- `configs/agents`
-- `packages/agent-config`
-- `apps/orchestrator-runner`
+Current product-domain scope includes:
+- `packages/domain-model` with:
+  - `MonitoredSymbol`
+  - `SetupDefinition`
+  - `SignalCandidate`
+  - `EvaluationWindow`
+  - `EvaluationResult`
+  - `ResearchHypothesis`
+  - `ResearchRun`
+- docs:
+  - `docs/project/domain-model.md`
+  - `docs/project/research-model.md`
+  - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
 
-The current workflow uses states:
+The current workflow states are:
 - `INTAKE`
 - `DESIGN`
 - `FORMALIZE`
@@ -28,40 +35,21 @@ The current workflow uses states:
 - `DONE`
 - `REJECTED`
 
-Current status:
-- Product Agent is live-capable
-- Architect Agent is live-capable
-- Quant Pattern Agent is live-capable
-- Backend Agent is live-capable in constrained patch mode
-- Docs Reviewer Agent is live-capable
-- per-agent execution mode selection exists
-- persisted workflow artifacts exist
-- approval and artifact/reference enforcement is active in runtime
-- shared live-adapter execution pipeline exists
-- backend isolated apply + verification + rollback + controlled promotion exists
-- narrow helper-file creation constraints exist
-- dedicated stability reassessment artifact exists for reassessment runs
+## Current constraints
+- spot-only scope
+- no automated trading logic
+- no futures/leverage funding logic
+- no exchange ingestion implementation yet
+- no statistics engine implementation yet
+- no UI/dashboard implementation yet
 
-The next likely step is:
-- **post-reassessment consolidation before any further Backend scope expansion**
-
-Please preserve this project direction and avoid broad redesign unless clearly justified.
-
-## What future chats should preserve
-- The project is config-driven and schema-backed.
-- Phase 1 scope is intentionally narrow.
-- Spot only.
-- No automated trading.
-- No futures or leverage logic.
-- No news/sentiment work yet.
-- Runner changes should avoid hardcoded hacks.
-- New live agents should be introduced gradually.
-- Prefer incremental PR-sized steps.
+## Recommended next step
+- define monitoring ingestion architecture against the existing product-domain contracts (no full implementation yet)
 
 ## Behavioral instructions for future assistants
 When continuing this project:
-1. preserve the current architecture direction unless explicitly asked to redesign it
-2. prioritize consistency between docs, config, schemas, and runtime behavior
-3. avoid proposing unrelated “cool AI agent” ideas
-4. treat the current repository state as the actual baseline
-5. prefer small, explicit, reviewable next steps
+1. preserve orchestration safety constraints while product-domain implementation starts
+2. keep orchestration-domain and product-domain boundaries explicit
+3. prioritize consistency between docs, contracts, config, schemas, and runtime behavior
+4. prefer small, explicit, reviewable PR-sized steps
+5. avoid unrelated “AI trading bot” scope expansion

@@ -10,6 +10,13 @@ Run workflow transitions using:
 - repository configs present under `configs/agents`
 - `OPENAI_API_KEY` in environment or `.env` whenever any agent is configured as `live`
 
+## Related product-domain contracts
+The runner is orchestration-focused. Product-domain entities are defined separately in:
+- `packages/domain-model`
+- `docs/project/domain-model.md`
+- `docs/project/research-model.md`
+- `docs/project/monitoring-model.md`
+
 ## Environment setup
 Create `.env` in repo root from the template. Runner auto-loads it on start:
 
