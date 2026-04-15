@@ -71,6 +71,12 @@ export const PRODUCT_WRITE_PATH_OWNERSHIP: ProductWritePathOwnership[] = [
     ownerService: "setup_definition_service",
     createPath: "approved setup lifecycle mutation flow",
     updatePath: "mutation audit metadata corrections in controlled setup review path"
+  },
+  {
+    entityType: "setup_refinement_request",
+    ownerService: "research_service",
+    createPath: "approved refine_definition follow-up request flow",
+    updatePath: "refinement request workflow/status updates in controlled research review path"
   }
 ];
 

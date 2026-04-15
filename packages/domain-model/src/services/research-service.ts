@@ -12,6 +12,7 @@ import type { ResearchHypothesis } from "../research-hypothesis.js";
 import type { ResearchHypothesisRepository } from "../repositories/research-hypothesis-repository.js";
 import type { ResearchFeedbackDecisionRepository } from "../repositories/research-feedback-decision-repository.js";
 import type { ResearchDecisionApprovalRepository } from "../repositories/research-decision-approval-repository.js";
+import type { SetupRefinementRequestRepository } from "../repositories/setup-refinement-request-repository.js";
 import type { SetupDefinitionRepository } from "../repositories/setup-definition-repository.js";
 import type { SetupAggregateResultRepository } from "../repositories/setup-aggregate-result-repository.js";
 import type { ProductRecordMetadata } from "../storage/product-record-metadata.js";
@@ -21,6 +22,7 @@ import {
   type ResearchDecisionApprovalOutcome
 } from "../review/approval-outcome.js";
 import type { ResearchDecisionApproval } from "../review/research-decision-approval.js";
+import type { SetupRefinementRequest } from "../review/setup-refinement-request.js";
 
 export type CreateResearchHypothesisRequest = {
   hypothesis: ResearchHypothesis;
@@ -112,11 +114,32 @@ export type FeedbackDecisionApproval = {
   decision: ResearchFeedbackDecision;
 };
 
+export type CreateRefinementRequest = {
+  researchDecisionApprovalId: string;
+  researchFeedbackDecisionId: string;
+  setupDefinitionId: string;
+  approvedAction: ResearchFeedbackDecisionAction;
+  requestedBy: string;
+  requestedAt: TimestampUtc;
+  refinementRationaleSummary: string;
+  requestedChangesSummary: string;
+  evidenceReferences?: string[];
+  originRunId?: string;
+  sourceMetadata?: JsonObject;
+  metadata: ProductRecordMetadata;
+  expectedVersion: number | null;
+};
+
+export type SetupRefinementFollowUp = {
+  request: SetupRefinementRequest;
+};
+
 export type ResearchServiceDependencies = {
   researchHypothesisRepository: ResearchHypothesisRepository;
   setupDefinitionRepository: SetupDefinitionRepository;
   researchFeedbackDecisionRepository?: ResearchFeedbackDecisionRepository;
   researchDecisionApprovalRepository?: ResearchDecisionApprovalRepository;
+  setupRefinementRequestRepository?: SetupRefinementRequestRepository;
   setupAggregateResultRepository?: Pick<SetupAggregateResultRepository, "getById">;
 };
 
@@ -138,6 +161,9 @@ export type ResearchService = {
   approveFeedbackDecision(
     request: ApproveFeedbackDecisionRequest
   ): Promise<FeedbackDecisionApproval | null>;
+  createRefinementRequest(
+    request: CreateRefinementRequest
+  ): Promise<SetupRefinementFollowUp | null>;
 };
 
 export class ResearchHypothesisValidationError extends Error {
@@ -348,6 +374,22 @@ const buildApprovalId = (
   return `approval-${request.researchFeedbackDecisionId}-${timestampToken}`;
 };
 
+const buildRefinementRequestId = (
+  request: CreateRefinementRequest
+): string => {
+  const timestampToken = String(Date.parse(request.requestedAt));
+  return `setup-refinement-${request.setupDefinitionId}-${timestampToken}`;
+};
+
+const normalizeEvidenceReferences = (evidenceReferences?: string[]): string[] | undefined => {
+  if (!evidenceReferences) {
+    return undefined;
+  }
+
+  const normalized = [...new Set(evidenceReferences.map((reference) => reference.trim()).filter(Boolean))];
+  return normalized.length > 0 ? normalized : undefined;
+};
+
 const mapApprovalOutcomeToDecisionStatus = (
   approvalOutcome: ResearchDecisionApprovalOutcome
 ): ResearchFeedbackDecision["decisionStatus"] => {
@@ -374,6 +416,7 @@ export const createResearchService = (dependencies: ResearchServiceDependencies)
     setupDefinitionRepository,
     researchFeedbackDecisionRepository,
     researchDecisionApprovalRepository,
+    setupRefinementRequestRepository,
     setupAggregateResultRepository
   } = dependencies;
 
@@ -719,6 +762,90 @@ export const createResearchService = (dependencies: ResearchServiceDependencies)
         approval,
         decision: updatedDecision
       };
+    },
+    async createRefinementRequest(request) {
+      assertNonEmptyString(request.researchDecisionApprovalId, "researchDecisionApprovalId");
+      assertNonEmptyString(request.researchFeedbackDecisionId, "researchFeedbackDecisionId");
+      assertNonEmptyString(request.setupDefinitionId, "setupDefinitionId");
+      assertNonEmptyString(request.approvedAction, "approvedAction");
+      assertNonEmptyString(request.requestedBy, "requestedBy");
+      assertNonEmptyString(request.requestedAt, "requestedAt");
+      assertNonEmptyString(request.refinementRationaleSummary, "refinementRationaleSummary");
+      assertNonEmptyString(request.requestedChangesSummary, "requestedChangesSummary");
+
+      if (request.approvedAction !== "refine_definition") {
+        throw new ResearchHypothesisValidationError(
+          `approved action does not authorize setup refinement request creation: ${request.approvedAction}`
+        );
+      }
+
+      if (!researchDecisionApprovalRepository) {
+        throw new ResearchHypothesisValidationError(
+          "research_decision_approval repository is required for setup refinement request creation"
+        );
+      }
+
+      if (!setupRefinementRequestRepository) {
+        throw new ResearchHypothesisValidationError(
+          "setup_refinement_request repository is required for setup refinement request creation"
+        );
+      }
+
+      const approval = await researchDecisionApprovalRepository.getById(
+        request.researchDecisionApprovalId
+      );
+      if (!approval) {
+        return null;
+      }
+
+      if (approval.researchFeedbackDecisionId !== request.researchFeedbackDecisionId) {
+        throw new ResearchHypothesisValidationError(
+          `research_decision_approval ${approval.id} does not belong to research_feedback_decision ${request.researchFeedbackDecisionId}`
+        );
+      }
+
+      if (approval.setupDefinitionId !== request.setupDefinitionId) {
+        throw new ResearchHypothesisValidationError(
+          `research_decision_approval ${approval.id} does not belong to setup_definition ${request.setupDefinitionId}`
+        );
+      }
+
+      if (approval.approvalOutcome !== "approved") {
+        throw new ResearchHypothesisValidationError(
+          `research_decision_approval outcome does not authorize setup refinement request creation: ${approval.approvalOutcome}`
+        );
+      }
+
+      if (approval.authorizedNextAction !== "refine_definition") {
+        throw new ResearchHypothesisValidationError(
+          `research_decision_approval does not authorize refine_definition action: ${approval.authorizedNextAction ?? "none"}`
+        );
+      }
+
+      const setupDefinition = await setupDefinitionRepository.getById(request.setupDefinitionId);
+      if (!setupDefinition) {
+        return null;
+      }
+
+      const refinementRequest = await setupRefinementRequestRepository.create({
+        request: {
+          id: buildRefinementRequestId(request),
+          setupDefinitionId: request.setupDefinitionId,
+          sourceResearchDecisionApprovalId: request.researchDecisionApprovalId,
+          sourceResearchFeedbackDecisionId: request.researchFeedbackDecisionId,
+          refinementRationaleSummary: request.refinementRationaleSummary,
+          requestedChangesSummary: request.requestedChangesSummary,
+          evidenceReferences: normalizeEvidenceReferences(request.evidenceReferences),
+          status: "proposed",
+          requestedBy: request.requestedBy,
+          requestedAt: request.requestedAt,
+          createdAt: request.requestedAt,
+          updatedAt: request.requestedAt
+        },
+        metadata: request.metadata
+      });
+
+      return { request: refinementRequest };
     }
   };
 };

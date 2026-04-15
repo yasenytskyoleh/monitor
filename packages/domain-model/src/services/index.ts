@@ -59,6 +59,7 @@ export {
 export type {
   ApproveFeedbackDecisionRequest,
   AttachHypothesisToSetupDefinitionsRequest,
+  CreateRefinementRequest,
   CreateResearchHypothesisRequest,
   FeedbackDecisionApproval,
   HypothesisEvidenceScopeDescriptor,
@@ -66,6 +67,7 @@ export type {
   ReviewSetupFromEvidenceRequest,
   ResearchService,
   ResearchServiceDependencies,
+  SetupRefinementFollowUp,
   SetupFeedbackReview,
   UpdateHypothesisEvidenceRequest,
   UpdateResearchHypothesisRequest,
