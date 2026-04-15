@@ -59,11 +59,19 @@ export {
 } from "./setup-lifecycle-mutation-record-repository.impl.js";
 export type {
   SetupDefinitionRevisionCreateRequest,
-  SetupDefinitionRevisionRepository
+  SetupDefinitionRevisionRepository,
+  SetupDefinitionRevisionStatusUpdateRequest
 } from "./setup-definition-revision-repository.js";
 export {
   InMemorySetupDefinitionRevisionRepository
 } from "./setup-definition-revision-repository.impl.js";
+export type {
+  SetupRevisionActivationRecordCreateRequest,
+  SetupRevisionActivationRecordRepository
+} from "./setup-revision-activation-record-repository.js";
+export {
+  InMemorySetupRevisionActivationRecordRepository
+} from "./setup-revision-activation-record-repository.impl.js";
 export type {
   SetupRefinementRequestCreateRequest,
   SetupRefinementRequestRepository

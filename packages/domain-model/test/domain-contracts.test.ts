@@ -40,6 +40,8 @@ import {
   SETUP_DEFINITION_REVISION_RESULT_STATUSES,
   SETUP_DEFINITION_REVISION_STATUSES,
   SETUP_LIFECYCLE_MUTATION_RESULT_STATUSES,
+  SETUP_REVISION_ACTIVATION_OUTCOMES,
+  SETUP_REVISION_ACTIVATION_RESULT_STATUSES,
   SETUP_REFINEMENT_REQUEST_RESULT_STATUSES,
   SETUP_REFINEMENT_STATUSES,
   SIGNAL_CANDIDATE_STATUSES,
@@ -155,6 +157,19 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "rejected_linkage",
     "failed"
   ]);
+  assert.deepEqual(SETUP_REVISION_ACTIVATION_OUTCOMES, [
+    "activated",
+    "superseded_previous",
+    "already_active",
+    "rejected"
+  ]);
+  assert.deepEqual(SETUP_REVISION_ACTIVATION_RESULT_STATUSES, [
+    "activated",
+    "superseded_previous",
+    "already_active",
+    "rejected",
+    "failed"
+  ]);
   assert.deepEqual(AGGREGATION_SYMBOL_SCOPE_KINDS, ["single_symbol", "symbol_set", "all_monitored"]);
   assert.deepEqual(STORAGE_BOUNDARIES, ["runtime_evidence", "product_domain", "derived_analytics"]);
   assert.deepEqual(RUNTIME_EVIDENCE_ARTIFACT_TYPES, [
@@ -175,7 +190,8 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "research_decision_approval",
     "setup_lifecycle_mutation_record",
     "setup_refinement_request",
-    "setup_definition_revision"
+    "setup_definition_revision",
+    "setup_revision_activation_record"
   ]);
   assert.deepEqual(PRODUCT_EPHEMERAL_ENTITY_TYPES, [
     "detection_input_transient",
@@ -199,10 +215,10 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "research_aggregation_service"
   ]);
   assert.deepEqual(FIRST_PERSISTED_PRODUCT_SLICE, ["setup_definition", "research_hypothesis"]);
-  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 11);
+  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 12);
   assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
   assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
-  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 11);
+  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 12);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
   assert.deepEqual(MARKET_DATA_PROVIDER_KINDS, ["exchange_adapter"]);
   assert.deepEqual(MARKET_DATA_SOURCE_STATUSES, ["active", "degraded", "paused"]);
@@ -579,7 +595,8 @@ test("supports repository and service boundary contracts", async () => {
     activateSetupDefinition: async () => null,
     archiveSetupDefinition: async () => null,
     applyApprovedMutation: async () => null,
-    createRevision: async () => null
+    createRevision: async () => null,
+    activateRevision: async () => null
   };
 
   const researchService: ResearchService = {

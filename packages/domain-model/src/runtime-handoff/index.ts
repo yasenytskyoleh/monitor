@@ -105,3 +105,9 @@ export {
 export type {
   SetupDefinitionRevisionHandoffDependencies
 } from "./setup-definition-revision.js";
+export {
+  createSetupRevisionActivationHandoff
+} from "./setup-revision-activation.js";
+export type {
+  SetupRevisionActivationHandoffDependencies
+} from "./setup-revision-activation.js";

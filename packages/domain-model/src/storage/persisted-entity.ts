@@ -149,5 +149,16 @@ export const FIRST_CLASS_PERSISTED_ENTITY_PROFILES: PersistedEntityProfile[] = [
       mutableFields: ["metadata", "updatedAtUtc"],
       canBeArchived: true
     }
+  },
+  {
+    entityType: "setup_revision_activation_record",
+    firstClassPersisted: true,
+    timing: {
+      createdWhen: "created when accepted setup revision is explicitly activated as operational current revision",
+      updatedWhen: "updated only for controlled activation audit metadata corrections",
+      immutableFields: ["identity.entityId"],
+      mutableFields: ["metadata", "updatedAtUtc"],
+      canBeArchived: true
+    }
   }
 ];

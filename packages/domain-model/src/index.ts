@@ -131,10 +131,13 @@ export {
   SETUP_DEFINITION_REVISION_RESULT_STATUSES,
   SETUP_DEFINITION_REVISION_STATUSES,
   SETUP_LIFECYCLE_MUTATION_RESULT_STATUSES,
+  SETUP_REVISION_ACTIVATION_OUTCOMES,
+  SETUP_REVISION_ACTIVATION_RESULT_STATUSES,
   SETUP_REFINEMENT_REQUEST_RESULT_STATUSES,
   SETUP_REFINEMENT_STATUSES
 } from "./review/index.js";
 export type {
+  ActivateSetupDefinitionRevisionCommand,
   ApplyApprovedSetupMutationCommand,
   ApprovedSetupLifecycleAction,
   CreateSetupDefinitionRevisionCommand,
@@ -150,6 +153,10 @@ export type {
   SetupDefinitionRevisionResultStatus,
   SetupDefinitionRevisionStatus,
   SetupDefinitionVersion,
+  SetupRevisionActivationOutcome,
+  SetupRevisionActivationRecord,
+  SetupRevisionActivationResult,
+  SetupRevisionActivationResultStatus,
   SetupLifecycleMutationRecord,
   SetupLifecycleMutationResult,
   SetupLifecycleMutationResultStatus,
@@ -221,11 +228,19 @@ export {
 } from "./repositories/research-decision-approval-repository.impl.js";
 export type {
   SetupDefinitionRevisionCreateRequest,
-  SetupDefinitionRevisionRepository
+  SetupDefinitionRevisionRepository,
+  SetupDefinitionRevisionStatusUpdateRequest
 } from "./repositories/setup-definition-revision-repository.js";
 export {
   InMemorySetupDefinitionRevisionRepository
 } from "./repositories/setup-definition-revision-repository.impl.js";
+export type {
+  SetupRevisionActivationRecordCreateRequest,
+  SetupRevisionActivationRecordRepository
+} from "./repositories/setup-revision-activation-record-repository.js";
+export {
+  InMemorySetupRevisionActivationRecordRepository
+} from "./repositories/setup-revision-activation-record-repository.impl.js";
 export type {
   SetupLifecycleMutationRecordCreateRequest,
   SetupLifecycleMutationRecordRepository
@@ -278,11 +293,13 @@ export type {
   UpdateMonitoredSymbolStatusRequest
 } from "./services/monitoring-catalog-service.js";
 export type {
+  ActivateSetupRevisionRequest,
   ApplyApprovedMutationRequest,
   ActivateSetupDefinitionRequest,
   ArchiveSetupDefinitionRequest,
   CreateSetupDefinitionRevisionRequest,
   CreateSetupDefinitionRequest,
+  SetupRevisionActivated,
   SetupDefinitionRevisionCreated,
   SetupLifecycleMutationApplied,
   SetupDefinitionService,
@@ -370,6 +387,7 @@ export {
   createApprovedRefinementFollowUpHandoff,
   createApprovedSetupLifecycleMutationHandoff,
   createSetupDefinitionRevisionHandoff,
+  createSetupRevisionActivationHandoff,
   createEvaluationToAggregationRefreshHandoff,
   createHypothesisEvidenceToSetupFeedbackHandoff,
   createResearchDecisionApprovalHandoff,
@@ -395,6 +413,7 @@ export type {
   ApprovedRefinementFollowUpDependencies,
   ApprovedSetupLifecycleMutationDependencies,
   SetupDefinitionRevisionHandoffDependencies,
+  SetupRevisionActivationHandoffDependencies,
   ResearchDecisionApprovalHandoffDependencies,
   EvaluationTriggerResult,
   EvaluationTriggerStatus,
