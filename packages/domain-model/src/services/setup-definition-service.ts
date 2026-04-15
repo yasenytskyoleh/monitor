@@ -1,10 +1,13 @@
 import type { SetupDefinition } from "../setup-definition.js";
 import type { TimestampUtc } from "../common.js";
 import type { ResearchDecisionApprovalRepository } from "../repositories/research-decision-approval-repository.js";
+import type { SetupRefinementRequestRepository } from "../repositories/setup-refinement-request-repository.js";
+import type { SetupDefinitionRevisionRepository } from "../repositories/setup-definition-revision-repository.js";
 import type { SetupLifecycleMutationRecordRepository } from "../repositories/setup-lifecycle-mutation-record-repository.js";
 import type { SetupDefinitionRepository } from "../repositories/setup-definition-repository.js";
 import {
   APPROVED_SETUP_LIFECYCLE_ACTIONS,
+  type SetupDefinitionRevision,
   type ApprovedSetupLifecycleAction,
   type SetupLifecycleMutationRecord
 } from "../review/index.js";
@@ -54,10 +57,36 @@ export type SetupLifecycleMutationApplied = {
   newStatus: SetupDefinition["status"];
 };
 
+export type CreateSetupDefinitionRevisionRequest = {
+  setupRefinementRequestId: string;
+  setupDefinitionId: string;
+  requestedBy: string;
+  requestedAt: TimestampUtc;
+  revisionSummary: string;
+  proposedChangedFieldsSummary: string;
+  proposedDescription?: string;
+  proposedMeasurableConditions?: string[];
+  proposedEvaluationAssumptions?: string[];
+  proposedInvalidationAssumptions?: string[];
+  expectedPreviousRevisionId?: string;
+  notes?: string;
+  originRunId?: string;
+  metadata: ProductRecordMetadata;
+  expectedVersion: number | null;
+};
+
+export type SetupDefinitionRevisionCreated = {
+  previousSetupDefinitionId: string;
+  newSetupDefinition: SetupDefinition;
+  revision: SetupDefinitionRevision;
+};
+
 export type SetupDefinitionServiceDependencies = {
   setupDefinitionRepository: SetupDefinitionRepository;
   researchDecisionApprovalRepository?: Pick<ResearchDecisionApprovalRepository, "getById">;
   setupLifecycleMutationRecordRepository?: SetupLifecycleMutationRecordRepository;
+  setupRefinementRequestRepository?: Pick<SetupRefinementRequestRepository, "getById">;
+  setupDefinitionRevisionRepository?: SetupDefinitionRevisionRepository;
 };
 
 export type SetupDefinitionService = {
@@ -68,6 +97,9 @@ export type SetupDefinitionService = {
   applyApprovedMutation(
     request: ApplyApprovedMutationRequest
   ): Promise<SetupLifecycleMutationApplied | null>;
+  createRevision(
+    request: CreateSetupDefinitionRevisionRequest
+  ): Promise<SetupDefinitionRevisionCreated | null>;
 };
 
 export class SetupDefinitionValidationError extends Error {
@@ -144,13 +176,30 @@ const resolveTargetStatus = (
 const buildMutationId = (request: ApplyApprovedMutationRequest): string =>
   `setup-mutation-${request.setupDefinitionId}-${Date.parse(request.mutatedAt)}`;
 
+const normalizeStringArray = (values: string[] | undefined): string[] | undefined => {
+  if (!values) {
+    return undefined;
+  }
+
+  const normalizedValues = values.map((value) => value.trim()).filter(Boolean);
+  return normalizedValues.length > 0 ? normalizedValues : undefined;
+};
+
+const buildRevisionId = (setupFamilyId: string, version: number, requestedAt: TimestampUtc): string =>
+  `setup-revision-${setupFamilyId}-${version}-${Date.parse(requestedAt)}`;
+
+const buildRevisionSetupDefinitionId = (setupFamilyId: string, version: number): string =>
+  `setup-${setupFamilyId}-v${version}`;
+
 export const createSetupDefinitionService = (
   dependencies: SetupDefinitionServiceDependencies
 ): SetupDefinitionService => {
   const {
     setupDefinitionRepository,
     researchDecisionApprovalRepository,
-    setupLifecycleMutationRecordRepository
+    setupLifecycleMutationRecordRepository,
+    setupRefinementRequestRepository,
+    setupDefinitionRevisionRepository
   } = dependencies;
 
   return {
@@ -317,6 +366,127 @@ export const createSetupDefinitionService = (
         mutationRecord,
         previousStatus: current.status,
         newStatus: nextStatus
+      };
+    },
+    async createRevision(request) {
+      assertNonEmptyString(request.setupRefinementRequestId, "setupRefinementRequestId");
+      assertNonEmptyString(request.setupDefinitionId, "setupDefinitionId");
+      assertNonEmptyString(request.requestedBy, "requestedBy");
+      assertNonEmptyString(request.requestedAt, "requestedAt");
+      assertNonEmptyString(request.revisionSummary, "revisionSummary");
+      assertNonEmptyString(request.proposedChangedFieldsSummary, "proposedChangedFieldsSummary");
+
+      if (!setupRefinementRequestRepository) {
+        throw new SetupDefinitionValidationError(
+          "setup_refinement_request repository is required for setup definition revision path"
+        );
+      }
+
+      if (!setupDefinitionRevisionRepository) {
+        throw new SetupDefinitionValidationError(
+          "setup_definition_revision repository is required for setup definition revision path"
+        );
+      }
+
+      const refinementRequest = await setupRefinementRequestRepository.getById(
+        request.setupRefinementRequestId
+      );
+      if (!refinementRequest) {
+        return null;
+      }
+
+      if (refinementRequest.setupDefinitionId !== request.setupDefinitionId) {
+        throw new SetupDefinitionValidationError(
+          `setup_refinement_request ${refinementRequest.id} does not belong to setup_definition ${request.setupDefinitionId}`
+        );
+      }
+
+      const currentDefinition = await setupDefinitionRepository.getById(request.setupDefinitionId);
+      if (!currentDefinition) {
+        return null;
+      }
+
+      const currentRevision = await setupDefinitionRevisionRepository.getBySetupDefinitionId(
+        request.setupDefinitionId
+      );
+      const setupFamilyId = currentRevision
+        ? currentRevision.versionInfo.setupFamilyId
+        : request.setupDefinitionId;
+
+      const previousRevision = currentRevision ??
+        (await setupDefinitionRevisionRepository.getLatestBySetupFamilyId(setupFamilyId));
+
+      if (request.expectedPreviousRevisionId) {
+        if (!previousRevision) {
+          throw new SetupDefinitionValidationError(
+            `expectedPreviousRevisionId does not match linkage: no previous revision exists for setup_family ${setupFamilyId}`
+          );
+        }
+
+        if (request.expectedPreviousRevisionId !== previousRevision.id) {
+          throw new SetupDefinitionValidationError(
+            `expectedPreviousRevisionId mismatch: expected ${request.expectedPreviousRevisionId}, got ${previousRevision.id}`
+          );
+        }
+      }
+
+      const previousVersion = previousRevision ? previousRevision.versionInfo.version : 1;
+      const nextVersion = previousVersion + 1;
+      const newSetupDefinitionId = buildRevisionSetupDefinitionId(setupFamilyId, nextVersion);
+      const requestedAt = request.requestedAt;
+      const revisionId = buildRevisionId(setupFamilyId, nextVersion, requestedAt);
+
+      const nextDefinition: SetupDefinition = {
+        ...currentDefinition,
+        id: newSetupDefinitionId,
+        description: request.proposedDescription?.trim() || currentDefinition.description,
+        measurableConditions: normalizeStringArray(request.proposedMeasurableConditions)
+          ?? currentDefinition.measurableConditions,
+        evaluationAssumptions: normalizeStringArray(request.proposedEvaluationAssumptions)
+          ?? currentDefinition.evaluationAssumptions,
+        invalidationAssumptions: normalizeStringArray(request.proposedInvalidationAssumptions)
+          ?? currentDefinition.invalidationAssumptions,
+        status: "draft",
+        createdAt: requestedAt,
+        updatedAt: requestedAt
+      };
+
+      validateSetupDefinition(nextDefinition);
+
+      const newSetupDefinition = await setupDefinitionRepository.create({
+        definition: nextDefinition,
+        metadata: request.metadata
+      });
+
+      const revision = await setupDefinitionRevisionRepository.create({
+        revision: {
+          id: revisionId,
+          setupDefinitionId: newSetupDefinition.id,
+          previousSetupDefinitionId: currentDefinition.id,
+          versionInfo: {
+            setupFamilyId,
+            revisionId,
+            version: nextVersion,
+            previousRevisionId: previousRevision?.id
+          },
+          revisionReason: request.revisionSummary,
+          revisionStatus: "draft",
+          changedFieldsSummary: request.proposedChangedFieldsSummary,
+          createdBy: request.requestedBy,
+          createdAt: requestedAt,
+          notes: request.notes,
+          sourceSetupRefinementRequestId: refinementRequest.id,
+          sourceResearchDecisionApprovalId: refinementRequest.sourceResearchDecisionApprovalId,
+          sourceResearchFeedbackDecisionId: refinementRequest.sourceResearchFeedbackDecisionId,
+          updatedAt: requestedAt
+        },
+        metadata: request.metadata
+      });
+
+      return {
+        previousSetupDefinitionId: currentDefinition.id,
+        newSetupDefinition,
+        revision
       };
     }
   };

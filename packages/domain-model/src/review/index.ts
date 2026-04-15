@@ -70,3 +70,27 @@ export type {
   SetupRefinementRequestResult,
   SetupRefinementRequestResultStatus
 } from "./setup-refinement-request-result.js";
+
+export type {
+  SetupDefinitionVersion
+} from "./setup-definition-version.js";
+
+export {
+  SETUP_DEFINITION_REVISION_STATUSES
+} from "./setup-definition-revision.js";
+export type {
+  SetupDefinitionRevision,
+  SetupDefinitionRevisionStatus
+} from "./setup-definition-revision.js";
+
+export type {
+  CreateSetupDefinitionRevisionCommand
+} from "./create-setup-definition-revision-command.js";
+
+export {
+  SETUP_DEFINITION_REVISION_RESULT_STATUSES
+} from "./setup-definition-revision-result.js";
+export type {
+  SetupDefinitionRevisionResult,
+  SetupDefinitionRevisionResultStatus
+} from "./setup-definition-revision-result.js";

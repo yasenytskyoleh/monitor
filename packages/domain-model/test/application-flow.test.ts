@@ -130,7 +130,8 @@ test("happy path service sequence", async () => {
     updateSetupDefinition: async (request) => request.definition,
     activateSetupDefinition: async () => null,
     archiveSetupDefinition: async () => null,
-    applyApprovedMutation: async () => null
+    applyApprovedMutation: async () => null,
+    createRevision: async () => null
   };
 
   const researchService: ResearchService = {
@@ -226,7 +227,8 @@ test("failure at candidate stage stops downstream steps", async () => {
       updateSetupDefinition: async (request) => request.definition,
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
-      applyApprovedMutation: async () => null
+      applyApprovedMutation: async () => null,
+      createRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,
@@ -236,7 +238,7 @@ test("failure at candidate stage stops downstream steps", async () => {
       updateHypothesisEvidence: async () => null,
       reviewSetupFromEvidence: async () => null,
       approveFeedbackDecision: async () => null,
-    createRefinementRequest: async () => null
+      createRefinementRequest: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async () => {
@@ -287,7 +289,8 @@ test("failure at evaluation stage stops before aggregation", async () => {
       updateSetupDefinition: async (request) => request.definition,
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
-      applyApprovedMutation: async () => null
+      applyApprovedMutation: async () => null,
+      createRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,
@@ -297,7 +300,7 @@ test("failure at evaluation stage stops before aggregation", async () => {
       updateHypothesisEvidence: async () => null,
       reviewSetupFromEvidence: async () => null,
       approveFeedbackDecision: async () => null,
-    createRefinementRequest: async () => null
+      createRefinementRequest: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,
@@ -339,7 +342,8 @@ test("aggregation refresh failure returns partial flow result", async () => {
       updateSetupDefinition: async (request) => request.definition,
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
-      applyApprovedMutation: async () => null
+      applyApprovedMutation: async () => null,
+      createRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,
@@ -349,7 +353,7 @@ test("aggregation refresh failure returns partial flow result", async () => {
       updateHypothesisEvidence: async () => null,
       reviewSetupFromEvidence: async () => null,
       approveFeedbackDecision: async () => null,
-    createRefinementRequest: async () => null
+      createRefinementRequest: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,
@@ -387,7 +391,8 @@ test("null research-hypothesis link result fails flow", async () => {
       updateSetupDefinition: async (request) => request.definition,
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
-      applyApprovedMutation: async () => null
+      applyApprovedMutation: async () => null,
+      createRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,
@@ -397,7 +402,7 @@ test("null research-hypothesis link result fails flow", async () => {
       updateHypothesisEvidence: async () => null,
       reviewSetupFromEvidence: async () => null,
       approveFeedbackDecision: async () => null,
-    createRefinementRequest: async () => null
+      createRefinementRequest: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,
@@ -435,7 +440,8 @@ test("null evaluation start result fails flow at start step", async () => {
       updateSetupDefinition: async (request) => request.definition,
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
-      applyApprovedMutation: async () => null
+      applyApprovedMutation: async () => null,
+      createRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,
@@ -445,7 +451,7 @@ test("null evaluation start result fails flow at start step", async () => {
       updateHypothesisEvidence: async () => null,
       reviewSetupFromEvidence: async () => null,
       approveFeedbackDecision: async () => null,
-    createRefinementRequest: async () => null
+      createRefinementRequest: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,
@@ -483,7 +489,8 @@ test("null aggregation recompute result returns partial with warning", async () 
       updateSetupDefinition: async (request) => request.definition,
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
-      applyApprovedMutation: async () => null
+      applyApprovedMutation: async () => null,
+      createRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,
@@ -493,7 +500,7 @@ test("null aggregation recompute result returns partial with warning", async () 
       updateHypothesisEvidence: async () => null,
       reviewSetupFromEvidence: async () => null,
       approveFeedbackDecision: async () => null,
-    createRefinementRequest: async () => null
+      createRefinementRequest: async () => null
     },
     signalCandidateService: {
       createSignalCandidate: async (request) => request.candidate,

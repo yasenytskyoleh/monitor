@@ -138,5 +138,16 @@ export const FIRST_CLASS_PERSISTED_ENTITY_PROFILES: PersistedEntityProfile[] = [
       mutableFields: ["metadata", "updatedAtUtc"],
       canBeArchived: true
     }
+  },
+  {
+    entityType: "setup_definition_revision",
+    firstClassPersisted: true,
+    timing: {
+      createdWhen: "created when refinement request is converted into a versioned setup_definition revision",
+      updatedWhen: "updated when revision status metadata changes in controlled revision flow",
+      immutableFields: ["identity.entityId"],
+      mutableFields: ["metadata", "updatedAtUtc"],
+      canBeArchived: true
+    }
   }
 ];
