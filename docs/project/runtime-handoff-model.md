@@ -214,3 +214,21 @@ This boundary is deterministic and service-driven:
 - creates a new draft `SetupDefinition` revision rather than mutating previous setup in place
 - persists `SetupDefinitionRevision` with family/version linkage metadata
 - returns explicit revision creation result statuses
+
+## Setup-revision activation boundary
+Tenth runtime handoff in this phase:
+- from accepted `SetupDefinitionRevision` to explicit operational activation
+- through explicit `ActivateSetupDefinitionRevisionCommand` payload
+
+Contracts:
+- `packages/domain-model/src/review/activate-setup-definition-revision-command.ts`
+- `packages/domain-model/src/review/setup-revision-activation-record.ts`
+- `packages/domain-model/src/review/setup-revision-activation-result.ts`
+- `packages/domain-model/src/runtime-handoff/setup-revision-activation.ts`
+
+This boundary is deterministic and service-driven:
+- requires explicit activation command and target revision id
+- enforces one-active-revision rule per setup family
+- allows activation only from accepted revision status
+- supersedes previous active revision explicitly while retaining immutable history
+- persists `SetupRevisionActivationRecord` for auditable operational selection history

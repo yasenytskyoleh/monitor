@@ -1,6 +1,7 @@
 import type {
   SetupDefinitionRevisionCreateRequest,
-  SetupDefinitionRevisionRepository
+  SetupDefinitionRevisionRepository,
+  SetupDefinitionRevisionStatusUpdateRequest
 } from "./setup-definition-revision-repository.js";
 import type { SetupDefinitionRevision } from "../review/setup-definition-revision.js";
 import type { ProductRecordMetadata } from "../storage/product-record-metadata.js";
@@ -15,6 +16,20 @@ const cloneRevision = (revision: SetupDefinitionRevision): SetupDefinitionRevisi
   structuredClone(revision);
 
 const cloneMetadata = (metadata: ProductRecordMetadata): ProductRecordMetadata => structuredClone(metadata);
+
+const assertExpectedVersion = (
+  record: PersistedSetupDefinitionRevisionRecord,
+  expectedVersion: number | null
+): void => {
+  if (expectedVersion !== null && expectedVersion !== record.version) {
+    throw new Error(
+      `setup_definition_revision version mismatch: expected ${expectedVersion}, got ${record.version}`
+    );
+  }
+};
+
+const buildUpdatedTimestamp = (metadata: ProductRecordMetadata): string =>
+  metadata.sourceObservedAtUtc ?? new Date().toISOString();
 
 export class InMemorySetupDefinitionRevisionRepository
 implements SetupDefinitionRevisionRepository {
@@ -70,6 +85,31 @@ implements SetupDefinitionRevisionRepository {
     this.recordsById.set(setupDefinitionRevisionId, {
       revision,
       version: 1,
+      metadata: cloneMetadata(request.metadata)
+    });
+
+    return cloneRevision(revision);
+  }
+
+  async updateStatus(
+    request: SetupDefinitionRevisionStatusUpdateRequest
+  ): Promise<SetupDefinitionRevision | null> {
+    const currentRecord = this.recordsById.get(request.setupDefinitionRevisionId);
+    if (!currentRecord) {
+      return null;
+    }
+
+    assertExpectedVersion(currentRecord, request.expectedVersion);
+
+    const revision: SetupDefinitionRevision = {
+      ...currentRecord.revision,
+      revisionStatus: request.status,
+      updatedAt: buildUpdatedTimestamp(request.metadata)
+    };
+
+    this.recordsById.set(request.setupDefinitionRevisionId, {
+      revision,
+      version: currentRecord.version + 1,
       metadata: cloneMetadata(request.metadata)
     });
 

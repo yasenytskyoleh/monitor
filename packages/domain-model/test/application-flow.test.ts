@@ -131,7 +131,8 @@ test("happy path service sequence", async () => {
     activateSetupDefinition: async () => null,
     archiveSetupDefinition: async () => null,
     applyApprovedMutation: async () => null,
-    createRevision: async () => null
+    createRevision: async () => null,
+    activateRevision: async () => null
   };
 
   const researchService: ResearchService = {
@@ -228,7 +229,8 @@ test("failure at candidate stage stops downstream steps", async () => {
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
       applyApprovedMutation: async () => null,
-      createRevision: async () => null
+      createRevision: async () => null,
+      activateRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,
@@ -290,7 +292,8 @@ test("failure at evaluation stage stops before aggregation", async () => {
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
       applyApprovedMutation: async () => null,
-      createRevision: async () => null
+      createRevision: async () => null,
+      activateRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,
@@ -343,7 +346,8 @@ test("aggregation refresh failure returns partial flow result", async () => {
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
       applyApprovedMutation: async () => null,
-      createRevision: async () => null
+      createRevision: async () => null,
+      activateRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,
@@ -392,7 +396,8 @@ test("null research-hypothesis link result fails flow", async () => {
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
       applyApprovedMutation: async () => null,
-      createRevision: async () => null
+      createRevision: async () => null,
+      activateRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,
@@ -441,7 +446,8 @@ test("null evaluation start result fails flow at start step", async () => {
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
       applyApprovedMutation: async () => null,
-      createRevision: async () => null
+      createRevision: async () => null,
+      activateRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,
@@ -490,7 +496,8 @@ test("null aggregation recompute result returns partial with warning", async () 
       activateSetupDefinition: async () => null,
       archiveSetupDefinition: async () => null,
       applyApprovedMutation: async () => null,
-      createRevision: async () => null
+      createRevision: async () => null,
+      activateRevision: async () => null
     },
     researchService: {
       createResearchHypothesis: async (request) => request.hypothesis,

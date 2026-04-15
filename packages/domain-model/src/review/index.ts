@@ -94,3 +94,26 @@ export type {
   SetupDefinitionRevisionResult,
   SetupDefinitionRevisionResultStatus
 } from "./setup-definition-revision-result.js";
+
+export {
+  SETUP_REVISION_ACTIVATION_OUTCOMES
+} from "./setup-revision-activation-status.js";
+export type {
+  SetupRevisionActivationOutcome
+} from "./setup-revision-activation-status.js";
+
+export type {
+  ActivateSetupDefinitionRevisionCommand
+} from "./activate-setup-definition-revision-command.js";
+
+export type {
+  SetupRevisionActivationRecord
+} from "./setup-revision-activation-record.js";
+
+export {
+  SETUP_REVISION_ACTIVATION_RESULT_STATUSES
+} from "./setup-revision-activation-result.js";
+export type {
+  SetupRevisionActivationResult,
+  SetupRevisionActivationResultStatus
+} from "./setup-revision-activation-result.js";

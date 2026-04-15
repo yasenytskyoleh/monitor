@@ -3,10 +3,13 @@ import type { TimestampUtc } from "../common.js";
 import type { ResearchDecisionApprovalRepository } from "../repositories/research-decision-approval-repository.js";
 import type { SetupRefinementRequestRepository } from "../repositories/setup-refinement-request-repository.js";
 import type { SetupDefinitionRevisionRepository } from "../repositories/setup-definition-revision-repository.js";
+import type { SetupRevisionActivationRecordRepository } from "../repositories/setup-revision-activation-record-repository.js";
 import type { SetupLifecycleMutationRecordRepository } from "../repositories/setup-lifecycle-mutation-record-repository.js";
 import type { SetupDefinitionRepository } from "../repositories/setup-definition-repository.js";
 import {
   APPROVED_SETUP_LIFECYCLE_ACTIONS,
+  type SetupRevisionActivationRecord,
+  type SetupRevisionActivationOutcome,
   type SetupDefinitionRevision,
   type ApprovedSetupLifecycleAction,
   type SetupLifecycleMutationRecord
@@ -81,12 +84,35 @@ export type SetupDefinitionRevisionCreated = {
   revision: SetupDefinitionRevision;
 };
 
+export type ActivateSetupRevisionRequest = {
+  setupDefinitionId?: string;
+  setupFamilyId?: string;
+  targetRevisionId: string;
+  activatedBy: string;
+  activatedAt: TimestampUtc;
+  rationale?: string;
+  previousActiveRevisionId?: string;
+  originRunId?: string;
+  metadata: ProductRecordMetadata;
+  expectedVersion: number | null;
+};
+
+export type SetupRevisionActivated = {
+  targetRevision: SetupDefinitionRevision;
+  targetSetupDefinition: SetupDefinition;
+  previousActiveRevision: SetupDefinitionRevision | null;
+  previousActiveSetupDefinition: SetupDefinition | null;
+  activationRecord: SetupRevisionActivationRecord;
+  activationOutcome: Exclude<SetupRevisionActivationOutcome, "rejected">;
+};
+
 export type SetupDefinitionServiceDependencies = {
   setupDefinitionRepository: SetupDefinitionRepository;
   researchDecisionApprovalRepository?: Pick<ResearchDecisionApprovalRepository, "getById">;
   setupLifecycleMutationRecordRepository?: SetupLifecycleMutationRecordRepository;
   setupRefinementRequestRepository?: Pick<SetupRefinementRequestRepository, "getById">;
   setupDefinitionRevisionRepository?: SetupDefinitionRevisionRepository;
+  setupRevisionActivationRecordRepository?: SetupRevisionActivationRecordRepository;
 };
 
 export type SetupDefinitionService = {
@@ -100,6 +126,9 @@ export type SetupDefinitionService = {
   createRevision(
     request: CreateSetupDefinitionRevisionRequest
   ): Promise<SetupDefinitionRevisionCreated | null>;
+  activateRevision(
+    request: ActivateSetupRevisionRequest
+  ): Promise<SetupRevisionActivated | null>;
 };
 
 export class SetupDefinitionValidationError extends Error {
@@ -191,6 +220,12 @@ const buildRevisionId = (setupFamilyId: string, version: number, requestedAt: Ti
 const buildRevisionSetupDefinitionId = (setupFamilyId: string, version: number): string =>
   `setup-${setupFamilyId}-v${version}`;
 
+const buildRevisionActivationId = (
+  setupFamilyId: string,
+  targetRevisionId: string,
+  activatedAt: TimestampUtc
+): string => `setup-activation-${setupFamilyId}-${targetRevisionId}-${Date.parse(activatedAt)}`;
+
 export const createSetupDefinitionService = (
   dependencies: SetupDefinitionServiceDependencies
 ): SetupDefinitionService => {
@@ -199,7 +234,8 @@ export const createSetupDefinitionService = (
     researchDecisionApprovalRepository,
     setupLifecycleMutationRecordRepository,
     setupRefinementRequestRepository,
-    setupDefinitionRevisionRepository
+    setupDefinitionRevisionRepository,
+    setupRevisionActivationRecordRepository
   } = dependencies;
 
   return {
@@ -487,6 +523,228 @@ export const createSetupDefinitionService = (
         previousSetupDefinitionId: currentDefinition.id,
         newSetupDefinition,
         revision
+      };
+    },
+    async activateRevision(request) {
+      assertNonEmptyString(request.targetRevisionId, "targetRevisionId");
+      assertNonEmptyString(request.activatedBy, "activatedBy");
+      assertNonEmptyString(request.activatedAt, "activatedAt");
+
+      if (!request.setupFamilyId && !request.setupDefinitionId) {
+        throw new SetupDefinitionValidationError(
+          "setupFamilyId or setupDefinitionId is required for setup revision activation"
+        );
+      }
+
+      if (!setupDefinitionRevisionRepository) {
+        throw new SetupDefinitionValidationError(
+          "setup_definition_revision repository is required for setup revision activation path"
+        );
+      }
+
+      if (!setupRevisionActivationRecordRepository) {
+        throw new SetupDefinitionValidationError(
+          "setup_revision_activation_record repository is required for setup revision activation path"
+        );
+      }
+
+      const targetRevision = await setupDefinitionRevisionRepository.getById(request.targetRevisionId);
+      if (!targetRevision) {
+        return null;
+      }
+
+      const setupFamilyId = targetRevision.versionInfo.setupFamilyId;
+      if (request.setupFamilyId && request.setupFamilyId !== setupFamilyId) {
+        throw new SetupDefinitionValidationError(
+          `target revision ${targetRevision.id} does not belong to setup_family ${request.setupFamilyId}`
+        );
+      }
+
+      if (
+        request.setupDefinitionId &&
+        request.setupDefinitionId !== targetRevision.setupDefinitionId &&
+        request.setupDefinitionId !== setupFamilyId
+      ) {
+        throw new SetupDefinitionValidationError(
+          `target revision ${targetRevision.id} does not match setup_definition selector ${request.setupDefinitionId}`
+        );
+      }
+
+      const targetSetupDefinition = await setupDefinitionRepository.getById(
+        targetRevision.setupDefinitionId
+      );
+      if (!targetSetupDefinition) {
+        return null;
+      }
+
+      const familyRevisions = await setupDefinitionRevisionRepository.listBySetupFamilyId(setupFamilyId);
+      const activeRevisions: SetupDefinitionRevision[] = [];
+      for (const revision of familyRevisions) {
+        const definition = await setupDefinitionRepository.getById(revision.setupDefinitionId);
+        if (definition?.status === "active") {
+          activeRevisions.push(revision);
+        }
+      }
+
+      if (activeRevisions.length > 1) {
+        throw new SetupDefinitionValidationError(
+          `setup_family ${setupFamilyId} has multiple active revisions and cannot be activated deterministically`
+        );
+      }
+
+      const previousActiveRevision = activeRevisions[0] ?? null;
+
+      if (
+        request.previousActiveRevisionId &&
+        request.previousActiveRevisionId !== previousActiveRevision?.id
+      ) {
+        throw new SetupDefinitionValidationError(
+          `previousActiveRevisionId mismatch: expected ${request.previousActiveRevisionId}, got ${previousActiveRevision?.id ?? "none"}`
+        );
+      }
+
+      if (previousActiveRevision?.id === targetRevision.id) {
+        const activationRecord = await setupRevisionActivationRecordRepository.create({
+          activation: {
+            id: buildRevisionActivationId(setupFamilyId, targetRevision.id, request.activatedAt),
+            setupFamilyId,
+            targetRevisionId: targetRevision.id,
+            targetSetupDefinitionId: targetRevision.setupDefinitionId,
+            previousRevisionId: previousActiveRevision.id,
+            previousSetupDefinitionId: previousActiveRevision.setupDefinitionId,
+            activatedBy: request.activatedBy,
+            activatedAt: request.activatedAt,
+            activationOutcome: "already_active",
+            rationale: request.rationale,
+            createdAt: request.activatedAt,
+            updatedAt: request.activatedAt
+          },
+          metadata: request.metadata
+        });
+
+        return {
+          targetRevision,
+          targetSetupDefinition,
+          previousActiveRevision,
+          previousActiveSetupDefinition: targetSetupDefinition,
+          activationRecord,
+          activationOutcome: "already_active"
+        };
+      }
+
+      if (targetRevision.revisionStatus !== "accepted") {
+        throw new SetupDefinitionValidationError(
+          `setup_definition_revision is not eligible for activation in status: ${targetRevision.revisionStatus}`
+        );
+      }
+
+      const activatedTargetSetupDefinition = targetSetupDefinition.status === "active"
+        ? targetSetupDefinition
+        : await setupDefinitionRepository.updateStatus({
+          setupDefinitionId: targetSetupDefinition.id,
+          status: "active",
+          metadata: request.metadata,
+          expectedVersion: request.expectedVersion
+        });
+      if (!activatedTargetSetupDefinition) {
+        throw new SetupDefinitionValidationError(
+          `setup_definition not found during revision activation: ${targetSetupDefinition.id}`
+        );
+      }
+
+      let previousActiveSetupDefinition: SetupDefinition | null = null;
+      let supersededRevision: SetupDefinitionRevision | null = null;
+      let activationOutcome: Exclude<SetupRevisionActivationOutcome, "rejected"> = "activated";
+
+      if (previousActiveRevision && previousActiveRevision.id !== targetRevision.id) {
+        previousActiveSetupDefinition = await setupDefinitionRepository.getById(
+          previousActiveRevision.setupDefinitionId
+        );
+        if (!previousActiveSetupDefinition) {
+          throw new SetupDefinitionValidationError(
+            `setup_definition not found for previous active revision: ${previousActiveRevision.setupDefinitionId}`
+          );
+        }
+
+        if (previousActiveSetupDefinition.status === "active") {
+          const updatedPrevious = await setupDefinitionRepository.updateStatus({
+            setupDefinitionId: previousActiveSetupDefinition.id,
+            status: "paused",
+            metadata: request.metadata,
+            expectedVersion: request.expectedVersion
+          });
+
+          if (!updatedPrevious) {
+            throw new SetupDefinitionValidationError(
+              `setup_definition not found during previous revision superseding: ${previousActiveSetupDefinition.id}`
+            );
+          }
+
+          previousActiveSetupDefinition = updatedPrevious;
+        }
+
+        supersededRevision = await setupDefinitionRevisionRepository.updateStatus({
+          setupDefinitionRevisionId: previousActiveRevision.id,
+          status: "superseded",
+          metadata: request.metadata,
+          expectedVersion: request.expectedVersion
+        });
+        if (!supersededRevision) {
+          throw new SetupDefinitionValidationError(
+            `setup_definition_revision not found during superseding: ${previousActiveRevision.id}`
+          );
+        }
+
+        activationOutcome = "superseded_previous";
+      } else if (!previousActiveRevision && targetRevision.previousSetupDefinitionId) {
+        const previousSetupByLinkage = await setupDefinitionRepository.getById(
+          targetRevision.previousSetupDefinitionId
+        );
+
+        if (previousSetupByLinkage?.status === "active") {
+          const updatedPreviousByLinkage = await setupDefinitionRepository.updateStatus({
+            setupDefinitionId: previousSetupByLinkage.id,
+            status: "paused",
+            metadata: request.metadata,
+            expectedVersion: request.expectedVersion
+          });
+
+          if (!updatedPreviousByLinkage) {
+            throw new SetupDefinitionValidationError(
+              `setup_definition not found during previous setup superseding: ${previousSetupByLinkage.id}`
+            );
+          }
+
+          previousActiveSetupDefinition = updatedPreviousByLinkage;
+          activationOutcome = "superseded_previous";
+        }
+      }
+
+      const activationRecord = await setupRevisionActivationRecordRepository.create({
+        activation: {
+          id: buildRevisionActivationId(setupFamilyId, targetRevision.id, request.activatedAt),
+          setupFamilyId,
+          targetRevisionId: targetRevision.id,
+          targetSetupDefinitionId: targetRevision.setupDefinitionId,
+          previousRevisionId: previousActiveRevision?.id,
+          previousSetupDefinitionId: previousActiveRevision?.setupDefinitionId,
+          activatedBy: request.activatedBy,
+          activatedAt: request.activatedAt,
+          activationOutcome,
+          rationale: request.rationale,
+          createdAt: request.activatedAt,
+          updatedAt: request.activatedAt
+        },
+        metadata: request.metadata
+      });
+
+      return {
+        targetRevision,
+        targetSetupDefinition: activatedTargetSetupDefinition,
+        previousActiveRevision: supersededRevision ?? previousActiveRevision,
+        previousActiveSetupDefinition,
+        activationRecord,
+        activationOutcome
       };
     }
   };
