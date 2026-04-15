@@ -99,3 +99,9 @@ export {
 export type {
   ApprovedRefinementFollowUpDependencies
 } from "./approved-refinement-follow-up.js";
+export {
+  createSetupDefinitionRevisionHandoff
+} from "./setup-definition-revision.js";
+export type {
+  SetupDefinitionRevisionHandoffDependencies
+} from "./setup-definition-revision.js";

@@ -58,6 +58,13 @@ export {
   InMemorySetupLifecycleMutationRecordRepository
 } from "./setup-lifecycle-mutation-record-repository.impl.js";
 export type {
+  SetupDefinitionRevisionCreateRequest,
+  SetupDefinitionRevisionRepository
+} from "./setup-definition-revision-repository.js";
+export {
+  InMemorySetupDefinitionRevisionRepository
+} from "./setup-definition-revision-repository.impl.js";
+export type {
   SetupRefinementRequestCreateRequest,
   SetupRefinementRequestRepository
 } from "./setup-refinement-request-repository.js";

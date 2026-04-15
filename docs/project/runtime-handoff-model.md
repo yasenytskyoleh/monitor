@@ -196,3 +196,21 @@ This boundary is deterministic and service-driven:
 - delegates refinement request creation semantics to `ResearchService.createRefinementRequest(...)`
 - persists `SetupRefinementRequest` as durable reviewable follow-up artifact
 - does not auto-apply setup-definition content mutation in this slice
+
+## Setup-refinement to setup-revision boundary
+Ninth runtime handoff in this phase:
+- from persisted `SetupRefinementRequest` to explicit setup-definition revision creation
+- through explicit `CreateSetupDefinitionRevisionCommand` payload
+
+Contracts:
+- `packages/domain-model/src/review/create-setup-definition-revision-command.ts`
+- `packages/domain-model/src/review/setup-definition-revision.ts`
+- `packages/domain-model/src/review/setup-definition-revision-result.ts`
+- `packages/domain-model/src/runtime-handoff/setup-definition-revision.ts`
+
+This boundary is deterministic and service-driven:
+- validates refinement request and setup-definition linkage explicitly
+- delegates version assignment and revision chain semantics to `SetupDefinitionService.createRevision(...)`
+- creates a new draft `SetupDefinition` revision rather than mutating previous setup in place
+- persists `SetupDefinitionRevision` with family/version linkage metadata
+- returns explicit revision creation result statuses
