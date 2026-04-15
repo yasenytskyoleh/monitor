@@ -178,3 +178,21 @@ This boundary is deterministic and service-driven:
 - delegates lifecycle legality checks and status application to `SetupDefinitionService.applyApprovedMutation(...)`
 - persists `SetupLifecycleMutationRecord` as durable audit artifact
 - returns explicit mutation result statuses
+
+## Approved refinement follow-up boundary
+Eighth runtime handoff in this phase:
+- from approved `ResearchDecisionApproval` with `refine_definition` action
+- to structured refinement follow-up request creation
+
+Contracts:
+- `packages/domain-model/src/review/create-setup-refinement-request-command.ts`
+- `packages/domain-model/src/review/setup-refinement-request.ts`
+- `packages/domain-model/src/review/setup-refinement-request-result.ts`
+- `packages/domain-model/src/runtime-handoff/approved-refinement-follow-up.ts`
+
+This boundary is deterministic and service-driven:
+- requires explicit `approved` outcome and `authorizedNextAction=refine_definition`
+- validates approval/setup/feedback linkage and command action explicitly
+- delegates refinement request creation semantics to `ResearchService.createRefinementRequest(...)`
+- persists `SetupRefinementRequest` as durable reviewable follow-up artifact
+- does not auto-apply setup-definition content mutation in this slice

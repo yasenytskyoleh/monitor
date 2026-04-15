@@ -57,3 +57,10 @@ export type {
 export {
   InMemorySetupLifecycleMutationRecordRepository
 } from "./setup-lifecycle-mutation-record-repository.impl.js";
+export type {
+  SetupRefinementRequestCreateRequest,
+  SetupRefinementRequestRepository
+} from "./setup-refinement-request-repository.js";
+export {
+  InMemorySetupRefinementRequestRepository
+} from "./setup-refinement-request-repository.impl.js";
