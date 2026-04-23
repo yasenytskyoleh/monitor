@@ -1,16 +1,23 @@
 import type { EvaluationResult } from "../evaluation.js";
 import type { EvaluationResultRepository } from "../repositories/evaluation-result-repository.js";
+import type { ResearchDecisionApprovalRepository } from "../repositories/research-decision-approval-repository.js";
+import type { ResearchFeedbackDecisionRepository } from "../repositories/research-feedback-decision-repository.js";
+import type { ResearchHypothesisRepository } from "../repositories/research-hypothesis-repository.js";
 import type { SetupAggregateResultRepository } from "../repositories/setup-aggregate-result-repository.js";
 import type { SetupDefinitionRepository } from "../repositories/setup-definition-repository.js";
 import type { SetupDefinitionRevisionRepository } from "../repositories/setup-definition-revision-repository.js";
 import type { SignalCandidateRepository } from "../repositories/signal-candidate-repository.js";
+import type { ResearchHypothesis } from "../research-hypothesis.js";
+import type { ResearchFeedbackDecision } from "../research/research-feedback-decision.js";
 import type { SetupAggregateResult } from "../research/setup-aggregate-result.js";
+import type { ResearchDecisionApproval } from "../review/research-decision-approval.js";
 import type { SetupDefinitionRevision } from "../review/setup-definition-revision.js";
 import type { SignalCandidate } from "../signal-candidate.js";
 import type {
   CompareSetupRevisionsCommand,
   RevisionComparisonScopeDescriptor
 } from "./compare-setup-revisions-command.js";
+import type { BuildResearchReviewPacketCommand } from "./build-research-review-packet-command.js";
 import type { BuildSetupRevisionImpactSummaryCommand } from "./build-setup-revision-impact-summary-command.js";
 import type { QueryAggregateEvidenceByRevisionScope } from "./query-aggregate-evidence-by-revision-scope.js";
 import type { QueryEvaluationResultsByRevision } from "./query-evaluation-results-by-revision.js";
@@ -27,6 +34,8 @@ import type {
 } from "./revision-comparison-metrics.js";
 import type { RevisionImpactSummaryResult } from "./revision-impact-summary-result.js";
 import type { RevisionHistoryQueryResult } from "./revision-history-query-result.js";
+import type { ResearchReviewPacket } from "./research-review-packet.js";
+import type { ResearchReviewPacketResult } from "./research-review-packet-result.js";
 import type { SetupRevisionComparison } from "./setup-revision-comparison.js";
 import type {
   RevisionEvidenceSufficiencyLevel,
@@ -66,19 +75,36 @@ export type SetupComparisonSummaryService = {
   buildImpactSummary(command: BuildSetupRevisionImpactSummaryCommand): Promise<RevisionImpactSummaryResult>;
 };
 
+export type ResearchReviewPacketService = {
+  buildReviewPacket(command: BuildResearchReviewPacketCommand): Promise<ResearchReviewPacketResult>;
+};
+
 export type RevisionHistoryQueryService = SetupDefinitionQueryService &
   SignalCandidateQueryService &
   EvaluationQueryService &
   AggregateEvidenceQueryService &
   SetupComparisonQueryService &
-  SetupComparisonSummaryService;
+  SetupComparisonSummaryService &
+  ResearchReviewPacketService;
 
 export type RevisionHistoryQueryServiceDependencies = {
-  setupDefinitionRevisionRepository: Pick<SetupDefinitionRevisionRepository, "getById" | "listBySetupFamilyId">;
+  setupDefinitionRevisionRepository: Pick<
+    SetupDefinitionRevisionRepository,
+    "getById" | "getLatestBySetupFamilyId" | "listBySetupFamilyId"
+  >;
   setupDefinitionRepository: Pick<SetupDefinitionRepository, "getById">;
   signalCandidateRepository: Pick<SignalCandidateRepository, "listBySetupDefinitionId">;
   evaluationResultRepository: Pick<EvaluationResultRepository, "listBySignalCandidateId">;
   setupAggregateResultRepository: Pick<SetupAggregateResultRepository, "listBySetupDefinitionId">;
+  researchHypothesisRepository?: Pick<ResearchHypothesisRepository, "getById">;
+  researchFeedbackDecisionRepository?: Pick<
+    ResearchFeedbackDecisionRepository,
+    "getById" | "listBySetupDefinitionId" | "listByResearchHypothesisId"
+  >;
+  researchDecisionApprovalRepository?: Pick<
+    ResearchDecisionApprovalRepository,
+    "getById" | "listByFeedbackDecisionId"
+  >;
 };
 
 const isTimestampWithinRange = (timestamp: string | null | undefined, range: QueryTimeRange | undefined): boolean => {
@@ -456,6 +482,29 @@ const resolveImpactClassification = (
   return "inconclusive";
 };
 
+const trimToOptional = (value: string | undefined): string | undefined => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+};
+
+const asTimestampValue = (value: string | undefined): number => {
+  if (!value) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
+};
+
+const pickLatestBy = <T>(
+  items: T[],
+  timestampSelector: (item: T) => string | undefined
+): T | null =>
+  items
+    .slice()
+    .sort((left, right) => asTimestampValue(timestampSelector(right)) - asTimestampValue(timestampSelector(left)))[0] ??
+  null;
+
 const asErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "unexpected revision-history query failure";
 
@@ -467,7 +516,10 @@ export const createRevisionHistoryQueryService = (
     setupDefinitionRepository,
     signalCandidateRepository,
     evaluationResultRepository,
-    setupAggregateResultRepository
+    setupAggregateResultRepository,
+    researchHypothesisRepository,
+    researchFeedbackDecisionRepository,
+    researchDecisionApprovalRepository
   } = dependencies;
 
   const buildRevisionCandidates = async (
@@ -1223,6 +1275,302 @@ export const createRevisionHistoryQueryService = (
     }
   };
 
+  const buildReviewPacket = async (
+    command: BuildResearchReviewPacketCommand
+  ): Promise<ResearchReviewPacketResult> => {
+    try {
+      const setupFamilyId = command.setupFamilyId.trim();
+      if (!setupFamilyId) {
+        return {
+          status: "rejected",
+          reason: "setupFamilyId is required",
+          warnings: []
+        };
+      }
+
+      if (!command.builtAt.trim()) {
+        return {
+          status: "rejected",
+          setupFamilyId,
+          reason: "builtAt is required",
+          warnings: []
+        };
+      }
+
+      const requestedArtifactRefs = {
+        setupRevisionId: trimToOptional(command.setupRevisionId),
+        researchHypothesisId: trimToOptional(command.researchHypothesisId),
+        researchFeedbackDecisionId: trimToOptional(command.researchFeedbackDecisionId),
+        researchDecisionApprovalId: trimToOptional(command.researchDecisionApprovalId),
+        impactSummaryId: trimToOptional(command.impactSummaryId)
+      };
+
+      let revision: SetupDefinitionRevision | null = null;
+      if (requestedArtifactRefs.setupRevisionId) {
+        revision = await resolveRevision(requestedArtifactRefs.setupRevisionId);
+        if (!revision) {
+          return {
+            status: "rejected",
+            setupFamilyId,
+            setupRevisionId: requestedArtifactRefs.setupRevisionId,
+            reason: `setup_definition_revision not found: ${requestedArtifactRefs.setupRevisionId}`,
+            warnings: []
+          };
+        }
+      } else {
+        revision = await setupDefinitionRevisionRepository.getLatestBySetupFamilyId(setupFamilyId);
+      }
+
+      if (revision && revision.versionInfo.setupFamilyId !== setupFamilyId) {
+        return {
+          status: "rejected",
+          setupFamilyId,
+          setupRevisionId: revision.id,
+          reason: "setupRevisionId does not belong to setupFamilyId",
+          warnings: []
+        };
+      }
+
+      const warnings: string[] = [];
+
+      if (!revision) {
+        warnings.push("no setup revision context resolved for setupFamilyId");
+      }
+
+      const setupDefinition = revision
+        ? await setupDefinitionRepository.getById(revision.setupDefinitionId)
+        : null;
+
+      if (revision && !setupDefinition) {
+        warnings.push(`setup_definition not found for revision: ${revision.setupDefinitionId}`);
+      }
+
+      let impactSummary = command.impactSummarySnapshot;
+      if (impactSummary) {
+        if (impactSummary.setupFamilyId !== setupFamilyId) {
+          return {
+            status: "rejected",
+            setupFamilyId,
+            setupRevisionId: revision?.id,
+            reason: "impactSummarySnapshot.setupFamilyId does not match setupFamilyId",
+            warnings: []
+          };
+        }
+
+        if (
+          revision &&
+          impactSummary.targetRevisionId !== revision.id &&
+          impactSummary.baselineRevisionId !== revision.id
+        ) {
+          warnings.push("impact summary does not directly include the resolved setup revision context");
+        }
+      } else if (requestedArtifactRefs.impactSummaryId) {
+        warnings.push(
+          "impactSummaryId provided without impactSummarySnapshot; snapshot lookup by id is postponed"
+        );
+      } else {
+        warnings.push("latest impact summary snapshot is missing");
+      }
+
+      if (requestedArtifactRefs.researchHypothesisId && !researchHypothesisRepository) {
+        return {
+          status: "rejected",
+          setupFamilyId,
+          setupRevisionId: revision?.id,
+          researchHypothesisId: requestedArtifactRefs.researchHypothesisId,
+          reason: "researchHypothesisRepository is required when researchHypothesisId is provided",
+          warnings: []
+        };
+      }
+
+      if (requestedArtifactRefs.researchFeedbackDecisionId && !researchFeedbackDecisionRepository) {
+        return {
+          status: "rejected",
+          setupFamilyId,
+          setupRevisionId: revision?.id,
+          researchFeedbackDecisionId: requestedArtifactRefs.researchFeedbackDecisionId,
+          reason:
+            "researchFeedbackDecisionRepository is required when researchFeedbackDecisionId is provided",
+          warnings: []
+        };
+      }
+
+      if (requestedArtifactRefs.researchDecisionApprovalId && !researchDecisionApprovalRepository) {
+        return {
+          status: "rejected",
+          setupFamilyId,
+          setupRevisionId: revision?.id,
+          researchDecisionApprovalId: requestedArtifactRefs.researchDecisionApprovalId,
+          reason:
+            "researchDecisionApprovalRepository is required when researchDecisionApprovalId is provided",
+          warnings: []
+        };
+      }
+
+      let recommendation: ResearchFeedbackDecision | null = null;
+      if (requestedArtifactRefs.researchFeedbackDecisionId && researchFeedbackDecisionRepository) {
+        recommendation = await researchFeedbackDecisionRepository.getById(
+          requestedArtifactRefs.researchFeedbackDecisionId
+        );
+        if (!recommendation) {
+          return {
+            status: "rejected",
+            setupFamilyId,
+            setupRevisionId: revision?.id,
+            researchFeedbackDecisionId: requestedArtifactRefs.researchFeedbackDecisionId,
+            reason: `research_feedback_decision not found: ${requestedArtifactRefs.researchFeedbackDecisionId}`,
+            warnings: []
+          };
+        }
+      } else if (researchFeedbackDecisionRepository && revision) {
+        const decisions = requestedArtifactRefs.researchHypothesisId
+          ? await researchFeedbackDecisionRepository.listByResearchHypothesisId(
+              requestedArtifactRefs.researchHypothesisId
+            )
+          : await researchFeedbackDecisionRepository.listBySetupDefinitionId(revision.setupDefinitionId);
+        recommendation = pickLatestBy(decisions, (decision) => decision.updatedAt || decision.createdAt);
+      }
+
+      if (!recommendation) {
+        warnings.push("latest research feedback decision snapshot is missing");
+      } else if (revision && recommendation.setupDefinitionId !== revision.setupDefinitionId) {
+        warnings.push("resolved research feedback decision is outside current setup revision context");
+      }
+
+      const resolvedHypothesisId =
+        requestedArtifactRefs.researchHypothesisId ?? recommendation?.researchHypothesisId;
+
+      let hypothesis: ResearchHypothesis | null = null;
+      if (resolvedHypothesisId) {
+        if (!researchHypothesisRepository) {
+          warnings.push("research hypothesis repository is unavailable for hypothesis snapshot lookup");
+        } else {
+          hypothesis = await researchHypothesisRepository.getById(resolvedHypothesisId);
+          if (!hypothesis) {
+            warnings.push(`research_hypothesis not found: ${resolvedHypothesisId}`);
+          } else if (
+            revision &&
+            !hypothesis.relatedSetupDefinitionIds.includes(revision.setupDefinitionId)
+          ) {
+            warnings.push("resolved hypothesis is not linked to the setup definition in revision context");
+          }
+        }
+      } else {
+        warnings.push("linked research hypothesis context is missing");
+      }
+
+      let approval: ResearchDecisionApproval | null = null;
+      if (requestedArtifactRefs.researchDecisionApprovalId && researchDecisionApprovalRepository) {
+        approval = await researchDecisionApprovalRepository.getById(
+          requestedArtifactRefs.researchDecisionApprovalId
+        );
+        if (!approval) {
+          return {
+            status: "rejected",
+            setupFamilyId,
+            setupRevisionId: revision?.id,
+            researchDecisionApprovalId: requestedArtifactRefs.researchDecisionApprovalId,
+            reason: `research_decision_approval not found: ${requestedArtifactRefs.researchDecisionApprovalId}`,
+            warnings: []
+          };
+        }
+      } else if (researchDecisionApprovalRepository && recommendation) {
+        const approvals = await researchDecisionApprovalRepository.listByFeedbackDecisionId(
+          recommendation.id
+        );
+        approval = pickLatestBy(approvals, (item) => item.reviewedAt || item.createdAt);
+      }
+
+      if (!approval) {
+        warnings.push("latest research decision approval snapshot is missing");
+      } else if (recommendation && approval.researchFeedbackDecisionId !== recommendation.id) {
+        return {
+          status: "rejected",
+          setupFamilyId,
+          setupRevisionId: revision?.id,
+          researchFeedbackDecisionId: recommendation.id,
+          researchDecisionApprovalId: approval.id,
+          reason: "research decision approval does not link to resolved research feedback decision",
+          warnings: []
+        };
+      }
+
+      const includedArtifactRefs = {
+        setupRevisionId: revision?.id,
+        setupDefinitionId: revision?.setupDefinitionId,
+        researchHypothesisId: hypothesis?.id ?? resolvedHypothesisId,
+        researchFeedbackDecisionId: recommendation?.id,
+        researchDecisionApprovalId: approval?.id,
+        impactSummaryId: requestedArtifactRefs.impactSummaryId
+      };
+
+      const packetId = `review-packet:${setupFamilyId}:${revision?.id ?? "no-revision"}:${command.builtAt}`;
+      const hasEvidenceContext = Boolean(
+        impactSummary ||
+          hypothesis?.evidenceStatus ||
+          recommendation ||
+          approval
+      );
+
+      let packetStatus: ResearchReviewPacket["status"] = "complete";
+      if (!revision || !hasEvidenceContext) {
+        packetStatus = "insufficient_context";
+      } else if (warnings.length > 0) {
+        packetStatus = "partial";
+      }
+
+      const packet: ResearchReviewPacket = {
+        id: packetId,
+        setupFamilyId,
+        setupRevisionId: revision?.id,
+        hypothesisId: hypothesis?.id ?? resolvedHypothesisId,
+        reviewScope: command.scopeDescriptor,
+        revisionContext: revision
+          ? {
+              setupRevisionId: revision.id,
+              setupDefinitionId: revision.setupDefinitionId,
+              revisionStatus: revision.revisionStatus,
+              setupDefinitionStatus: setupDefinition?.status ?? "missing_setup_definition",
+              version: revision.versionInfo.version,
+              previousRevisionId: revision.versionInfo.previousRevisionId
+            }
+          : undefined,
+        impactSummarySnapshot: impactSummary,
+        hypothesisSnapshot: hypothesis ?? undefined,
+        recommendationSnapshot: recommendation ?? undefined,
+        approvalSnapshot: approval ?? undefined,
+        includedArtifactRefs,
+        requestedArtifactRefs,
+        currentEvidenceStatus: hypothesis?.evidenceStatus,
+        warnings,
+        status: packetStatus,
+        createdAt: command.builtAt
+      };
+
+      return {
+        status: packetStatus,
+        packet,
+        setupFamilyId,
+        setupRevisionId: revision?.id,
+        researchHypothesisId: hypothesis?.id ?? resolvedHypothesisId,
+        researchFeedbackDecisionId: recommendation?.id,
+        researchDecisionApprovalId: approval?.id,
+        warnings
+      };
+    } catch (error: unknown) {
+      return {
+        status: "failed",
+        setupFamilyId: command.setupFamilyId,
+        setupRevisionId: command.setupRevisionId,
+        researchHypothesisId: command.researchHypothesisId,
+        researchFeedbackDecisionId: command.researchFeedbackDecisionId,
+        researchDecisionApprovalId: command.researchDecisionApprovalId,
+        reason: asErrorMessage(error),
+        warnings: ["research review packet assembly can be retried after resolving query failure"]
+      };
+    }
+  };
+
   const queryHistory = async (
     query: QuerySetupRevisionHistory
   ): Promise<RevisionHistoryQueryResult> => {
@@ -1287,6 +1635,7 @@ export const createRevisionHistoryQueryService = (
     getEvaluationsByRevision,
     getByRevisionScope,
     compareRevisions,
-    buildImpactSummary
+    buildImpactSummary,
+    buildReviewPacket
   };
 };

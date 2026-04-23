@@ -29,6 +29,10 @@ export type {
 } from "./build-setup-revision-impact-summary-command.js";
 
 export type {
+  BuildResearchReviewPacketCommand
+} from "./build-research-review-packet-command.js";
+
+export type {
   RevisionComparisonMetricDeltas,
   RevisionComparisonMetrics,
   RevisionMetricDelta
@@ -75,6 +79,27 @@ export type {
   RevisionImpactSummaryResultStatus
 } from "./revision-impact-summary-result.js";
 
+export {
+  RESEARCH_REVIEW_PACKET_STATUSES
+} from "./research-review-packet-status.js";
+export type {
+  ResearchReviewPacketStatus
+} from "./research-review-packet-status.js";
+
+export type {
+  ResearchReviewPacket,
+  ResearchReviewPacketArtifactRefs,
+  ResearchReviewPacketRevisionContext
+} from "./research-review-packet.js";
+
+export {
+  RESEARCH_REVIEW_PACKET_RESULT_STATUSES
+} from "./research-review-packet-result.js";
+export type {
+  ResearchReviewPacketResult,
+  ResearchReviewPacketResultStatus
+} from "./research-review-packet-result.js";
+
 export type {
   RevisionAggregateHistoryView,
   RevisionCandidateHistoryView,
@@ -99,6 +124,7 @@ export type {
   EvaluationQueryService,
   SetupComparisonQueryService,
   SetupComparisonSummaryService,
+  ResearchReviewPacketService,
   RevisionHistoryQueryService,
   RevisionHistoryQueryServiceDependencies,
   SetupDefinitionQueryService,
