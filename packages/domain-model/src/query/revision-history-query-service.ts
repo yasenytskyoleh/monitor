@@ -7,6 +7,10 @@ import type { SignalCandidateRepository } from "../repositories/signal-candidate
 import type { SetupAggregateResult } from "../research/setup-aggregate-result.js";
 import type { SetupDefinitionRevision } from "../review/setup-definition-revision.js";
 import type { SignalCandidate } from "../signal-candidate.js";
+import type {
+  CompareSetupRevisionsCommand,
+  RevisionComparisonScopeDescriptor
+} from "./compare-setup-revisions-command.js";
 import type { QueryAggregateEvidenceByRevisionScope } from "./query-aggregate-evidence-by-revision-scope.js";
 import type { QueryEvaluationResultsByRevision } from "./query-evaluation-results-by-revision.js";
 import type {
@@ -14,7 +18,13 @@ import type {
   QueryTimeRange
 } from "./query-setup-revision-history.js";
 import type { QuerySignalCandidatesByRevision } from "./query-signal-candidates-by-revision.js";
+import type { RevisionComparisonResult } from "./revision-comparison-result.js";
+import type {
+  RevisionComparisonMetricDeltas,
+  RevisionComparisonMetrics
+} from "./revision-comparison-metrics.js";
 import type { RevisionHistoryQueryResult } from "./revision-history-query-result.js";
+import type { SetupRevisionComparison } from "./setup-revision-comparison.js";
 import type {
   RevisionAggregateHistoryView,
   RevisionCandidateHistoryView,
@@ -40,10 +50,15 @@ export type AggregateEvidenceQueryService = {
   getByRevisionScope(query: QueryAggregateEvidenceByRevisionScope): Promise<RevisionHistoryQueryResult>;
 };
 
+export type SetupComparisonQueryService = {
+  compareRevisions(command: CompareSetupRevisionsCommand): Promise<RevisionComparisonResult>;
+};
+
 export type RevisionHistoryQueryService = SetupDefinitionQueryService &
   SignalCandidateQueryService &
   EvaluationQueryService &
-  AggregateEvidenceQueryService;
+  AggregateEvidenceQueryService &
+  SetupComparisonQueryService;
 
 export type RevisionHistoryQueryServiceDependencies = {
   setupDefinitionRevisionRepository: Pick<SetupDefinitionRevisionRepository, "getById" | "listBySetupFamilyId">;
@@ -169,6 +184,166 @@ const filterAggregates = (
     return true;
   });
 };
+
+const hasSymbolScopeMatch = (
+  aggregate: SetupAggregateResult,
+  symbolIds: string[] | undefined
+): boolean => {
+  if (!symbolIds || symbolIds.length === 0) {
+    return true;
+  }
+
+  const requested = new Set(symbolIds);
+  const scope = aggregate.aggregationScope.symbolScope;
+  if (scope.kind === "all_monitored") {
+    return false;
+  }
+
+  return scope.symbolIds.some((symbolId) => requested.has(symbolId));
+};
+
+const normalizeComparisonScope = (
+  scope: RevisionComparisonScopeDescriptor | undefined
+): RevisionComparisonScopeDescriptor => {
+  if (!scope) {
+    return {};
+  }
+
+  const normalizedSymbolIds = scope.symbolIds
+    ?.map((symbolId) => symbolId.trim())
+    .filter(Boolean);
+
+  return {
+    evaluationWindowId: scope.evaluationWindowId?.trim() || undefined,
+    symbolIds: normalizedSymbolIds && normalizedSymbolIds.length > 0 ? normalizedSymbolIds : undefined,
+    timeRange: scope.timeRange
+  };
+};
+
+const hasValidTimeRange = (range: QueryTimeRange | undefined): boolean => {
+  if (!range?.startAtUtc || !range.endAtUtc) {
+    return true;
+  }
+
+  return Date.parse(range.startAtUtc) <= Date.parse(range.endAtUtc);
+};
+
+const toOutcomeScore = (evaluation: EvaluationResult): number | null => {
+  if (evaluation.percentageMove === null) {
+    return null;
+  }
+
+  if (evaluation.percentageMove > 0) {
+    return 1;
+  }
+
+  if (evaluation.percentageMove < 0) {
+    return -1;
+  }
+
+  return 0;
+};
+
+const averageFrom = (
+  values: Array<number | null | undefined>
+): number | null => {
+  const valid = values.filter((value): value is number => typeof value === "number");
+  if (valid.length === 0) {
+    return null;
+  }
+
+  return valid.reduce((sum, value) => sum + value, 0) / valid.length;
+};
+
+const buildComparisonMetrics = (
+  candidates: SignalCandidate[],
+  evaluations: EvaluationResult[]
+): RevisionComparisonMetrics => {
+  const completedEvaluations = evaluations.filter((evaluation) => evaluation.status === "completed");
+  const invalidatedEvaluations = evaluations.filter((evaluation) => evaluation.status === "invalidated");
+  const evaluatedCandidates = candidates.filter((candidate) => candidate.status === "evaluated");
+  const positiveOutcomeCount = completedEvaluations.filter(
+    (evaluation) => (evaluation.percentageMove ?? 0) > 0
+  ).length;
+
+  const completedCount = completedEvaluations.length;
+
+  return {
+    totalEvaluatedCandidates: evaluatedCandidates.length,
+    completedEvaluations: completedCount,
+    invalidatedEvaluations: invalidatedEvaluations.length,
+    averagePercentageMove: averageFrom(completedEvaluations.map((evaluation) => evaluation.percentageMove)),
+    averageAbsoluteMove: averageFrom(completedEvaluations.map((evaluation) => evaluation.absoluteMove)),
+    averageFinalOutcome: averageFrom(completedEvaluations.map((evaluation) => toOutcomeScore(evaluation))),
+    averageMaxFavorableExcursion: averageFrom(
+      completedEvaluations.map((evaluation) => evaluation.maxFavorableExcursion)
+    ),
+    averageMaxAdverseExcursion: averageFrom(
+      completedEvaluations.map((evaluation) => evaluation.maxAdverseExcursion)
+    ),
+    positiveOutcomeCount,
+    positiveOutcomeRate: completedCount > 0 ? positiveOutcomeCount / completedCount : null
+  };
+};
+
+const deltaValue = (baseline: number | null, target: number | null): number | null =>
+  baseline === null || target === null ? null : target - baseline;
+
+const buildMetricDeltas = (
+  baseline: RevisionComparisonMetrics,
+  target: RevisionComparisonMetrics
+): RevisionComparisonMetricDeltas => ({
+  totalEvaluatedCandidates: {
+    baseline: baseline.totalEvaluatedCandidates,
+    target: target.totalEvaluatedCandidates,
+    delta: target.totalEvaluatedCandidates - baseline.totalEvaluatedCandidates
+  },
+  completedEvaluations: {
+    baseline: baseline.completedEvaluations,
+    target: target.completedEvaluations,
+    delta: target.completedEvaluations - baseline.completedEvaluations
+  },
+  invalidatedEvaluations: {
+    baseline: baseline.invalidatedEvaluations,
+    target: target.invalidatedEvaluations,
+    delta: target.invalidatedEvaluations - baseline.invalidatedEvaluations
+  },
+  averagePercentageMove: {
+    baseline: baseline.averagePercentageMove,
+    target: target.averagePercentageMove,
+    delta: deltaValue(baseline.averagePercentageMove, target.averagePercentageMove)
+  },
+  averageAbsoluteMove: {
+    baseline: baseline.averageAbsoluteMove,
+    target: target.averageAbsoluteMove,
+    delta: deltaValue(baseline.averageAbsoluteMove, target.averageAbsoluteMove)
+  },
+  averageFinalOutcome: {
+    baseline: baseline.averageFinalOutcome,
+    target: target.averageFinalOutcome,
+    delta: deltaValue(baseline.averageFinalOutcome, target.averageFinalOutcome)
+  },
+  averageMaxFavorableExcursion: {
+    baseline: baseline.averageMaxFavorableExcursion,
+    target: target.averageMaxFavorableExcursion,
+    delta: deltaValue(baseline.averageMaxFavorableExcursion, target.averageMaxFavorableExcursion)
+  },
+  averageMaxAdverseExcursion: {
+    baseline: baseline.averageMaxAdverseExcursion,
+    target: target.averageMaxAdverseExcursion,
+    delta: deltaValue(baseline.averageMaxAdverseExcursion, target.averageMaxAdverseExcursion)
+  },
+  positiveOutcomeCount: {
+    baseline: baseline.positiveOutcomeCount,
+    target: target.positiveOutcomeCount,
+    delta: target.positiveOutcomeCount - baseline.positiveOutcomeCount
+  },
+  positiveOutcomeRate: {
+    baseline: baseline.positiveOutcomeRate,
+    target: target.positiveOutcomeRate,
+    delta: deltaValue(baseline.positiveOutcomeRate, target.positiveOutcomeRate)
+  }
+});
 
 const asErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "unexpected revision-history query failure";
@@ -526,6 +701,265 @@ export const createRevisionHistoryQueryService = (
     }
   };
 
+  const compareRevisions = async (
+    command: CompareSetupRevisionsCommand
+  ): Promise<RevisionComparisonResult> => {
+    try {
+      if (!command.setupFamilyId.trim()) {
+        return {
+          status: "rejected",
+          reason: "setupFamilyId is required",
+          warnings: []
+        };
+      }
+
+      if (!command.baselineRevisionId.trim()) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          reason: "baselineRevisionId is required",
+          warnings: []
+        };
+      }
+
+      if (!command.targetRevisionId.trim()) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          reason: "targetRevisionId is required",
+          warnings: []
+        };
+      }
+
+      if (!command.comparedAt.trim()) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason: "comparedAt is required",
+          warnings: []
+        };
+      }
+
+      if (command.baselineRevisionId === command.targetRevisionId) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason: "baselineRevisionId and targetRevisionId must be different",
+          warnings: []
+        };
+      }
+
+      const scope = normalizeComparisonScope(command.comparisonScope);
+      if (!hasValidTimeRange(scope.timeRange)) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason: "comparisonScope timeRange is invalid: startAtUtc must be <= endAtUtc",
+          warnings: []
+        };
+      }
+
+      if (command.comparisonScope?.symbolIds && !scope.symbolIds) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason: "comparisonScope symbolIds must include at least one symbol",
+          warnings: []
+        };
+      }
+
+      const baselineRevision = await resolveRevision(command.baselineRevisionId);
+      if (!baselineRevision) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason: `baseline setup_definition_revision not found: ${command.baselineRevisionId}`,
+          warnings: []
+        };
+      }
+
+      const targetRevision = await resolveRevision(command.targetRevisionId);
+      if (!targetRevision) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason: `target setup_definition_revision not found: ${command.targetRevisionId}`,
+          warnings: []
+        };
+      }
+
+      if (
+        baselineRevision.versionInfo.setupFamilyId !== command.setupFamilyId ||
+        targetRevision.versionInfo.setupFamilyId !== command.setupFamilyId
+      ) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason: "baseline/target revisions do not belong to requested setupFamilyId",
+          warnings: []
+        };
+      }
+
+      if (baselineRevision.versionInfo.setupFamilyId !== targetRevision.versionInfo.setupFamilyId) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason: "baseline and target revisions must belong to the same setup family",
+          warnings: []
+        };
+      }
+
+      const symbolFilter = scope.symbolIds ? new Set(scope.symbolIds) : null;
+
+      const applyCandidateScope = (candidates: SignalCandidate[]): SignalCandidate[] =>
+        candidates.filter((candidate) => {
+          if (symbolFilter && !symbolFilter.has(candidate.monitoredSymbolId)) {
+            return false;
+          }
+
+          if (!isTimestampWithinRange(candidate.detectedAt, scope.timeRange)) {
+            return false;
+          }
+
+          return true;
+        });
+
+      const applyEvaluationScope = (evaluations: EvaluationResult[]): EvaluationResult[] =>
+        evaluations.filter((evaluation) => {
+          if (scope.evaluationWindowId && evaluation.evaluationWindowId !== scope.evaluationWindowId) {
+            return false;
+          }
+
+          const eventTimestamp = evaluation.evaluatedAt ?? evaluation.updatedAt;
+          return isTimestampWithinRange(eventTimestamp, scope.timeRange);
+        });
+
+      const applyAggregateScope = (aggregates: SetupAggregateResult[]): SetupAggregateResult[] =>
+        aggregates.filter((aggregate) => {
+          if (
+            scope.evaluationWindowId &&
+            aggregate.aggregationScope.evaluationWindowId !== scope.evaluationWindowId
+          ) {
+            return false;
+          }
+
+          if (!hasSymbolScopeMatch(aggregate, scope.symbolIds)) {
+            return false;
+          }
+
+          const eventTimestamp = aggregate.computedAt ?? aggregate.updatedAt;
+          return isTimestampWithinRange(eventTimestamp, scope.timeRange);
+        });
+
+      const baselineCandidates = applyCandidateScope(
+        await buildRevisionCandidates(baselineRevision.setupDefinitionId, baselineRevision.id)
+      );
+      const targetCandidates = applyCandidateScope(
+        await buildRevisionCandidates(targetRevision.setupDefinitionId, targetRevision.id)
+      );
+
+      const baselineEvaluations = applyEvaluationScope(
+        await buildRevisionEvaluations(baselineCandidates)
+      );
+      const targetEvaluations = applyEvaluationScope(
+        await buildRevisionEvaluations(targetCandidates)
+      );
+
+      const baselineAggregates = applyAggregateScope(
+        await setupAggregateResultRepository.listBySetupDefinitionId(baselineRevision.setupDefinitionId)
+      );
+      const targetAggregates = applyAggregateScope(
+        await setupAggregateResultRepository.listBySetupDefinitionId(targetRevision.setupDefinitionId)
+      );
+
+      const baselineMetrics = buildComparisonMetrics(baselineCandidates, baselineEvaluations);
+      const targetMetrics = buildComparisonMetrics(targetCandidates, targetEvaluations);
+      const metricDeltas = buildMetricDeltas(baselineMetrics, targetMetrics);
+
+      const notes: string[] = [];
+      if (baselineAggregates.length === 0 || targetAggregates.length === 0) {
+        notes.push("aggregate evidence missing for one or both revisions in comparison scope");
+      }
+
+      const comparison: SetupRevisionComparison = {
+        setupFamilyId: command.setupFamilyId,
+        baselineRevisionId: baselineRevision.id,
+        targetRevisionId: targetRevision.id,
+        baselineSetupDefinitionId: baselineRevision.setupDefinitionId,
+        targetSetupDefinitionId: targetRevision.setupDefinitionId,
+        baselineVersion: baselineRevision.versionInfo.version,
+        targetVersion: targetRevision.versionInfo.version,
+        comparisonScope: scope,
+        baselineMetrics,
+        targetMetrics,
+        metricDeltas,
+        baselineEvidenceCounts: {
+          candidateCount: baselineCandidates.length,
+          evaluationCount: baselineEvaluations.length,
+          aggregateCount: baselineAggregates.length
+        },
+        targetEvidenceCounts: {
+          candidateCount: targetCandidates.length,
+          evaluationCount: targetEvaluations.length,
+          aggregateCount: targetAggregates.length
+        },
+        comparedAt: command.comparedAt,
+        status:
+          baselineMetrics.completedEvaluations === 0 || targetMetrics.completedEvaluations === 0
+            ? "insufficient_evidence"
+            : "compared",
+        notes: notes.length > 0 ? notes : undefined
+      };
+
+      if (comparison.status === "insufficient_evidence") {
+        return {
+          status: "insufficient_evidence",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          comparison,
+          reason: "one or both revisions lack completed evaluations for comparison scope",
+          warnings: notes
+        };
+      }
+
+      return {
+        status: "compared",
+        setupFamilyId: command.setupFamilyId,
+        baselineRevisionId: command.baselineRevisionId,
+        targetRevisionId: command.targetRevisionId,
+        comparison,
+        warnings: notes
+      };
+    } catch (error: unknown) {
+      return {
+        status: "failed",
+        setupFamilyId: command.setupFamilyId,
+        baselineRevisionId: command.baselineRevisionId,
+        targetRevisionId: command.targetRevisionId,
+        reason: asErrorMessage(error),
+        warnings: ["revision comparison can be retried after resolving query failure"]
+      };
+    }
+  };
+
   const queryHistory = async (
     query: QuerySetupRevisionHistory
   ): Promise<RevisionHistoryQueryResult> => {
@@ -588,6 +1022,7 @@ export const createRevisionHistoryQueryService = (
     getFamilyHistory,
     getByRevision,
     getEvaluationsByRevision,
-    getByRevisionScope
+    getByRevisionScope,
+    compareRevisions
   };
 };
