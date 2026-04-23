@@ -35,6 +35,10 @@ import {
   RESEARCH_FEEDBACK_DECISION_ACTIONS,
   RESEARCH_FEEDBACK_DECISION_STATUSES,
   RESEARCH_HYPOTHESIS_STATUSES,
+  RESEARCH_REVIEW_AUTHORIZED_NEXT_ACTIONS,
+  RESEARCH_REVIEW_DECISION_OUTCOMES,
+  RESEARCH_REVIEW_DECISION_RESULT_STATUSES,
+  RESEARCH_REVIEW_DECISION_STATUSES,
   RESEARCH_REVIEW_PACKET_RESULT_STATUSES,
   RESEARCH_REVIEW_PACKET_STATUSES,
   REVISION_COMPARISON_RESULT_STATUSES,
@@ -127,6 +131,27 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
   assert.deepEqual(RESEARCH_DECISION_APPROVAL_RESULT_STATUSES, [
     "recorded",
     "rejected_validation",
+    "rejected_lifecycle",
+    "failed"
+  ]);
+  assert.deepEqual(RESEARCH_REVIEW_DECISION_OUTCOMES, [
+    "accepted",
+    "rejected",
+    "revise"
+  ]);
+  assert.deepEqual(RESEARCH_REVIEW_AUTHORIZED_NEXT_ACTIONS, [
+    "confirm_no_change",
+    "prepare_activation_follow_up",
+    "prepare_lifecycle_mutation_follow_up",
+    "prepare_refinement_follow_up"
+  ]);
+  assert.deepEqual(RESEARCH_REVIEW_DECISION_STATUSES, [
+    "recorded"
+  ]);
+  assert.deepEqual(RESEARCH_REVIEW_DECISION_RESULT_STATUSES, [
+    "recorded",
+    "rejected_validation",
+    "rejected_linkage",
     "rejected_lifecycle",
     "failed"
   ]);
@@ -252,6 +277,7 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "setup_aggregate_result",
     "research_feedback_decision",
     "research_decision_approval",
+    "research_review_decision",
     "setup_lifecycle_mutation_record",
     "setup_refinement_request",
     "setup_definition_revision",
@@ -279,10 +305,10 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "research_aggregation_service"
   ]);
   assert.deepEqual(FIRST_PERSISTED_PRODUCT_SLICE, ["setup_definition", "research_hypothesis"]);
-  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 12);
+  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 13);
   assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
   assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
-  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 12);
+  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 13);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
   assert.deepEqual(MARKET_DATA_PROVIDER_KINDS, ["exchange_adapter"]);
   assert.deepEqual(MARKET_DATA_SOURCE_STATUSES, ["active", "degraded", "paused"]);

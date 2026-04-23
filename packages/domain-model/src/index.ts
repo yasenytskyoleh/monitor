@@ -125,9 +125,14 @@ export type {
 } from "./research/research-feedback-decision.js";
 export {
   APPROVED_SETUP_LIFECYCLE_ACTIONS,
+  createResearchReviewDecisionService,
   RESEARCH_DECISION_APPROVAL_OUTCOMES,
   RESEARCH_DECISION_APPROVAL_RESULT_STATUSES,
   RESEARCH_DECISION_APPROVAL_STATUSES,
+  RESEARCH_REVIEW_AUTHORIZED_NEXT_ACTIONS,
+  RESEARCH_REVIEW_DECISION_OUTCOMES,
+  RESEARCH_REVIEW_DECISION_RESULT_STATUSES,
+  RESEARCH_REVIEW_DECISION_STATUSES,
   SETUP_DEFINITION_REVISION_RESULT_STATUSES,
   SETUP_DEFINITION_REVISION_STATUSES,
   SETUP_LIFECYCLE_MUTATION_RESULT_STATUSES,
@@ -139,9 +144,20 @@ export {
 export type {
   ActivateSetupDefinitionRevisionCommand,
   ApplyApprovedSetupMutationCommand,
+  ApplyResearchReviewDecisionCommand,
   ApprovedSetupLifecycleAction,
+  ApplyResearchReviewDecisionRequest,
   CreateSetupDefinitionRevisionCommand,
   CreateSetupRefinementRequestCommand,
+  ResearchReviewAuthorizedNextAction,
+  ResearchReviewDecision,
+  ResearchReviewDecisionOutcome,
+  ResearchReviewDecisionResult,
+  ResearchReviewDecisionResultStatus,
+  ResearchReviewDecisionService,
+  ResearchReviewDecisionServiceDependencies,
+  ResearchReviewDecisionStatus,
+  ResearchReviewPacketLookup,
   ResearchDecisionApproval,
   ResearchDecisionApprovalOutcome,
   ResearchDecisionApprovalResult,
@@ -226,6 +242,13 @@ export type {
 export {
   InMemoryResearchDecisionApprovalRepository
 } from "./repositories/research-decision-approval-repository.impl.js";
+export type {
+  ResearchReviewDecisionCreateRequest,
+  ResearchReviewDecisionRepository
+} from "./repositories/research-review-decision-repository.js";
+export {
+  InMemoryResearchReviewDecisionRepository
+} from "./repositories/research-review-decision-repository.impl.js";
 export type {
   SetupDefinitionRevisionCreateRequest,
   SetupDefinitionRevisionRepository,

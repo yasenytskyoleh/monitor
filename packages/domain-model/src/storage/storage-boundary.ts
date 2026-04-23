@@ -23,6 +23,7 @@ export const PRODUCT_PERSISTED_ENTITY_TYPES = [
   "setup_aggregate_result",
   "research_feedback_decision",
   "research_decision_approval",
+  "research_review_decision",
   "setup_lifecycle_mutation_record",
   "setup_refinement_request",
   "setup_definition_revision",
