@@ -73,6 +73,12 @@ export const PRODUCT_WRITE_PATH_OWNERSHIP: ProductWritePathOwnership[] = [
     updatePath: "review decision audit metadata corrections in controlled review path"
   },
   {
+    entityType: "routed_action_execution_envelope",
+    ownerService: "research_service",
+    createPath: "review-decision downstream action execution envelope preparation flow",
+    updatePath: "execution-envelope audit metadata corrections in controlled review-execution path"
+  },
+  {
     entityType: "setup_lifecycle_mutation_record",
     ownerService: "setup_definition_service",
     createPath: "approved setup lifecycle mutation flow",

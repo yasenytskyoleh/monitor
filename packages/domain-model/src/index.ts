@@ -193,6 +193,25 @@ export type {
   SetupRefinementStatus
 } from "./review/index.js";
 export {
+  ROUTED_ACTION_EXECUTION_RESULT_STATUSES,
+  ROUTED_ACTION_EXECUTION_STATUSES,
+  createDownstreamActionExecutionPreparationService
+} from "./execution/index.js";
+export type {
+  BuildRoutedActionExecutionEnvelopeCommand,
+  BuildRoutedActionExecutionEnvelopeInput,
+  BuildRoutedActionExecutionEnvelopeRequest,
+  DownstreamActionExecutionPreparationService,
+  DownstreamActionExecutionPreparationServiceDependencies,
+  RouteMetadataSnapshot,
+  RoutedActionExecutionEnvelope,
+  RoutedActionExecutionPayloadSnapshot,
+  RoutedActionExecutionResult,
+  RoutedActionExecutionResultStatus,
+  RoutedActionExecutionStatus,
+  RoutedActionTargetEntityRefs
+} from "./execution/index.js";
+export {
   DEFAULT_STORAGE_TECHNOLOGY_DIRECTION,
   FIRST_CLASS_PERSISTED_ENTITY_PROFILES,
   PRODUCT_EPHEMERAL_ENTITY_TYPES,
@@ -260,6 +279,20 @@ export type {
 export {
   InMemoryResearchReviewDecisionRepository
 } from "./repositories/research-review-decision-repository.impl.js";
+export type {
+  ReviewDecisionRoutingResultCreateRequest,
+  ReviewDecisionRoutingResultRepository
+} from "./repositories/review-decision-routing-result-repository.js";
+export {
+  InMemoryReviewDecisionRoutingResultRepository
+} from "./repositories/review-decision-routing-result-repository.impl.js";
+export type {
+  RoutedActionExecutionEnvelopeCreateRequest,
+  RoutedActionExecutionEnvelopeRepository
+} from "./repositories/routed-action-execution-envelope-repository.js";
+export {
+  InMemoryRoutedActionExecutionEnvelopeRepository
+} from "./repositories/routed-action-execution-envelope-repository.impl.js";
 export type {
   SetupDefinitionRevisionCreateRequest,
   SetupDefinitionRevisionRepository,

@@ -49,6 +49,16 @@ export type {
 } from "./research-review-decision-repository.js";
 export { InMemoryResearchReviewDecisionRepository } from "./research-review-decision-repository.impl.js";
 export type {
+  ReviewDecisionRoutingResultCreateRequest,
+  ReviewDecisionRoutingResultRepository
+} from "./review-decision-routing-result-repository.js";
+export { InMemoryReviewDecisionRoutingResultRepository } from "./review-decision-routing-result-repository.impl.js";
+export type {
+  RoutedActionExecutionEnvelopeCreateRequest,
+  RoutedActionExecutionEnvelopeRepository
+} from "./routed-action-execution-envelope-repository.js";
+export { InMemoryRoutedActionExecutionEnvelopeRepository } from "./routed-action-execution-envelope-repository.impl.js";
+export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,
   SetupAggregateResultStatusUpdateRequest,

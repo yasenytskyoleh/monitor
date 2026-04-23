@@ -12,6 +12,8 @@ import {
   EVALUATION_STATUSES,
   EVALUATION_WINDOW_MODES,
   EVALUATION_WINDOW_UNITS,
+  ROUTED_ACTION_EXECUTION_RESULT_STATUSES,
+  ROUTED_ACTION_EXECUTION_STATUSES,
   FEEDBACK_DECISION_RESULT_STATUSES,
   FIRST_CLASS_PERSISTED_ENTITY_PROFILES,
   FIRST_PERSISTED_PRODUCT_SLICE,
@@ -178,6 +180,19 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "NoOpConfirmed",
     "None"
   ]);
+  assert.deepEqual(ROUTED_ACTION_EXECUTION_STATUSES, [
+    "prepared",
+    "ready",
+    "cancelled",
+    "failed"
+  ]);
+  assert.deepEqual(ROUTED_ACTION_EXECUTION_RESULT_STATUSES, [
+    "prepared",
+    "no_envelope",
+    "rejected_validation",
+    "rejected_lifecycle",
+    "failed"
+  ]);
   assert.deepEqual(APPROVED_SETUP_LIFECYCLE_ACTIONS, [
     "keep_active",
     "pause_setup",
@@ -301,6 +316,7 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "research_feedback_decision",
     "research_decision_approval",
     "research_review_decision",
+    "routed_action_execution_envelope",
     "setup_lifecycle_mutation_record",
     "setup_refinement_request",
     "setup_definition_revision",
@@ -328,10 +344,10 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "research_aggregation_service"
   ]);
   assert.deepEqual(FIRST_PERSISTED_PRODUCT_SLICE, ["setup_definition", "research_hypothesis"]);
-  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 13);
+  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 14);
   assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
   assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
-  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 13);
+  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 14);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
   assert.deepEqual(MARKET_DATA_PROVIDER_KINDS, ["exchange_adapter"]);
   assert.deepEqual(MARKET_DATA_SOURCE_STATUSES, ["active", "degraded", "paused"]);
