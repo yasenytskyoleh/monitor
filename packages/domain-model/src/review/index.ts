@@ -18,6 +18,45 @@ export type {
 } from "./review-research-decision-command.js";
 
 export {
+  RESEARCH_REVIEW_DECISION_OUTCOMES
+} from "./research-review-decision-outcome.js";
+export type {
+  ResearchReviewDecisionOutcome
+} from "./research-review-decision-outcome.js";
+
+export {
+  RESEARCH_REVIEW_AUTHORIZED_NEXT_ACTIONS,
+  RESEARCH_REVIEW_DECISION_STATUSES
+} from "./research-review-decision.js";
+export type {
+  ResearchReviewAuthorizedNextAction,
+  ResearchReviewDecision,
+  ResearchReviewDecisionStatus
+} from "./research-review-decision.js";
+
+export type {
+  ApplyResearchReviewDecisionCommand
+} from "./apply-research-review-decision-command.js";
+
+export {
+  RESEARCH_REVIEW_DECISION_RESULT_STATUSES
+} from "./research-review-decision-result.js";
+export type {
+  ResearchReviewDecisionResult,
+  ResearchReviewDecisionResultStatus
+} from "./research-review-decision-result.js";
+
+export type {
+  ApplyResearchReviewDecisionRequest,
+  ResearchReviewDecisionService,
+  ResearchReviewDecisionServiceDependencies,
+  ResearchReviewPacketLookup
+} from "./research-review-decision-service.js";
+export {
+  createResearchReviewDecisionService
+} from "./research-review-decision-service.js";
+
+export {
   RESEARCH_DECISION_APPROVAL_RESULT_STATUSES
 } from "./research-decision-approval-result.js";
 export type {

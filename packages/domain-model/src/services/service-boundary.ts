@@ -67,6 +67,12 @@ export const PRODUCT_WRITE_PATH_OWNERSHIP: ProductWritePathOwnership[] = [
     updatePath: "approval artifact metadata corrections in controlled review path"
   },
   {
+    entityType: "research_review_decision",
+    ownerService: "research_service",
+    createPath: "research review packet resolution flow",
+    updatePath: "review decision audit metadata corrections in controlled review path"
+  },
+  {
     entityType: "setup_lifecycle_mutation_record",
     ownerService: "setup_definition_service",
     createPath: "approved setup lifecycle mutation flow",

@@ -118,6 +118,17 @@ export const FIRST_CLASS_PERSISTED_ENTITY_PROFILES: PersistedEntityProfile[] = [
     }
   },
   {
+    entityType: "research_review_decision",
+    firstClassPersisted: true,
+    timing: {
+      createdWhen: "created when reviewer resolves a research review packet outcome",
+      updatedWhen: "updated only for controlled audit metadata corrections in review decision flow",
+      immutableFields: ["identity.entityId"],
+      mutableFields: ["metadata", "updatedAtUtc"],
+      canBeArchived: true
+    }
+  },
+  {
     entityType: "setup_lifecycle_mutation_record",
     firstClassPersisted: true,
     timing: {
