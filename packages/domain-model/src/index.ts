@@ -437,3 +437,29 @@ export type {
   SignalCandidateFromDetectionDependencies,
   SignalCandidateToEvaluationDependencies
 } from "./runtime-handoff/index.js";
+export {
+  REVISION_HISTORY_QUERY_STATUSES,
+  SETUP_REVISION_HISTORY_QUERY_MODES,
+  createRevisionHistoryQueryService
+} from "./query/index.js";
+export type {
+  AggregateEvidenceQueryService,
+  EvaluationQueryService,
+  QueryAggregateEvidenceByRevisionScope,
+  QueryEvaluationResultsByRevision,
+  QuerySetupRevisionHistory,
+  QuerySignalCandidatesByRevision,
+  QueryTimeRange,
+  RevisionAggregateHistoryView,
+  RevisionCandidateHistoryView,
+  RevisionEvaluationHistoryView,
+  RevisionHistoryQueryResult,
+  RevisionHistoryQueryService,
+  RevisionHistoryQueryServiceDependencies,
+  RevisionHistoryQueryStatus,
+  SetupDefinitionQueryService,
+  SetupRevisionHistoryGroup,
+  SetupRevisionHistoryQueryMode,
+  SetupRevisionHistoryView,
+  SignalCandidateQueryService
+} from "./query/index.js";
