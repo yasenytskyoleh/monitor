@@ -20,6 +20,34 @@ export type {
 } from "./query-aggregate-evidence-by-revision-scope.js";
 
 export type {
+  CompareSetupRevisionsCommand,
+  RevisionComparisonScopeDescriptor
+} from "./compare-setup-revisions-command.js";
+
+export type {
+  RevisionComparisonMetricDeltas,
+  RevisionComparisonMetrics,
+  RevisionMetricDelta
+} from "./revision-comparison-metrics.js";
+
+export {
+  SETUP_REVISION_COMPARISON_STATUSES
+} from "./setup-revision-comparison.js";
+export type {
+  RevisionEvidenceCounts,
+  SetupRevisionComparison,
+  SetupRevisionComparisonStatus
+} from "./setup-revision-comparison.js";
+
+export {
+  REVISION_COMPARISON_RESULT_STATUSES
+} from "./revision-comparison-result.js";
+export type {
+  RevisionComparisonResult,
+  RevisionComparisonResultStatus
+} from "./revision-comparison-result.js";
+
+export type {
   RevisionAggregateHistoryView,
   RevisionCandidateHistoryView,
   RevisionEvaluationHistoryView,
@@ -41,6 +69,7 @@ export {
 export type {
   AggregateEvidenceQueryService,
   EvaluationQueryService,
+  SetupComparisonQueryService,
   RevisionHistoryQueryService,
   RevisionHistoryQueryServiceDependencies,
   SetupDefinitionQueryService,
