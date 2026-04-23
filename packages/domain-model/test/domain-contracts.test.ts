@@ -36,7 +36,10 @@ import {
   RESEARCH_FEEDBACK_DECISION_STATUSES,
   RESEARCH_HYPOTHESIS_STATUSES,
   REVISION_COMPARISON_RESULT_STATUSES,
+  REVISION_EVIDENCE_SUFFICIENCY_LEVELS,
   REVISION_HISTORY_QUERY_STATUSES,
+  REVISION_IMPACT_CLASSIFICATIONS,
+  REVISION_IMPACT_SUMMARY_RESULT_STATUSES,
   RUNTIME_EVIDENCE_ARTIFACT_TYPES,
   SETUP_DEFINITION_STATUSES,
   SETUP_DEFINITION_REVISION_RESULT_STATUSES,
@@ -197,6 +200,22 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
   assert.deepEqual(REVISION_COMPARISON_RESULT_STATUSES, [
     "compared",
     "insufficient_evidence",
+    "rejected",
+    "failed"
+  ]);
+  assert.deepEqual(REVISION_IMPACT_CLASSIFICATIONS, [
+    "improved",
+    "degraded",
+    "mixed",
+    "inconclusive"
+  ]);
+  assert.deepEqual(REVISION_EVIDENCE_SUFFICIENCY_LEVELS, [
+    "sufficient",
+    "limited",
+    "insufficient"
+  ]);
+  assert.deepEqual(REVISION_IMPACT_SUMMARY_RESULT_STATUSES, [
+    "summarized",
     "rejected",
     "failed"
   ]);

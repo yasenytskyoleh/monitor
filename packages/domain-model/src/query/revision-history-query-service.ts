@@ -11,6 +11,7 @@ import type {
   CompareSetupRevisionsCommand,
   RevisionComparisonScopeDescriptor
 } from "./compare-setup-revisions-command.js";
+import type { BuildSetupRevisionImpactSummaryCommand } from "./build-setup-revision-impact-summary-command.js";
 import type { QueryAggregateEvidenceByRevisionScope } from "./query-aggregate-evidence-by-revision-scope.js";
 import type { QueryEvaluationResultsByRevision } from "./query-evaluation-results-by-revision.js";
 import type {
@@ -18,13 +19,20 @@ import type {
   QueryTimeRange
 } from "./query-setup-revision-history.js";
 import type { QuerySignalCandidatesByRevision } from "./query-signal-candidates-by-revision.js";
+import type { RevisionImpactClassification } from "./revision-impact-classification.js";
 import type { RevisionComparisonResult } from "./revision-comparison-result.js";
 import type {
   RevisionComparisonMetricDeltas,
   RevisionComparisonMetrics
 } from "./revision-comparison-metrics.js";
+import type { RevisionImpactSummaryResult } from "./revision-impact-summary-result.js";
 import type { RevisionHistoryQueryResult } from "./revision-history-query-result.js";
 import type { SetupRevisionComparison } from "./setup-revision-comparison.js";
+import type {
+  RevisionEvidenceSufficiencyLevel,
+  RevisionImpactKeyMetricChanges,
+  SetupRevisionImpactSummary
+} from "./setup-revision-impact-summary.js";
 import type {
   RevisionAggregateHistoryView,
   RevisionCandidateHistoryView,
@@ -54,11 +62,16 @@ export type SetupComparisonQueryService = {
   compareRevisions(command: CompareSetupRevisionsCommand): Promise<RevisionComparisonResult>;
 };
 
+export type SetupComparisonSummaryService = {
+  buildImpactSummary(command: BuildSetupRevisionImpactSummaryCommand): Promise<RevisionImpactSummaryResult>;
+};
+
 export type RevisionHistoryQueryService = SetupDefinitionQueryService &
   SignalCandidateQueryService &
   EvaluationQueryService &
   AggregateEvidenceQueryService &
-  SetupComparisonQueryService;
+  SetupComparisonQueryService &
+  SetupComparisonSummaryService;
 
 export type RevisionHistoryQueryServiceDependencies = {
   setupDefinitionRevisionRepository: Pick<SetupDefinitionRevisionRepository, "getById" | "listBySetupFamilyId">;
@@ -344,6 +357,104 @@ const buildMetricDeltas = (
     delta: deltaValue(baseline.positiveOutcomeRate, target.positiveOutcomeRate)
   }
 });
+
+const COMPARISON_DELTA_EPSILON = 1e-9;
+
+const areScopesEquivalent = (
+  left: RevisionComparisonScopeDescriptor | undefined,
+  right: RevisionComparisonScopeDescriptor | undefined
+): boolean => JSON.stringify(normalizeComparisonScope(left)) === JSON.stringify(normalizeComparisonScope(right));
+
+const buildImpactKeyMetricChanges = (
+  metricDeltas: RevisionComparisonMetricDeltas
+): RevisionImpactKeyMetricChanges => ({
+  completedEvaluations: metricDeltas.completedEvaluations,
+  positiveOutcomeRate: metricDeltas.positiveOutcomeRate,
+  averagePercentageMove: metricDeltas.averagePercentageMove,
+  averageFinalOutcome: metricDeltas.averageFinalOutcome,
+  averageMaxFavorableExcursion: metricDeltas.averageMaxFavorableExcursion,
+  averageMaxAdverseExcursion: metricDeltas.averageMaxAdverseExcursion
+});
+
+const resolveEvidenceSufficiency = (
+  comparison: SetupRevisionComparison
+): RevisionEvidenceSufficiencyLevel => {
+  if (comparison.status === "insufficient_evidence") {
+    return "insufficient";
+  }
+
+  const minCompletedEvaluations = Math.min(
+    comparison.baselineMetrics.completedEvaluations,
+    comparison.targetMetrics.completedEvaluations
+  );
+
+  if (minCompletedEvaluations < 3) {
+    return "insufficient";
+  }
+
+  if (minCompletedEvaluations < 10) {
+    return "limited";
+  }
+
+  return "sufficient";
+};
+
+const classifyDelta = (delta: number | null): "positive" | "negative" | "neutral" => {
+  if (delta === null || Math.abs(delta) <= COMPARISON_DELTA_EPSILON) {
+    return "neutral";
+  }
+
+  return delta > 0 ? "positive" : "negative";
+};
+
+const summarizeImpactDirections = (
+  keyMetricChanges: RevisionImpactKeyMetricChanges
+): {
+  positive: number;
+  negative: number;
+  neutral: number;
+  comparable: number;
+} => {
+  const directionValues = Object.values(keyMetricChanges).map((change) => classifyDelta(change.delta));
+  const positive = directionValues.filter((value) => value === "positive").length;
+  const negative = directionValues.filter((value) => value === "negative").length;
+  const neutral = directionValues.length - positive - negative;
+
+  return {
+    positive,
+    negative,
+    neutral,
+    comparable: positive + negative
+  };
+};
+
+const resolveImpactClassification = (
+  keyMetricChanges: RevisionImpactKeyMetricChanges,
+  evidenceSufficiency: RevisionEvidenceSufficiencyLevel
+): RevisionImpactClassification => {
+  if (evidenceSufficiency === "insufficient") {
+    return "inconclusive";
+  }
+
+  const directionSummary = summarizeImpactDirections(keyMetricChanges);
+  if (directionSummary.comparable < 3) {
+    return "inconclusive";
+  }
+
+  if (directionSummary.positive > directionSummary.negative) {
+    return "improved";
+  }
+
+  if (directionSummary.negative > directionSummary.positive) {
+    return "degraded";
+  }
+
+  if (directionSummary.positive > 0 && directionSummary.negative > 0) {
+    return "mixed";
+  }
+
+  return "inconclusive";
+};
 
 const asErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "unexpected revision-history query failure";
@@ -960,6 +1071,158 @@ export const createRevisionHistoryQueryService = (
     }
   };
 
+  const buildImpactSummary = async (
+    command: BuildSetupRevisionImpactSummaryCommand
+  ): Promise<RevisionImpactSummaryResult> => {
+    try {
+      if (!command.setupFamilyId.trim()) {
+        return {
+          status: "rejected",
+          reason: "setupFamilyId is required",
+          warnings: []
+        };
+      }
+
+      if (!command.baselineRevisionId.trim()) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          reason: "baselineRevisionId is required",
+          warnings: []
+        };
+      }
+
+      if (!command.targetRevisionId.trim()) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          reason: "targetRevisionId is required",
+          warnings: []
+        };
+      }
+
+      if (!command.summarizedAt.trim()) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason: "summarizedAt is required",
+          warnings: []
+        };
+      }
+
+      if (!command.comparison) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason:
+            "comparison payload reference is required in first version; revisionComparisonId lookup is postponed",
+          warnings: []
+        };
+      }
+
+      const comparison = command.comparison;
+      if (
+        comparison.setupFamilyId !== command.setupFamilyId ||
+        comparison.baselineRevisionId !== command.baselineRevisionId ||
+        comparison.targetRevisionId !== command.targetRevisionId
+      ) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason: "comparison payload does not match setupFamilyId/baselineRevisionId/targetRevisionId",
+          warnings: []
+        };
+      }
+
+      if (
+        command.summaryScope &&
+        !areScopesEquivalent(command.summaryScope, comparison.comparisonScope)
+      ) {
+        return {
+          status: "rejected",
+          setupFamilyId: command.setupFamilyId,
+          baselineRevisionId: command.baselineRevisionId,
+          targetRevisionId: command.targetRevisionId,
+          reason: "summaryScope is ambiguous: it must match comparison.comparisonScope",
+          warnings: []
+        };
+      }
+
+      const keyMetricChanges = buildImpactKeyMetricChanges(comparison.metricDeltas);
+      const evidenceSufficiency = resolveEvidenceSufficiency(comparison);
+      const impactClassification = resolveImpactClassification(
+        keyMetricChanges,
+        evidenceSufficiency
+      );
+      const directionSummary = summarizeImpactDirections(keyMetricChanges);
+
+      const warnings = [...(comparison.notes ?? [])];
+      if (evidenceSufficiency === "insufficient") {
+        warnings.push("evidence sufficiency is insufficient for confident before/after interpretation");
+      } else if (evidenceSufficiency === "limited") {
+        warnings.push("evidence sufficiency is limited; summary should be reviewed with caution");
+      }
+
+      if (directionSummary.comparable < 3) {
+        warnings.push("insufficient comparable key metric deltas; impact classified as inconclusive");
+      }
+
+      const dedupedWarnings = Array.from(new Set(warnings));
+
+      const summary: SetupRevisionImpactSummary = {
+        setupFamilyId: comparison.setupFamilyId,
+        baselineRevisionId: comparison.baselineRevisionId,
+        targetRevisionId: comparison.targetRevisionId,
+        baselineVersion: comparison.baselineVersion,
+        targetVersion: comparison.targetVersion,
+        summaryScope: comparison.comparisonScope,
+        comparisonReference: command.revisionComparisonId
+          ? {
+              revisionComparisonId: command.revisionComparisonId
+            }
+          : undefined,
+        comparisonStatus: comparison.status,
+        impactClassification,
+        evidenceSufficiency,
+        keyMetricChanges,
+        baselineEvidenceCounts: comparison.baselineEvidenceCounts,
+        targetEvidenceCounts: comparison.targetEvidenceCounts,
+        summaryNotes: [
+          `positive_deltas=${directionSummary.positive}`,
+          `negative_deltas=${directionSummary.negative}`,
+          `neutral_or_unknown_deltas=${directionSummary.neutral}`
+        ],
+        warnings: dedupedWarnings.length > 0 ? dedupedWarnings : undefined,
+        summarizedAt: command.summarizedAt
+      };
+
+      return {
+        status: "summarized",
+        setupFamilyId: command.setupFamilyId,
+        baselineRevisionId: command.baselineRevisionId,
+        targetRevisionId: command.targetRevisionId,
+        summary,
+        warnings: dedupedWarnings
+      };
+    } catch (error: unknown) {
+      return {
+        status: "failed",
+        setupFamilyId: command.setupFamilyId,
+        baselineRevisionId: command.baselineRevisionId,
+        targetRevisionId: command.targetRevisionId,
+        reason: asErrorMessage(error),
+        warnings: ["impact summary generation can be retried after resolving query failure"]
+      };
+    }
+  };
+
   const queryHistory = async (
     query: QuerySetupRevisionHistory
   ): Promise<RevisionHistoryQueryResult> => {
@@ -1023,6 +1286,7 @@ export const createRevisionHistoryQueryService = (
     getByRevision,
     getEvaluationsByRevision,
     getByRevisionScope,
-    compareRevisions
+    compareRevisions,
+    buildImpactSummary
   };
 };
