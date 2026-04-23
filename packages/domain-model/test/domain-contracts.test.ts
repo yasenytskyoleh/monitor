@@ -35,12 +35,15 @@ import {
   RESEARCH_FEEDBACK_DECISION_ACTIONS,
   RESEARCH_FEEDBACK_DECISION_STATUSES,
   RESEARCH_HYPOTHESIS_STATUSES,
+  REVIEW_DECISION_DOWNSTREAM_COMMAND_TYPES,
+  REVIEW_DECISION_ROUTE_STATUSES,
   RESEARCH_REVIEW_AUTHORIZED_NEXT_ACTIONS,
   RESEARCH_REVIEW_DECISION_OUTCOMES,
   RESEARCH_REVIEW_DECISION_RESULT_STATUSES,
   RESEARCH_REVIEW_DECISION_STATUSES,
   RESEARCH_REVIEW_PACKET_RESULT_STATUSES,
   RESEARCH_REVIEW_PACKET_STATUSES,
+  DOWNSTREAM_ACTION_TARGETS,
   REVISION_COMPARISON_RESULT_STATUSES,
   REVISION_EVIDENCE_SUFFICIENCY_LEVELS,
   REVISION_HISTORY_QUERY_STATUSES,
@@ -154,6 +157,26 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "rejected_linkage",
     "rejected_lifecycle",
     "failed"
+  ]);
+  assert.deepEqual(DOWNSTREAM_ACTION_TARGETS, [
+    "apply_setup_lifecycle_mutation",
+    "create_setup_refinement_request",
+    "activate_setup_revision",
+    "no_op_confirmed"
+  ]);
+  assert.deepEqual(REVIEW_DECISION_ROUTE_STATUSES, [
+    "routed",
+    "rejected_validation",
+    "rejected_lifecycle",
+    "no_action",
+    "failed"
+  ]);
+  assert.deepEqual(REVIEW_DECISION_DOWNSTREAM_COMMAND_TYPES, [
+    "ApplyApprovedSetupMutationCommand",
+    "CreateSetupRefinementRequestCommand",
+    "ActivateSetupDefinitionRevisionCommand",
+    "NoOpConfirmed",
+    "None"
   ]);
   assert.deepEqual(APPROVED_SETUP_LIFECYCLE_ACTIONS, [
     "keep_active",
