@@ -42,6 +42,7 @@ import {
   SETUP_LIFECYCLE_MUTATION_RESULT_STATUSES,
   SETUP_REVISION_ACTIVATION_OUTCOMES,
   SETUP_REVISION_ACTIVATION_RESULT_STATUSES,
+  SETUP_REVISION_RESOLUTION_STATUSES,
   SETUP_REFINEMENT_REQUEST_RESULT_STATUSES,
   SETUP_REFINEMENT_STATUSES,
   SIGNAL_CANDIDATE_STATUSES,
@@ -170,6 +171,11 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "rejected",
     "failed"
   ]);
+  assert.deepEqual(SETUP_REVISION_RESOLUTION_STATUSES, [
+    "resolved",
+    "rejected",
+    "failed"
+  ]);
   assert.deepEqual(AGGREGATION_SYMBOL_SCOPE_KINDS, ["single_symbol", "symbol_set", "all_monitored"]);
   assert.deepEqual(STORAGE_BOUNDARIES, ["runtime_evidence", "product_domain", "derived_analytics"]);
   assert.deepEqual(RUNTIME_EVIDENCE_ARTIFACT_TYPES, [
@@ -265,6 +271,7 @@ test("supports constructing typed contracts without implementation logic", () =>
   const candidate: SignalCandidate = {
     id: "candidate-001",
     setupDefinitionId: setup.id,
+    setupRevisionId: "revision-001",
     monitoredSymbolId: symbol.symbolId,
     detectedAt: "2026-04-14T10:30:00.000Z",
     status: "detected",
@@ -596,7 +603,8 @@ test("supports repository and service boundary contracts", async () => {
     archiveSetupDefinition: async () => null,
     applyApprovedMutation: async () => null,
     createRevision: async () => null,
-    activateRevision: async () => null
+    activateRevision: async () => null,
+    resolveActiveRevision: async () => null
   };
 
   const researchService: ResearchService = {

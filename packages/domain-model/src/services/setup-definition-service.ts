@@ -1,5 +1,5 @@
 import type { SetupDefinition } from "../setup-definition.js";
-import type { TimestampUtc } from "../common.js";
+import type { JsonObject, TimestampUtc } from "../common.js";
 import type { ResearchDecisionApprovalRepository } from "../repositories/research-decision-approval-repository.js";
 import type { SetupRefinementRequestRepository } from "../repositories/setup-refinement-request-repository.js";
 import type { SetupDefinitionRevisionRepository } from "../repositories/setup-definition-revision-repository.js";
@@ -97,6 +97,29 @@ export type ActivateSetupRevisionRequest = {
   expectedVersion: number | null;
 };
 
+export type ResolveActiveRevisionRequest = {
+  setupDefinitionId?: string;
+  setupFamilyId?: string;
+  resolvedAt: TimestampUtc;
+  runtimeContext?: JsonObject;
+  originRunId?: string;
+};
+
+export type ActiveSetupRevisionResolution = {
+  setupFamilyId: string;
+  setupDefinitionId: string;
+  setupRevisionId: string;
+  version: number;
+  resolvedAt: TimestampUtc;
+  effectiveStatus: SetupDefinition["status"];
+  revisionStatus: SetupDefinitionRevision["revisionStatus"];
+  activationMetadata?: {
+    setupRevisionActivationRecordId: string;
+    activationOutcome: SetupRevisionActivationOutcome;
+    activatedAt: TimestampUtc;
+  };
+};
+
 export type SetupRevisionActivated = {
   targetRevision: SetupDefinitionRevision;
   targetSetupDefinition: SetupDefinition;
@@ -129,6 +152,9 @@ export type SetupDefinitionService = {
   activateRevision(
     request: ActivateSetupRevisionRequest
   ): Promise<SetupRevisionActivated | null>;
+  resolveActiveRevision(
+    request: ResolveActiveRevisionRequest
+  ): Promise<ActiveSetupRevisionResolution | null>;
 };
 
 export class SetupDefinitionValidationError extends Error {
@@ -226,6 +252,9 @@ const buildRevisionActivationId = (
   activatedAt: TimestampUtc
 ): string => `setup-activation-${setupFamilyId}-${targetRevisionId}-${Date.parse(activatedAt)}`;
 
+const compareTimestampAsc = (left: string, right: string): number =>
+  Date.parse(left) - Date.parse(right);
+
 export const createSetupDefinitionService = (
   dependencies: SetupDefinitionServiceDependencies
 ): SetupDefinitionService => {
@@ -237,6 +266,62 @@ export const createSetupDefinitionService = (
     setupDefinitionRevisionRepository,
     setupRevisionActivationRecordRepository
   } = dependencies;
+
+  const resolveSetupFamilyId = async (
+    setupDefinitionId: string | undefined,
+    setupFamilyId: string | undefined
+  ): Promise<string | null> => {
+    if (setupFamilyId?.trim()) {
+      return setupFamilyId.trim();
+    }
+
+    if (!setupDefinitionId?.trim() || !setupDefinitionRevisionRepository) {
+      return null;
+    }
+
+    const normalizedSetupDefinitionId = setupDefinitionId.trim();
+    const bySetupDefinition = await setupDefinitionRevisionRepository.getBySetupDefinitionId(
+      normalizedSetupDefinitionId
+    );
+    if (bySetupDefinition) {
+      return bySetupDefinition.versionInfo.setupFamilyId;
+    }
+
+    const familyRevisions = await setupDefinitionRevisionRepository.listBySetupFamilyId(
+      normalizedSetupDefinitionId
+    );
+    return familyRevisions.length > 0 ? normalizedSetupDefinitionId : null;
+  };
+
+  const resolveActivationMetadata = async (
+    setupFamilyId: string,
+    setupRevisionId: string,
+    resolvedAt: TimestampUtc
+  ): Promise<ActiveSetupRevisionResolution["activationMetadata"] | undefined> => {
+    if (!setupRevisionActivationRecordRepository) {
+      return undefined;
+    }
+
+    const records = await setupRevisionActivationRecordRepository.listBySetupFamilyId(setupFamilyId);
+    const relevant = records
+      .filter(
+        (record) =>
+          record.targetRevisionId === setupRevisionId &&
+          Date.parse(record.activatedAt) <= Date.parse(resolvedAt)
+      )
+      .sort((left, right) => compareTimestampAsc(right.activatedAt, left.activatedAt));
+
+    const latest = relevant[0];
+    if (!latest) {
+      return undefined;
+    }
+
+    return {
+      setupRevisionActivationRecordId: latest.id,
+      activationOutcome: latest.activationOutcome,
+      activatedAt: latest.activatedAt
+    };
+  };
 
   return {
     async createSetupDefinition(request) {
@@ -523,6 +608,130 @@ export const createSetupDefinitionService = (
         previousSetupDefinitionId: currentDefinition.id,
         newSetupDefinition,
         revision
+      };
+    },
+    async resolveActiveRevision(request) {
+      assertNonEmptyString(request.resolvedAt, "resolvedAt");
+
+      if (!request.setupDefinitionId && !request.setupFamilyId) {
+        throw new SetupDefinitionValidationError(
+          "setupDefinitionId or setupFamilyId is required for active revision resolution"
+        );
+      }
+
+      if (!setupDefinitionRevisionRepository) {
+        throw new SetupDefinitionValidationError(
+          "setup_definition_revision repository is required for active revision resolution"
+        );
+      }
+
+      const setupFamilyId = await resolveSetupFamilyId(request.setupDefinitionId, request.setupFamilyId);
+      if (!setupFamilyId) {
+        return null;
+      }
+
+      const familyRevisions = await setupDefinitionRevisionRepository.listBySetupFamilyId(setupFamilyId);
+      if (familyRevisions.length === 0) {
+        return null;
+      }
+
+      const activationRecords = setupRevisionActivationRecordRepository
+        ? await setupRevisionActivationRecordRepository.listBySetupFamilyId(setupFamilyId)
+        : [];
+
+      const resolvedAtEpoch = Date.parse(request.resolvedAt);
+      const latestActivationAtOrBeforeResolution = activationRecords
+        .filter((record) => Date.parse(record.activatedAt) <= resolvedAtEpoch)
+        .sort((left, right) => compareTimestampAsc(right.activatedAt, left.activatedAt))[0];
+
+      if (latestActivationAtOrBeforeResolution) {
+        const targetRevision = await setupDefinitionRevisionRepository.getById(
+          latestActivationAtOrBeforeResolution.targetRevisionId
+        );
+        if (!targetRevision) {
+          throw new SetupDefinitionValidationError(
+            `setup_revision_activation_record points to missing setup_definition_revision: ${latestActivationAtOrBeforeResolution.targetRevisionId}`
+          );
+        }
+
+        if (targetRevision.versionInfo.setupFamilyId !== setupFamilyId) {
+          throw new SetupDefinitionValidationError(
+            `setup_revision_activation_record ${latestActivationAtOrBeforeResolution.id} has invalid setup_family linkage`
+          );
+        }
+
+        const targetSetupDefinition = await setupDefinitionRepository.getById(
+          targetRevision.setupDefinitionId
+        );
+        if (!targetSetupDefinition) {
+          throw new SetupDefinitionValidationError(
+            `setup_definition not found for activated setup revision: ${targetRevision.setupDefinitionId}`
+          );
+        }
+
+        const activationMetadata = await resolveActivationMetadata(
+          setupFamilyId,
+          targetRevision.id,
+          request.resolvedAt
+        );
+
+        return {
+          setupFamilyId,
+          setupDefinitionId: targetRevision.setupDefinitionId,
+          setupRevisionId: targetRevision.id,
+          version: targetRevision.versionInfo.version,
+          resolvedAt: request.resolvedAt,
+          effectiveStatus: "active",
+          revisionStatus: targetRevision.revisionStatus,
+          activationMetadata
+        };
+      }
+
+      const activeRevisions: Array<{
+        revision: SetupDefinitionRevision;
+        setupDefinition: SetupDefinition;
+      }> = [];
+      for (const revision of familyRevisions) {
+        const setupDefinition = await setupDefinitionRepository.getById(revision.setupDefinitionId);
+        if (setupDefinition?.status === "active") {
+          activeRevisions.push({ revision, setupDefinition });
+        }
+      }
+
+      if (activeRevisions.length > 1) {
+        throw new SetupDefinitionValidationError(
+          `setup_family ${setupFamilyId} has multiple active revisions and cannot be resolved deterministically`
+        );
+      }
+
+      if (activeRevisions.length === 0) {
+        throw new SetupDefinitionValidationError(
+          `setup_family ${setupFamilyId} has no active revision for runtime resolution`
+        );
+      }
+
+      const resolved = activeRevisions[0];
+      if (!resolved) {
+        throw new SetupDefinitionValidationError(
+          `setup_family ${setupFamilyId} active revision resolution failed unexpectedly`
+        );
+      }
+
+      const activationMetadata = await resolveActivationMetadata(
+        setupFamilyId,
+        resolved.revision.id,
+        request.resolvedAt
+      );
+
+      return {
+        setupFamilyId,
+        setupDefinitionId: resolved.revision.setupDefinitionId,
+        setupRevisionId: resolved.revision.id,
+        version: resolved.revision.versionInfo.version,
+        resolvedAt: request.resolvedAt,
+        effectiveStatus: resolved.setupDefinition.status,
+        revisionStatus: resolved.revision.revisionStatus,
+        activationMetadata
       };
     },
     async activateRevision(request) {

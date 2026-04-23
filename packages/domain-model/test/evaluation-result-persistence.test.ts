@@ -27,6 +27,7 @@ const buildSignalCandidate = (
 ): SignalCandidate => ({
   id,
   setupDefinitionId,
+  setupRevisionId: `${setupDefinitionId}-revision`,
   monitoredSymbolId,
   status: "under_review",
   detectedAt: "2026-04-16T10:00:00.000Z",

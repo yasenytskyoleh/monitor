@@ -1,4 +1,7 @@
 export type { DetectionToCandidateCommand } from "./detection-to-candidate-command.js";
+export type { ResolveActiveSetupRevisionCommand } from "./resolve-active-setup-revision-command.js";
+export type { RuntimeSetupRevisionRef } from "./runtime-setup-revision-ref.js";
+export type { ActiveSetupRevisionResolution } from "./active-setup-revision-resolution.js";
 export type {
   EvaluationWindowDescriptor,
   SignalCandidateEvaluationTrigger
@@ -16,6 +19,13 @@ export type { RefreshAggregateFromEvaluationCommand } from "./refresh-aggregate-
 export type { UpdateHypothesisFromAggregateCommand } from "./update-hypothesis-from-aggregate-command.js";
 export type { HypothesisFeedbackDecisionTrigger } from "./hypothesis-feedback-decision-trigger.js";
 export type { ReviewSetupFromEvidenceCommand } from "./review-setup-from-evidence-command.js";
+export {
+  SETUP_REVISION_RESOLUTION_STATUSES
+} from "./setup-revision-resolution-result.js";
+export type {
+  SetupRevisionResolutionResult,
+  SetupRevisionResolutionStatus
+} from "./setup-revision-resolution-result.js";
 export {
   EVALUATION_TRIGGER_STATUSES
 } from "./evaluation-trigger-result.js";
@@ -51,6 +61,12 @@ export type {
   RuntimeHandoffResult,
   RuntimeHandoffStatus
 } from "./runtime-handoff-result.js";
+export {
+  createActiveSetupRevisionResolutionHandoff
+} from "./resolve-active-setup-revision.js";
+export type {
+  ActiveSetupRevisionResolutionHandoffDependencies
+} from "./resolve-active-setup-revision.js";
 export {
   createSignalCandidateFromDetectionHandoff
 } from "./signal-candidate-from-detection.js";

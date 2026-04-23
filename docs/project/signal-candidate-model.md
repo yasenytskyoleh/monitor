@@ -16,6 +16,7 @@ It does not represent:
 `SignalCandidate` fields:
 - `id`
 - `setupDefinitionId`
+- `setupRevisionId`
 - `monitoredSymbolId`
 - `detectionHitId` (optional placeholder)
 - `status` (`detected` | `under_review` | `evaluated` | `discarded`)
@@ -52,6 +53,7 @@ Implementation sources:
 ## Boundary and relationships
 - must reference:
   - one `SetupDefinition`
+  - one explicit `SetupDefinitionRevision` (`setupRevisionId`)
   - one `MonitoredSymbol`
 - optional linkage to orchestrator run context can be carried as metadata (`originRunId`) only
 - runtime evidence under `runtime/runs/*` remains separate from product-domain persistence

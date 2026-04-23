@@ -50,6 +50,7 @@ const assertValidStatus = (status: SignalCandidate["status"]): void => {
 const validateSignalCandidate = (candidate: SignalCandidate): void => {
   assertNonEmptyString(candidate.id, "id");
   assertNonEmptyString(candidate.setupDefinitionId, "setupDefinitionId");
+  assertNonEmptyString(candidate.setupRevisionId, "setupRevisionId");
   assertNonEmptyString(candidate.monitoredSymbolId, "monitoredSymbolId");
   assertNonEmptyString(candidate.detectedAt, "detectedAt");
   assertNonEmptyString(candidate.evidenceSummary, "evidenceSummary");

@@ -5,11 +5,13 @@ import {
   SignalCandidateValidationError,
   type SignalCandidateService
 } from "../services/signal-candidate-service.js";
+import type { SetupDefinitionService } from "../services/setup-definition-service.js";
 import type { DetectionToCandidateCommand } from "./detection-to-candidate-command.js";
 import type { RuntimeHandoffResult } from "./runtime-handoff-result.js";
 
 export type SignalCandidateFromDetectionDependencies = {
   signalCandidateService: SignalCandidateService;
+  setupDefinitionService: Pick<SetupDefinitionService, "resolveActiveRevision">;
   signalCandidateRepository: Pick<SignalCandidateRepository, "listBySetupDefinitionId">;
 };
 
@@ -40,6 +42,7 @@ const isDuplicateDetectionHit = (
       existingCandidate.detectionHitId &&
       existingCandidate.detectionHitId === command.detectionHitId &&
       existingCandidate.setupDefinitionId === command.setupDefinitionId &&
+      existingCandidate.setupRevisionId === command.setupRevisionId &&
       existingCandidate.monitoredSymbolId === command.monitoredSymbolId
   );
 
@@ -51,12 +54,17 @@ export const createSignalCandidateFromDetectionHandoff = (
     metadata: ProductRecordMetadata
   ): Promise<RuntimeHandoffResult>;
 } => {
-  const { signalCandidateService, signalCandidateRepository } = dependencies;
+  const {
+    signalCandidateService,
+    setupDefinitionService,
+    signalCandidateRepository
+  } = dependencies;
 
   return {
     async handoff(command, metadata): Promise<RuntimeHandoffResult> {
       try {
         assertRequired(command.setupDefinitionId, "setupDefinitionId");
+        assertRequired(command.setupRevisionId, "setupRevisionId");
         assertRequired(command.monitoredSymbolId, "monitoredSymbolId");
         assertRequired(command.detectedAt, "detectedAt");
         assertRequired(command.evidenceSummary, "evidenceSummary");
@@ -64,6 +72,28 @@ export const createSignalCandidateFromDetectionHandoff = (
         return {
           status: "rejected_validation",
           reason: error instanceof Error ? error.message : "invalid detection handoff command",
+          warnings: []
+        };
+      }
+
+      const resolvedActiveRevision = await setupDefinitionService.resolveActiveRevision({
+        setupDefinitionId: command.setupDefinitionId,
+        resolvedAt: command.detectedAt,
+        runtimeContext: command.sourceMetadata,
+        originRunId: command.originRunId
+      });
+      if (!resolvedActiveRevision) {
+        return {
+          status: "rejected_validation",
+          reason: `active setup revision not found for setup_definition: ${command.setupDefinitionId}`,
+          warnings: []
+        };
+      }
+
+      if (resolvedActiveRevision.setupRevisionId !== command.setupRevisionId) {
+        return {
+          status: "rejected_validation",
+          reason: `setup revision mismatch: resolved ${resolvedActiveRevision.setupRevisionId}, command provided ${command.setupRevisionId}`,
           warnings: []
         };
       }
@@ -90,6 +120,7 @@ export const createSignalCandidateFromDetectionHandoff = (
           candidate: {
             id: buildCandidateId(command),
             setupDefinitionId: command.setupDefinitionId,
+            setupRevisionId: command.setupRevisionId,
             monitoredSymbolId: command.monitoredSymbolId,
             detectionHitId: command.detectionHitId,
             status: "detected",
