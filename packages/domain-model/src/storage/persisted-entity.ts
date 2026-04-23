@@ -129,6 +129,17 @@ export const FIRST_CLASS_PERSISTED_ENTITY_PROFILES: PersistedEntityProfile[] = [
     }
   },
   {
+    entityType: "routed_action_execution_envelope",
+    firstClassPersisted: true,
+    timing: {
+      createdWhen: "created when routed review decision action is packaged into execution-ready envelope",
+      updatedWhen: "updated only for controlled execution-envelope metadata corrections",
+      immutableFields: ["identity.entityId"],
+      mutableFields: ["metadata", "updatedAtUtc"],
+      canBeArchived: true
+    }
+  },
+  {
     entityType: "setup_lifecycle_mutation_record",
     firstClassPersisted: true,
     timing: {
