@@ -39,6 +39,40 @@ export type {
 } from "./apply-research-review-decision-command.js";
 
 export {
+  DOWNSTREAM_ACTION_TARGETS
+} from "./downstream-action-target.js";
+export type {
+  DownstreamActionTarget
+} from "./downstream-action-target.js";
+
+export {
+  REVIEW_DECISION_ROUTE_STATUSES
+} from "./review-decision-route-status.js";
+export type {
+  ReviewDecisionRouteStatus
+} from "./review-decision-route-status.js";
+
+export type {
+  RouteAcceptedReviewDecisionCommand
+} from "./route-accepted-review-decision-command.js";
+
+export {
+  REVIEW_DECISION_DOWNSTREAM_COMMAND_TYPES
+} from "./review-decision-routing-result.js";
+export type {
+  ReviewDecisionDownstreamCommandType,
+  ReviewDecisionRoutingResult
+} from "./review-decision-routing-result.js";
+
+export type {
+  ReviewDecisionRoutingService,
+  ReviewDecisionRoutingServiceDependencies
+} from "./review-decision-routing-service.js";
+export {
+  createReviewDecisionRoutingService
+} from "./review-decision-routing-service.js";
+
+export {
   RESEARCH_REVIEW_DECISION_RESULT_STATUSES
 } from "./research-review-decision-result.js";
 export type {
