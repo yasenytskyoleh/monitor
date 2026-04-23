@@ -438,14 +438,18 @@ export type {
   SignalCandidateToEvaluationDependencies
 } from "./runtime-handoff/index.js";
 export {
+  REVISION_EVIDENCE_SUFFICIENCY_LEVELS,
   REVISION_COMPARISON_RESULT_STATUSES,
   REVISION_HISTORY_QUERY_STATUSES,
+  REVISION_IMPACT_CLASSIFICATIONS,
+  REVISION_IMPACT_SUMMARY_RESULT_STATUSES,
   SETUP_REVISION_COMPARISON_STATUSES,
   SETUP_REVISION_HISTORY_QUERY_MODES,
   createRevisionHistoryQueryService
 } from "./query/index.js";
 export type {
   AggregateEvidenceQueryService,
+  BuildSetupRevisionImpactSummaryCommand,
   CompareSetupRevisionsCommand,
   EvaluationQueryService,
   RevisionComparisonMetricDeltas,
@@ -453,7 +457,12 @@ export type {
   RevisionComparisonResult,
   RevisionComparisonResultStatus,
   RevisionComparisonScopeDescriptor,
+  RevisionEvidenceSufficiencyLevel,
   RevisionEvidenceCounts,
+  RevisionImpactClassification,
+  RevisionImpactKeyMetricChanges,
+  RevisionImpactSummaryResult,
+  RevisionImpactSummaryResultStatus,
   QueryAggregateEvidenceByRevisionScope,
   QueryEvaluationResultsByRevision,
   QuerySetupRevisionHistory,
@@ -467,8 +476,10 @@ export type {
   RevisionHistoryQueryServiceDependencies,
   RevisionHistoryQueryStatus,
   SetupComparisonQueryService,
+  SetupComparisonSummaryService,
   SetupDefinitionQueryService,
   SetupRevisionComparison,
+  SetupRevisionImpactSummary,
   SetupRevisionComparisonStatus,
   SetupRevisionHistoryGroup,
   SetupRevisionHistoryQueryMode,

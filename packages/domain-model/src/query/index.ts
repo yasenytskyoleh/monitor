@@ -25,6 +25,10 @@ export type {
 } from "./compare-setup-revisions-command.js";
 
 export type {
+  BuildSetupRevisionImpactSummaryCommand
+} from "./build-setup-revision-impact-summary-command.js";
+
+export type {
   RevisionComparisonMetricDeltas,
   RevisionComparisonMetrics,
   RevisionMetricDelta
@@ -46,6 +50,30 @@ export type {
   RevisionComparisonResult,
   RevisionComparisonResultStatus
 } from "./revision-comparison-result.js";
+
+export {
+  REVISION_IMPACT_CLASSIFICATIONS
+} from "./revision-impact-classification.js";
+export type {
+  RevisionImpactClassification
+} from "./revision-impact-classification.js";
+
+export {
+  REVISION_EVIDENCE_SUFFICIENCY_LEVELS
+} from "./setup-revision-impact-summary.js";
+export type {
+  RevisionEvidenceSufficiencyLevel,
+  RevisionImpactKeyMetricChanges,
+  SetupRevisionImpactSummary
+} from "./setup-revision-impact-summary.js";
+
+export {
+  REVISION_IMPACT_SUMMARY_RESULT_STATUSES
+} from "./revision-impact-summary-result.js";
+export type {
+  RevisionImpactSummaryResult,
+  RevisionImpactSummaryResultStatus
+} from "./revision-impact-summary-result.js";
 
 export type {
   RevisionAggregateHistoryView,
@@ -70,6 +98,7 @@ export type {
   AggregateEvidenceQueryService,
   EvaluationQueryService,
   SetupComparisonQueryService,
+  SetupComparisonSummaryService,
   RevisionHistoryQueryService,
   RevisionHistoryQueryServiceDependencies,
   SetupDefinitionQueryService,
