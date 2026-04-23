@@ -3,16 +3,18 @@
 ## Happy path (first version)
 1. monitoring pipeline emits normalized event
 2. deterministic setup rule evaluates event context
-3. setup detection hit is produced
-4. detection hit is mapped to `DetectionToCandidateCommand`
-5. runtime handoff coordinator invokes product service
-6. `SignalCandidate` is persisted in `detected` status
-7. handoff result returns created candidate id
+3. runtime resolves current active setup revision for the setup selector
+4. setup detection hit is produced with explicit revision context
+5. detection hit is mapped to `DetectionToCandidateCommand` including `setupRevisionId`
+6. runtime handoff coordinator invokes product service
+7. `SignalCandidate` is persisted in `detected` status with `setupRevisionId`
+8. handoff result returns created candidate id
 
 ## Ownership boundaries
 - detection/runtime side:
   - event normalization
   - deterministic rule evaluation
+  - active revision resolution
   - hit payload construction
 - product side:
   - command validation
@@ -23,6 +25,7 @@
 ## Failure boundaries
 - invalid hit command -> reject before persistence
 - missing setup/symbol references -> reject via product validation
+- missing or mismatched setup revision reference -> reject
 - duplicate detection hit -> explicit duplicate outcome
 - unexpected persistence failure -> explicit failed outcome with retry hint
 

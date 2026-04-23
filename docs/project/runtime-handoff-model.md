@@ -28,6 +28,7 @@ Contract:
 
 Minimum fields:
 - `setupDefinitionId`
+- `setupRevisionId`
 - `monitoredSymbolId`
 - `detectedAt`
 - optional `detectionHitId`
@@ -50,10 +51,11 @@ Statuses:
 ## First coordination path
 1. normalized monitoring event exists
 2. detection rule produces structured hit payload
-3. handoff command created (`DetectionToCandidateCommand`)
-4. product handoff coordinator validates command
-5. `SignalCandidateService.createSignalCandidate` is called
-6. explicit handoff result is returned
+3. runtime resolves active setup revision context
+4. handoff command created (`DetectionToCandidateCommand`) with explicit `setupRevisionId`
+5. product handoff coordinator validates command + resolved revision context
+6. `SignalCandidateService.createSignalCandidate` is called
+7. explicit handoff result is returned
 
 Coordinator:
 - `createSignalCandidateFromDetectionHandoff`
@@ -68,7 +70,8 @@ Coordinator:
 ## Failure behavior
 Failure cases:
 - invalid command shape -> `rejected_validation`
-- missing setup definition -> `rejected_validation`
+- missing setup definition / active revision context -> `rejected_validation`
+- missing or mismatched setup revision reference -> `rejected_validation`
 - missing monitored symbol -> `rejected_validation`
 - duplicate detection-hit policy hit -> `rejected_duplicate`
 - unexpected service/runtime error -> `failed` + retry warning
@@ -88,6 +91,7 @@ Contracts:
 
 This boundary is deterministic and service-driven:
 - validates candidate lifecycle eligibility
+- validates candidate setup/revision reference consistency explicitly
 - resolves evaluation window id explicitly
 - initializes pending evaluation result and starts evaluation
 - returns explicit trigger result statuses
@@ -232,3 +236,22 @@ This boundary is deterministic and service-driven:
 - allows activation only from accepted revision status
 - supersedes previous active revision explicitly while retaining immutable history
 - persists `SetupRevisionActivationRecord` for auditable operational selection history
+
+## Revision-aware runtime consumption boundary
+Eleventh runtime handoff in this phase:
+- from revision governance state to runtime active-revision resolution and consumption
+- through explicit `ResolveActiveSetupRevisionCommand` payload
+
+Contracts:
+- `packages/domain-model/src/runtime-handoff/resolve-active-setup-revision-command.ts`
+- `packages/domain-model/src/runtime-handoff/runtime-setup-revision-ref.ts`
+- `packages/domain-model/src/runtime-handoff/active-setup-revision-resolution.ts`
+- `packages/domain-model/src/runtime-handoff/setup-revision-resolution-result.ts`
+- `packages/domain-model/src/runtime-handoff/resolve-active-setup-revision.ts`
+
+This boundary is deterministic and service-driven:
+- resolves one active revision explicitly through `SetupDefinitionService.resolveActiveRevision(...)`
+- rejects missing, zero-active, and multiple-active family states explicitly
+- requires runtime candidate creation to carry explicit `setupRevisionId`
+- keeps historical revision references immutable on created records
+- applies revision activation changes to future runtime resolution only

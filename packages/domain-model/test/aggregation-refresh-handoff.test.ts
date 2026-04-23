@@ -79,6 +79,7 @@ test("valid aggregation-refresh trigger shape", async () => {
     candidate: {
       id: "candidate-agg-refresh-001",
       setupDefinitionId: "setup-agg-refresh-001",
+      setupRevisionId: "revision-agg-refresh-001",
       monitoredSymbolId: "BTC-USDT",
       status: "evaluated",
       detectedAt: "2026-04-21T11:00:00.000Z",
@@ -155,6 +156,7 @@ test("non-completed evaluation rejected", async () => {
     candidate: {
       id: "candidate-agg-refresh-003",
       setupDefinitionId: "setup-agg-refresh-003",
+      setupRevisionId: "revision-agg-refresh-003",
       monitoredSymbolId: "BTC-USDT",
       status: "under_review",
       detectedAt: "2026-04-21T11:00:00.000Z",
@@ -214,6 +216,7 @@ test("duplicate refresh policy recomputes existing aggregate", async () => {
     candidate: {
       id: "candidate-agg-refresh-004",
       setupDefinitionId: "setup-agg-refresh-004",
+      setupRevisionId: "revision-agg-refresh-004",
       monitoredSymbolId: "BTC-USDT",
       status: "evaluated",
       detectedAt: "2026-04-21T11:00:00.000Z",

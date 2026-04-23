@@ -97,6 +97,7 @@ test("valid evaluation trigger shape starts evaluation", async () => {
     candidate: {
       id: "candidate-eval-001",
       setupDefinitionId: "setup-eval-001",
+      setupRevisionId: "revision-eval-001",
       monitoredSymbolId: "BTC-USDT",
       status: "detected",
       detectedAt: "2026-04-20T11:00:00.000Z",
@@ -111,6 +112,7 @@ test("valid evaluation trigger shape starts evaluation", async () => {
     {
       signalCandidateId: "candidate-eval-001",
       setupDefinitionId: "setup-eval-001",
+      setupRevisionId: "revision-eval-001",
       monitoredSymbolId: "BTC-USDT",
       triggeredAt: "2026-04-20T11:30:00.000Z",
       evaluationWindowId: "window-24h"
@@ -130,6 +132,7 @@ test("missing signal candidate reference rejected", async () => {
     {
       signalCandidateId: "candidate-missing",
       setupDefinitionId: "setup-eval-002",
+      setupRevisionId: "revision-eval-002",
       monitoredSymbolId: "BTC-USDT",
       triggeredAt: "2026-04-20T11:30:00.000Z",
       evaluationWindowId: "window-24h"
@@ -151,6 +154,7 @@ test("invalid candidate lifecycle rejected", async () => {
     candidate: {
       id: "candidate-eval-003",
       setupDefinitionId: "setup-eval-003",
+      setupRevisionId: "revision-eval-003",
       monitoredSymbolId: "BTC-USDT",
       status: "detected",
       detectedAt: "2026-04-20T11:00:00.000Z",
@@ -171,6 +175,7 @@ test("invalid candidate lifecycle rejected", async () => {
     {
       signalCandidateId: "candidate-eval-003",
       setupDefinitionId: "setup-eval-003",
+      setupRevisionId: "revision-eval-003",
       monitoredSymbolId: "BTC-USDT",
       triggeredAt: "2026-04-20T11:30:00.000Z",
       evaluationWindowId: "window-24h"
@@ -192,6 +197,7 @@ test("duplicate candidate/window trigger rejected with explicit outcome", async 
     candidate: {
       id: "candidate-eval-004",
       setupDefinitionId: "setup-eval-004",
+      setupRevisionId: "revision-eval-004",
       monitoredSymbolId: "BTC-USDT",
       status: "detected",
       detectedAt: "2026-04-20T11:00:00.000Z",
@@ -212,6 +218,7 @@ test("duplicate candidate/window trigger rejected with explicit outcome", async 
     {
       signalCandidateId: "candidate-eval-004",
       setupDefinitionId: "setup-eval-004",
+      setupRevisionId: "revision-eval-004",
       monitoredSymbolId: "BTC-USDT",
       triggeredAt: "2026-04-20T11:30:00.000Z",
       evaluationWindowId: "window-24h"
@@ -222,6 +229,7 @@ test("duplicate candidate/window trigger rejected with explicit outcome", async 
     {
       signalCandidateId: "candidate-eval-004",
       setupDefinitionId: "setup-eval-004",
+      setupRevisionId: "revision-eval-004",
       monitoredSymbolId: "BTC-USDT",
       triggeredAt: "2026-04-20T11:31:00.000Z",
       evaluationWindowId: "window-24h"
@@ -241,6 +249,7 @@ test("evaluation-trigger result shape stays explicit", async () => {
     {
       signalCandidateId: "",
       setupDefinitionId: "setup-eval-005",
+      setupRevisionId: "revision-eval-005",
       monitoredSymbolId: "BTC-USDT",
       triggeredAt: "2026-04-20T11:30:00.000Z",
       evaluationWindowDescriptor: {
@@ -274,6 +283,7 @@ test("failed trigger does not advance candidate lifecycle before evaluation star
     candidate: {
       id: "candidate-eval-006a",
       setupDefinitionId: "setup-eval-006",
+      setupRevisionId: "revision-eval-006",
       monitoredSymbolId: "BTC-USDT",
       status: "detected",
       detectedAt: "2026-04-20T11:00:00.000Z",
@@ -287,6 +297,7 @@ test("failed trigger does not advance candidate lifecycle before evaluation star
     candidate: {
       id: "candidate-eval-006b",
       setupDefinitionId: "setup-eval-006",
+      setupRevisionId: "revision-eval-006",
       monitoredSymbolId: "BTC-USDT",
       status: "detected",
       detectedAt: "2026-04-20T11:01:00.000Z",
@@ -321,6 +332,7 @@ test("failed trigger does not advance candidate lifecycle before evaluation star
     {
       signalCandidateId: "candidate-eval-006a",
       setupDefinitionId: "setup-eval-006",
+      setupRevisionId: "revision-eval-006",
       monitoredSymbolId: "BTC-USDT",
       triggeredAt: "2026-04-20T11:30:00.000Z",
       evaluationWindowId: "window-24h",

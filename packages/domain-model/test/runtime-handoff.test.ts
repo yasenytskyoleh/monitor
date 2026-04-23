@@ -3,12 +3,15 @@ import test from "node:test";
 
 import {
   InMemorySetupDefinitionRepository,
+  InMemorySetupDefinitionRevisionRepository,
   InMemorySignalCandidateRepository,
+  createSetupDefinitionService,
   createSignalCandidateFromDetectionHandoff,
   createSignalCandidateService,
   type MonitoredSymbol,
   type ProductRecordMetadata,
-  type SetupDefinition
+  type SetupDefinition,
+  type SetupDefinitionRevision
 } from "../src/index.js";
 
 const metadata: ProductRecordMetadata = {
@@ -29,6 +32,27 @@ const buildSetupDefinition = (id: string): SetupDefinition => ({
   evaluationAssumptions: ["24h evaluation"],
   invalidationAssumptions: ["range failure invalidates"],
   createdAt: "2026-04-19T10:00:00.000Z",
+  updatedAt: "2026-04-19T10:00:00.000Z"
+});
+
+const buildRevision = (
+  setupDefinitionId: string,
+  revisionId: string,
+  setupFamilyId: string
+): SetupDefinitionRevision => ({
+  id: revisionId,
+  setupDefinitionId,
+  versionInfo: {
+    setupFamilyId,
+    revisionId,
+    version: 1
+  },
+  revisionReason: "runtime handoff revision",
+  revisionStatus: "accepted",
+  changedFieldsSummary: "baseline revision",
+  createdBy: "research_reviewer_1",
+  createdAt: "2026-04-19T10:00:00.000Z",
+  sourceSetupRefinementRequestId: `refinement-${revisionId}`,
   updatedAt: "2026-04-19T10:00:00.000Z"
 });
 
@@ -57,7 +81,13 @@ const createMonitoredSymbolRepositoryStub = (symbols: MonitoredSymbol[]) => {
 
 const createFixture = () => {
   const setupDefinitionRepository = new InMemorySetupDefinitionRepository();
+  const setupDefinitionRevisionRepository = new InMemorySetupDefinitionRevisionRepository();
   const signalCandidateRepository = new InMemorySignalCandidateRepository();
+
+  const setupDefinitionService = createSetupDefinitionService({
+    setupDefinitionRepository,
+    setupDefinitionRevisionRepository
+  });
 
   const signalCandidateService = createSignalCandidateService({
     signalCandidateRepository,
@@ -67,26 +97,43 @@ const createFixture = () => {
 
   const runtimeHandoff = createSignalCandidateFromDetectionHandoff({
     signalCandidateService,
+    setupDefinitionService,
     signalCandidateRepository
   });
 
   return {
     setupDefinitionRepository,
+    setupDefinitionRevisionRepository,
+    setupDefinitionService,
     signalCandidateRepository,
     runtimeHandoff
   };
 };
 
-test("valid detection handoff shape creates candidate", async () => {
-  const { setupDefinitionRepository, runtimeHandoff } = createFixture();
-  await setupDefinitionRepository.create({
-    definition: buildSetupDefinition("setup-runtime-001"),
+const seedActiveSetupRevision = async (
+  setupDefinitionId: string,
+  revisionId: string,
+  fixture: ReturnType<typeof createFixture>
+): Promise<void> => {
+  await fixture.setupDefinitionRepository.create({
+    definition: buildSetupDefinition(setupDefinitionId),
     metadata
   });
 
-  const result = await runtimeHandoff.handoff(
+  await fixture.setupDefinitionRevisionRepository.create({
+    revision: buildRevision(setupDefinitionId, revisionId, setupDefinitionId),
+    metadata
+  });
+};
+
+test("valid detection handoff shape creates candidate", async () => {
+  const fixture = createFixture();
+  await seedActiveSetupRevision("setup-runtime-001", "revision-runtime-001", fixture);
+
+  const result = await fixture.runtimeHandoff.handoff(
     {
       setupDefinitionId: "setup-runtime-001",
+      setupRevisionId: "revision-runtime-001",
       monitoredSymbolId: "BTC-USDT",
       detectedAt: "2026-04-19T11:00:00.000Z",
       detectionHitId: "hit-001",
@@ -97,6 +144,9 @@ test("valid detection handoff shape creates candidate", async () => {
 
   assert.equal(result.status, "created");
   assert.equal(typeof result.signalCandidateId, "string");
+
+  const candidate = await fixture.signalCandidateRepository.getById(result.signalCandidateId ?? "");
+  assert.equal(candidate?.setupRevisionId, "revision-runtime-001");
 });
 
 test("missing setup definition reference rejected", async () => {
@@ -105,6 +155,7 @@ test("missing setup definition reference rejected", async () => {
   const result = await runtimeHandoff.handoff(
     {
       setupDefinitionId: "setup-missing",
+      setupRevisionId: "revision-missing",
       monitoredSymbolId: "BTC-USDT",
       detectedAt: "2026-04-19T11:00:00.000Z",
       detectionHitId: "hit-002",
@@ -114,29 +165,28 @@ test("missing setup definition reference rejected", async () => {
   );
 
   assert.equal(result.status, "rejected_validation");
-  assert.equal(result.reason?.includes("setup_definition not found"), true);
+  assert.equal(result.reason?.includes("active setup revision not found"), true);
 });
 
 test("missing monitored symbol reference rejected", async () => {
-  const { setupDefinitionRepository, signalCandidateRepository } = createFixture();
-  await setupDefinitionRepository.create({
-    definition: buildSetupDefinition("setup-runtime-003"),
-    metadata
-  });
+  const fixture = createFixture();
+  await seedActiveSetupRevision("setup-runtime-003", "revision-runtime-003", fixture);
 
   const signalCandidateService = createSignalCandidateService({
-    signalCandidateRepository,
-    setupDefinitionRepository,
+    signalCandidateRepository: fixture.signalCandidateRepository,
+    setupDefinitionRepository: fixture.setupDefinitionRepository,
     monitoredSymbolRepository: createMonitoredSymbolRepositoryStub([])
   });
   const runtimeHandoff = createSignalCandidateFromDetectionHandoff({
     signalCandidateService,
-    signalCandidateRepository
+    setupDefinitionService: fixture.setupDefinitionService,
+    signalCandidateRepository: fixture.signalCandidateRepository
   });
 
   const result = await runtimeHandoff.handoff(
     {
       setupDefinitionId: "setup-runtime-003",
+      setupRevisionId: "revision-runtime-003",
       monitoredSymbolId: "BTC-USDT",
       detectedAt: "2026-04-19T11:00:00.000Z",
       detectionHitId: "hit-003",
@@ -150,15 +200,13 @@ test("missing monitored symbol reference rejected", async () => {
 });
 
 test("duplicate detection hit returns explicit duplicate outcome", async () => {
-  const { setupDefinitionRepository, runtimeHandoff } = createFixture();
-  await setupDefinitionRepository.create({
-    definition: buildSetupDefinition("setup-runtime-004"),
-    metadata
-  });
+  const fixture = createFixture();
+  await seedActiveSetupRevision("setup-runtime-004", "revision-runtime-004", fixture);
 
-  const first = await runtimeHandoff.handoff(
+  const first = await fixture.runtimeHandoff.handoff(
     {
       setupDefinitionId: "setup-runtime-004",
+      setupRevisionId: "revision-runtime-004",
       monitoredSymbolId: "BTC-USDT",
       detectedAt: "2026-04-19T11:00:00.000Z",
       detectionHitId: "hit-duplicate",
@@ -166,9 +214,10 @@ test("duplicate detection hit returns explicit duplicate outcome", async () => {
     },
     metadata
   );
-  const second = await runtimeHandoff.handoff(
+  const second = await fixture.runtimeHandoff.handoff(
     {
       setupDefinitionId: "setup-runtime-004",
+      setupRevisionId: "revision-runtime-004",
       monitoredSymbolId: "BTC-USDT",
       detectedAt: "2026-04-19T11:01:00.000Z",
       detectionHitId: "hit-duplicate",
@@ -182,12 +231,33 @@ test("duplicate detection hit returns explicit duplicate outcome", async () => {
   assert.equal(second.signalCandidateId, first.signalCandidateId);
 });
 
+test("candidate creation without explicit setup revision is rejected", async () => {
+  const fixture = createFixture();
+  await seedActiveSetupRevision("setup-runtime-005", "revision-runtime-005", fixture);
+
+  const result = await fixture.runtimeHandoff.handoff(
+    {
+      setupDefinitionId: "setup-runtime-005",
+      setupRevisionId: "",
+      monitoredSymbolId: "BTC-USDT",
+      detectedAt: "2026-04-19T11:00:00.000Z",
+      detectionHitId: "hit-005",
+      evidenceSummary: "deterministic breakout rule hit"
+    },
+    metadata
+  );
+
+  assert.equal(result.status, "rejected_validation");
+  assert.equal(result.reason?.includes("setupRevisionId is required"), true);
+});
+
 test("handoff result shape is explicit for invalid command", async () => {
   const { runtimeHandoff } = createFixture();
 
   const result = await runtimeHandoff.handoff(
     {
       setupDefinitionId: "",
+      setupRevisionId: "",
       monitoredSymbolId: "BTC-USDT",
       detectedAt: "2026-04-19T11:00:00.000Z",
       evidenceSummary: ""

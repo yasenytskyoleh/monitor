@@ -53,6 +53,7 @@ const buildSignalCandidate = (
 ) => ({
   id,
   setupDefinitionId,
+  setupRevisionId: `${setupDefinitionId}-revision`,
   monitoredSymbolId,
   status: "detected" as const,
   detectedAt: "2026-04-15T11:30:00.000Z",

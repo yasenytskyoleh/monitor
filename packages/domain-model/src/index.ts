@@ -293,12 +293,14 @@ export type {
   UpdateMonitoredSymbolStatusRequest
 } from "./services/monitoring-catalog-service.js";
 export type {
+  ActiveSetupRevisionResolution,
   ActivateSetupRevisionRequest,
   ApplyApprovedMutationRequest,
   ActivateSetupDefinitionRequest,
   ArchiveSetupDefinitionRequest,
   CreateSetupDefinitionRevisionRequest,
   CreateSetupDefinitionRequest,
+  ResolveActiveRevisionRequest,
   SetupRevisionActivated,
   SetupDefinitionRevisionCreated,
   SetupLifecycleMutationApplied,
@@ -383,6 +385,8 @@ export {
   FEEDBACK_DECISION_RESULT_STATUSES,
   HYPOTHESIS_EVIDENCE_UPDATE_STATUSES,
   RUNTIME_HANDOFF_STATUSES,
+  SETUP_REVISION_RESOLUTION_STATUSES,
+  createActiveSetupRevisionResolutionHandoff,
   createAggregateToHypothesisEvidenceHandoff,
   createApprovedRefinementFollowUpHandoff,
   createApprovedSetupLifecycleMutationHandoff,
@@ -397,6 +401,7 @@ export {
 export type {
   AggregateHypothesisEvidenceTrigger,
   AggregateToHypothesisEvidenceDependencies,
+  ActiveSetupRevisionResolutionHandoffDependencies,
   AggregationRefreshResult,
   AggregationRefreshStatus,
   AggregationScopeDescriptor,
@@ -410,6 +415,10 @@ export type {
   HypothesisEvidenceUpdateResult,
   HypothesisEvidenceUpdateStatus,
   HypothesisEvidenceToSetupFeedbackDependencies,
+  ResolveActiveSetupRevisionCommand,
+  RuntimeSetupRevisionRef,
+  SetupRevisionResolutionResult,
+  SetupRevisionResolutionStatus,
   ApprovedRefinementFollowUpDependencies,
   ApprovedSetupLifecycleMutationDependencies,
   SetupDefinitionRevisionHandoffDependencies,

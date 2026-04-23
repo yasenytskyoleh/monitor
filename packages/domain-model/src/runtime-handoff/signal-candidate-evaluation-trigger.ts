@@ -9,6 +9,7 @@ export type EvaluationWindowDescriptor = {
 export type SignalCandidateEvaluationTrigger = {
   signalCandidateId: string;
   setupDefinitionId: string;
+  setupRevisionId: string;
   monitoredSymbolId: string;
   triggeredAt: TimestampUtc;
   evaluationWindowId?: string;

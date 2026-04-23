@@ -68,11 +68,13 @@ export const createSignalCandidateToEvaluationHandoff = (
       try {
         assertRequired(payload.signalCandidateId, "signalCandidateId");
         assertRequired(payload.setupDefinitionId, "setupDefinitionId");
+        assertRequired(payload.setupRevisionId, "setupRevisionId");
         assertRequired(payload.monitoredSymbolId, "monitoredSymbolId");
         assertRequired(payload.triggeredAt, "triggeredAt");
         command = {
           signalCandidateId: payload.signalCandidateId,
           setupDefinitionId: payload.setupDefinitionId,
+          setupRevisionId: payload.setupRevisionId,
           monitoredSymbolId: payload.monitoredSymbolId,
           triggeredAt: payload.triggeredAt,
           evaluationWindowId: resolveEvaluationWindowId(payload),
@@ -99,6 +101,7 @@ export const createSignalCandidateToEvaluationHandoff = (
 
       if (
         candidate.setupDefinitionId !== command.setupDefinitionId ||
+        candidate.setupRevisionId !== command.setupRevisionId ||
         candidate.monitoredSymbolId !== command.monitoredSymbolId
       ) {
         return {
