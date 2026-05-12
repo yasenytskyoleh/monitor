@@ -12,6 +12,19 @@ export type {
   StorageBoundary,
   StorageTechnologyDirection
 } from "./storage-boundary.js";
+export {
+  DURABLE_RELATIONAL_STORAGE_SCHEMA_VERSIONS,
+  FIRST_DURABLE_RELATIONAL_ENTITY_TYPES
+} from "./first-durable-relational-slice.js";
+export type {
+  DurableRelationalRecordBase,
+  DurableRelationalStorageSchemaVersion,
+  FirstDurableRelationalEntityType,
+  FirstDurableRelationalRecord,
+  ResearchHypothesisDurableRecord,
+  ResearchHypothesisSetupDefinitionLinkRecord,
+  SetupDefinitionDurableRecord
+} from "./first-durable-relational-slice.js";
 
 export type {
   EntityIdentity,

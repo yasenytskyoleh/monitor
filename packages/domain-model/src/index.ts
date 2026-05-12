@@ -213,7 +213,9 @@ export type {
 } from "./execution/index.js";
 export {
   DEFAULT_STORAGE_TECHNOLOGY_DIRECTION,
+  DURABLE_RELATIONAL_STORAGE_SCHEMA_VERSIONS,
   FIRST_CLASS_PERSISTED_ENTITY_PROFILES,
+  FIRST_DURABLE_RELATIONAL_ENTITY_TYPES,
   PRODUCT_EPHEMERAL_ENTITY_TYPES,
   PRODUCT_PERSISTED_ENTITY_TYPES,
   PRODUCT_RECORD_SOURCES,
@@ -222,7 +224,11 @@ export {
   STORAGE_BOUNDARIES
 } from "./storage/index.js";
 export type {
+  DurableRelationalRecordBase,
+  DurableRelationalStorageSchemaVersion,
   EntityIdentity,
+  FirstDurableRelationalEntityType,
+  FirstDurableRelationalRecord,
   PersistedEntity,
   PersistedEntityLifecycleStatus,
   PersistedEntityProfile,
@@ -232,8 +238,11 @@ export type {
   ProductPersistedEntityType,
   ProductRecordMetadata,
   ProductRecordSource,
+  ResearchHypothesisDurableRecord,
+  ResearchHypothesisSetupDefinitionLinkRecord,
   RuntimeEvidenceArtifactType,
   RuntimeEvidenceIdentity,
+  SetupDefinitionDurableRecord,
   StorageBoundary,
   StorageTechnologyDirection
 } from "./storage/index.js";

@@ -20,7 +20,7 @@ The orchestration side proves that the project can:
 The product side now proves that the repo can:
 - maintain implemented in-memory persistence,
 - enforce service-owned write paths,
-- keep durable relational persistence work explicitly separate and pending.
+- define first durable relational persistence contracts while keeping DB implementation pending.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -84,6 +84,10 @@ The product side now proves that the repo can:
   - `docs/project/persistence-boundaries.md`
   - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
   - `packages/domain-model/src/storage/*`
+- first durable relational persistence contract for the first durable slice:
+  - `docs/project/durable-relational-persistence-model.md`
+  - `docs/architecture/adr/ADR-026-first-durable-relational-persistence-contract.md`
+  - `packages/domain-model/src/storage/first-durable-relational-slice.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -116,7 +120,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- durable relational persistence planning for the implemented in-memory slice, starting with `setup_definition` and `research_hypothesis`
+- relational adapter rollout design for the planned first durable slice, starting with `setup_definition` and `research_hypothesis`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

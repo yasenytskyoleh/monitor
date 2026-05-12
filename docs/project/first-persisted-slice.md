@@ -47,6 +47,7 @@ Implementation references:
 - `packages/domain-model/src/services/research-aggregation-service.ts`
 
 ## Durable relational persistence pending
+- durable relational contract now exists for `setup_definition` and `research_hypothesis`
 - DB schema and migrations
 - relational runtime adapters
 - exchange ingestion runtime
