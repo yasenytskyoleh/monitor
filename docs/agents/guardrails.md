@@ -5,6 +5,9 @@ Define runtime safety defaults, configuration controls, enforcement boundaries, 
 
 This document is the human-readable policy layer. Machine-readable validation must live in `packages/agent-config/schemas` and related runtime validation code.
 
+This document describes the **internal orchestration subsystem**.
+In current repo usage, day-to-day planning and implementation run through a **Codex-first workflow**. Codex may rely on these guardrails without requiring separate human-operated agents or separate user identities.
+
 ---
 
 ## Core Safety Model

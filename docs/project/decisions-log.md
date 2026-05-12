@@ -7,7 +7,8 @@
 - current market scope is **spot only**
 - news enrichment should come **after** signal/statistics foundation
 - the project uses a **monorepo from the start**
-- agents are expected to run mainly through an **own orchestrator later**
+- day-to-day repo work runs through a **Codex-first workflow**
+- the internal orchestrator remains a **constrained supporting subsystem** in the repo
 
 ## Architectural decisions
 - docs are the human-readable contract layer
@@ -25,6 +26,7 @@
 - research evidence is contract-first with explicit aggregation scopes and setup comparison before ranking
 - persistence is contract-first with explicit storage boundaries before DB/repository implementation
 - repository/service architecture is contract-first before schema and runtime persistence code
+- implemented in-memory persistence exists before durable relational persistence
 
 ## Agent/workflow decisions
 - current core agents:
@@ -74,6 +76,12 @@
 - first repository/service architecture ADR exists (`docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`)
 - first repository/service contracts exist (`packages/domain-model/src/repositories/*`, `packages/domain-model/src/services/*`)
 - first persisted implementation slice chosen (`setup_definition`, `research_hypothesis`)
+- implemented in-memory persistence now exists for:
+  - `SetupDefinition`
+  - `ResearchHypothesis`
+  - `SignalCandidate`
+  - `EvaluationResult`
+  - `SetupAggregateResult`
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -83,4 +91,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **schema-planning and repository-runtime rollout design for the first persisted slice (without DB migrations yet)**
+- the currently recommended next step is **durable relational persistence planning for the implemented in-memory slice, starting with `setup_definition` and `research_hypothesis` (without DB migrations yet)**

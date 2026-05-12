@@ -3,6 +3,9 @@
 ## Purpose
 Define operational contracts for each agent. This document is the human-readable source of truth for agent responsibilities, while machine-readable validation lives in `packages/agent-config/schemas`.
 
+This document describes the **internal orchestration subsystem**.
+In current repo usage, day-to-day planning and implementation run through a **Codex-first workflow**. Codex may use these role contracts without requiring separate human-operated agents or separate user identities.
+
 ## Canonical Envelope Contracts
 
 ### Task Envelope (Input to Any Agent)

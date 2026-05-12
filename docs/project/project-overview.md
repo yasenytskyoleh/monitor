@@ -16,7 +16,7 @@ In the long term, it is intended to become a structured system for:
 ## Current product positioning
 At the current stage, Monitor should be described as:
 
-> **An agent-driven orchestration foundation with an initial product-domain model for a future crypto monitoring platform**
+> **A Codex-first workflow around an internal orchestration subsystem and an initial product-domain model for a future crypto monitoring platform**
 
 It is **not yet**:
 - a trading system,
@@ -25,7 +25,11 @@ It is **not yet**:
 - or an autonomous trading bot.
 
 ## Current implementation status
-The orchestration foundation is functional and test-backed, and the first product-domain contracts now include monitoring, evaluation, research-aggregation, storage-boundary, and repository/service architecture contracts.
+The repo is already usable through a **Codex-first workflow**:
+- Codex is the primary day-to-day operator for planning, implementation, and repo coordination
+- the internal orchestration subsystem remains in the repo as a constrained, test-backed supporting subsystem
+
+The internal orchestration subsystem is functional and test-backed, and the product domain now includes monitoring, evaluation, research-aggregation, storage-boundary, repository/service architecture, and implemented in-memory persistence.
 
 Implemented today:
 - config + schema + semantic-validation platform (`packages/agent-config`)
@@ -59,6 +63,12 @@ Implemented today:
   - service contracts (`*Service`) with explicit write ownership
   - `ResearchHypothesis`
   - `ResearchRun`
+- implemented in-memory persistence and service-owned write paths for:
+  - `SetupDefinition`
+  - `ResearchHypothesis`
+  - `SignalCandidate`
+  - `EvaluationResult`
+  - `SetupAggregateResult`
 - product-domain docs and ADR:
   - `docs/project/domain-model.md`
   - `docs/project/research-model.md`
@@ -84,6 +94,15 @@ Current limitation:
   - isolated apply + verification + rollback + controlled promotion
   - narrow helper-file creation only
   - no broad refactors, schema/migration/architecture changes, or cross-package scope
+- durable relational persistence pending:
+  - no DB schema or migrations yet
+  - no relational runtime adapters yet
+  - no exchange ingestion runtime yet
+  - no setup-detection / evaluation / aggregation runtime engines yet
+  - no UI yet
+
+Current recommended next step:
+- durable relational persistence planning for the implemented in-memory slice, starting with `setup_definition` and `research_hypothesis`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
@@ -96,7 +115,7 @@ This means:
 - agents operate under explicit boundaries, permissions, and workflow states.
 
 ## Why the project exists
-The main motivation is to create a system where AI agents can help with:
+The main motivation is to create a system where Codex and constrained automation can help with:
 - research,
 - planning,
 - architecture work,
@@ -115,7 +134,7 @@ The new product-domain contracts are intentionally thin:
 - no evaluation runtime engine yet,
 - no aggregation runtime engine yet,
 - no statistics/scoring engine yet,
-- no database/repository runtime implementation yet,
+- durable relational persistence/runtime adapters pending,
 - no exchange integration yet.
 
 ## Long-term product idea

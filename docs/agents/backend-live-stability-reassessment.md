@@ -2,6 +2,9 @@
 
 This checklist is for reassessing current constrained Backend live behavior after helper-file expansion.
 
+This checklist belongs to the **internal orchestration subsystem**.
+It supports the repo's **Codex-first workflow** by defining how Codex or another operator should reassess constrained backend live mode. It does not require separate human-operated agents or separate user identities.
+
 ## Scope Guard
 - No new Backend powers are introduced in reassessment runs.
 - No target-root expansion beyond approved allowlists.

@@ -10,14 +10,29 @@ The goal of this slice is to provide explicit contracts for:
 - research hypotheses and run tracking,
 - aggregation and setup comparison evidence.
 
-The package remains intentionally narrow, and now includes concrete persisted service/repository paths for:
+The package remains intentionally narrow, and now includes **implemented in-memory persistence** plus service-owned write paths for:
 - `SetupDefinition`
 - `ResearchHypothesis`
 - `SignalCandidate`
 - `EvaluationResult`
 - `SetupAggregateResult`
 
-It still does not implement ingestion, execution, or statistics engines.
+It still does not implement durable relational persistence, ingestion, execution, or statistics engines.
+
+## Current implementation status
+Implemented in-memory persistence exists today for:
+- `SetupDefinition`
+- `ResearchHypothesis`
+- `SignalCandidate`
+- `EvaluationResult`
+- `SetupAggregateResult`
+
+Durable relational persistence pending:
+- DB schema and migrations
+- relational runtime adapters
+- exchange ingestion runtime
+- setup-detection / evaluation / aggregation runtime engines
+- UI
 
 ## Included in this slice
 - `MonitoredSymbol`
@@ -66,7 +81,7 @@ Related product docs:
 - signal generation engine implementation
 - evaluation engine implementation
 - execution/trading logic
-- DB migrations and storage adapters
+- durable relational persistence adapters, DB schema, and migrations
 - UI/dashboard work
 - news/sentiment enrichment
 
@@ -112,7 +127,7 @@ Rule: orchestration executes workflows; product domain defines market/research m
 ## Storage direction (initial)
 Storage boundaries are now explicitly defined:
 - `runtime_evidence` (orchestrator file-based evidence)
-- `product_domain` (relational persistence planned)
+- `product_domain` (implemented in-memory persistence today; durable relational persistence pending)
 - `derived_analytics` (deferred)
 
 Current package provides contract-level storage types in `packages/domain-model/src/storage/*`.

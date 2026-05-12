@@ -1,11 +1,27 @@
 # Persistence Implementation Architecture
 
 ## Purpose
-Define the first implementation architecture for product-domain persistence without introducing DB runtime code.
+Define the current implementation architecture for product-domain persistence without introducing durable DB runtime code.
 
 This document now reflects both:
 - boundary contracts
 - first concrete implementation for the initial persisted product slice
+- the current implemented in-memory persistence surface
+
+## Canonical current-state summary
+Implemented in-memory persistence and service-owned write paths exist today for:
+- `SetupDefinition`
+- `ResearchHypothesis`
+- `SignalCandidate`
+- `EvaluationResult`
+- `SetupAggregateResult`
+
+Durable relational persistence pending:
+- DB schema and migrations
+- relational runtime adapters
+- exchange ingestion runtime
+- setup-detection / evaluation / aggregation runtime engines
+- UI
 
 ## Repository boundaries
 Repository interfaces are defined in `packages/domain-model/src/repositories/*`.

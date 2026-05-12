@@ -1,12 +1,13 @@
 # Current Phase
 
 ## Phase
-**Phase 1.10 — Orchestration foundation plus first product persistence implementation contracts**
+**Phase 1.10 — Codex-first workflow, internal orchestration foundation, and implemented in-memory persistence**
 
 ## What this phase is about
 This phase is focused on:
+- using a Codex-first workflow for day-to-day repo work,
 - keeping the orchestration foundation stable and constrained, and
-- defining the first explicit product-domain contracts for monitoring/research.
+- defining and extending explicit product-domain contracts for monitoring/research.
 
 The orchestration side proves that the project can:
 - define agent roles clearly,
@@ -16,7 +17,13 @@ The orchestration side proves that the project can:
 - persist workflow artifacts,
 - maintain safety and traceability.
 
+The product side now proves that the repo can:
+- maintain implemented in-memory persistence,
+- enforce service-owned write paths,
+- keep durable relational persistence work explicitly separate and pending.
+
 ## Implemented in this phase (current baseline)
+- Codex-first workflow for planning, implementation, and repo coordination
 - config-driven orchestration foundation (`docs/agents`, `configs/agents`, `packages/agent-config`)
 - compiled immutable runtime snapshots with checksum and version metadata
 - runner execution modes:
@@ -72,12 +79,18 @@ The orchestration side proves that the project can:
   - `docs/project/setup-comparison-model.md`
   - `docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`
   - `packages/domain-model/src/research/*`
-- first persistence/storage architecture contracts (still no DB/runtime persistence implementation):
+- first persistence/storage architecture contracts (durable relational persistence pending):
   - `docs/project/storage-architecture.md`
   - `docs/project/persistence-boundaries.md`
   - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
   - `packages/domain-model/src/storage/*`
-- first repository/service implementation architecture contracts (still no DB/service runtime implementation):
+- implemented in-memory persistence and service-owned write paths for:
+  - `SetupDefinition`
+  - `ResearchHypothesis`
+  - `SignalCandidate`
+  - `EvaluationResult`
+  - `SetupAggregateResult`
+- repository/service implementation architecture with durable relational persistence pending:
   - `docs/project/persistence-implementation-architecture.md`
   - `docs/project/first-persisted-slice.md`
   - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
@@ -102,8 +115,11 @@ Explicitly out of scope:
 
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
+## Current recommended next step
+- durable relational persistence planning for the implemented in-memory slice, starting with `setup_definition` and `research_hypothesis`
+
 ## Why this phase matters
-Even though the larger vision is market-facing, the current orchestration focus is still correct.
+Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
 
 Without a stable operating system for:
 - agents,
@@ -116,4 +132,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus first product-domain contracts that make the real product implementable**.
+It is the **foundation plus implemented in-memory persistence that make the real product implementable while durable relational persistence remains explicit next-step work**.

@@ -2,6 +2,9 @@
 
 Purpose: keep constrained `backend-agent` live execution stable while preserving strict safety boundaries.
 
+This checklist belongs to the **internal orchestration subsystem**.
+It supports the repo's **Codex-first workflow** by defining the evidence expected when Codex or another operator invokes constrained backend live mode. It does not require separate human-operated agents or separate user identities.
+
 ## Scope
 - Applies only to constrained backend live mode in `@monitor/orchestrator-runner`.
 - Covers isolated execution, verification, rollback, promotion, and narrow helper-file creation.

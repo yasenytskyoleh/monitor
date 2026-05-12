@@ -3,6 +3,9 @@
 ## Purpose
 Define the active safety contract for live `backend-agent` execution in constrained patch mode.
 
+This document describes the **internal orchestration subsystem** backend safety contract.
+It supports the repo's **Codex-first workflow** by defining the rules Codex or other operators must satisfy when invoking constrained backend live mode. It does not require separate human-operated agents or separate user identities.
+
 The contract covers:
 - allowed patch boundaries,
 - required structured output shape,

@@ -1,4 +1,18 @@
-# Crypto Monitoring Agents — Foundation v0.1
+# Crypto Monitoring Foundation Note — v0.1
+
+## Status Note
+
+This file is the original foundation memo for the project.
+
+The current repo now operates through a **Codex-first workflow**:
+- Codex is the primary day-to-day operator for planning, implementation, and repo coordination
+- the internal orchestration subsystem remains in the repo as a constrained supporting subsystem
+
+For current source-of-truth status and roadmap, prefer:
+- `docs/project/project-overview.md`
+- `docs/project/current-phase.md`
+- `docs/project/next-steps.md`
+- `docs/project/decisions-log.md`
 
 ## Goal
 
@@ -331,17 +345,18 @@ Acceptance criteria:
 
 ## Locked Decisions
 
-1. Agents will run mainly through your own orchestrator later.
+1. Day-to-day work runs through a Codex-first workflow; the internal orchestrator remains a supporting subsystem in the repo.
 2. The project will use a monorepo from the start.
 3. News enrichment is postponed until after the signal/statistics foundation is in place.
 4. The first market focus is spot only.
 
 ## Implications of These Decisions
 
-### Orchestrator-first direction
+### Codex-first workflow
 
-* agent roles and outputs should be defined as machine-readable contracts,
-* workflows should be state-driven,
+* Codex is the primary operator for planning, implementation, and repo coordination,
+* agent roles and outputs should still be defined as machine-readable contracts,
+* automated workflows should remain state-driven,
 * handoffs must be explicit,
 * prompts should be portable and not tied to a single IDE tool.
 
@@ -401,4 +416,4 @@ It should define for each agent:
 * escalation points,
 * success criteria.
 
-This should become the first operational contract for your future orchestrator.
+This should become the first operational contract for the internal orchestration subsystem.

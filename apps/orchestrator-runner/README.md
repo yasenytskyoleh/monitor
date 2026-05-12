@@ -6,6 +6,9 @@ Run workflow transitions using:
 - deterministic mocked handlers (`--mode mock`)
 - per-agent execution mode selection (`--agent-mode ...`)
 
+This app documents the **internal orchestration subsystem**.
+The repo's primary working model is a **Codex-first workflow**: Codex is the main day-to-day operator for planning, implementation, and repo coordination, while the runner remains a constrained supporting subsystem for explicit workflow automation and audited experiments.
+
 ## Requirements
 - repository configs present under `configs/agents`
 - `OPENAI_API_KEY` in environment or `.env` whenever any agent is configured as `live`

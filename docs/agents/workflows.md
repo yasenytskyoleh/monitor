@@ -3,6 +3,9 @@
 ## Purpose
 Define the allowed workflow state machine, handoff rules, approval gates, and audit requirements for the agent system.
 
+This document describes the **internal orchestration subsystem**.
+In current repo usage, day-to-day planning and implementation run through a **Codex-first workflow**. Codex may use these workflow contracts without requiring separate human-operated agents or separate user identities.
+
 ## Workflow Model
 Workflow states are defined in configuration and enforced at runtime. Human-readable semantics are defined here; machine validation lives in `packages/agent-config/schemas`.
 
