@@ -82,12 +82,14 @@ Implemented today:
   - `docs/project/persistence-boundaries.md`
   - `docs/project/persistence-implementation-architecture.md`
   - `docs/project/first-persisted-slice.md`
+  - `docs/project/durable-relational-persistence-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
   - `docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`
   - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
   - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
+  - `docs/architecture/adr/ADR-026-first-durable-relational-persistence-contract.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -95,6 +97,7 @@ Current limitation:
   - narrow helper-file creation only
   - no broad refactors, schema/migration/architecture changes, or cross-package scope
 - durable relational persistence pending:
+  - first durable relational contract now exists for `setup_definition` and `research_hypothesis`
   - no DB schema or migrations yet
   - no relational runtime adapters yet
   - no exchange ingestion runtime yet
@@ -102,7 +105,7 @@ Current limitation:
   - no UI yet
 
 Current recommended next step:
-- durable relational persistence planning for the implemented in-memory slice, starting with `setup_definition` and `research_hypothesis`
+- relational adapter rollout design for the planned first durable slice, starting with `setup_definition` and `research_hypothesis`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

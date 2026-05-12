@@ -17,6 +17,7 @@ Implemented in-memory persistence and service-owned write paths exist today for:
 - `SetupAggregateResult`
 
 Durable relational persistence pending:
+- first durable relational contract now exists for `setup_definition` and `research_hypothesis`
 - DB schema and migrations
 - relational runtime adapters
 - exchange ingestion runtime
@@ -127,3 +128,6 @@ Ownership direction:
 - orchestrator workflows may trigger future product-domain services
 - product persistence side effects should happen only through explicit service/repository boundaries
 - `runtime/runs/*` remains orchestration evidence, not product source of truth
+
+## Related contract source
+- `packages/domain-model/src/storage/first-durable-relational-slice.ts`

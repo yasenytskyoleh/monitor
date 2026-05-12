@@ -67,3 +67,6 @@ Not allowed:
 - first implementation slice is intentionally narrow:
   - `setup_definition`
   - `research_hypothesis`
+
+Durable relational planning for that same narrow slice is now explicit in:
+- `docs/project/durable-relational-persistence-model.md`

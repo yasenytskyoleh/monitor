@@ -27,6 +27,7 @@
 - persistence is contract-first with explicit storage boundaries before DB/repository implementation
 - repository/service architecture is contract-first before schema and runtime persistence code
 - implemented in-memory persistence exists before durable relational persistence
+- first durable relational persistence contract exists before DB migration work
 
 ## Agent/workflow decisions
 - current core agents:
@@ -82,6 +83,9 @@
   - `SignalCandidate`
   - `EvaluationResult`
   - `SetupAggregateResult`
+- first durable relational persistence contract now exists for:
+  - `setup_definition`
+  - `research_hypothesis`
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -91,4 +95,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **durable relational persistence planning for the implemented in-memory slice, starting with `setup_definition` and `research_hypothesis` (without DB migrations yet)**
+- the currently recommended next step is **relational adapter rollout design for the planned first durable slice, starting with `setup_definition` and `research_hypothesis` (without DB migrations yet)**

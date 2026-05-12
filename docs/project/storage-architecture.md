@@ -65,3 +65,4 @@ Examples:
 
 ## Contract source
 - `packages/domain-model/src/storage/*`
+- `docs/project/durable-relational-persistence-model.md`

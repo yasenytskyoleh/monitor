@@ -1,25 +1,25 @@
 # Next Steps
 
 ## Current recommended next step
-### Durable relational persistence planning for the implemented in-memory slice
+### Relational adapter rollout design for the planned first durable slice
 
 Reason:
-- implemented in-memory persistence already exists for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, and `SetupAggregateResult`
-- write ownership is explicit and the original first slice remains the narrow anchor for durable rollout planning
-- the next high-value gap is durable relational persistence planning for `setup_definition` and `research_hypothesis`
+- first durable relational persistence contract now exists for `setup_definition` and `research_hypothesis`
+- write ownership is explicit and the durable record contract is now defined
+- the next unresolved gap before migrations is adapter hydration/dehydration and deterministic error-boundary design
 
 ## Recommended near-future sequence
-1. define storage schema contracts for `setup_definition` and `research_hypothesis` (no migrations yet)
-2. define relational repository/runtime adapter boundaries plus failure/retry behavior
-3. define compatibility strategy between domain contract versions and stored record versions
-4. extend the durable rollout plan to candidate/evaluation/aggregate persistence only after the first two entities are explicit
+1. define relational repository adapter read/write rules for `setup_definition` and `research_hypothesis`
+2. define deterministic error mapping for `already exists`, `not found`, and `version mismatch`
+3. define migration rollout order and compatibility checks for `product_domain.relational.v1`
+4. only then implement Prisma schema and migrations for the first durable slice
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
-- implementing migrations before schema contracts are explicit
+- implementing migrations before adapter contracts are explicit
 - expanding the durable rollout slice prematurely
-- mixing analytics runtime logic into relational persistence planning
+- mixing analytics runtime logic into relational adapter design
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

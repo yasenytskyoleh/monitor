@@ -27,6 +27,10 @@ Implemented in-memory persistence exists today for:
 - `EvaluationResult`
 - `SetupAggregateResult`
 
+First durable relational contract exists today for:
+- `SetupDefinition`
+- `ResearchHypothesis`
+
 Durable relational persistence pending:
 - DB schema and migrations
 - relational runtime adapters
@@ -66,6 +70,7 @@ Related product docs:
 - `docs/project/persistence-boundaries.md`
 - `docs/project/persistence-implementation-architecture.md`
 - `docs/project/first-persisted-slice.md`
+- `docs/project/durable-relational-persistence-model.md`
 - `docs/project/signal-candidate-model.md`
 - `docs/project/first-application-flow.md`
 - `docs/project/product-service-flow.md`

@@ -37,12 +37,14 @@ Current product-domain scope includes:
   - `docs/project/persistence-boundaries.md`
   - `docs/project/persistence-implementation-architecture.md`
   - `docs/project/first-persisted-slice.md`
+  - `docs/project/durable-relational-persistence-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
   - `docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`
   - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
   - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
+  - `docs/architecture/adr/ADR-026-first-durable-relational-persistence-contract.md`
 
 ## Current constraints
 - spot-only scope
@@ -50,13 +52,14 @@ Current product-domain scope includes:
 - no setup-detection runtime engine yet
 - no evaluation runtime engine yet
 - no aggregation/scoring runtime engine yet
+- first durable relational contract exists for `setup_definition` and `research_hypothesis`
 - durable relational persistence/runtime adapters pending
 - no DB schema or migrations yet
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- define durable relational persistence planning for the implemented in-memory slice, starting with `setup_definition` and `research_hypothesis`
+- define relational adapter rollout design for the planned first durable slice, starting with `setup_definition` and `research_hypothesis`
 
 ## Behavioral instructions for future assistants
 When continuing this project:
