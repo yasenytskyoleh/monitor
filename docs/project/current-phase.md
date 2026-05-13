@@ -100,6 +100,13 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/storage/first-durable-relational-physical-schema.ts`
   - `packages/domain-model/prisma/schema.prisma`
   - `packages/domain-model/prisma/migrations/20260512235500_product_domain_relational_v1_init/migration.sql`
+- first adapter-backed relational repositories for the first durable slice:
+  - `docs/project/relational-repository-implementation-model.md`
+  - `docs/architecture/adr/ADR-029-first-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/repositories/first-durable-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.impl.ts`
+  - `packages/domain-model/src/repositories/setup-definition-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/research-hypothesis-relational-repository.impl.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -132,7 +139,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- Prisma tooling and relational adapter implementation for the first durable slice, starting with `setup_definition` and `research_hypothesis`
+- Prisma client/tooling wiring and concrete Prisma adapter implementation for the first durable slice, starting with `setup_definition` and `research_hypothesis`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -148,4 +155,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence and first physical schema artifacts that make the real product implementable while relational adapter/runtime wiring remains explicit next-step work**.
+It is the **foundation plus implemented in-memory persistence, first physical schema artifacts, and adapter-backed relational repositories that make the real product implementable while concrete Prisma adapter/runtime wiring remains explicit next-step work**.

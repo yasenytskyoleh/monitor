@@ -273,6 +273,15 @@ export type {
   SetupDefinitionRecordWriteRequest
 } from "./repositories/first-durable-relational-repository-adapter.js";
 export {
+  dehydrateResearchHypothesisToDurableBundle,
+  dehydrateSetupDefinitionToDurableRecord,
+  hydrateResearchHypothesisFromDurableBundle,
+  hydrateSetupDefinitionFromDurableRecord
+} from "./repositories/first-durable-relational-repository-mappers.js";
+export {
+  InMemoryFirstDurableRelationalRepositoryAdapter
+} from "./repositories/first-durable-relational-repository-adapter.impl.js";
+export {
   REPOSITORY_ERROR_CODES,
   REPOSITORY_OPERATIONS,
   REPOSITORY_RETRY_DISPOSITIONS,
@@ -308,6 +317,9 @@ export type {
   ResearchHypothesisUpdateRequest
 } from "./repositories/research-hypothesis-repository.js";
 export { InMemoryResearchHypothesisRepository } from "./repositories/research-hypothesis-repository.impl.js";
+export {
+  RelationalResearchHypothesisRepository
+} from "./repositories/research-hypothesis-relational-repository.impl.js";
 export type {
   ResearchFeedbackDecisionCreateRequest,
   ResearchFeedbackDecisionRepository,
@@ -387,6 +399,9 @@ export type {
   SetupDefinitionUpdateRequest
 } from "./repositories/setup-definition-repository.js";
 export { InMemorySetupDefinitionRepository } from "./repositories/setup-definition-repository.impl.js";
+export {
+  RelationalSetupDefinitionRepository
+} from "./repositories/setup-definition-relational-repository.impl.js";
 export type {
   SignalCandidateCreateRequest,
   SignalCandidateRepository,

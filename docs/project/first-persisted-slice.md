@@ -50,8 +50,9 @@ Implementation references:
 - durable relational contract now exists for `setup_definition` and `research_hypothesis`
 - relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
 - first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
+- adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
 - Prisma client/runtime wiring
-- relational runtime adapters
+- concrete Prisma adapter
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI

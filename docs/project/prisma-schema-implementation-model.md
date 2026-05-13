@@ -70,7 +70,7 @@ Implemented indexes:
 
 ## What remains pending
 - Prisma package/tooling wiring for executable validation and client generation
-- relational repositories/adapters against this schema
+- concrete Prisma adapter against this schema
 - error translation from physical DB failures into repository contract errors
-- parity tests against the in-memory repository baseline
+- parity tests against the current adapter-backed repository baseline
 - runtime DB configuration and deployment concerns
