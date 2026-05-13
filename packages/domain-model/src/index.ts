@@ -215,7 +215,13 @@ export {
   DEFAULT_STORAGE_TECHNOLOGY_DIRECTION,
   DURABLE_RELATIONAL_STORAGE_SCHEMA_VERSIONS,
   FIRST_CLASS_PERSISTED_ENTITY_PROFILES,
+  FIRST_DURABLE_RELATIONAL_DATABASE_SCHEMA,
   FIRST_DURABLE_RELATIONAL_ENTITY_TYPES,
+  FIRST_DURABLE_RELATIONAL_INDEXES,
+  FIRST_DURABLE_RELATIONAL_MIGRATION_SLUG,
+  FIRST_DURABLE_RELATIONAL_PRISMA_MODELS,
+  FIRST_DURABLE_RELATIONAL_REQUIRED_COLUMNS,
+  FIRST_DURABLE_RELATIONAL_TABLES,
   PRODUCT_EPHEMERAL_ENTITY_TYPES,
   PRODUCT_PERSISTED_ENTITY_TYPES,
   PRODUCT_RECORD_SOURCES,
@@ -227,8 +233,11 @@ export type {
   DurableRelationalRecordBase,
   DurableRelationalStorageSchemaVersion,
   EntityIdentity,
+  FirstDurableRelationalIndexName,
   FirstDurableRelationalEntityType,
+  FirstDurableRelationalPrismaModelName,
   FirstDurableRelationalRecord,
+  FirstDurableRelationalTableName,
   PersistedEntity,
   PersistedEntityLifecycleStatus,
   PersistedEntityProfile,
@@ -246,6 +255,39 @@ export type {
   StorageBoundary,
   StorageTechnologyDirection
 } from "./storage/index.js";
+export {
+  FIRST_DURABLE_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  FIRST_DURABLE_RELATIONAL_ADAPTER_OPERATIONS,
+  FIRST_DURABLE_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  FIRST_DURABLE_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isFirstDurableRelationalDeterministicErrorCode
+} from "./repositories/first-durable-relational-repository-adapter.js";
+export type {
+  FirstDurableRelationalAdapterErrorMapping,
+  FirstDurableRelationalAdapterOperation,
+  FirstDurableRelationalDeterministicErrorCode,
+  FirstDurableRelationalRepositoryAdapter,
+  FirstDurableRelationalRetryableErrorCode,
+  ResearchHypothesisBundleWriteRequest,
+  ResearchHypothesisDurableRecordBundle,
+  SetupDefinitionRecordWriteRequest
+} from "./repositories/first-durable-relational-repository-adapter.js";
+export {
+  REPOSITORY_ERROR_CODES,
+  REPOSITORY_OPERATIONS,
+  REPOSITORY_RETRY_DISPOSITIONS,
+  RepositoryError,
+  createAlreadyExistsRepositoryError,
+  createInvalidReferenceRepositoryError,
+  createNotFoundRepositoryError,
+  createVersionMismatchRepositoryError
+} from "./repositories/repository-error.js";
+export type {
+  RepositoryErrorCode,
+  RepositoryErrorDetails,
+  RepositoryOperation,
+  RepositoryRetryDisposition
+} from "./repositories/repository-error.js";
 export type {
   EvaluationResultCreateRequest,
   EvaluationResultRepository,

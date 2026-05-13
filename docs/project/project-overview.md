@@ -83,6 +83,8 @@ Implemented today:
   - `docs/project/persistence-implementation-architecture.md`
   - `docs/project/first-persisted-slice.md`
   - `docs/project/durable-relational-persistence-model.md`
+  - `docs/project/relational-adapter-rollout-model.md`
+  - `docs/project/prisma-schema-implementation-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -90,6 +92,8 @@ Implemented today:
   - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
   - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
   - `docs/architecture/adr/ADR-026-first-durable-relational-persistence-contract.md`
+  - `docs/architecture/adr/ADR-027-first-relational-adapter-rollout-design.md`
+  - `docs/architecture/adr/ADR-028-first-prisma-schema-and-migration-layout.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -98,14 +102,16 @@ Current limitation:
   - no broad refactors, schema/migration/architecture changes, or cross-package scope
 - durable relational persistence pending:
   - first durable relational contract now exists for `setup_definition` and `research_hypothesis`
-  - no DB schema or migrations yet
+  - first relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
+  - first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
   - no relational runtime adapters yet
+  - no Prisma client/runtime wiring yet
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- relational adapter rollout design for the planned first durable slice, starting with `setup_definition` and `research_hypothesis`
+- Prisma tooling and relational adapter implementation for the first durable slice, starting with `setup_definition` and `research_hypothesis`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

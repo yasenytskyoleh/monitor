@@ -48,7 +48,9 @@ Implementation references:
 
 ## Durable relational persistence pending
 - durable relational contract now exists for `setup_definition` and `research_hypothesis`
-- DB schema and migrations
+- relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
+- first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
+- Prisma client/runtime wiring
 - relational runtime adapters
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines

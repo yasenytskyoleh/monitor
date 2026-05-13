@@ -9,7 +9,7 @@ This step formalizes:
 - mapping rules,
 - and adapter failure boundaries
 
-for the first durable slice without introducing Prisma schema, migrations, or DB runtime code.
+for the first durable slice before runtime DB adapter code is introduced.
 
 ## First durable slice scope
 - `SetupDefinition`
@@ -20,6 +20,8 @@ This slice is anchored to existing implemented in-memory persistence and preserv
 
 ## Contract source
 - `packages/domain-model/src/storage/first-durable-relational-slice.ts`
+- `packages/domain-model/prisma/schema.prisma`
+- `docs/project/relational-adapter-rollout-model.md`
 
 ## Logical durable record contracts
 
@@ -104,8 +106,7 @@ These errors should remain deterministic across in-memory and future relational 
 - historical stored `identity.version` values must not be rewritten retroactively during ordinary application writes
 
 ## Explicitly postponed
-- Prisma schema
-- DB migrations
+- Prisma client/runtime wiring
 - relational repository runtime adapters
 - query/index tuning
 - expansion of durable relational planning to `signal_candidate`, `evaluation_result`, and `setup_aggregate_result`

@@ -6,6 +6,12 @@ import type {
 } from "./setup-definition-repository.js";
 import type { SetupDefinition } from "../setup-definition.js";
 import type { ProductRecordMetadata } from "../storage/product-record-metadata.js";
+import {
+  createAlreadyExistsRepositoryError,
+  createNotFoundRepositoryError,
+  createVersionMismatchRepositoryError,
+  type RepositoryOperation
+} from "./repository-error.js";
 
 type PersistedSetupDefinitionRecord = {
   definition: SetupDefinition;
@@ -19,12 +25,18 @@ const cloneMetadata = (metadata: ProductRecordMetadata): ProductRecordMetadata =
 
 const assertExpectedVersion = (
   record: PersistedSetupDefinitionRecord,
-  expectedVersion: number | null
+  expectedVersion: number | null,
+  setupDefinitionId: string,
+  operation: RepositoryOperation
 ): void => {
   if (expectedVersion !== null && expectedVersion !== record.version) {
-    throw new Error(
-      `setup_definition version mismatch: expected ${expectedVersion}, got ${record.version}`
-    );
+    throw createVersionMismatchRepositoryError({
+      entityType: "setup_definition",
+      entityId: setupDefinitionId,
+      operation,
+      expectedVersion,
+      actualVersion: record.version
+    });
   }
 };
 
@@ -49,7 +61,11 @@ export class InMemorySetupDefinitionRepository implements SetupDefinitionReposit
   async create(request: SetupDefinitionCreateRequest): Promise<SetupDefinition> {
     const setupDefinitionId = request.definition.id;
     if (this.recordsById.has(setupDefinitionId)) {
-      throw new Error(`setup_definition already exists: ${setupDefinitionId}`);
+      throw createAlreadyExistsRepositoryError({
+        entityType: "setup_definition",
+        entityId: setupDefinitionId,
+        operation: "create"
+      });
     }
 
     const definition = cloneSetupDefinition(request.definition);
@@ -65,10 +81,14 @@ export class InMemorySetupDefinitionRepository implements SetupDefinitionReposit
     const setupDefinitionId = request.definition.id;
     const currentRecord = this.recordsById.get(setupDefinitionId);
     if (!currentRecord) {
-      throw new Error(`setup_definition not found: ${setupDefinitionId}`);
+      throw createNotFoundRepositoryError({
+        entityType: "setup_definition",
+        entityId: setupDefinitionId,
+        operation: "update"
+      });
     }
 
-    assertExpectedVersion(currentRecord, request.expectedVersion);
+    assertExpectedVersion(currentRecord, request.expectedVersion, setupDefinitionId, "update");
 
     const nextDefinition = cloneSetupDefinition(request.definition);
     this.recordsById.set(setupDefinitionId, {
@@ -85,7 +105,12 @@ export class InMemorySetupDefinitionRepository implements SetupDefinitionReposit
       return null;
     }
 
-    assertExpectedVersion(currentRecord, request.expectedVersion);
+    assertExpectedVersion(
+      currentRecord,
+      request.expectedVersion,
+      request.setupDefinitionId,
+      "update_status"
+    );
 
     const nextDefinition: SetupDefinition = {
       ...currentRecord.definition,

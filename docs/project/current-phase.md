@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.10 — Codex-first workflow, internal orchestration foundation, and implemented in-memory persistence**
+**Phase 1.10 — Codex-first workflow, internal orchestration foundation, implemented in-memory persistence, and first physical relational schema artifacts**
 
 ## What this phase is about
 This phase is focused on:
@@ -20,7 +20,8 @@ The orchestration side proves that the project can:
 The product side now proves that the repo can:
 - maintain implemented in-memory persistence,
 - enforce service-owned write paths,
-- define first durable relational persistence contracts while keeping DB implementation pending.
+- define first durable relational persistence and adapter contracts,
+- and commit first physical Prisma schema artifacts while keeping DB runtime adapters pending.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -88,6 +89,17 @@ The product side now proves that the repo can:
   - `docs/project/durable-relational-persistence-model.md`
   - `docs/architecture/adr/ADR-026-first-durable-relational-persistence-contract.md`
   - `packages/domain-model/src/storage/first-durable-relational-slice.ts`
+- first relational adapter rollout design for the first durable slice:
+  - `docs/project/relational-adapter-rollout-model.md`
+  - `docs/architecture/adr/ADR-027-first-relational-adapter-rollout-design.md`
+  - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/repository-error.ts`
+- first physical Prisma schema and initial migration for the first durable slice:
+  - `docs/project/prisma-schema-implementation-model.md`
+  - `docs/architecture/adr/ADR-028-first-prisma-schema-and-migration-layout.md`
+  - `packages/domain-model/src/storage/first-durable-relational-physical-schema.ts`
+  - `packages/domain-model/prisma/schema.prisma`
+  - `packages/domain-model/prisma/migrations/20260512235500_product_domain_relational_v1_init/migration.sql`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -120,7 +132,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- relational adapter rollout design for the planned first durable slice, starting with `setup_definition` and `research_hypothesis`
+- Prisma tooling and relational adapter implementation for the first durable slice, starting with `setup_definition` and `research_hypothesis`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -136,4 +148,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence that make the real product implementable while durable relational persistence remains explicit next-step work**.
+It is the **foundation plus implemented in-memory persistence and first physical schema artifacts that make the real product implementable while relational adapter/runtime wiring remains explicit next-step work**.
