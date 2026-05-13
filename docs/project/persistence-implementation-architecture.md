@@ -20,8 +20,9 @@ Durable relational persistence pending:
 - first durable relational contract now exists for `setup_definition` and `research_hypothesis`
 - first relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
 - first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
+- adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
 - Prisma client/runtime wiring
-- relational runtime adapters
+- concrete Prisma adapter
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI
@@ -43,6 +44,9 @@ Implemented concrete repositories in this PR:
 - `InMemorySignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-repository.impl.ts`)
 - `InMemoryEvaluationResultRepository` (`packages/domain-model/src/repositories/evaluation-result-repository.impl.ts`)
 - `InMemorySetupAggregateResultRepository` (`packages/domain-model/src/repositories/setup-aggregate-result-repository.impl.ts`)
+- `RelationalSetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-relational-repository.impl.ts`)
+- `RelationalResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-relational-repository.impl.ts`)
+- `InMemoryFirstDurableRelationalRepositoryAdapter` (`packages/domain-model/src/repositories/first-durable-relational-repository-adapter.impl.ts`)
 
 Repository responsibilities:
 - persist and load domain-shaped records
@@ -134,4 +138,5 @@ Ownership direction:
 ## Related contract source
 - `packages/domain-model/src/storage/first-durable-relational-slice.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.ts`
+- `packages/domain-model/src/repositories/first-durable-relational-repository-mappers.ts`
 - `packages/domain-model/src/repositories/repository-error.ts`

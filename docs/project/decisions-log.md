@@ -30,6 +30,7 @@
 - first durable relational persistence contract exists before DB migration work
 - first relational adapter rollout design exists before Prisma implementation work
 - first physical Prisma schema and migration layout exists before runtime adapter wiring
+- adapter-backed relational repositories exist before concrete Prisma adapter wiring
 
 ## Agent/workflow decisions
 - current core agents:
@@ -94,6 +95,9 @@
 - first physical Prisma schema and initial migration now exist for:
   - `setup_definition`
   - `research_hypothesis`
+- first adapter-backed relational repositories and in-memory adapter harness now exist for:
+  - `setup_definition`
+  - `research_hypothesis`
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -103,4 +107,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **Prisma tooling and relational adapter implementation for the first durable slice, starting with `setup_definition` and `research_hypothesis`**
+- the currently recommended next step is **Prisma client/tooling wiring and concrete Prisma adapter implementation for the first durable slice, starting with `setup_definition` and `research_hypothesis`**

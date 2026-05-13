@@ -21,6 +21,7 @@ for the first durable slice with committed physical schema artifacts but without
 - `packages/domain-model/src/repositories/repository-error.ts`
 - `packages/domain-model/src/storage/first-durable-relational-slice.ts`
 - `packages/domain-model/prisma/schema.prisma`
+- `packages/domain-model/src/repositories/first-durable-relational-repository-mappers.ts`
 
 ## Boundary model
 Direction:
@@ -98,12 +99,12 @@ Expected physical-to-contract mapping:
 ## Rollout order
 1. physical Prisma schema is defined for `setup_definition`, `research_hypothesis`, and hypothesis-link storage
 2. initial SQL migration for `product_domain.relational.v1` is committed
-3. implement relational adapters that satisfy the adapter and error contracts
-4. run parity tests against current in-memory repository semantics
+3. adapter-backed relational repositories and an in-memory adapter harness are implemented against the adapter contract
+4. next: wire Prisma client/tooling and implement the concrete Prisma adapter
 
 ## Explicitly postponed
 - Prisma client/runtime wiring
-- repository wiring to real DB runtime
+- concrete Prisma adapter wiring to real DB runtime
 - expansion of adapter rollout beyond the first durable slice
 - runtime ingestion/detection/evaluation/aggregation work
 - UI

@@ -31,6 +31,13 @@ export {
   FIRST_DURABLE_RELATIONAL_RETRYABLE_ERROR_CODES,
   isFirstDurableRelationalDeterministicErrorCode
 } from "./first-durable-relational-repository-adapter.js";
+export {
+  dehydrateResearchHypothesisToDurableBundle,
+  dehydrateSetupDefinitionToDurableRecord,
+  hydrateResearchHypothesisFromDurableBundle,
+  hydrateSetupDefinitionFromDurableRecord
+} from "./first-durable-relational-repository-mappers.js";
+export { InMemoryFirstDurableRelationalRepositoryAdapter } from "./first-durable-relational-repository-adapter.impl.js";
 export type {
   MonitoredSymbolCreateRequest,
   MonitoredSymbolRepository,
@@ -44,6 +51,7 @@ export type {
   SetupDefinitionUpdateRequest
 } from "./setup-definition-repository.js";
 export { InMemorySetupDefinitionRepository } from "./setup-definition-repository.impl.js";
+export { RelationalSetupDefinitionRepository } from "./setup-definition-relational-repository.impl.js";
 export type {
   SignalCandidateCreateRequest,
   SignalCandidateRepository,
@@ -65,6 +73,7 @@ export type {
   ResearchHypothesisUpdateRequest
 } from "./research-hypothesis-repository.js";
 export { InMemoryResearchHypothesisRepository } from "./research-hypothesis-repository.impl.js";
+export { RelationalResearchHypothesisRepository } from "./research-hypothesis-relational-repository.impl.js";
 export type {
   ResearchFeedbackDecisionCreateRequest,
   ResearchFeedbackDecisionRepository,

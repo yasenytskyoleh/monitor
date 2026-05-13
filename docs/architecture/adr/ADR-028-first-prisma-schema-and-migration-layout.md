@@ -52,4 +52,4 @@ Tradeoffs:
 - expansion beyond the first durable slice
 
 ## Follow-up
-- wire Prisma tooling and implement relational repositories/adapters for the first durable slice against the committed schema
+- wire Prisma client/tooling and implement the concrete Prisma adapter for the first durable slice against the committed schema

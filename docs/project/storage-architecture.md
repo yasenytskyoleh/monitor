@@ -28,7 +28,8 @@ Purpose:
 Current direction:
 - implemented in-memory persistence exists today
 - first physical PostgreSQL + Prisma schema artifacts now exist for the first durable slice
-- relational repositories/adapters and runtime DB wiring remain pending
+- adapter-backed relational repositories now exist for the first durable slice
+- concrete Prisma adapter and runtime DB wiring remain pending
 
 First-class persisted entities:
 - `MonitoredSymbol`

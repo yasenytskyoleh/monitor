@@ -85,6 +85,7 @@ Implemented today:
   - `docs/project/durable-relational-persistence-model.md`
   - `docs/project/relational-adapter-rollout-model.md`
   - `docs/project/prisma-schema-implementation-model.md`
+  - `docs/project/relational-repository-implementation-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -94,6 +95,7 @@ Implemented today:
   - `docs/architecture/adr/ADR-026-first-durable-relational-persistence-contract.md`
   - `docs/architecture/adr/ADR-027-first-relational-adapter-rollout-design.md`
   - `docs/architecture/adr/ADR-028-first-prisma-schema-and-migration-layout.md`
+  - `docs/architecture/adr/ADR-029-first-adapter-backed-relational-repositories.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -104,14 +106,15 @@ Current limitation:
   - first durable relational contract now exists for `setup_definition` and `research_hypothesis`
   - first relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
   - first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
-  - no relational runtime adapters yet
+  - adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
+  - no concrete Prisma adapter yet
   - no Prisma client/runtime wiring yet
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- Prisma tooling and relational adapter implementation for the first durable slice, starting with `setup_definition` and `research_hypothesis`
+- Prisma client/tooling wiring and concrete Prisma adapter implementation for the first durable slice, starting with `setup_definition` and `research_hypothesis`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

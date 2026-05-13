@@ -39,9 +39,13 @@ First physical Prisma schema and initial migration exist today for:
 - `SetupDefinition`
 - `ResearchHypothesis`
 
+Adapter-backed relational repositories and in-memory adapter harness exist today for:
+- `SetupDefinition`
+- `ResearchHypothesis`
+
 Durable relational persistence pending:
 - Prisma client/runtime wiring
-- relational runtime adapters
+- concrete Prisma adapter
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI
@@ -81,6 +85,7 @@ Related product docs:
 - `docs/project/durable-relational-persistence-model.md`
 - `docs/project/relational-adapter-rollout-model.md`
 - `docs/project/prisma-schema-implementation-model.md`
+- `docs/project/relational-repository-implementation-model.md`
 - `docs/project/signal-candidate-model.md`
 - `docs/project/first-application-flow.md`
 - `docs/project/product-service-flow.md`
@@ -96,7 +101,7 @@ Related product docs:
 - signal generation engine implementation
 - evaluation engine implementation
 - execution/trading logic
-- durable relational persistence adapters and DB runtime wiring
+- concrete Prisma adapter and DB runtime wiring
 - UI/dashboard work
 - news/sentiment enrichment
 
@@ -142,7 +147,7 @@ Rule: orchestration executes workflows; product domain defines market/research m
 ## Storage direction (initial)
 Storage boundaries are now explicitly defined:
 - `runtime_evidence` (orchestrator file-based evidence)
-- `product_domain` (implemented in-memory persistence today; first physical Prisma schema committed; durable relational runtime adapters pending)
+- `product_domain` (implemented in-memory persistence today; first physical Prisma schema committed; adapter-backed relational repositories exist; concrete Prisma adapter pending)
 - `derived_analytics` (deferred)
 
 Current package provides contract-level storage types in `packages/domain-model/src/storage/*`.
@@ -150,7 +155,7 @@ Current package provides contract-level storage types in `packages/domain-model/
 Deferred to later slices:
 - full detection runtime engine and event processing
 - aggregation runtime/job orchestration and advanced evidence analytics
-- Prisma runtime wiring and relational adapter implementation
+- Prisma runtime wiring and concrete Prisma adapter implementation
 - data retention policies
 
 ## Acceptance criteria for this slice
