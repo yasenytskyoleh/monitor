@@ -6,6 +6,12 @@ import type {
 } from "./research-hypothesis-repository.js";
 import type { ResearchHypothesis } from "../research-hypothesis.js";
 import type { ProductRecordMetadata } from "../storage/product-record-metadata.js";
+import {
+  createAlreadyExistsRepositoryError,
+  createNotFoundRepositoryError,
+  createVersionMismatchRepositoryError,
+  type RepositoryOperation
+} from "./repository-error.js";
 
 type PersistedResearchHypothesisRecord = {
   hypothesis: ResearchHypothesis;
@@ -20,12 +26,18 @@ const cloneMetadata = (metadata: ProductRecordMetadata): ProductRecordMetadata =
 
 const assertExpectedVersion = (
   record: PersistedResearchHypothesisRecord,
-  expectedVersion: number | null
+  expectedVersion: number | null,
+  researchHypothesisId: string,
+  operation: RepositoryOperation
 ): void => {
   if (expectedVersion !== null && expectedVersion !== record.version) {
-    throw new Error(
-      `research_hypothesis version mismatch: expected ${expectedVersion}, got ${record.version}`
-    );
+    throw createVersionMismatchRepositoryError({
+      entityType: "research_hypothesis",
+      entityId: researchHypothesisId,
+      operation,
+      expectedVersion,
+      actualVersion: record.version
+    });
   }
 };
 
@@ -50,7 +62,11 @@ export class InMemoryResearchHypothesisRepository implements ResearchHypothesisR
   async create(request: ResearchHypothesisCreateRequest): Promise<ResearchHypothesis> {
     const researchHypothesisId = request.hypothesis.id;
     if (this.recordsById.has(researchHypothesisId)) {
-      throw new Error(`research_hypothesis already exists: ${researchHypothesisId}`);
+      throw createAlreadyExistsRepositoryError({
+        entityType: "research_hypothesis",
+        entityId: researchHypothesisId,
+        operation: "create"
+      });
     }
 
     const hypothesis = cloneResearchHypothesis(request.hypothesis);
@@ -66,10 +82,14 @@ export class InMemoryResearchHypothesisRepository implements ResearchHypothesisR
     const researchHypothesisId = request.hypothesis.id;
     const currentRecord = this.recordsById.get(researchHypothesisId);
     if (!currentRecord) {
-      throw new Error(`research_hypothesis not found: ${researchHypothesisId}`);
+      throw createNotFoundRepositoryError({
+        entityType: "research_hypothesis",
+        entityId: researchHypothesisId,
+        operation: "update"
+      });
     }
 
-    assertExpectedVersion(currentRecord, request.expectedVersion);
+    assertExpectedVersion(currentRecord, request.expectedVersion, researchHypothesisId, "update");
 
     const nextHypothesis = cloneResearchHypothesis(request.hypothesis);
     this.recordsById.set(researchHypothesisId, {
@@ -86,7 +106,12 @@ export class InMemoryResearchHypothesisRepository implements ResearchHypothesisR
       return null;
     }
 
-    assertExpectedVersion(currentRecord, request.expectedVersion);
+    assertExpectedVersion(
+      currentRecord,
+      request.expectedVersion,
+      request.researchHypothesisId,
+      "update_status"
+    );
 
     const nextHypothesis: ResearchHypothesis = {
       ...currentRecord.hypothesis,

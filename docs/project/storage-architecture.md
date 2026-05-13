@@ -3,7 +3,7 @@
 ## Purpose
 Define the first persistence architecture for Monitor product-domain entities while preserving strict separation from orchestrator runtime evidence.
 
-This slice defines storage boundaries and contracts only. It does not implement repositories, migrations, or database writes.
+This slice now includes storage boundaries, logical persistence contracts, and first physical schema artifacts. It still does not implement relational repositories/adapters or live database writes.
 
 ## Storage layers
 
@@ -25,8 +25,10 @@ Examples:
 Purpose:
 - first-class persisted product records
 
-Planned direction:
-- relational persistence (planned), with PostgreSQL + Prisma as target direction
+Current direction:
+- implemented in-memory persistence exists today
+- first physical PostgreSQL + Prisma schema artifacts now exist for the first durable slice
+- relational repositories/adapters and runtime DB wiring remain pending
 
 First-class persisted entities:
 - `MonitoredSymbol`
@@ -55,7 +57,7 @@ Examples:
 
 ## Technology direction
 - runtime evidence: file-based artifacts (already implemented)
-- product domain: relational persistence planned (PostgreSQL + Prisma direction)
+- product domain: implemented in-memory persistence plus committed first physical PostgreSQL + Prisma schema artifacts
 - derived analytics: deferred until aggregation/scoring architecture matures
 
 ## Implementation-architecture boundary
@@ -66,3 +68,5 @@ Examples:
 ## Contract source
 - `packages/domain-model/src/storage/*`
 - `docs/project/durable-relational-persistence-model.md`
+- `docs/project/relational-adapter-rollout-model.md`
+- `docs/project/prisma-schema-implementation-model.md`

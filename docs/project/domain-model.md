@@ -17,7 +17,7 @@ The package remains intentionally narrow, and now includes **implemented in-memo
 - `EvaluationResult`
 - `SetupAggregateResult`
 
-It still does not implement durable relational persistence, ingestion, execution, or statistics engines.
+It still does not implement durable relational runtime adapters, ingestion, execution, or statistics engines.
 
 ## Current implementation status
 Implemented in-memory persistence exists today for:
@@ -31,8 +31,16 @@ First durable relational contract exists today for:
 - `SetupDefinition`
 - `ResearchHypothesis`
 
+First relational adapter rollout design exists today for:
+- `SetupDefinition`
+- `ResearchHypothesis`
+
+First physical Prisma schema and initial migration exist today for:
+- `SetupDefinition`
+- `ResearchHypothesis`
+
 Durable relational persistence pending:
-- DB schema and migrations
+- Prisma client/runtime wiring
 - relational runtime adapters
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
@@ -71,6 +79,8 @@ Related product docs:
 - `docs/project/persistence-implementation-architecture.md`
 - `docs/project/first-persisted-slice.md`
 - `docs/project/durable-relational-persistence-model.md`
+- `docs/project/relational-adapter-rollout-model.md`
+- `docs/project/prisma-schema-implementation-model.md`
 - `docs/project/signal-candidate-model.md`
 - `docs/project/first-application-flow.md`
 - `docs/project/product-service-flow.md`
@@ -86,7 +96,7 @@ Related product docs:
 - signal generation engine implementation
 - evaluation engine implementation
 - execution/trading logic
-- durable relational persistence adapters, DB schema, and migrations
+- durable relational persistence adapters and DB runtime wiring
 - UI/dashboard work
 - news/sentiment enrichment
 
@@ -132,7 +142,7 @@ Rule: orchestration executes workflows; product domain defines market/research m
 ## Storage direction (initial)
 Storage boundaries are now explicitly defined:
 - `runtime_evidence` (orchestrator file-based evidence)
-- `product_domain` (implemented in-memory persistence today; durable relational persistence pending)
+- `product_domain` (implemented in-memory persistence today; first physical Prisma schema committed; durable relational runtime adapters pending)
 - `derived_analytics` (deferred)
 
 Current package provides contract-level storage types in `packages/domain-model/src/storage/*`.
@@ -140,7 +150,7 @@ Current package provides contract-level storage types in `packages/domain-model/
 Deferred to later slices:
 - full detection runtime engine and event processing
 - aggregation runtime/job orchestration and advanced evidence analytics
-- schema/migration implementation
+- Prisma runtime wiring and relational adapter implementation
 - data retention policies
 
 ## Acceptance criteria for this slice

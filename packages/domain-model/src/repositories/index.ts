@@ -1,4 +1,37 @@
 export type {
+  RepositoryErrorCode,
+  RepositoryErrorDetails,
+  RepositoryOperation,
+  RepositoryRetryDisposition
+} from "./repository-error.js";
+export {
+  REPOSITORY_ERROR_CODES,
+  REPOSITORY_OPERATIONS,
+  REPOSITORY_RETRY_DISPOSITIONS,
+  RepositoryError,
+  createAlreadyExistsRepositoryError,
+  createInvalidReferenceRepositoryError,
+  createNotFoundRepositoryError,
+  createVersionMismatchRepositoryError
+} from "./repository-error.js";
+export type {
+  FirstDurableRelationalAdapterErrorMapping,
+  FirstDurableRelationalAdapterOperation,
+  FirstDurableRelationalDeterministicErrorCode,
+  FirstDurableRelationalRepositoryAdapter,
+  FirstDurableRelationalRetryableErrorCode,
+  ResearchHypothesisBundleWriteRequest,
+  ResearchHypothesisDurableRecordBundle,
+  SetupDefinitionRecordWriteRequest
+} from "./first-durable-relational-repository-adapter.js";
+export {
+  FIRST_DURABLE_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  FIRST_DURABLE_RELATIONAL_ADAPTER_OPERATIONS,
+  FIRST_DURABLE_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  FIRST_DURABLE_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isFirstDurableRelationalDeterministicErrorCode
+} from "./first-durable-relational-repository-adapter.js";
+export type {
   MonitoredSymbolCreateRequest,
   MonitoredSymbolRepository,
   MonitoredSymbolStatusUpdateRequest,

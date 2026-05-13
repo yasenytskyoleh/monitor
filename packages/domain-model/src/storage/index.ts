@@ -25,6 +25,19 @@ export type {
   ResearchHypothesisSetupDefinitionLinkRecord,
   SetupDefinitionDurableRecord
 } from "./first-durable-relational-slice.js";
+export {
+  FIRST_DURABLE_RELATIONAL_DATABASE_SCHEMA,
+  FIRST_DURABLE_RELATIONAL_INDEXES,
+  FIRST_DURABLE_RELATIONAL_MIGRATION_SLUG,
+  FIRST_DURABLE_RELATIONAL_PRISMA_MODELS,
+  FIRST_DURABLE_RELATIONAL_REQUIRED_COLUMNS,
+  FIRST_DURABLE_RELATIONAL_TABLES
+} from "./first-durable-relational-physical-schema.js";
+export type {
+  FirstDurableRelationalIndexName,
+  FirstDurableRelationalPrismaModelName,
+  FirstDurableRelationalTableName
+} from "./first-durable-relational-physical-schema.js";
 
 export type {
   EntityIdentity,

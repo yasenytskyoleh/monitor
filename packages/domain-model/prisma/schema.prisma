@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["product_domain"]
+}
+
+enum PersistedLifecycleStatus {
+  active
+  archived
+
+  @@map("persisted_lifecycle_status")
+  @@schema("product_domain")
+}
+
+enum ProductRecordSource {
+  monitoring_pipeline
+  detection_pipeline
+  evaluation_pipeline
+  research_aggregation_pipeline
+  manual_curation
+  migration_backfill
+
+  @@map("product_record_source")
+  @@schema("product_domain")
+}
+
+enum SetupDefinitionStatus {
+  draft
+  active
+  paused
+  archived
+
+  @@map("setup_definition_status")
+  @@schema("product_domain")
+}
+
+enum ResearchHypothesisStatus {
+  draft
+  active
+  paused
+  closed
+
+  @@map("research_hypothesis_status")
+  @@schema("product_domain")
+}
+
+enum HypothesisEvidenceStatus {
+  supports
+  weakens
+  inconclusive
+
+  @@map("hypothesis_evidence_status")
+  @@schema("product_domain")
+}
+
+model SetupDefinitionRecord {
+  setupDefinitionId         String                                       @id(map: "setup_definition_pkey") @map("setup_definition_id") @db.Text
+  version                   Int                                          @map("version")
+  lifecycleStatus           PersistedLifecycleStatus                     @map("lifecycle_status")
+  definitionStatus          SetupDefinitionStatus                        @map("definition_status")
+  name                      String                                       @map("name") @db.Text
+  description               String                                       @map("description") @db.Text
+  measurableConditions      String[]                                     @map("measurable_conditions")
+  evaluationAssumptions     String[]                                     @map("evaluation_assumptions")
+  invalidationAssumptions   String[]                                     @map("invalidation_assumptions")
+  originRunId               String?                                      @map("origin_run_id") @db.Text
+  originTransitionId        String?                                      @map("origin_transition_id") @db.Text
+  createdBySource           ProductRecordSource                          @map("created_by_source")
+  lastUpdatedBySource       ProductRecordSource                          @map("last_updated_by_source")
+  traceId                   String?                                      @map("trace_id") @db.Text
+  sourceObservedAtUtc       DateTime?                                    @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes             String?                                      @map("metadata_notes") @db.Text
+  traceOriginRunId          String?                                      @map("trace_origin_run_id") @db.Text
+  traceOriginTransitionId   String?                                      @map("trace_origin_transition_id") @db.Text
+  traceMetadataTraceId      String?                                      @map("trace_metadata_trace_id") @db.Text
+  createdAtUtc              DateTime                                     @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc              DateTime                                     @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc             DateTime?                                    @map("archived_at_utc") @db.Timestamptz(3)
+  hypothesisSetupLinks      ResearchHypothesisSetupDefinitionLinkRecord[]
+
+  @@index([definitionStatus], map: "idx_setup_definition_definition_status")
+  @@index([lifecycleStatus], map: "idx_setup_definition_lifecycle_status")
+  @@map("setup_definition")
+  @@schema("product_domain")
+}
+
+model ResearchHypothesisRecord {
+  researchHypothesisId          String                                       @id(map: "research_hypothesis_pkey") @map("research_hypothesis_id") @db.Text
+  version                       Int                                          @map("version")
+  lifecycleStatus               PersistedLifecycleStatus                     @map("lifecycle_status")
+  hypothesisStatus              ResearchHypothesisStatus                     @map("hypothesis_status")
+  title                         String                                       @map("title") @db.Text
+  description                   String                                       @map("description") @db.Text
+  assumptions                   String[]                                     @map("assumptions")
+  notes                         String[]                                     @map("notes")
+  evidenceStatus                HypothesisEvidenceStatus?                    @map("evidence_status")
+  evidenceSummary               String?                                      @map("evidence_summary") @db.Text
+  lastEvidenceAggregateResultId String?                                      @map("last_evidence_aggregate_result_id") @db.Text
+  lastEvidenceAssessedAt        DateTime?                                    @map("last_evidence_assessed_at") @db.Timestamptz(3)
+  originRunId                   String?                                      @map("origin_run_id") @db.Text
+  originTransitionId            String?                                      @map("origin_transition_id") @db.Text
+  createdBySource               ProductRecordSource                          @map("created_by_source")
+  lastUpdatedBySource           ProductRecordSource                          @map("last_updated_by_source")
+  traceId                       String?                                      @map("trace_id") @db.Text
+  sourceObservedAtUtc           DateTime?                                    @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes                 String?                                      @map("metadata_notes") @db.Text
+  createdAtUtc                  DateTime                                     @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc                  DateTime                                     @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc                 DateTime?                                    @map("archived_at_utc") @db.Timestamptz(3)
+  setupDefinitionLinks          ResearchHypothesisSetupDefinitionLinkRecord[]
+
+  @@index([hypothesisStatus], map: "idx_research_hypothesis_hypothesis_status")
+  @@index([lifecycleStatus], map: "idx_research_hypothesis_lifecycle_status")
+  @@map("research_hypothesis")
+  @@schema("product_domain")
+}
+
+model ResearchHypothesisSetupDefinitionLinkRecord {
+  researchHypothesisId String                   @map("research_hypothesis_id") @db.Text
+  setupDefinitionId    String                   @map("setup_definition_id") @db.Text
+  linkedAtUtc          DateTime                 @map("linked_at_utc") @db.Timestamptz(3)
+  researchHypothesis   ResearchHypothesisRecord @relation(fields: [researchHypothesisId], references: [researchHypothesisId], onDelete: Restrict, onUpdate: Cascade)
+  setupDefinition      SetupDefinitionRecord    @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+
+  @@id([researchHypothesisId, setupDefinitionId], map: "research_hypothesis_setup_definition_link_pkey")
+  @@index([setupDefinitionId], map: "idx_research_hypothesis_setup_definition_link_setup_definition_id")
+  @@map("research_hypothesis_setup_definition_link")
+  @@schema("product_domain")
+}

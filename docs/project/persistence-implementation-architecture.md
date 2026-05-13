@@ -1,7 +1,7 @@
 # Persistence Implementation Architecture
 
 ## Purpose
-Define the current implementation architecture for product-domain persistence without introducing durable DB runtime code.
+Define the current implementation architecture for product-domain persistence with committed first-slice schema artifacts but without durable DB runtime adapter code.
 
 This document now reflects both:
 - boundary contracts
@@ -18,7 +18,9 @@ Implemented in-memory persistence and service-owned write paths exist today for:
 
 Durable relational persistence pending:
 - first durable relational contract now exists for `setup_definition` and `research_hypothesis`
-- DB schema and migrations
+- first relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
+- first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
+- Prisma client/runtime wiring
 - relational runtime adapters
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
@@ -131,3 +133,5 @@ Ownership direction:
 
 ## Related contract source
 - `packages/domain-model/src/storage/first-durable-relational-slice.ts`
+- `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.ts`
+- `packages/domain-model/src/repositories/repository-error.ts`

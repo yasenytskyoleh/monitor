@@ -38,6 +38,8 @@ Current product-domain scope includes:
   - `docs/project/persistence-implementation-architecture.md`
   - `docs/project/first-persisted-slice.md`
   - `docs/project/durable-relational-persistence-model.md`
+  - `docs/project/relational-adapter-rollout-model.md`
+  - `docs/project/prisma-schema-implementation-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -45,6 +47,8 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
   - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
   - `docs/architecture/adr/ADR-026-first-durable-relational-persistence-contract.md`
+  - `docs/architecture/adr/ADR-027-first-relational-adapter-rollout-design.md`
+  - `docs/architecture/adr/ADR-028-first-prisma-schema-and-migration-layout.md`
 
 ## Current constraints
 - spot-only scope
@@ -53,13 +57,15 @@ Current product-domain scope includes:
 - no evaluation runtime engine yet
 - no aggregation/scoring runtime engine yet
 - first durable relational contract exists for `setup_definition` and `research_hypothesis`
-- durable relational persistence/runtime adapters pending
-- no DB schema or migrations yet
+- first relational adapter rollout design exists for `setup_definition` and `research_hypothesis`
+- first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
+- durable relational runtime adapters pending
+- no Prisma client/runtime wiring yet
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- define relational adapter rollout design for the planned first durable slice, starting with `setup_definition` and `research_hypothesis`
+- wire Prisma tooling and implement relational repositories/adapters for the first durable slice, starting with `setup_definition` and `research_hypothesis`
 
 ## Behavioral instructions for future assistants
 When continuing this project:
@@ -67,5 +73,5 @@ When continuing this project:
 2. preserve orchestration safety constraints while product-domain implementation grows
 3. keep orchestrator runtime evidence and product-domain persistence separate
 4. enforce service-owned write paths and repository-owned persistence abstraction
-5. keep runtime engines and durable relational persistence implementation out of scope until architecture contracts are explicit
+5. keep runtime engines out of scope and keep relational adapter/runtime implementation narrowly aligned to the committed persistence contracts
 6. prefer small, explicit, reviewable PR-sized steps
