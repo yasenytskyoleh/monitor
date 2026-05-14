@@ -104,5 +104,5 @@ CREATE INDEX "idx_research_hypothesis_hypothesis_status"
   ON "product_domain"."research_hypothesis" ("hypothesis_status");
 CREATE INDEX "idx_research_hypothesis_lifecycle_status"
   ON "product_domain"."research_hypothesis" ("lifecycle_status");
-CREATE INDEX "idx_research_hypothesis_setup_definition_link_setup_definition_id"
+CREATE INDEX "idx_research_hypothesis_link_setup_definition_id"
   ON "product_domain"."research_hypothesis_setup_definition_link" ("setup_definition_id");

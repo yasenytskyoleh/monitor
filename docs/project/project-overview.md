@@ -107,14 +107,14 @@ Current limitation:
   - first relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
   - first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
   - adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
-  - no concrete Prisma adapter yet
-  - no Prisma client/runtime wiring yet
+  - Prisma 7 config, generated client wiring, concrete adapter, and client factory now exist for the first durable slice
+  - shared repository composition and real-database integration coverage are still pending
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- Prisma client/tooling wiring and concrete Prisma adapter implementation for the first durable slice, starting with `setup_definition` and `research_hypothesis`
+- shared repository composition and real-database integration for the first durable slice, starting with `setup_definition` and `research_hypothesis`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

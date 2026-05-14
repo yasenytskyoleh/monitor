@@ -19,3 +19,6 @@ runtime/logs/*
 # Generated runner artifacts
 runtime/runs/*
 !runtime/runs/.gitkeep
+
+# Generated Prisma client
+packages/domain-model/src/generated/

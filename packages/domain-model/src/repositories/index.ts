@@ -38,6 +38,21 @@ export {
   hydrateSetupDefinitionFromDurableRecord
 } from "./first-durable-relational-repository-mappers.js";
 export { InMemoryFirstDurableRelationalRepositoryAdapter } from "./first-durable-relational-repository-adapter.impl.js";
+export {
+  createFirstDurableRelationalPrismaClient,
+  createFirstDurableRelationalPrismaRepositoryAdapter
+} from "./first-durable-relational-prisma-client.js";
+export type {
+  FirstDurableRelationalPrismaClientOptions,
+  FirstDurableRelationalRuntimePrismaClient
+} from "./first-durable-relational-prisma-client.js";
+export type {
+  FirstDurableRelationalPrismaClient,
+  FirstDurableRelationalPrismaTransactionClient
+} from "./first-durable-relational-prisma-adapter.js";
+export {
+  PrismaFirstDurableRelationalRepositoryAdapter
+} from "./first-durable-relational-prisma-adapter.js";
 export type {
   MonitoredSymbolCreateRequest,
   MonitoredSymbolRepository,

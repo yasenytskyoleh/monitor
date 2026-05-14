@@ -282,6 +282,21 @@ export {
   InMemoryFirstDurableRelationalRepositoryAdapter
 } from "./repositories/first-durable-relational-repository-adapter.impl.js";
 export {
+  createFirstDurableRelationalPrismaClient,
+  createFirstDurableRelationalPrismaRepositoryAdapter
+} from "./repositories/first-durable-relational-prisma-client.js";
+export type {
+  FirstDurableRelationalPrismaClientOptions,
+  FirstDurableRelationalRuntimePrismaClient
+} from "./repositories/first-durable-relational-prisma-client.js";
+export type {
+  FirstDurableRelationalPrismaClient,
+  FirstDurableRelationalPrismaTransactionClient
+} from "./repositories/first-durable-relational-prisma-adapter.js";
+export {
+  PrismaFirstDurableRelationalRepositoryAdapter
+} from "./repositories/first-durable-relational-prisma-adapter.js";
+export {
   REPOSITORY_ERROR_CODES,
   REPOSITORY_OPERATIONS,
   REPOSITORY_RETRY_DISPOSITIONS,
