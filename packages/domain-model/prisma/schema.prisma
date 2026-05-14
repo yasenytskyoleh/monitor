@@ -1,11 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
   schemas  = ["product_domain"]
 }
 
@@ -128,7 +127,7 @@ model ResearchHypothesisSetupDefinitionLinkRecord {
   setupDefinition      SetupDefinitionRecord    @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
 
   @@id([researchHypothesisId, setupDefinitionId], map: "research_hypothesis_setup_definition_link_pkey")
-  @@index([setupDefinitionId], map: "idx_research_hypothesis_setup_definition_link_setup_definition_id")
+  @@index([setupDefinitionId], map: "idx_research_hypothesis_link_setup_definition_id")
   @@map("research_hypothesis_setup_definition_link")
   @@schema("product_domain")
 }

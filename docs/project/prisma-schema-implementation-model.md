@@ -66,7 +66,7 @@ Implemented indexes:
 - `idx_setup_definition_lifecycle_status`
 - `idx_research_hypothesis_hypothesis_status`
 - `idx_research_hypothesis_lifecycle_status`
-- `idx_research_hypothesis_setup_definition_link_setup_definition_id`
+- `idx_research_hypothesis_link_setup_definition_id`
 
 ## What remains pending
 - Prisma package/tooling wiring for executable validation and client generation

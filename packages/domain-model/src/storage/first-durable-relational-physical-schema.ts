@@ -77,7 +77,7 @@ export const FIRST_DURABLE_RELATIONAL_INDEXES = [
   "idx_setup_definition_lifecycle_status",
   "idx_research_hypothesis_hypothesis_status",
   "idx_research_hypothesis_lifecycle_status",
-  "idx_research_hypothesis_setup_definition_link_setup_definition_id"
+  "idx_research_hypothesis_link_setup_definition_id"
 ] as const;
 export type FirstDurableRelationalIndexName =
   (typeof FIRST_DURABLE_RELATIONAL_INDEXES)[number];

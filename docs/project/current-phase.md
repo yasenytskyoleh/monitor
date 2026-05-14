@@ -139,7 +139,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- Prisma client/tooling wiring and concrete Prisma adapter implementation for the first durable slice, starting with `setup_definition` and `research_hypothesis`
+- shared repository composition and real-database integration for the first durable slice, starting with `setup_definition` and `research_hypothesis`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -155,4 +155,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, first physical schema artifacts, and adapter-backed relational repositories that make the real product implementable while concrete Prisma adapter/runtime wiring remains explicit next-step work**.
+It is the **foundation plus implemented in-memory persistence, first physical schema artifacts, adapter-backed relational repositories, and now real Prisma client/adapter wiring that make the real product implementable while shared repository composition and live database integration remain the next-step work**.
