@@ -89,6 +89,7 @@ Implemented today:
   - `docs/project/relational-repository-implementation-model.md`
   - `docs/project/signal-evaluation-relational-rollout-model.md`
   - `docs/project/setup-aggregate-relational-persistence-model.md`
+  - `docs/project/setup-aggregate-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -101,6 +102,7 @@ Implemented today:
   - `docs/architecture/adr/ADR-029-first-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-030-signal-evaluation-durable-relational-rollout.md`
   - `docs/architecture/adr/ADR-031-setup-aggregate-durable-relational-contract-and-schema.md`
+  - `docs/architecture/adr/ADR-032-setup-aggregate-adapter-backed-relational-repositories.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -109,14 +111,14 @@ Current limitation:
   - no broad refactors, schema/migration/architecture changes, or cross-package scope
 - durable relational persistence pending:
   - durable relational contracts and committed Prisma schema/migrations now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, and `setup_aggregate_result`
-  - adapter-backed relational repositories, concrete Prisma adapters, shared repository composition, and opt-in real-database integration coverage now exist for the first two durable slices
-  - adapter-backed repository and concrete Prisma adapter implementation are still pending for `setup_aggregate_result`
+  - adapter-backed relational repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now exist for all five implemented service-owned product entities
+  - a broader all-entities repository bundle and one end-to-end real-database integration flow are still pending
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- implement the adapter-backed repository and concrete Prisma adapter for `setup_aggregate_result`
+- compose a shared Prisma-backed repository bundle and end-to-end integration flow across the implemented durable entities
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

@@ -33,7 +33,7 @@ Positive:
 - aggregate scope semantics are now explicit in relational storage terms
 
 Tradeoffs:
-- aggregate repository/runtime parity is still incomplete until the adapter-backed repository layer is added
+- aggregate repository/runtime parity was intentionally deferred from this ADR and is implemented separately in `ADR-032`
 - `scope_research_run_id` and `scope_hypothesis_id` remain scalar descriptors rather than fully related entities
 
 ## Explicitly not included
@@ -44,4 +44,5 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- implement the adapter-backed `SetupAggregateResult` repository and Prisma adapter using the committed contract/schema
+- adapter-backed `SetupAggregateResult` repository parity is implemented in `ADR-032`
+- broader cross-slice repository composition remains the next persistence step

@@ -59,4 +59,5 @@ Tradeoffs:
 - durable rollout for `setup_aggregate_result`
 
 ## Follow-up
-- implement durable relational persistence for `setup_aggregate_result` using the same narrow contract/schema/adapter/repository/integration sequence
+- `setup_aggregate_result` durable relational persistence is now implemented through `ADR-031` and `ADR-032`
+- broader shared repository composition across the implemented durable entities is the next persistence step

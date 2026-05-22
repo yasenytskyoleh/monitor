@@ -58,7 +58,6 @@ without expanding into runtime market ingestion, detection engines, evaluation j
 - shared Prisma-backed repository composition can support multi-entity persistence flows without mixing domain rules into adapters
 
 ## What remains pending
-- durable relational rollout for `setup_aggregate_result`
 - broader multi-slice repository factory composition for all implemented durable entities
 - runtime detection, evaluation, and aggregation engines
 - exchange ingestion and UI work

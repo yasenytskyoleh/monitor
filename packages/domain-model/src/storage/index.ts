@@ -38,7 +38,8 @@ export type {
 export {
   SETUP_AGGREGATE_RELATIONAL_ENTITY_TYPES,
   buildSetupAggregateScopeKey,
-  decomposeSetupAggregateScope
+  decomposeSetupAggregateScope,
+  rehydrateSetupAggregateScope
 } from "./setup-aggregate-relational-slice.js";
 export type {
   SetupAggregateRelationalEntityType,

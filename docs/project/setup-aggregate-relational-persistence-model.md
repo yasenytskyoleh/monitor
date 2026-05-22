@@ -11,6 +11,10 @@ This keeps the next persistence slice narrow:
 
 without yet introducing repository mappers, in-memory durable adapters, or Prisma repository adapters for aggregate writes.
 
+That follow-up is now implemented in:
+- `docs/project/setup-aggregate-relational-rollout-model.md`
+- `docs/architecture/adr/ADR-032-setup-aggregate-adapter-backed-relational-repositories.md`
+
 ## Implemented artifact locations
 - `packages/domain-model/src/storage/setup-aggregate-relational-slice.ts`
 - `packages/domain-model/src/storage/setup-aggregate-relational-physical-schema.ts`
@@ -73,6 +77,5 @@ Scalar-only scope references remain scalar in this step:
 This keeps the slice aligned with existing durable coverage instead of inventing more relational tables prematurely.
 
 ## What remains pending
-- adapter-backed `SetupAggregateResult` relational repository
-- concrete Prisma adapter for aggregate persistence
-- shared integration coverage across setup -> candidate -> evaluation -> aggregate repository flow
+- broader shared Prisma-backed repository composition across the implemented durable entities
+- end-to-end integration coverage across setup -> candidate -> evaluation -> aggregate repository flow

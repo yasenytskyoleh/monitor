@@ -49,6 +49,24 @@ export const decomposeSetupAggregateScope = (
   hypothesisId: aggregationScope.hypothesisId ?? null
 });
 
+export const rehydrateSetupAggregateScope = (
+  setupDefinitionId: string,
+  snapshot: SetupAggregateScopeSnapshot
+): AggregationScope => ({
+  setupDefinitionId,
+  evaluationWindowId: snapshot.evaluationWindowId,
+  symbolScope: {
+    kind: snapshot.symbolScopeKind,
+    symbolIds: [...snapshot.symbolIds]
+  },
+  timeRange: {
+    startAtUtc: snapshot.timeRangeStartAtUtc,
+    endAtUtc: snapshot.timeRangeEndAtUtc
+  },
+  ...(snapshot.researchRunId ? { researchRunId: snapshot.researchRunId } : {}),
+  ...(snapshot.hypothesisId ? { hypothesisId: snapshot.hypothesisId } : {})
+});
+
 export type SetupAggregateResultDurableRecord =
   DurableRelationalRecordBase<"setup_aggregate_result"> & {
     aggregateStatus: AggregateComputationStatus;

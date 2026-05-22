@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.12 — Codex-first workflow, bounded autonomous mode, and durable relational rollout through aggregate schema planning**
+**Phase 1.13 — Codex-first workflow, bounded autonomous mode, and durable relational parity across the implemented product entities**
 
 ## What this phase is about
 This phase is focused on:
@@ -129,6 +129,16 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/storage/setup-aggregate-relational-slice.ts`
   - `packages/domain-model/src/storage/setup-aggregate-relational-physical-schema.ts`
   - `packages/domain-model/prisma/migrations/20260522153000_product_domain_setup_aggregate_relational_v1/migration.sql`
+- setup-aggregate adapter-backed relational repository and Prisma adapter:
+  - `docs/project/setup-aggregate-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-032-setup-aggregate-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-repository-adapter.impl.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-result-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-prisma-client.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -161,7 +171,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- implement the adapter-backed repository and concrete Prisma adapter for `setup_aggregate_result`
+- compose a shared Prisma-backed repository bundle and end-to-end integration flow across the implemented durable entities
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -177,4 +187,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, two verified durable relational slices, and committed aggregate schema artifacts that make the remaining aggregate repository step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, and full per-entity durable parity that make the next cross-slice composition step straightforward instead of speculative**.

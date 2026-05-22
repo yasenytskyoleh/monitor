@@ -243,7 +243,8 @@ export {
   RUNTIME_EVIDENCE_ARTIFACT_TYPES,
   STORAGE_BOUNDARIES,
   buildSetupAggregateScopeKey,
-  decomposeSetupAggregateScope
+  decomposeSetupAggregateScope,
+  rehydrateSetupAggregateScope
 } from "./storage/index.js";
 export type {
   DurableRelationalRecordBase,
@@ -301,6 +302,13 @@ export {
   SIGNAL_EVALUATION_RELATIONAL_RETRYABLE_ERROR_CODES,
   isSignalEvaluationRelationalDeterministicErrorCode
 } from "./repositories/signal-evaluation-relational-repository-adapter.js";
+export {
+  SETUP_AGGREGATE_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  SETUP_AGGREGATE_RELATIONAL_ADAPTER_OPERATIONS,
+  SETUP_AGGREGATE_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  SETUP_AGGREGATE_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isSetupAggregateRelationalDeterministicErrorCode
+} from "./repositories/setup-aggregate-relational-repository-adapter.js";
 export { composeFirstDurableRelationalRepositories } from "./repositories/first-durable-relational-repositories.js";
 export type {
   FirstDurableRelationalRepositories
@@ -311,6 +319,12 @@ export {
 export type {
   SignalEvaluationRelationalRepositories
 } from "./repositories/signal-evaluation-relational-repositories.js";
+export {
+  composeSetupAggregateRelationalRepositories
+} from "./repositories/setup-aggregate-relational-repositories.js";
+export type {
+  SetupAggregateRelationalRepositories
+} from "./repositories/setup-aggregate-relational-repositories.js";
 export type {
   FirstDurableRelationalAdapterErrorMapping,
   FirstDurableRelationalAdapterOperation,
@@ -336,12 +350,24 @@ export type {
   SignalEvaluationRelationalRepositoryAdapter,
   SignalEvaluationRelationalRetryableErrorCode
 } from "./repositories/signal-evaluation-relational-repository-adapter.js";
+export type {
+  SetupAggregateRelationalAdapterErrorMapping,
+  SetupAggregateRelationalAdapterOperation,
+  SetupAggregateRelationalDeterministicErrorCode,
+  SetupAggregateRelationalRepositoryAdapter,
+  SetupAggregateRelationalRetryableErrorCode,
+  SetupAggregateResultRecordWriteRequest
+} from "./repositories/setup-aggregate-relational-repository-adapter.js";
 export {
   dehydrateEvaluationResultToDurableRecord,
   dehydrateSignalCandidateToDurableRecord,
   hydrateEvaluationResultFromDurableRecord,
   hydrateSignalCandidateFromDurableRecord
 } from "./repositories/signal-evaluation-relational-repository-mappers.js";
+export {
+  dehydrateSetupAggregateResultToDurableRecord,
+  hydrateSetupAggregateResultFromDurableRecord
+} from "./repositories/setup-aggregate-relational-repository-mappers.js";
 export {
   InMemoryFirstDurableRelationalRepositoryAdapter
 } from "./repositories/first-durable-relational-repository-adapter.impl.js";
@@ -351,6 +377,12 @@ export type {
 export {
   InMemorySignalEvaluationRelationalRepositoryAdapter
 } from "./repositories/signal-evaluation-relational-repository-adapter.impl.js";
+export type {
+  SetupAggregateRelationalReferenceReader
+} from "./repositories/setup-aggregate-relational-repository-adapter.impl.js";
+export {
+  InMemorySetupAggregateRelationalRepositoryAdapter
+} from "./repositories/setup-aggregate-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,
@@ -381,6 +413,19 @@ export type {
 export {
   PrismaSignalEvaluationRelationalRepositoryAdapter
 } from "./repositories/signal-evaluation-relational-prisma-adapter.js";
+export {
+  createSetupAggregateRelationalPrismaRepositories,
+  createSetupAggregateRelationalPrismaRepositoryAdapter
+} from "./repositories/setup-aggregate-relational-prisma-client.js";
+export type {
+  SetupAggregateRelationalPrismaRepositories
+} from "./repositories/setup-aggregate-relational-prisma-client.js";
+export type {
+  SetupAggregateRelationalPrismaClient
+} from "./repositories/setup-aggregate-relational-prisma-adapter.js";
+export {
+  PrismaSetupAggregateRelationalRepositoryAdapter
+} from "./repositories/setup-aggregate-relational-prisma-adapter.js";
 export {
   REPOSITORY_ERROR_CODES,
   REPOSITORY_OPERATIONS,
@@ -495,6 +540,9 @@ export type {
   SetupAggregateResultUpdateRequest
 } from "./repositories/setup-aggregate-result-repository.js";
 export { InMemorySetupAggregateResultRepository } from "./repositories/setup-aggregate-result-repository.impl.js";
+export {
+  RelationalSetupAggregateResultRepository
+} from "./repositories/setup-aggregate-result-relational-repository.impl.js";
 export type {
   SetupDefinitionCreateRequest,
   SetupDefinitionRepository,

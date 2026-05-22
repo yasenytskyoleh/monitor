@@ -33,6 +33,14 @@ export type {
   SignalEvaluationRelationalRepositoryAdapter,
   SignalEvaluationRelationalRetryableErrorCode
 } from "./signal-evaluation-relational-repository-adapter.js";
+export type {
+  SetupAggregateRelationalAdapterErrorMapping,
+  SetupAggregateRelationalAdapterOperation,
+  SetupAggregateRelationalDeterministicErrorCode,
+  SetupAggregateRelationalRepositoryAdapter,
+  SetupAggregateRelationalRetryableErrorCode,
+  SetupAggregateResultRecordWriteRequest
+} from "./setup-aggregate-relational-repository-adapter.js";
 export {
   FIRST_DURABLE_RELATIONAL_ADAPTER_ERROR_MAPPING,
   FIRST_DURABLE_RELATIONAL_ADAPTER_OPERATIONS,
@@ -48,6 +56,13 @@ export {
   isSignalEvaluationRelationalDeterministicErrorCode
 } from "./signal-evaluation-relational-repository-adapter.js";
 export {
+  SETUP_AGGREGATE_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  SETUP_AGGREGATE_RELATIONAL_ADAPTER_OPERATIONS,
+  SETUP_AGGREGATE_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  SETUP_AGGREGATE_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isSetupAggregateRelationalDeterministicErrorCode
+} from "./setup-aggregate-relational-repository-adapter.js";
+export {
   composeFirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
 export type {
@@ -60,6 +75,12 @@ export type {
   SignalEvaluationRelationalRepositories
 } from "./signal-evaluation-relational-repositories.js";
 export {
+  composeSetupAggregateRelationalRepositories
+} from "./setup-aggregate-relational-repositories.js";
+export type {
+  SetupAggregateRelationalRepositories
+} from "./setup-aggregate-relational-repositories.js";
+export {
   dehydrateResearchHypothesisToDurableBundle,
   dehydrateSetupDefinitionToDurableRecord,
   hydrateResearchHypothesisFromDurableBundle,
@@ -71,6 +92,10 @@ export {
   hydrateEvaluationResultFromDurableRecord,
   hydrateSignalCandidateFromDurableRecord
 } from "./signal-evaluation-relational-repository-mappers.js";
+export {
+  dehydrateSetupAggregateResultToDurableRecord,
+  hydrateSetupAggregateResultFromDurableRecord
+} from "./setup-aggregate-relational-repository-mappers.js";
 export { InMemoryFirstDurableRelationalRepositoryAdapter } from "./first-durable-relational-repository-adapter.impl.js";
 export type {
   SignalEvaluationRelationalReferenceReader
@@ -78,6 +103,12 @@ export type {
 export {
   InMemorySignalEvaluationRelationalRepositoryAdapter
 } from "./signal-evaluation-relational-repository-adapter.impl.js";
+export type {
+  SetupAggregateRelationalReferenceReader
+} from "./setup-aggregate-relational-repository-adapter.impl.js";
+export {
+  InMemorySetupAggregateRelationalRepositoryAdapter
+} from "./setup-aggregate-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,
@@ -108,6 +139,19 @@ export type {
 export {
   PrismaSignalEvaluationRelationalRepositoryAdapter
 } from "./signal-evaluation-relational-prisma-adapter.js";
+export {
+  createSetupAggregateRelationalPrismaRepositories,
+  createSetupAggregateRelationalPrismaRepositoryAdapter
+} from "./setup-aggregate-relational-prisma-client.js";
+export type {
+  SetupAggregateRelationalPrismaRepositories
+} from "./setup-aggregate-relational-prisma-client.js";
+export type {
+  SetupAggregateRelationalPrismaClient
+} from "./setup-aggregate-relational-prisma-adapter.js";
+export {
+  PrismaSetupAggregateRelationalRepositoryAdapter
+} from "./setup-aggregate-relational-prisma-adapter.js";
 export type {
   MonitoredSymbolCreateRequest,
   MonitoredSymbolRepository,
@@ -179,6 +223,9 @@ export type {
   SetupAggregateResultUpdateRequest
 } from "./setup-aggregate-result-repository.js";
 export { InMemorySetupAggregateResultRepository } from "./setup-aggregate-result-repository.impl.js";
+export {
+  RelationalSetupAggregateResultRepository
+} from "./setup-aggregate-result-relational-repository.impl.js";
 export type {
   SetupLifecycleMutationRecordCreateRequest,
   SetupLifecycleMutationRecordRepository
