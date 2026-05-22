@@ -155,7 +155,7 @@ Current package provides contract-level storage types in `packages/domain-model/
 Deferred to later slices:
 - full detection runtime engine and event processing
 - aggregation runtime/job orchestration and advanced evidence analytics
-- broader cross-slice durable repository composition and later derived analytic entities
+- durable relational planning for `research_feedback_decision` and later review/execution entities
 - data retention policies
 
 ## Acceptance criteria for this slice

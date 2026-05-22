@@ -1,12 +1,12 @@
 # Persistence Implementation Architecture
 
 ## Purpose
-Define the current implementation architecture for product-domain persistence with committed first-slice schema artifacts but without durable DB runtime adapter code.
+Define the current implementation architecture for product-domain persistence across the implemented core research chain.
 
-This document now reflects both:
+This document now reflects:
 - boundary contracts
-- first concrete implementation for the initial persisted product slice
 - the current implemented in-memory persistence surface
+- current durable relational repository/adapter coverage for the core research chain
 
 ## Canonical current-state summary
 Implemented in-memory persistence and service-owned write paths exist today for:
@@ -16,13 +16,18 @@ Implemented in-memory persistence and service-owned write paths exist today for:
 - `EvaluationResult`
 - `SetupAggregateResult`
 
-Durable relational persistence pending:
-- first durable relational contract now exists for `setup_definition` and `research_hypothesis`
-- first relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
-- first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
-- adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
-- Prisma client/runtime wiring
-- concrete Prisma adapter
+Durable relational coverage now exists for that same core chain:
+- committed contracts, schema/migrations, adapter-backed repositories, and concrete Prisma adapters for:
+  - `setup_definition`
+  - `research_hypothesis`
+  - `signal_candidate`
+  - `evaluation_result`
+  - `setup_aggregate_result`
+- one shared Prisma-backed repository bundle and one end-to-end integration path for setup -> candidate -> evaluation -> aggregate
+
+Still pending:
+- durable relational planning for `research_feedback_decision`
+- later review/approval/execution durable slices
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI
@@ -38,7 +43,7 @@ Repository abstractions:
 - `ResearchHypothesisRepository`
 - `SetupAggregateResultRepository`
 
-Implemented concrete repositories in this PR:
+Implemented concrete repositories in the current baseline:
 - `InMemorySetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-repository.impl.ts`)
 - `InMemoryResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-repository.impl.ts`)
 - `InMemorySignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-repository.impl.ts`)
@@ -46,7 +51,10 @@ Implemented concrete repositories in this PR:
 - `InMemorySetupAggregateResultRepository` (`packages/domain-model/src/repositories/setup-aggregate-result-repository.impl.ts`)
 - `RelationalSetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-relational-repository.impl.ts`)
 - `RelationalResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-relational-repository.impl.ts`)
-- `InMemoryFirstDurableRelationalRepositoryAdapter` (`packages/domain-model/src/repositories/first-durable-relational-repository-adapter.impl.ts`)
+- `RelationalSignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-relational-repository.impl.ts`)
+- `RelationalEvaluationResultRepository` (`packages/domain-model/src/repositories/evaluation-result-relational-repository.impl.ts`)
+- `RelationalSetupAggregateResultRepository` (`packages/domain-model/src/repositories/setup-aggregate-result-relational-repository.impl.ts`)
+- shared implemented-product composition (`packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`)
 
 Repository responsibilities:
 - persist and load domain-shaped records

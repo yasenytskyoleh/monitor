@@ -69,6 +69,13 @@ export type {
   FirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
 export {
+  composeImplementedProductRelationalRepositories
+} from "./implemented-product-relational-repositories.js";
+export type {
+  ImplementedProductRelationalAdapters,
+  ImplementedProductRelationalRepositories
+} from "./implemented-product-relational-repositories.js";
+export {
   composeSignalEvaluationRelationalRepositories
 } from "./signal-evaluation-relational-repositories.js";
 export type {
@@ -126,6 +133,14 @@ export type {
 export {
   PrismaFirstDurableRelationalRepositoryAdapter
 } from "./first-durable-relational-prisma-adapter.js";
+export {
+  createImplementedProductRelationalPrismaAdapters,
+  createImplementedProductRelationalPrismaRepositories
+} from "./implemented-product-relational-prisma-client.js";
+export type {
+  ImplementedProductRelationalPrismaAdapters,
+  ImplementedProductRelationalPrismaRepositories
+} from "./implemented-product-relational-prisma-client.js";
 export {
   createSignalEvaluationRelationalPrismaRepositories,
   createSignalEvaluationRelationalPrismaRepositoryAdapter

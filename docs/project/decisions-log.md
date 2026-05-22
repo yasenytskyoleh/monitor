@@ -102,6 +102,7 @@
   - `signal_candidate`
   - `evaluation_result`
 - setup-aggregate durable relational contract, adapter-backed repository, and concrete Prisma adapter now exist
+- shared Prisma-backed composition now exists for the current core research chain
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -111,4 +112,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **composing a shared Prisma-backed repository bundle and end-to-end integration flow across the implemented durable entities**
+- the currently recommended next step is **planning the durable relational contract and schema for `research_feedback_decision`**

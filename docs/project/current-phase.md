@@ -139,6 +139,11 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/repositories/setup-aggregate-relational-repositories.ts`
   - `packages/domain-model/src/repositories/setup-aggregate-relational-prisma-adapter.ts`
   - `packages/domain-model/src/repositories/setup-aggregate-relational-prisma-client.ts`
+- shared Prisma-backed composition for the implemented product chain:
+  - `docs/project/implemented-product-relational-composition-model.md`
+  - `docs/architecture/adr/ADR-033-shared-implemented-product-relational-composition.md`
+  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -171,7 +176,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- compose a shared Prisma-backed repository bundle and end-to-end integration flow across the implemented durable entities
+- plan the durable relational contract and schema for `research_feedback_decision`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -187,4 +192,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, and full per-entity durable parity that make the next cross-slice composition step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, and shared core-chain composition that make the next downstream review/governance persistence step straightforward instead of speculative**.
