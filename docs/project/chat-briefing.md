@@ -7,6 +7,7 @@ I am working on **Monitor**, a monorepo TypeScript project that combines:
 
 The primary working model is a **Codex-first workflow**:
 - Codex is the main operator for planning, implementation, and repo coordination
+- bounded autonomous execution is allowed when it follows `docs/project/autonomous-mode-policy.md`
 - the internal orchestration subsystem remains an in-repo supporting subsystem for constrained, auditable workflow automation
 
 Current foundation scope includes:
@@ -41,6 +42,10 @@ Current product-domain scope includes:
   - `docs/project/relational-adapter-rollout-model.md`
   - `docs/project/prisma-schema-implementation-model.md`
   - `docs/project/relational-repository-implementation-model.md`
+  - `docs/project/signal-evaluation-relational-rollout-model.md`
+  - `docs/project/setup-aggregate-relational-persistence-model.md`
+  - `docs/project/setup-aggregate-relational-rollout-model.md`
+  - `docs/project/implemented-product-relational-composition-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -51,6 +56,10 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-027-first-relational-adapter-rollout-design.md`
   - `docs/architecture/adr/ADR-028-first-prisma-schema-and-migration-layout.md`
   - `docs/architecture/adr/ADR-029-first-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-030-signal-evaluation-durable-relational-rollout.md`
+  - `docs/architecture/adr/ADR-031-setup-aggregate-durable-relational-contract-and-schema.md`
+  - `docs/architecture/adr/ADR-032-setup-aggregate-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-033-shared-implemented-product-relational-composition.md`
 
 ## Current constraints
 - spot-only scope
@@ -58,17 +67,20 @@ Current product-domain scope includes:
 - no setup-detection runtime engine yet
 - no evaluation runtime engine yet
 - no aggregation/scoring runtime engine yet
-- first durable relational contract exists for `setup_definition` and `research_hypothesis`
-- first relational adapter rollout design exists for `setup_definition` and `research_hypothesis`
-- first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
-- adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
-- Prisma 7 config, generated client wiring, concrete adapter, and client factory now exist for the first durable slice
-- shared repository composition and real-database integration coverage are still pending
+- durable relational contracts and committed Prisma schema/migrations now exist for:
+  - `setup_definition`
+  - `research_hypothesis`
+  - `signal_candidate`
+  - `evaluation_result`
+  - `setup_aggregate_result`
+- adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now exist for all five implemented service-owned entities
+- one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now exist for the current core research chain
+- the next persistence gap is downstream review/governance entities, starting with `research_feedback_decision`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- compose shared Prisma-backed repositories and add real-database integration coverage for the first durable slice, starting with `setup_definition` and `research_hypothesis`
+- plan the durable relational contract and schema for `research_feedback_decision`
 
 ## Behavioral instructions for future assistants
 When continuing this project:
@@ -76,5 +88,5 @@ When continuing this project:
 2. preserve orchestration safety constraints while product-domain implementation grows
 3. keep orchestrator runtime evidence and product-domain persistence separate
 4. enforce service-owned write paths and repository-owned persistence abstraction
-5. keep runtime engines out of scope and keep repository composition and real-database integration narrowly aligned to the committed persistence contracts
+5. keep runtime engines out of scope and keep new durable slices narrowly aligned to the committed adapter/repository/integration pattern
 6. prefer small, explicit, reviewable PR-sized steps

@@ -109,6 +109,6 @@ These errors should remain deterministic across in-memory and future relational 
 - Prisma client/runtime wiring
 - relational repository runtime adapters
 - query/index tuning
-- expansion of durable relational planning to `signal_candidate`, `evaluation_result`, and `setup_aggregate_result`
+- broader shared repository composition across the implemented durable slices
 - runtime ingestion/detection/evaluation/aggregation engines
 - UI

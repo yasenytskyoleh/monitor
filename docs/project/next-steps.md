@@ -1,28 +1,34 @@
 # Next Steps
 
 ## Current recommended next step
-### Shared repository composition and real-database integration for the first durable slice
+### Plan the durable relational contract and schema for `research_feedback_decision`
 
 Reason:
-- first durable relational persistence contract now exists for `setup_definition` and `research_hypothesis`
-- first relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
-- first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
-- adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
-- Prisma 7 config, generated client wiring, concrete adapter, and client factory now exist for the first durable slice
-- the next unresolved gap is shared repository composition plus real-database integration coverage against that schema
+- the core setup -> hypothesis -> candidate -> evaluation -> aggregate chain now has:
+  - `setup_definition`
+  - `research_hypothesis`
+  - `signal_candidate`
+  - `evaluation_result`
+  - `setup_aggregate_result`
+- one shared Prisma-backed repository bundle and one end-to-end integration path
+- `research_feedback_decision` is the next service-owned product entity downstream of aggregate evidence and upstream of approval/refinement flows
+- runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
 
 ## Recommended near-future sequence
-1. compose shared Prisma-backed repository factories for `setup_definition` and `research_hypothesis`
-2. add real-database integration coverage against the committed migration/schema
-3. keep parity checks against the current adapter-backed repository baseline
-4. keep slice scope narrow until repository composition and real-database integration are proven
+1. define the durable record contract for `research_feedback_decision`
+2. define reference, version, and metadata mapping rules for:
+   - `setup_definition`
+   - `research_hypothesis`
+   - optional `setup_aggregate_result`
+3. define the Prisma schema and migration plan, but stop before repository/adapter implementation
+4. keep approval/review/execution durable slices deferred until the feedback-decision persistence direction is explicit
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
 - expanding the durable rollout slice prematurely
-- mixing analytics runtime logic into first-slice repository composition or integration coverage
+- mixing approval/execution workflow logic into the feedback-decision contract/schema step
 
 ## Baseline verification commands
 Use these commands before and after implementation work:
@@ -30,6 +36,7 @@ Use these commands before and after implementation work:
 ```bash
 pnpm --filter @monitor/domain-model typecheck
 pnpm --filter @monitor/domain-model test
-pnpm --filter @monitor/orchestrator-runner typecheck
-pnpm --filter @monitor/orchestrator-runner test
+pnpm --filter @monitor/domain-model test:integration
+pnpm typecheck
+pnpm test
 ```

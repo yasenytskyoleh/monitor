@@ -18,6 +18,7 @@ export {
 } from "./first-durable-relational-slice.js";
 export type {
   DurableRelationalRecordBase,
+  DurableRelationalIdentity,
   DurableRelationalStorageSchemaVersion,
   FirstDurableRelationalEntityType,
   FirstDurableRelationalRecord,
@@ -25,6 +26,26 @@ export type {
   ResearchHypothesisSetupDefinitionLinkRecord,
   SetupDefinitionDurableRecord
 } from "./first-durable-relational-slice.js";
+export {
+  SIGNAL_EVALUATION_RELATIONAL_ENTITY_TYPES
+} from "./signal-evaluation-relational-slice.js";
+export type {
+  EvaluationResultDurableRecord,
+  SignalCandidateDurableRecord,
+  SignalEvaluationRelationalEntityType,
+  SignalEvaluationRelationalRecord
+} from "./signal-evaluation-relational-slice.js";
+export {
+  SETUP_AGGREGATE_RELATIONAL_ENTITY_TYPES,
+  buildSetupAggregateScopeKey,
+  decomposeSetupAggregateScope,
+  rehydrateSetupAggregateScope
+} from "./setup-aggregate-relational-slice.js";
+export type {
+  SetupAggregateRelationalEntityType,
+  SetupAggregateResultDurableRecord,
+  SetupAggregateScopeSnapshot
+} from "./setup-aggregate-relational-slice.js";
 export {
   FIRST_DURABLE_RELATIONAL_DATABASE_SCHEMA,
   FIRST_DURABLE_RELATIONAL_INDEXES,
@@ -38,6 +59,34 @@ export type {
   FirstDurableRelationalPrismaModelName,
   FirstDurableRelationalTableName
 } from "./first-durable-relational-physical-schema.js";
+export {
+  SIGNAL_EVALUATION_RELATIONAL_INDEXES,
+  SIGNAL_EVALUATION_RELATIONAL_MIGRATION_SLUG,
+  SIGNAL_EVALUATION_RELATIONAL_PRISMA_MODELS,
+  SIGNAL_EVALUATION_RELATIONAL_REQUIRED_COLUMNS,
+  SIGNAL_EVALUATION_RELATIONAL_TABLES,
+  SIGNAL_EVALUATION_RELATIONAL_UNIQUE_CONSTRAINTS
+} from "./signal-evaluation-relational-physical-schema.js";
+export type {
+  SignalEvaluationRelationalIndexName,
+  SignalEvaluationRelationalPrismaModelName,
+  SignalEvaluationRelationalTableName,
+  SignalEvaluationRelationalUniqueConstraintName
+} from "./signal-evaluation-relational-physical-schema.js";
+export {
+  SETUP_AGGREGATE_RELATIONAL_INDEXES,
+  SETUP_AGGREGATE_RELATIONAL_MIGRATION_SLUG,
+  SETUP_AGGREGATE_RELATIONAL_PRISMA_MODELS,
+  SETUP_AGGREGATE_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_AGGREGATE_RELATIONAL_TABLES,
+  SETUP_AGGREGATE_RELATIONAL_UNIQUE_CONSTRAINTS
+} from "./setup-aggregate-relational-physical-schema.js";
+export type {
+  SetupAggregateRelationalIndexName,
+  SetupAggregateRelationalPrismaModelName,
+  SetupAggregateRelationalTableName,
+  SetupAggregateRelationalUniqueConstraintName
+} from "./setup-aggregate-relational-physical-schema.js";
 
 export type {
   EntityIdentity,

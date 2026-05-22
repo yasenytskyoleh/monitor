@@ -1,0 +1,236 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
+
+import { Client } from "pg";
+
+import {
+  composeSetupAggregateRelationalRepositories,
+  createFirstDurableRelationalPrismaRepositories,
+  createSetupAggregateRelationalPrismaRepositoryAdapter,
+  RepositoryError,
+  type FirstDurableRelationalPrismaRepositories,
+  type ProductRecordMetadata,
+  type ResearchHypothesis,
+  type SetupAggregateResult,
+  type SetupAggregateRelationalRepositories,
+  type SetupDefinition
+} from "../src/index.js";
+
+const INTEGRATION_DATABASE_URL = process.env.PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL?.trim() ?? "";
+const PRODUCT_DOMAIN_SCHEMA = "product_domain";
+const migrationsDirectory = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../prisma/migrations"
+);
+const initialMigrationSqlPath = resolve(
+  migrationsDirectory,
+  "20260512235500_product_domain_relational_v1_init/migration.sql"
+);
+const aggregateMigrationSqlPath = resolve(
+  migrationsDirectory,
+  "20260522153000_product_domain_setup_aggregate_relational_v1/migration.sql"
+);
+
+const metadata: ProductRecordMetadata = {
+  originRunId: "run-aggregate-001",
+  originTransitionId: "transition-aggregate-001",
+  createdBySource: "research_aggregation_pipeline",
+  lastUpdatedBySource: "research_aggregation_pipeline",
+  traceId: "trace-aggregate-001",
+  sourceObservedAtUtc: "2026-05-22T16:00:00.000Z"
+};
+
+const buildSetupDefinition = (id: string): SetupDefinition => ({
+  id,
+  name: "Breakout Retest",
+  description: "Retest after breakout with continuation bias.",
+  status: "active",
+  measurableConditions: ["4h close above range high"],
+  evaluationAssumptions: ["evaluate over fixed 24h window"],
+  invalidationAssumptions: ["invalidate on failed retest"],
+  createdAt: "2026-05-22T14:00:00.000Z",
+  updatedAt: "2026-05-22T15:00:00.000Z"
+});
+
+const buildResearchHypothesis = (id: string, setupDefinitionId: string): ResearchHypothesis => ({
+  id,
+  title: "Breakout retests outperform random entries",
+  description: "Structured breakout retests should show positive asymmetry.",
+  relatedSetupDefinitionIds: [setupDefinitionId],
+  assumptions: ["median MFE exceeds median MAE over 50 samples"],
+  notes: [],
+  status: "active",
+  createdAt: "2026-05-22T14:00:00.000Z",
+  updatedAt: "2026-05-22T15:00:00.000Z"
+});
+
+const buildAggregate = (
+  id: string,
+  setupDefinitionId: string,
+  researchHypothesisId = "hypothesis-001"
+): SetupAggregateResult => ({
+  id,
+  setupDefinitionId,
+  researchHypothesisId,
+  aggregationScope: {
+    setupDefinitionId,
+    evaluationWindowId: "window-24h",
+    symbolScope: {
+      kind: "symbol_set",
+      symbolIds: ["BTC-USDT", "ETH-USDT"]
+    },
+    timeRange: {
+      startAtUtc: "2026-05-01T00:00:00.000Z",
+      endAtUtc: "2026-05-31T23:59:59.000Z"
+    },
+    researchRunId: "run-aggregate-001",
+    hypothesisId: researchHypothesisId
+  },
+  status: "pending",
+  totalCandidates: 0,
+  completedEvaluations: 0,
+  invalidatedEvaluations: 0,
+  averagePercentageMove: null,
+  averageAbsoluteMove: null,
+  averageFinalOutcome: null,
+  averageMaxFavorableExcursion: null,
+  averageMaxAdverseExcursion: null,
+  positiveOutcomeCount: 0,
+  computedAt: null,
+  createdAt: "2026-05-22T15:00:00.000Z",
+  updatedAt: "2026-05-22T15:00:00.000Z"
+});
+
+type IntegrationRepositories = FirstDurableRelationalPrismaRepositories &
+  SetupAggregateRelationalRepositories;
+
+const withPgClient = async <T>(connectionString: string, work: (client: Client) => Promise<T>): Promise<T> => {
+  const client = new Client({ connectionString });
+  await client.connect();
+
+  try {
+    return await work(client);
+  } finally {
+    await client.end();
+  }
+};
+
+const dropProductDomainSchema = async (connectionString: string): Promise<void> => {
+  await withPgClient(connectionString, async (client) => {
+    await client.query(`DROP SCHEMA IF EXISTS "${PRODUCT_DOMAIN_SCHEMA}" CASCADE`);
+  });
+};
+
+const resetProductDomainSchema = async (connectionString: string): Promise<void> => {
+  const [initialMigrationSql, aggregateMigrationSql] = await Promise.all([
+    readFile(initialMigrationSqlPath, "utf8"),
+    readFile(aggregateMigrationSqlPath, "utf8")
+  ]);
+
+  await withPgClient(connectionString, async (client) => {
+    await client.query(`DROP SCHEMA IF EXISTS "${PRODUCT_DOMAIN_SCHEMA}" CASCADE`);
+    await client.query(initialMigrationSql);
+    await client.query(aggregateMigrationSql);
+  });
+};
+
+const withIntegrationRepositories = async <T>(
+  connectionString: string,
+  work: (repositories: IntegrationRepositories) => Promise<T>
+): Promise<T> => {
+  await resetProductDomainSchema(connectionString);
+
+  const firstDurableRepositories = createFirstDurableRelationalPrismaRepositories({
+    connectionString
+  });
+  const aggregateRepositories = composeSetupAggregateRelationalRepositories(
+    createSetupAggregateRelationalPrismaRepositoryAdapter(firstDurableRepositories.prismaClient)
+  );
+
+  try {
+    return await work({
+      ...firstDurableRepositories,
+      ...aggregateRepositories
+    });
+  } finally {
+    await firstDurableRepositories.disconnect();
+    await dropProductDomainSchema(connectionString);
+  }
+};
+
+const integrationTest = INTEGRATION_DATABASE_URL ? test : test.skip;
+
+integrationTest("aggregate repositories persist the durable relational aggregate slice against real Postgres", async () => {
+  await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+    await repositories.setupDefinitionRepository.create({
+      definition: buildSetupDefinition("setup-001"),
+      metadata
+    });
+    await repositories.researchHypothesisRepository.create({
+      hypothesis: buildResearchHypothesis("hypothesis-001", "setup-001"),
+      metadata
+    });
+
+    await repositories.setupAggregateResultRepository.create({
+      aggregate: buildAggregate("aggregate-001", "setup-001"),
+      metadata
+    });
+
+    const updated = await repositories.setupAggregateResultRepository.update({
+      aggregate: {
+        ...buildAggregate("aggregate-001", "setup-001"),
+        status: "completed",
+        totalCandidates: 8,
+        completedEvaluations: 7,
+        invalidatedEvaluations: 1,
+        averagePercentageMove: 1.5,
+        averageAbsoluteMove: 120,
+        averageFinalOutcome: 0.3,
+        averageMaxFavorableExcursion: 2.1,
+        averageMaxAdverseExcursion: -1.2,
+        positiveOutcomeCount: 4,
+        computedAt: "2026-05-22T17:00:00.000Z",
+        notes: "integration aggregate update",
+        updatedAt: "2026-05-22T17:00:00.000Z"
+      },
+      metadata: {
+        ...metadata,
+        sourceObservedAtUtc: "2026-05-22T17:00:00.000Z"
+      },
+      expectedVersion: 1
+    });
+    const directRows = await repositories.prismaClient.setupAggregateResultRecord.findMany({
+      orderBy: { setupAggregateResultId: "asc" }
+    });
+
+    assert.equal(updated.status, "completed");
+    assert.equal(updated.completedEvaluations, 7);
+    assert.equal(directRows.length, 1);
+    assert.equal(directRows[0]?.scopeSymbolIds.length, 2);
+  });
+});
+
+integrationTest("aggregate repositories map invalid hypothesis references from real Postgres", async () => {
+  await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+    await repositories.setupDefinitionRepository.create({
+      definition: buildSetupDefinition("setup-001"),
+      metadata
+    });
+
+    await assert.rejects(
+      async () =>
+        repositories.setupAggregateResultRepository.create({
+          aggregate: buildAggregate("aggregate-001", "setup-001", "hypothesis-404"),
+          metadata
+        }),
+      (error: unknown) =>
+        error instanceof RepositoryError &&
+        error.code === "invalid_reference" &&
+        error.referenceEntityType === "research_hypothesis" &&
+        error.referenceEntityId === "hypothesis-404"
+    );
+  });
+});

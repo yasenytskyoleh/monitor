@@ -98,6 +98,11 @@
 - first adapter-backed relational repositories and in-memory adapter harness now exist for:
   - `setup_definition`
   - `research_hypothesis`
+- second durable relational slice now exists for:
+  - `signal_candidate`
+  - `evaluation_result`
+- setup-aggregate durable relational contract, adapter-backed repository, and concrete Prisma adapter now exist
+- shared Prisma-backed composition now exists for the current core research chain
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -107,4 +112,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **shared repository composition and real-database integration for the first durable slice, starting with `setup_definition` and `research_hypothesis`**
+- the currently recommended next step is **planning the durable relational contract and schema for `research_feedback_decision`**

@@ -64,9 +64,13 @@ Not allowed:
 ## Write-path ownership guidance
 - services own write-path semantics
 - repositories own persistence abstraction
-- first implementation slice is intentionally narrow:
+- current implemented durable product chain is:
   - `setup_definition`
   - `research_hypothesis`
+  - `signal_candidate`
+  - `evaluation_result`
+  - `setup_aggregate_result`
 
-Durable relational planning for that same narrow slice is now explicit in:
+Shared durable repository composition for that current chain is now explicit in:
 - `docs/project/durable-relational-persistence-model.md`
+- `docs/project/implemented-product-relational-composition-model.md`

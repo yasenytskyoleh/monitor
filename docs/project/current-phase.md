@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.10 — Codex-first workflow, internal orchestration foundation, implemented in-memory persistence, and first physical relational schema artifacts**
+**Phase 1.13 — Codex-first workflow, bounded autonomous mode, and durable relational parity across the implemented product entities**
 
 ## What this phase is about
 This phase is focused on:
@@ -20,11 +20,13 @@ The orchestration side proves that the project can:
 The product side now proves that the repo can:
 - maintain implemented in-memory persistence,
 - enforce service-owned write paths,
-- define first durable relational persistence and adapter contracts,
-- and commit first physical Prisma schema artifacts while keeping DB runtime adapters pending.
+- extend durable relational persistence through setup/research and signal/evaluation entities,
+- and run concrete Prisma-backed adapters and integration harnesses while keeping runtime engines pending.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
+- bounded autonomous mode policy with explicit step-by-step execution flow:
+  - `docs/project/autonomous-mode-policy.md`
 - config-driven orchestration foundation (`docs/agents`, `configs/agents`, `packages/agent-config`)
 - compiled immutable runtime snapshots with checksum and version metadata
 - runner execution modes:
@@ -107,6 +109,41 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.impl.ts`
   - `packages/domain-model/src/repositories/setup-definition-relational-repository.impl.ts`
   - `packages/domain-model/src/repositories/research-hypothesis-relational-repository.impl.ts`
+- second durable relational slice for signal/evaluation:
+  - `docs/project/signal-evaluation-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-030-signal-evaluation-durable-relational-rollout.md`
+  - `packages/domain-model/src/storage/signal-evaluation-relational-slice.ts`
+  - `packages/domain-model/src/storage/signal-evaluation-relational-physical-schema.ts`
+  - `packages/domain-model/prisma/migrations/20260522101500_product_domain_signal_evaluation_relational_v1/migration.sql`
+  - `packages/domain-model/src/repositories/signal-evaluation-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/signal-evaluation-relational-repository-adapter.impl.ts`
+  - `packages/domain-model/src/repositories/signal-evaluation-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/signal-candidate-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/evaluation-result-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/signal-evaluation-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/signal-evaluation-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/signal-evaluation-relational-prisma-client.ts`
+- setup-aggregate durable relational contract and physical schema:
+  - `docs/project/setup-aggregate-relational-persistence-model.md`
+  - `docs/architecture/adr/ADR-031-setup-aggregate-durable-relational-contract-and-schema.md`
+  - `packages/domain-model/src/storage/setup-aggregate-relational-slice.ts`
+  - `packages/domain-model/src/storage/setup-aggregate-relational-physical-schema.ts`
+  - `packages/domain-model/prisma/migrations/20260522153000_product_domain_setup_aggregate_relational_v1/migration.sql`
+- setup-aggregate adapter-backed relational repository and Prisma adapter:
+  - `docs/project/setup-aggregate-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-032-setup-aggregate-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-repository-adapter.impl.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-result-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/setup-aggregate-relational-prisma-client.ts`
+- shared Prisma-backed composition for the implemented product chain:
+  - `docs/project/implemented-product-relational-composition-model.md`
+  - `docs/architecture/adr/ADR-033-shared-implemented-product-relational-composition.md`
+  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -139,7 +176,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- shared repository composition and real-database integration for the first durable slice, starting with `setup_definition` and `research_hypothesis`
+- plan the durable relational contract and schema for `research_feedback_decision`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -155,4 +192,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, first physical schema artifacts, adapter-backed relational repositories, and now real Prisma client/adapter wiring that make the real product implementable while shared repository composition and live database integration remain the next-step work**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, and shared core-chain composition that make the next downstream review/governance persistence step straightforward instead of speculative**.
