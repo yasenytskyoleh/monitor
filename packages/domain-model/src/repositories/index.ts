@@ -24,6 +24,15 @@ export type {
   ResearchHypothesisDurableRecordBundle,
   SetupDefinitionRecordWriteRequest
 } from "./first-durable-relational-repository-adapter.js";
+export type {
+  EvaluationResultRecordWriteRequest,
+  SignalCandidateRecordWriteRequest,
+  SignalEvaluationRelationalAdapterErrorMapping,
+  SignalEvaluationRelationalAdapterOperation,
+  SignalEvaluationRelationalDeterministicErrorCode,
+  SignalEvaluationRelationalRepositoryAdapter,
+  SignalEvaluationRelationalRetryableErrorCode
+} from "./signal-evaluation-relational-repository-adapter.js";
 export {
   FIRST_DURABLE_RELATIONAL_ADAPTER_ERROR_MAPPING,
   FIRST_DURABLE_RELATIONAL_ADAPTER_OPERATIONS,
@@ -32,18 +41,43 @@ export {
   isFirstDurableRelationalDeterministicErrorCode
 } from "./first-durable-relational-repository-adapter.js";
 export {
+  SIGNAL_EVALUATION_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  SIGNAL_EVALUATION_RELATIONAL_ADAPTER_OPERATIONS,
+  SIGNAL_EVALUATION_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  SIGNAL_EVALUATION_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isSignalEvaluationRelationalDeterministicErrorCode
+} from "./signal-evaluation-relational-repository-adapter.js";
+export {
   composeFirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
 export type {
   FirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
 export {
+  composeSignalEvaluationRelationalRepositories
+} from "./signal-evaluation-relational-repositories.js";
+export type {
+  SignalEvaluationRelationalRepositories
+} from "./signal-evaluation-relational-repositories.js";
+export {
   dehydrateResearchHypothesisToDurableBundle,
   dehydrateSetupDefinitionToDurableRecord,
   hydrateResearchHypothesisFromDurableBundle,
   hydrateSetupDefinitionFromDurableRecord
 } from "./first-durable-relational-repository-mappers.js";
+export {
+  dehydrateEvaluationResultToDurableRecord,
+  dehydrateSignalCandidateToDurableRecord,
+  hydrateEvaluationResultFromDurableRecord,
+  hydrateSignalCandidateFromDurableRecord
+} from "./signal-evaluation-relational-repository-mappers.js";
 export { InMemoryFirstDurableRelationalRepositoryAdapter } from "./first-durable-relational-repository-adapter.impl.js";
+export type {
+  SignalEvaluationRelationalReferenceReader
+} from "./signal-evaluation-relational-repository-adapter.impl.js";
+export {
+  InMemorySignalEvaluationRelationalRepositoryAdapter
+} from "./signal-evaluation-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,
@@ -61,6 +95,19 @@ export type {
 export {
   PrismaFirstDurableRelationalRepositoryAdapter
 } from "./first-durable-relational-prisma-adapter.js";
+export {
+  createSignalEvaluationRelationalPrismaRepositories,
+  createSignalEvaluationRelationalPrismaRepositoryAdapter
+} from "./signal-evaluation-relational-prisma-client.js";
+export type {
+  SignalEvaluationRelationalPrismaRepositories
+} from "./signal-evaluation-relational-prisma-client.js";
+export type {
+  SignalEvaluationRelationalPrismaClient
+} from "./signal-evaluation-relational-prisma-adapter.js";
+export {
+  PrismaSignalEvaluationRelationalRepositoryAdapter
+} from "./signal-evaluation-relational-prisma-adapter.js";
 export type {
   MonitoredSymbolCreateRequest,
   MonitoredSymbolRepository,
@@ -82,6 +129,7 @@ export type {
   SignalCandidateUpdateRequest
 } from "./signal-candidate-repository.js";
 export { InMemorySignalCandidateRepository } from "./signal-candidate-repository.impl.js";
+export { RelationalSignalCandidateRepository } from "./signal-candidate-relational-repository.impl.js";
 export type {
   EvaluationResultCreateRequest,
   EvaluationResultRepository,
@@ -89,6 +137,7 @@ export type {
   EvaluationResultUpdateRequest
 } from "./evaluation-result-repository.js";
 export { InMemoryEvaluationResultRepository } from "./evaluation-result-repository.impl.js";
+export { RelationalEvaluationResultRepository } from "./evaluation-result-relational-repository.impl.js";
 export type {
   ResearchHypothesisCreateRequest,
   ResearchHypothesisRepository,

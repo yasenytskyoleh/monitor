@@ -222,6 +222,13 @@ export {
   FIRST_DURABLE_RELATIONAL_PRISMA_MODELS,
   FIRST_DURABLE_RELATIONAL_REQUIRED_COLUMNS,
   FIRST_DURABLE_RELATIONAL_TABLES,
+  SIGNAL_EVALUATION_RELATIONAL_ENTITY_TYPES,
+  SIGNAL_EVALUATION_RELATIONAL_INDEXES,
+  SIGNAL_EVALUATION_RELATIONAL_MIGRATION_SLUG,
+  SIGNAL_EVALUATION_RELATIONAL_PRISMA_MODELS,
+  SIGNAL_EVALUATION_RELATIONAL_REQUIRED_COLUMNS,
+  SIGNAL_EVALUATION_RELATIONAL_TABLES,
+  SIGNAL_EVALUATION_RELATIONAL_UNIQUE_CONSTRAINTS,
   PRODUCT_EPHEMERAL_ENTITY_TYPES,
   PRODUCT_PERSISTED_ENTITY_TYPES,
   PRODUCT_RECORD_SOURCES,
@@ -231,7 +238,9 @@ export {
 } from "./storage/index.js";
 export type {
   DurableRelationalRecordBase,
+  DurableRelationalIdentity,
   DurableRelationalStorageSchemaVersion,
+  EvaluationResultDurableRecord,
   EntityIdentity,
   FirstDurableRelationalIndexName,
   FirstDurableRelationalEntityType,
@@ -251,6 +260,13 @@ export type {
   ResearchHypothesisSetupDefinitionLinkRecord,
   RuntimeEvidenceArtifactType,
   RuntimeEvidenceIdentity,
+  SignalCandidateDurableRecord,
+  SignalEvaluationRelationalEntityType,
+  SignalEvaluationRelationalIndexName,
+  SignalEvaluationRelationalPrismaModelName,
+  SignalEvaluationRelationalRecord,
+  SignalEvaluationRelationalTableName,
+  SignalEvaluationRelationalUniqueConstraintName,
   SetupDefinitionDurableRecord,
   StorageBoundary,
   StorageTechnologyDirection
@@ -263,11 +279,22 @@ export {
   isFirstDurableRelationalDeterministicErrorCode
 } from "./repositories/first-durable-relational-repository-adapter.js";
 export {
-  composeFirstDurableRelationalRepositories
-} from "./repositories/first-durable-relational-repositories.js";
+  SIGNAL_EVALUATION_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  SIGNAL_EVALUATION_RELATIONAL_ADAPTER_OPERATIONS,
+  SIGNAL_EVALUATION_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  SIGNAL_EVALUATION_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isSignalEvaluationRelationalDeterministicErrorCode
+} from "./repositories/signal-evaluation-relational-repository-adapter.js";
+export { composeFirstDurableRelationalRepositories } from "./repositories/first-durable-relational-repositories.js";
 export type {
   FirstDurableRelationalRepositories
 } from "./repositories/first-durable-relational-repositories.js";
+export {
+  composeSignalEvaluationRelationalRepositories
+} from "./repositories/signal-evaluation-relational-repositories.js";
+export type {
+  SignalEvaluationRelationalRepositories
+} from "./repositories/signal-evaluation-relational-repositories.js";
 export type {
   FirstDurableRelationalAdapterErrorMapping,
   FirstDurableRelationalAdapterOperation,
@@ -284,9 +311,30 @@ export {
   hydrateResearchHypothesisFromDurableBundle,
   hydrateSetupDefinitionFromDurableRecord
 } from "./repositories/first-durable-relational-repository-mappers.js";
+export type {
+  EvaluationResultRecordWriteRequest,
+  SignalCandidateRecordWriteRequest,
+  SignalEvaluationRelationalAdapterErrorMapping,
+  SignalEvaluationRelationalAdapterOperation,
+  SignalEvaluationRelationalDeterministicErrorCode,
+  SignalEvaluationRelationalRepositoryAdapter,
+  SignalEvaluationRelationalRetryableErrorCode
+} from "./repositories/signal-evaluation-relational-repository-adapter.js";
+export {
+  dehydrateEvaluationResultToDurableRecord,
+  dehydrateSignalCandidateToDurableRecord,
+  hydrateEvaluationResultFromDurableRecord,
+  hydrateSignalCandidateFromDurableRecord
+} from "./repositories/signal-evaluation-relational-repository-mappers.js";
 export {
   InMemoryFirstDurableRelationalRepositoryAdapter
 } from "./repositories/first-durable-relational-repository-adapter.impl.js";
+export type {
+  SignalEvaluationRelationalReferenceReader
+} from "./repositories/signal-evaluation-relational-repository-adapter.impl.js";
+export {
+  InMemorySignalEvaluationRelationalRepositoryAdapter
+} from "./repositories/signal-evaluation-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,
@@ -304,6 +352,19 @@ export type {
 export {
   PrismaFirstDurableRelationalRepositoryAdapter
 } from "./repositories/first-durable-relational-prisma-adapter.js";
+export {
+  createSignalEvaluationRelationalPrismaRepositories,
+  createSignalEvaluationRelationalPrismaRepositoryAdapter
+} from "./repositories/signal-evaluation-relational-prisma-client.js";
+export type {
+  SignalEvaluationRelationalPrismaRepositories
+} from "./repositories/signal-evaluation-relational-prisma-client.js";
+export type {
+  SignalEvaluationRelationalPrismaClient
+} from "./repositories/signal-evaluation-relational-prisma-adapter.js";
+export {
+  PrismaSignalEvaluationRelationalRepositoryAdapter
+} from "./repositories/signal-evaluation-relational-prisma-adapter.js";
 export {
   REPOSITORY_ERROR_CODES,
   REPOSITORY_OPERATIONS,
@@ -327,6 +388,9 @@ export type {
   EvaluationResultUpdateRequest
 } from "./repositories/evaluation-result-repository.js";
 export { InMemoryEvaluationResultRepository } from "./repositories/evaluation-result-repository.impl.js";
+export {
+  RelationalEvaluationResultRepository
+} from "./repositories/evaluation-result-relational-repository.impl.js";
 export type {
   MonitoredSymbolCreateRequest,
   MonitoredSymbolRepository,
@@ -432,6 +496,9 @@ export type {
   SignalCandidateUpdateRequest
 } from "./repositories/signal-candidate-repository.js";
 export { InMemorySignalCandidateRepository } from "./repositories/signal-candidate-repository.impl.js";
+export {
+  RelationalSignalCandidateRepository
+} from "./repositories/signal-candidate-relational-repository.impl.js";
 export {
   FIRST_PERSISTED_PRODUCT_SLICE,
   PRODUCT_SERVICE_NAMES,

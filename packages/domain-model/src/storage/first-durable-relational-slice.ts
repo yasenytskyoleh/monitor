@@ -18,16 +18,16 @@ export const FIRST_DURABLE_RELATIONAL_ENTITY_TYPES = [
 export type FirstDurableRelationalEntityType =
   (typeof FIRST_DURABLE_RELATIONAL_ENTITY_TYPES)[number];
 
-type FirstDurableRelationalIdentity<TEntityType extends FirstDurableRelationalEntityType> =
+export type DurableRelationalIdentity<TEntityType extends string> =
   ProductEntityIdentity & {
     boundary: "product_domain";
     entityType: TEntityType;
     version: number;
   };
 
-export type DurableRelationalRecordBase<TEntityType extends FirstDurableRelationalEntityType> =
+export type DurableRelationalRecordBase<TEntityType extends string> =
   Omit<PersistedEntity, "identity"> & {
-    identity: FirstDurableRelationalIdentity<TEntityType>;
+    identity: DurableRelationalIdentity<TEntityType>;
     storageSchemaVersion: DurableRelationalStorageSchemaVersion;
     archivedAtUtc: TimestampUtc | null;
   };

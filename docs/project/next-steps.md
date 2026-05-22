@@ -1,28 +1,29 @@
 # Next Steps
 
 ## Current recommended next step
-### Expand the durable relational rollout to `signal_candidate` and `evaluation_result`
+### Expand the durable relational rollout to `setup_aggregate_result`
 
 Reason:
-- first durable relational persistence contract now exists for `setup_definition` and `research_hypothesis`
-- first relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
-- first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
-- adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
-- Prisma 7 config, generated client wiring, concrete adapter, shared repository composition, and opt-in real-database integration coverage now exist for the first durable slice
-- the next unresolved gap is durable relational rollout for `signal_candidate` and `evaluation_result`
+- durable relational contracts, committed Prisma schema/migrations, adapter-backed repositories, concrete Prisma adapters, and test coverage now exist for:
+  - `setup_definition`
+  - `research_hypothesis`
+  - `signal_candidate`
+  - `evaluation_result`
+- `setup_aggregate_result` is the remaining implemented service-owned entity without durable relational parity
+- runtime engines are still intentionally out of scope, so the next bounded step should stay inside persistence infrastructure
 
 ## Recommended near-future sequence
-1. define the durable relational contract and physical schema for `signal_candidate`
-2. add the same adapter-backed repository path for `signal_candidate`
-3. repeat that slice for `evaluation_result`
-4. keep `setup_aggregate_result` deferred until `signal_candidate` and `evaluation_result` parity is proven
+1. define the durable relational contract and physical schema for `setup_aggregate_result`
+2. add the adapter-backed repository path and concrete Prisma adapter for `setup_aggregate_result`
+3. add shared integration coverage across setup -> candidate -> evaluation -> aggregate persistence flow
+4. keep runtime detection/evaluation/aggregation engines deferred until durable storage parity is proven for the implemented entities
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
 - expanding the durable rollout slice prematurely
-- mixing analytics runtime logic into the `signal_candidate` / `evaluation_result` durable rollout
+- mixing aggregation runtime logic into the `setup_aggregate_result` durable rollout
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

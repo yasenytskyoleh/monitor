@@ -15,7 +15,9 @@ export type RepositoryRetryDisposition = (typeof REPOSITORY_RETRY_DISPOSITIONS)[
 
 export const REPOSITORY_OPERATIONS = [
   "get_by_id",
+  "get_by_reference",
   "list_by_status",
+  "list_by_reference",
   "create",
   "update",
   "update_status",

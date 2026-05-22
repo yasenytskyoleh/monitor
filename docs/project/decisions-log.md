@@ -98,6 +98,9 @@
 - first adapter-backed relational repositories and in-memory adapter harness now exist for:
   - `setup_definition`
   - `research_hypothesis`
+- second durable relational slice now exists for:
+  - `signal_candidate`
+  - `evaluation_result`
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -107,4 +110,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **expanding the durable relational rollout to `signal_candidate` and `evaluation_result` using the same adapter/repository/integration pattern**
+- the currently recommended next step is **expanding the durable relational rollout to `setup_aggregate_result` using the same narrow contract/schema/adapter/repository/integration pattern**

@@ -7,6 +7,7 @@ I am working on **Monitor**, a monorepo TypeScript project that combines:
 
 The primary working model is a **Codex-first workflow**:
 - Codex is the main operator for planning, implementation, and repo coordination
+- bounded autonomous execution is allowed when it follows `docs/project/autonomous-mode-policy.md`
 - the internal orchestration subsystem remains an in-repo supporting subsystem for constrained, auditable workflow automation
 
 Current foundation scope includes:
@@ -41,6 +42,7 @@ Current product-domain scope includes:
   - `docs/project/relational-adapter-rollout-model.md`
   - `docs/project/prisma-schema-implementation-model.md`
   - `docs/project/relational-repository-implementation-model.md`
+  - `docs/project/signal-evaluation-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -51,6 +53,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-027-first-relational-adapter-rollout-design.md`
   - `docs/architecture/adr/ADR-028-first-prisma-schema-and-migration-layout.md`
   - `docs/architecture/adr/ADR-029-first-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-030-signal-evaluation-durable-relational-rollout.md`
 
 ## Current constraints
 - spot-only scope
@@ -58,17 +61,18 @@ Current product-domain scope includes:
 - no setup-detection runtime engine yet
 - no evaluation runtime engine yet
 - no aggregation/scoring runtime engine yet
-- first durable relational contract exists for `setup_definition` and `research_hypothesis`
-- first relational adapter rollout design exists for `setup_definition` and `research_hypothesis`
-- first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
-- adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
-- Prisma 7 config, generated client wiring, concrete adapter, shared repository composition, and opt-in real-database integration coverage now exist for the first durable slice
-- durable relational rollout for `signal_candidate`, `evaluation_result`, and `setup_aggregate_result` is still pending
+- durable relational contracts, committed Prisma schema/migrations, adapter-backed repositories, and concrete Prisma adapters now exist for:
+  - `setup_definition`
+  - `research_hypothesis`
+  - `signal_candidate`
+  - `evaluation_result`
+- shared repository composition and opt-in real-database integration coverage now exist for the first two durable slices
+- durable relational rollout for `setup_aggregate_result` is still pending
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- expand the durable relational rollout to `signal_candidate` and `evaluation_result` using the same adapter/repository/integration pattern
+- expand the durable relational rollout to `setup_aggregate_result` using the same narrow contract/schema/adapter/repository/integration pattern
 
 ## Behavioral instructions for future assistants
 When continuing this project:

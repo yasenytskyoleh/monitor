@@ -10,7 +10,13 @@ import {
   FIRST_DURABLE_RELATIONAL_MIGRATION_SLUG,
   FIRST_DURABLE_RELATIONAL_PRISMA_MODELS,
   FIRST_DURABLE_RELATIONAL_REQUIRED_COLUMNS,
-  FIRST_DURABLE_RELATIONAL_TABLES
+  FIRST_DURABLE_RELATIONAL_TABLES,
+  SIGNAL_EVALUATION_RELATIONAL_INDEXES,
+  SIGNAL_EVALUATION_RELATIONAL_MIGRATION_SLUG,
+  SIGNAL_EVALUATION_RELATIONAL_PRISMA_MODELS,
+  SIGNAL_EVALUATION_RELATIONAL_REQUIRED_COLUMNS,
+  SIGNAL_EVALUATION_RELATIONAL_TABLES,
+  SIGNAL_EVALUATION_RELATIONAL_UNIQUE_CONSTRAINTS
 } from "../src/index.js";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
@@ -21,6 +27,13 @@ const migrationPath = join(
   "prisma",
   "migrations",
   "20260512235500_product_domain_relational_v1_init",
+  "migration.sql"
+);
+const signalEvaluationMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260522101500_product_domain_signal_evaluation_relational_v1",
   "migration.sql"
 );
 
@@ -103,5 +116,92 @@ test("migration creates the first durable relational tables, indexes, and key co
   assert.match(
     migration,
     /CHECK \(cardinality\("assumptions"\) > 0\)/
+  );
+});
+
+test("exposes signal/evaluation physical schema constants", () => {
+  assert.equal(
+    SIGNAL_EVALUATION_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_signal_evaluation_relational_v1"
+  );
+  assert.equal(
+    SIGNAL_EVALUATION_RELATIONAL_PRISMA_MODELS.signalCandidateRecord,
+    "SignalCandidateRecord"
+  );
+  assert.equal(SIGNAL_EVALUATION_RELATIONAL_TABLES.signalCandidate, "signal_candidate");
+  assert.equal(
+    SIGNAL_EVALUATION_RELATIONAL_REQUIRED_COLUMNS.evaluation_result.includes("evaluation_status"),
+    true
+  );
+  assert.equal(
+    SIGNAL_EVALUATION_RELATIONAL_UNIQUE_CONSTRAINTS.includes(
+      "uq_evaluation_result_candidate_window"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the signal/evaluation relational models and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum SignalCandidateStatus \{/);
+  assert.match(schema, /enum EvaluationStatus \{/);
+  assert.match(schema, /model SignalCandidateRecord \{/);
+  assert.match(schema, /model EvaluationResultRecord \{/);
+  assert.match(schema, /@@map\("signal_candidate"\)/);
+  assert.match(schema, /@@map\("evaluation_result"\)/);
+
+  for (const tableName of Object.values(SIGNAL_EVALUATION_RELATIONAL_TABLES)) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(SIGNAL_EVALUATION_RELATIONAL_PRISMA_MODELS)) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the signal/evaluation relational tables, indexes, and key constraints", async () => {
+  const migration = await readFile(signalEvaluationMigrationPath, "utf8");
+
+  for (const tableName of Object.values(SIGNAL_EVALUATION_RELATIONAL_TABLES)) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of SIGNAL_EVALUATION_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const uniqueConstraintName of SIGNAL_EVALUATION_RELATIONAL_UNIQUE_CONSTRAINTS) {
+    assert.equal(migration.includes(`CREATE UNIQUE INDEX "${uniqueConstraintName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(SIGNAL_EVALUATION_RELATIONAL_REQUIRED_COLUMNS)) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("signal_candidate_id"\)\s+REFERENCES "product_domain"\."signal_candidate"/
+  );
+  assert.match(
+    migration,
+    /CHECK \(length\(trim\("evidence_summary"\)\) > 0\)/
+  );
+  assert.match(
+    migration,
+    /CHECK \(\s*"evaluation_status" <> 'completed' OR \(\s*"reference_price" IS NOT NULL/
   );
 });

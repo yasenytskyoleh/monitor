@@ -27,6 +27,7 @@ It is **not yet**:
 ## Current implementation status
 The repo is already usable through a **Codex-first workflow**:
 - Codex is the primary day-to-day operator for planning, implementation, and repo coordination
+- bounded autonomous mode now has an explicit step-by-step operating policy in `docs/project/autonomous-mode-policy.md`
 - the internal orchestration subsystem remains in the repo as a constrained, test-backed supporting subsystem
 
 The internal orchestration subsystem is functional and test-backed, and the product domain now includes monitoring, evaluation, research-aggregation, storage-boundary, repository/service architecture, and implemented in-memory persistence.
@@ -86,6 +87,7 @@ Implemented today:
   - `docs/project/relational-adapter-rollout-model.md`
   - `docs/project/prisma-schema-implementation-model.md`
   - `docs/project/relational-repository-implementation-model.md`
+  - `docs/project/signal-evaluation-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -96,6 +98,7 @@ Implemented today:
   - `docs/architecture/adr/ADR-027-first-relational-adapter-rollout-design.md`
   - `docs/architecture/adr/ADR-028-first-prisma-schema-and-migration-layout.md`
   - `docs/architecture/adr/ADR-029-first-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-030-signal-evaluation-durable-relational-rollout.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -103,18 +106,16 @@ Current limitation:
   - narrow helper-file creation only
   - no broad refactors, schema/migration/architecture changes, or cross-package scope
 - durable relational persistence pending:
-  - first durable relational contract now exists for `setup_definition` and `research_hypothesis`
-  - first relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
-  - first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
-  - adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
-  - Prisma 7 config, generated client wiring, concrete adapter, shared repository composition, and opt-in real-database integration coverage now exist for the first durable slice
-  - durable relational rollout for `signal_candidate`, `evaluation_result`, and `setup_aggregate_result` is still pending
+  - durable relational contracts now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, and `evaluation_result`
+  - committed Prisma schema/migrations now exist for those first four durable entities
+  - adapter-backed relational repositories, concrete Prisma adapters, shared repository composition, and opt-in real-database integration coverage now exist for those first two durable slices
+  - durable relational rollout for `setup_aggregate_result` is still pending
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- expand the durable relational rollout to `signal_candidate` and `evaluation_result` using the same adapter/repository/integration pattern
+- expand the durable relational rollout to `setup_aggregate_result` using the same narrow contract/schema/adapter/repository/integration pattern
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

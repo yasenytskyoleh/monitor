@@ -3,10 +3,13 @@ import test from "node:test";
 
 import {
   DURABLE_RELATIONAL_STORAGE_SCHEMA_VERSIONS,
+  type EvaluationResultDurableRecord,
   FIRST_DURABLE_RELATIONAL_ENTITY_TYPES,
   type ProductRecordMetadata,
   type ResearchHypothesisDurableRecord,
   type ResearchHypothesisSetupDefinitionLinkRecord,
+  SIGNAL_EVALUATION_RELATIONAL_ENTITY_TYPES,
+  type SignalCandidateDurableRecord,
   type SetupDefinitionDurableRecord
 } from "../src/index.js";
 
@@ -90,4 +93,71 @@ test("supports typed setup-definition and research-hypothesis durable records", 
   assert.equal(setupRecord.identity.version, 2);
   assert.equal(hypothesisRecord.identity.version, 3);
   assert.equal(linkRecord.setupDefinitionId, "setup-001");
+});
+
+test("exposes signal/evaluation durable relational storage planning constants", () => {
+  assert.deepEqual(SIGNAL_EVALUATION_RELATIONAL_ENTITY_TYPES, [
+    "signal_candidate",
+    "evaluation_result"
+  ]);
+});
+
+test("supports typed signal-candidate and evaluation-result durable records", () => {
+  const signalCandidateRecord: SignalCandidateDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "signal_candidate",
+      entityId: "candidate-001",
+      version: 2,
+      relatedEntityIds: ["setup-001", "setup-001-rev-001", "BTC-USDT", "hit-001"]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-05-22T08:00:00.000Z",
+    updatedAtUtc: "2026-05-22T09:00:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    candidateStatus: "under_review",
+    setupDefinitionId: "setup-001",
+    setupRevisionId: "setup-001-rev-001",
+    monitoredSymbolId: "BTC-USDT",
+    detectionHitId: "hit-001",
+    detectedAtUtc: "2026-05-22T08:00:00.000Z",
+    evidenceSummary: "4h breakout retest with volume expansion",
+    candidateOriginRunId: "run-detection-001"
+  };
+
+  const evaluationResultRecord: EvaluationResultDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "evaluation_result",
+      entityId: "result-001",
+      version: 4,
+      relatedEntityIds: ["candidate-001", "window-24h"]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-05-22T08:30:00.000Z",
+    updatedAtUtc: "2026-05-22T10:00:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    evaluationStatus: "completed",
+    signalCandidateId: "candidate-001",
+    evaluationWindowId: "window-24h",
+    referencePrice: 65000,
+    finalPrice: 65800,
+    highInWindow: 66400,
+    lowInWindow: 64100,
+    absoluteMove: 800,
+    percentageMove: 1.230769,
+    maxFavorableExcursion: 2.15,
+    maxAdverseExcursion: -1.38,
+    evaluatedAtUtc: "2026-05-23T08:30:00.000Z",
+    notes: "completed through integration-like contract test"
+  };
+
+  assert.equal(signalCandidateRecord.identity.version, 2);
+  assert.equal(signalCandidateRecord.candidateOriginRunId, "run-detection-001");
+  assert.equal(evaluationResultRecord.identity.version, 4);
+  assert.equal(evaluationResultRecord.evaluationStatus, "completed");
 });
