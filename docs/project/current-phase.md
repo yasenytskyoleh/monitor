@@ -139,7 +139,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- shared repository composition and real-database integration for the first durable slice, starting with `setup_definition` and `research_hypothesis`
+- expand the durable relational rollout to `signal_candidate` and `evaluation_result` using the same adapter/repository/integration pattern
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -155,4 +155,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, first physical schema artifacts, adapter-backed relational repositories, and now real Prisma client/adapter wiring that make the real product implementable while shared repository composition and live database integration remain the next-step work**.
+It is the **foundation plus implemented in-memory persistence, first physical schema artifacts, adapter-backed relational repositories, real Prisma client/adapter wiring, shared repository composition, and opt-in real-database integration coverage that make the real product implementable while the next durable slice remains the next-step work**.

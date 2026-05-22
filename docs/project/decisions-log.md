@@ -107,4 +107,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **shared repository composition and real-database integration for the first durable slice, starting with `setup_definition` and `research_hypothesis`**
+- the currently recommended next step is **expanding the durable relational rollout to `signal_candidate` and `evaluation_result` using the same adapter/repository/integration pattern**

@@ -32,6 +32,12 @@ export {
   isFirstDurableRelationalDeterministicErrorCode
 } from "./first-durable-relational-repository-adapter.js";
 export {
+  composeFirstDurableRelationalRepositories
+} from "./first-durable-relational-repositories.js";
+export type {
+  FirstDurableRelationalRepositories
+} from "./first-durable-relational-repositories.js";
+export {
   dehydrateResearchHypothesisToDurableBundle,
   dehydrateSetupDefinitionToDurableRecord,
   hydrateResearchHypothesisFromDurableBundle,
@@ -40,10 +46,12 @@ export {
 export { InMemoryFirstDurableRelationalRepositoryAdapter } from "./first-durable-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
+  createFirstDurableRelationalPrismaRepositories,
   createFirstDurableRelationalPrismaRepositoryAdapter
 } from "./first-durable-relational-prisma-client.js";
 export type {
   FirstDurableRelationalPrismaClientOptions,
+  FirstDurableRelationalPrismaRepositories,
   FirstDurableRelationalRuntimePrismaClient
 } from "./first-durable-relational-prisma-client.js";
 export type {

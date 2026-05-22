@@ -262,6 +262,12 @@ export {
   FIRST_DURABLE_RELATIONAL_RETRYABLE_ERROR_CODES,
   isFirstDurableRelationalDeterministicErrorCode
 } from "./repositories/first-durable-relational-repository-adapter.js";
+export {
+  composeFirstDurableRelationalRepositories
+} from "./repositories/first-durable-relational-repositories.js";
+export type {
+  FirstDurableRelationalRepositories
+} from "./repositories/first-durable-relational-repositories.js";
 export type {
   FirstDurableRelationalAdapterErrorMapping,
   FirstDurableRelationalAdapterOperation,
@@ -283,10 +289,12 @@ export {
 } from "./repositories/first-durable-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
+  createFirstDurableRelationalPrismaRepositories,
   createFirstDurableRelationalPrismaRepositoryAdapter
 } from "./repositories/first-durable-relational-prisma-client.js";
 export type {
   FirstDurableRelationalPrismaClientOptions,
+  FirstDurableRelationalPrismaRepositories,
   FirstDurableRelationalRuntimePrismaClient
 } from "./repositories/first-durable-relational-prisma-client.js";
 export type {

@@ -62,13 +62,13 @@ Current product-domain scope includes:
 - first relational adapter rollout design exists for `setup_definition` and `research_hypothesis`
 - first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
 - adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
-- Prisma 7 config, generated client wiring, concrete adapter, and client factory now exist for the first durable slice
-- shared repository composition and real-database integration coverage are still pending
+- Prisma 7 config, generated client wiring, concrete adapter, shared repository composition, and opt-in real-database integration coverage now exist for the first durable slice
+- durable relational rollout for `signal_candidate`, `evaluation_result`, and `setup_aggregate_result` is still pending
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- compose shared Prisma-backed repositories and add real-database integration coverage for the first durable slice, starting with `setup_definition` and `research_hypothesis`
+- expand the durable relational rollout to `signal_candidate` and `evaluation_result` using the same adapter/repository/integration pattern
 
 ## Behavioral instructions for future assistants
 When continuing this project:
@@ -76,5 +76,5 @@ When continuing this project:
 2. preserve orchestration safety constraints while product-domain implementation grows
 3. keep orchestrator runtime evidence and product-domain persistence separate
 4. enforce service-owned write paths and repository-owned persistence abstraction
-5. keep runtime engines out of scope and keep repository composition and real-database integration narrowly aligned to the committed persistence contracts
+5. keep runtime engines out of scope and keep new durable slices narrowly aligned to the committed adapter/repository/integration pattern
 6. prefer small, explicit, reviewable PR-sized steps
