@@ -16,7 +16,13 @@ import {
   SIGNAL_EVALUATION_RELATIONAL_PRISMA_MODELS,
   SIGNAL_EVALUATION_RELATIONAL_REQUIRED_COLUMNS,
   SIGNAL_EVALUATION_RELATIONAL_TABLES,
-  SIGNAL_EVALUATION_RELATIONAL_UNIQUE_CONSTRAINTS
+  SIGNAL_EVALUATION_RELATIONAL_UNIQUE_CONSTRAINTS,
+  SETUP_AGGREGATE_RELATIONAL_INDEXES,
+  SETUP_AGGREGATE_RELATIONAL_MIGRATION_SLUG,
+  SETUP_AGGREGATE_RELATIONAL_PRISMA_MODELS,
+  SETUP_AGGREGATE_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_AGGREGATE_RELATIONAL_TABLES,
+  SETUP_AGGREGATE_RELATIONAL_UNIQUE_CONSTRAINTS
 } from "../src/index.js";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
@@ -34,6 +40,13 @@ const signalEvaluationMigrationPath = join(
   "prisma",
   "migrations",
   "20260522101500_product_domain_signal_evaluation_relational_v1",
+  "migration.sql"
+);
+const setupAggregateMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260522153000_product_domain_setup_aggregate_relational_v1",
   "migration.sql"
 );
 
@@ -203,5 +216,90 @@ test("migration creates the signal/evaluation relational tables, indexes, and ke
   assert.match(
     migration,
     /CHECK \(\s*"evaluation_status" <> 'completed' OR \(\s*"reference_price" IS NOT NULL/
+  );
+});
+
+test("exposes setup-aggregate physical schema constants", () => {
+  assert.equal(
+    SETUP_AGGREGATE_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_setup_aggregate_relational_v1"
+  );
+  assert.equal(
+    SETUP_AGGREGATE_RELATIONAL_PRISMA_MODELS.setupAggregateResultRecord,
+    "SetupAggregateResultRecord"
+  );
+  assert.equal(SETUP_AGGREGATE_RELATIONAL_TABLES.setupAggregateResult, "setup_aggregate_result");
+  assert.equal(
+    SETUP_AGGREGATE_RELATIONAL_REQUIRED_COLUMNS.setup_aggregate_result.includes("scope_key"),
+    true
+  );
+  assert.equal(
+    SETUP_AGGREGATE_RELATIONAL_UNIQUE_CONSTRAINTS.includes(
+      "uq_setup_aggregate_result_scope_key"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the setup-aggregate relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum AggregateComputationStatus \{/);
+  assert.match(schema, /enum AggregationSymbolScopeKind \{/);
+  assert.match(schema, /model SetupAggregateResultRecord \{/);
+  assert.match(schema, /@@map\("setup_aggregate_result"\)/);
+
+  for (const tableName of Object.values(SETUP_AGGREGATE_RELATIONAL_TABLES)) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(SETUP_AGGREGATE_RELATIONAL_PRISMA_MODELS)) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the setup-aggregate relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(setupAggregateMigrationPath, "utf8");
+
+  for (const tableName of Object.values(SETUP_AGGREGATE_RELATIONAL_TABLES)) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of SETUP_AGGREGATE_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const uniqueConstraintName of SETUP_AGGREGATE_RELATIONAL_UNIQUE_CONSTRAINTS) {
+    assert.equal(migration.includes(`CREATE UNIQUE INDEX "${uniqueConstraintName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(SETUP_AGGREGATE_RELATIONAL_REQUIRED_COLUMNS)) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("research_hypothesis_id"\)\s+REFERENCES "product_domain"\."research_hypothesis"/
+  );
+  assert.match(
+    migration,
+    /CHECK \(\s*"aggregate_status" <> 'pending' OR \(\s*"total_candidates" = 0/
+  );
+  assert.match(
+    migration,
+    /CHECK \(\s*"aggregate_status" <> 'completed' OR \(\s*"average_percentage_move" IS NOT NULL/
   );
 });

@@ -43,6 +43,7 @@ Current product-domain scope includes:
   - `docs/project/prisma-schema-implementation-model.md`
   - `docs/project/relational-repository-implementation-model.md`
   - `docs/project/signal-evaluation-relational-rollout-model.md`
+  - `docs/project/setup-aggregate-relational-persistence-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -54,6 +55,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-028-first-prisma-schema-and-migration-layout.md`
   - `docs/architecture/adr/ADR-029-first-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-030-signal-evaluation-durable-relational-rollout.md`
+  - `docs/architecture/adr/ADR-031-setup-aggregate-durable-relational-contract-and-schema.md`
 
 ## Current constraints
 - spot-only scope
@@ -61,18 +63,19 @@ Current product-domain scope includes:
 - no setup-detection runtime engine yet
 - no evaluation runtime engine yet
 - no aggregation/scoring runtime engine yet
-- durable relational contracts, committed Prisma schema/migrations, adapter-backed repositories, and concrete Prisma adapters now exist for:
+- durable relational contracts and committed Prisma schema/migrations now exist for:
   - `setup_definition`
   - `research_hypothesis`
   - `signal_candidate`
   - `evaluation_result`
-- shared repository composition and opt-in real-database integration coverage now exist for the first two durable slices
-- durable relational rollout for `setup_aggregate_result` is still pending
+- `setup_aggregate_result`
+- shared repository composition, concrete Prisma adapters, and opt-in real-database integration coverage now exist for the first two durable slices
+- adapter-backed repository and concrete Prisma adapter implementation are still pending for `setup_aggregate_result`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- expand the durable relational rollout to `setup_aggregate_result` using the same narrow contract/schema/adapter/repository/integration pattern
+- implement the adapter-backed repository and concrete Prisma adapter for `setup_aggregate_result`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

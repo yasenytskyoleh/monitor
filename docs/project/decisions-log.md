@@ -101,6 +101,7 @@
 - second durable relational slice now exists for:
   - `signal_candidate`
   - `evaluation_result`
+- setup-aggregate durable relational contract and committed physical schema now exist
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -110,4 +111,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **expanding the durable relational rollout to `setup_aggregate_result` using the same narrow contract/schema/adapter/repository/integration pattern**
+- the currently recommended next step is **implementing the adapter-backed repository and concrete Prisma adapter for `setup_aggregate_result`**

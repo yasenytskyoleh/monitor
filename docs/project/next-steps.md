@@ -1,29 +1,30 @@
 # Next Steps
 
 ## Current recommended next step
-### Expand the durable relational rollout to `setup_aggregate_result`
+### Implement the adapter-backed repository and concrete Prisma adapter for `setup_aggregate_result`
 
 Reason:
-- durable relational contracts, committed Prisma schema/migrations, adapter-backed repositories, concrete Prisma adapters, and test coverage now exist for:
+- durable relational contracts and committed Prisma schema/migrations now exist for:
   - `setup_definition`
   - `research_hypothesis`
   - `signal_candidate`
   - `evaluation_result`
-- `setup_aggregate_result` is the remaining implemented service-owned entity without durable relational parity
+  - `setup_aggregate_result`
+- `setup_aggregate_result` is the remaining implemented service-owned entity without repository/adapter durable parity
 - runtime engines are still intentionally out of scope, so the next bounded step should stay inside persistence infrastructure
 
 ## Recommended near-future sequence
-1. define the durable relational contract and physical schema for `setup_aggregate_result`
-2. add the adapter-backed repository path and concrete Prisma adapter for `setup_aggregate_result`
-3. add shared integration coverage across setup -> candidate -> evaluation -> aggregate persistence flow
-4. keep runtime detection/evaluation/aggregation engines deferred until durable storage parity is proven for the implemented entities
+1. add the durable adapter contract, mapper layer, and adapter-backed repository for `setup_aggregate_result`
+2. add the concrete Prisma adapter for `setup_aggregate_result`
+3. add shared integration coverage across setup -> candidate -> evaluation -> aggregate repository flow
+4. keep runtime detection/evaluation/aggregation engines deferred until repository/adapter parity is proven for the implemented entities
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
 - expanding the durable rollout slice prematurely
-- mixing aggregation runtime logic into the `setup_aggregate_result` durable rollout
+- mixing aggregation runtime logic into the `setup_aggregate_result` repository/adapter rollout
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

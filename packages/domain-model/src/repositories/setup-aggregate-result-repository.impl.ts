@@ -5,7 +5,10 @@ import type {
   SetupAggregateResultUpdateRequest
 } from "./setup-aggregate-result-repository.js";
 import type { SetupAggregateResult } from "../research/index.js";
-import type { ProductRecordMetadata } from "../storage/index.js";
+import {
+  buildSetupAggregateScopeKey,
+  type ProductRecordMetadata
+} from "../storage/index.js";
 
 type PersistedSetupAggregateResultRecord = {
   aggregate: SetupAggregateResult;
@@ -29,11 +32,6 @@ const assertExpectedVersion = (
   }
 };
 
-const buildScopeKey = (
-  setupDefinitionId: string,
-  aggregationScope: SetupAggregateResult["aggregationScope"]
-): string => `${setupDefinitionId}:${JSON.stringify(aggregationScope)}`;
-
 const buildUpdateTimestamp = (metadata: ProductRecordMetadata): string =>
   metadata.sourceObservedAtUtc ?? new Date().toISOString();
 
@@ -50,7 +48,10 @@ export class InMemorySetupAggregateResultRepository implements SetupAggregateRes
     setupDefinitionId: string,
     aggregationScope: SetupAggregateResult["aggregationScope"]
   ): Promise<SetupAggregateResult | null> {
-    const scopeKey = buildScopeKey(setupDefinitionId, aggregationScope);
+    const scopeKey = buildSetupAggregateScopeKey({
+      ...aggregationScope,
+      setupDefinitionId
+    });
     const aggregateId = this.aggregateIdByScopeKey.get(scopeKey);
     if (!aggregateId) {
       return null;
@@ -79,7 +80,7 @@ export class InMemorySetupAggregateResultRepository implements SetupAggregateRes
       throw new Error(`setup_aggregate_result already exists: ${setupAggregateResultId}`);
     }
 
-    const scopeKey = buildScopeKey(request.aggregate.setupDefinitionId, request.aggregate.aggregationScope);
+    const scopeKey = buildSetupAggregateScopeKey(request.aggregate.aggregationScope);
     if (this.aggregateIdByScopeKey.has(scopeKey)) {
       throw new Error(
         `setup_aggregate_result already exists for setup/scope: ${request.aggregate.setupDefinitionId}`
@@ -105,14 +106,8 @@ export class InMemorySetupAggregateResultRepository implements SetupAggregateRes
 
     assertExpectedVersion(currentRecord, request.expectedVersion);
 
-    const currentScopeKey = buildScopeKey(
-      currentRecord.aggregate.setupDefinitionId,
-      currentRecord.aggregate.aggregationScope
-    );
-    const nextScopeKey = buildScopeKey(
-      request.aggregate.setupDefinitionId,
-      request.aggregate.aggregationScope
-    );
+    const currentScopeKey = buildSetupAggregateScopeKey(currentRecord.aggregate.aggregationScope);
+    const nextScopeKey = buildSetupAggregateScopeKey(request.aggregate.aggregationScope);
 
     if (currentScopeKey !== nextScopeKey) {
       const existingAggregateId = this.aggregateIdByScopeKey.get(nextScopeKey);

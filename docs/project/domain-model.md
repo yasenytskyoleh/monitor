@@ -147,7 +147,7 @@ Rule: orchestration executes workflows; product domain defines market/research m
 ## Storage direction (initial)
 Storage boundaries are now explicitly defined:
 - `runtime_evidence` (orchestrator file-based evidence)
-- `product_domain` (implemented in-memory persistence today; durable relational contracts, committed Prisma schema/migrations, adapter-backed repositories, concrete Prisma adapters, and opt-in integration coverage now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, and `evaluation_result`; `setup_aggregate_result` durable parity remains pending)
+- `product_domain` (implemented in-memory persistence today; durable relational contracts and committed Prisma schema/migrations now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, and `setup_aggregate_result`; adapter-backed repositories/concrete Prisma adapters currently exist for the first four entities, with `setup_aggregate_result` still pending)
 - `derived_analytics` (deferred)
 
 Current package provides contract-level storage types in `packages/domain-model/src/storage/*`.
@@ -155,7 +155,7 @@ Current package provides contract-level storage types in `packages/domain-model/
 Deferred to later slices:
 - full detection runtime engine and event processing
 - aggregation runtime/job orchestration and advanced evidence analytics
-- durable relational rollout for `setup_aggregate_result` and later derived analytic entities
+- adapter-backed durable repository rollout for `setup_aggregate_result` and later derived analytic entities
 - data retention policies
 
 ## Acceptance criteria for this slice

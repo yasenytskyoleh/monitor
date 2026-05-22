@@ -229,12 +229,21 @@ export {
   SIGNAL_EVALUATION_RELATIONAL_REQUIRED_COLUMNS,
   SIGNAL_EVALUATION_RELATIONAL_TABLES,
   SIGNAL_EVALUATION_RELATIONAL_UNIQUE_CONSTRAINTS,
+  SETUP_AGGREGATE_RELATIONAL_ENTITY_TYPES,
+  SETUP_AGGREGATE_RELATIONAL_INDEXES,
+  SETUP_AGGREGATE_RELATIONAL_MIGRATION_SLUG,
+  SETUP_AGGREGATE_RELATIONAL_PRISMA_MODELS,
+  SETUP_AGGREGATE_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_AGGREGATE_RELATIONAL_TABLES,
+  SETUP_AGGREGATE_RELATIONAL_UNIQUE_CONSTRAINTS,
   PRODUCT_EPHEMERAL_ENTITY_TYPES,
   PRODUCT_PERSISTED_ENTITY_TYPES,
   PRODUCT_RECORD_SOURCES,
   PERSISTED_ENTITY_LIFECYCLE_STATUSES,
   RUNTIME_EVIDENCE_ARTIFACT_TYPES,
-  STORAGE_BOUNDARIES
+  STORAGE_BOUNDARIES,
+  buildSetupAggregateScopeKey,
+  decomposeSetupAggregateScope
 } from "./storage/index.js";
 export type {
   DurableRelationalRecordBase,
@@ -267,6 +276,13 @@ export type {
   SignalEvaluationRelationalRecord,
   SignalEvaluationRelationalTableName,
   SignalEvaluationRelationalUniqueConstraintName,
+  SetupAggregateRelationalEntityType,
+  SetupAggregateRelationalIndexName,
+  SetupAggregateRelationalPrismaModelName,
+  SetupAggregateRelationalTableName,
+  SetupAggregateRelationalUniqueConstraintName,
+  SetupAggregateResultDurableRecord,
+  SetupAggregateScopeSnapshot,
   SetupDefinitionDurableRecord,
   StorageBoundary,
   StorageTechnologyDirection

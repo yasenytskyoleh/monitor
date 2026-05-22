@@ -69,6 +69,25 @@ enum EvaluationStatus {
   @@schema("product_domain")
 }
 
+enum AggregateComputationStatus {
+  pending
+  completed
+  partial
+  invalid
+
+  @@map("aggregate_computation_status")
+  @@schema("product_domain")
+}
+
+enum AggregationSymbolScopeKind {
+  single_symbol
+  symbol_set
+  all_monitored
+
+  @@map("aggregation_symbol_scope_kind")
+  @@schema("product_domain")
+}
+
 enum HypothesisEvidenceStatus {
   supports
   weakens
@@ -103,6 +122,7 @@ model SetupDefinitionRecord {
   archivedAtUtc             DateTime?                                    @map("archived_at_utc") @db.Timestamptz(3)
   hypothesisSetupLinks      ResearchHypothesisSetupDefinitionLinkRecord[]
   signalCandidates          SignalCandidateRecord[]
+  aggregateResults          SetupAggregateResultRecord[]
 
   @@index([definitionStatus], map: "idx_setup_definition_definition_status")
   @@index([lifecycleStatus], map: "idx_setup_definition_lifecycle_status")
@@ -134,6 +154,7 @@ model ResearchHypothesisRecord {
   updatedAtUtc                  DateTime                                     @map("updated_at_utc") @db.Timestamptz(3)
   archivedAtUtc                 DateTime?                                    @map("archived_at_utc") @db.Timestamptz(3)
   setupDefinitionLinks          ResearchHypothesisSetupDefinitionLinkRecord[]
+  aggregateResults              SetupAggregateResultRecord[]
 
   @@index([hypothesisStatus], map: "idx_research_hypothesis_hypothesis_status")
   @@index([lifecycleStatus], map: "idx_research_hypothesis_lifecycle_status")
@@ -220,5 +241,53 @@ model EvaluationResultRecord {
   @@index([evaluationWindowId], map: "idx_evaluation_result_evaluation_window_id")
   @@index([evaluationStatus], map: "idx_evaluation_result_evaluation_status")
   @@map("evaluation_result")
+  @@schema("product_domain")
+}
+
+model SetupAggregateResultRecord {
+  setupAggregateResultId         String                    @id(map: "setup_aggregate_result_pkey") @map("setup_aggregate_result_id") @db.Text
+  version                        Int                       @map("version")
+  lifecycleStatus                PersistedLifecycleStatus  @map("lifecycle_status")
+  aggregateStatus                AggregateComputationStatus @map("aggregate_status")
+  setupDefinitionId              String                    @map("setup_definition_id") @db.Text
+  researchHypothesisId           String?                   @map("research_hypothesis_id") @db.Text
+  scopeKey                       String                    @map("scope_key") @db.Text
+  scopeEvaluationWindowId        String?                   @map("scope_evaluation_window_id") @db.Text
+  scopeSymbolScopeKind           AggregationSymbolScopeKind @map("scope_symbol_scope_kind")
+  scopeSymbolIds                 String[]                  @map("scope_symbol_ids")
+  scopeTimeRangeStartAtUtc       DateTime                  @map("scope_time_range_start_at_utc") @db.Timestamptz(3)
+  scopeTimeRangeEndAtUtc         DateTime                  @map("scope_time_range_end_at_utc") @db.Timestamptz(3)
+  scopeResearchRunId             String?                   @map("scope_research_run_id") @db.Text
+  scopeHypothesisId              String?                   @map("scope_hypothesis_id") @db.Text
+  totalCandidates                Int                       @map("total_candidates")
+  completedEvaluations           Int                       @map("completed_evaluations")
+  invalidatedEvaluations         Int                       @map("invalidated_evaluations")
+  averagePercentageMove          Float?                    @map("average_percentage_move") @db.DoublePrecision
+  averageAbsoluteMove            Float?                    @map("average_absolute_move") @db.DoublePrecision
+  averageFinalOutcome            Float?                    @map("average_final_outcome") @db.DoublePrecision
+  averageMaxFavorableExcursion   Float?                    @map("average_max_favorable_excursion") @db.DoublePrecision
+  averageMaxAdverseExcursion     Float?                    @map("average_max_adverse_excursion") @db.DoublePrecision
+  positiveOutcomeCount           Int                       @map("positive_outcome_count")
+  computedAtUtc                  DateTime?                 @map("computed_at_utc") @db.Timestamptz(3)
+  notes                          String?                   @map("notes") @db.Text
+  originRunId                    String?                   @map("origin_run_id") @db.Text
+  originTransitionId             String?                   @map("origin_transition_id") @db.Text
+  createdBySource                ProductRecordSource       @map("created_by_source")
+  lastUpdatedBySource            ProductRecordSource       @map("last_updated_by_source")
+  traceId                        String?                   @map("trace_id") @db.Text
+  sourceObservedAtUtc            DateTime?                 @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes                  String?                   @map("metadata_notes") @db.Text
+  createdAtUtc                   DateTime                  @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc                   DateTime                  @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc                  DateTime?                 @map("archived_at_utc") @db.Timestamptz(3)
+  setupDefinition                SetupDefinitionRecord     @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+  researchHypothesis             ResearchHypothesisRecord? @relation(fields: [researchHypothesisId], references: [researchHypothesisId], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([setupDefinitionId, scopeKey], map: "uq_setup_aggregate_result_scope_key")
+  @@index([setupDefinitionId], map: "idx_setup_aggregate_result_setup_definition_id")
+  @@index([researchHypothesisId], map: "idx_setup_aggregate_result_research_hypothesis_id")
+  @@index([aggregateStatus], map: "idx_setup_aggregate_result_aggregate_status")
+  @@index([scopeEvaluationWindowId], map: "idx_setup_aggregate_result_scope_evaluation_window_id")
+  @@map("setup_aggregate_result")
   @@schema("product_domain")
 }

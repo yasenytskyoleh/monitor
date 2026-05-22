@@ -36,6 +36,16 @@ export type {
   SignalEvaluationRelationalRecord
 } from "./signal-evaluation-relational-slice.js";
 export {
+  SETUP_AGGREGATE_RELATIONAL_ENTITY_TYPES,
+  buildSetupAggregateScopeKey,
+  decomposeSetupAggregateScope
+} from "./setup-aggregate-relational-slice.js";
+export type {
+  SetupAggregateRelationalEntityType,
+  SetupAggregateResultDurableRecord,
+  SetupAggregateScopeSnapshot
+} from "./setup-aggregate-relational-slice.js";
+export {
   FIRST_DURABLE_RELATIONAL_DATABASE_SCHEMA,
   FIRST_DURABLE_RELATIONAL_INDEXES,
   FIRST_DURABLE_RELATIONAL_MIGRATION_SLUG,
@@ -62,6 +72,20 @@ export type {
   SignalEvaluationRelationalTableName,
   SignalEvaluationRelationalUniqueConstraintName
 } from "./signal-evaluation-relational-physical-schema.js";
+export {
+  SETUP_AGGREGATE_RELATIONAL_INDEXES,
+  SETUP_AGGREGATE_RELATIONAL_MIGRATION_SLUG,
+  SETUP_AGGREGATE_RELATIONAL_PRISMA_MODELS,
+  SETUP_AGGREGATE_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_AGGREGATE_RELATIONAL_TABLES,
+  SETUP_AGGREGATE_RELATIONAL_UNIQUE_CONSTRAINTS
+} from "./setup-aggregate-relational-physical-schema.js";
+export type {
+  SetupAggregateRelationalIndexName,
+  SetupAggregateRelationalPrismaModelName,
+  SetupAggregateRelationalTableName,
+  SetupAggregateRelationalUniqueConstraintName
+} from "./setup-aggregate-relational-physical-schema.js";
 
 export type {
   EntityIdentity,
