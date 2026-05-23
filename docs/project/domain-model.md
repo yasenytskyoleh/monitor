@@ -44,6 +44,9 @@ Committed Prisma schema/migrations, adapter-backed relational repositories, and 
 - `EvaluationResult`
 - `SetupAggregateResult`
 
+Committed Prisma schema/migrations now also exist for:
+- `ResearchFeedbackDecision`
+
 Shared Prisma-backed composition and opt-in real-database integration coverage exist today for:
 - `SetupDefinition`
 - `ResearchHypothesis`
@@ -52,7 +55,7 @@ Shared Prisma-backed composition and opt-in real-database integration coverage e
 - `SetupAggregateResult`
 
 Durable relational persistence pending:
-- physical schema/migrations and adapter rollout for `ResearchFeedbackDecision`
+- adapter rollout for `ResearchFeedbackDecision`
 - later approval/review/execution durable slices
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
@@ -159,7 +162,7 @@ Rule: orchestration executes workflows; product domain defines market/research m
 ## Storage direction (initial)
 Storage boundaries are now explicitly defined:
 - `runtime_evidence` (orchestrator file-based evidence)
-- `product_domain` (implemented in-memory persistence today; durable relational contracts now also include `research_feedback_decision`, while committed Prisma schema/migrations, adapter-backed repositories, and concrete Prisma adapters currently exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, and `setup_aggregate_result`)
+- `product_domain` (implemented in-memory persistence today; durable relational contracts and committed Prisma schema/migrations now also include `research_feedback_decision`, while adapter-backed repositories and concrete Prisma adapters currently exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, and `setup_aggregate_result`)
 - `derived_analytics` (deferred)
 
 Current package provides contract-level storage types in `packages/domain-model/src/storage/*`.

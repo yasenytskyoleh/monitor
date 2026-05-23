@@ -11,6 +11,11 @@ import {
   FIRST_DURABLE_RELATIONAL_PRISMA_MODELS,
   FIRST_DURABLE_RELATIONAL_REQUIRED_COLUMNS,
   FIRST_DURABLE_RELATIONAL_TABLES,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_TABLES,
   SIGNAL_EVALUATION_RELATIONAL_INDEXES,
   SIGNAL_EVALUATION_RELATIONAL_MIGRATION_SLUG,
   SIGNAL_EVALUATION_RELATIONAL_PRISMA_MODELS,
@@ -47,6 +52,13 @@ const setupAggregateMigrationPath = join(
   "prisma",
   "migrations",
   "20260522153000_product_domain_setup_aggregate_relational_v1",
+  "migration.sql"
+);
+const researchFeedbackDecisionMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260523091500_product_domain_research_feedback_decision_relational_v1",
   "migration.sql"
 );
 
@@ -301,5 +313,101 @@ test("migration creates the setup-aggregate relational table, indexes, and key c
   assert.match(
     migration,
     /CHECK \(\s*"aggregate_status" <> 'completed' OR \(\s*"average_percentage_move" IS NOT NULL/
+  );
+});
+
+test("exposes research-feedback-decision physical schema constants", () => {
+  assert.equal(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_research_feedback_decision_relational_v1"
+  );
+  assert.equal(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS.researchFeedbackDecisionRecord,
+    "ResearchFeedbackDecisionRecord"
+  );
+  assert.equal(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_TABLES.researchFeedbackDecision,
+    "research_feedback_decision"
+  );
+  assert.equal(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_REQUIRED_COLUMNS.research_feedback_decision.includes(
+      "reviewer_metadata"
+    ),
+    true
+  );
+  assert.equal(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES.includes(
+      "idx_research_feedback_decision_decision_status"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the research-feedback-decision relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum ResearchFeedbackDecisionAction \{/);
+  assert.match(schema, /enum ResearchFeedbackDecisionStatus \{/);
+  assert.match(schema, /model ResearchFeedbackDecisionRecord \{/);
+  assert.match(schema, /@@map\("research_feedback_decision"\)/);
+
+  for (const tableName of Object.values(RESEARCH_FEEDBACK_DECISION_RELATIONAL_TABLES)) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS)) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the research-feedback-decision relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(researchFeedbackDecisionMigrationPath, "utf8");
+
+  for (const tableName of Object.values(RESEARCH_FEEDBACK_DECISION_RELATIONAL_TABLES)) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("research_hypothesis_id"\)\s+REFERENCES "product_domain"\."research_hypothesis"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("setup_aggregate_result_id"\)\s+REFERENCES "product_domain"\."setup_aggregate_result"/
+  );
+  assert.match(
+    migration,
+    /CHECK \(\s*length\(trim\("rationale_summary"\)\) > 0/
+  );
+  assert.match(
+    migration,
+    /"requires_manual_review" = TRUE/
+  );
+  assert.match(
+    migration,
+    /"decision_status" = 'proposed' AND\s+"reviewer_metadata" IS NULL/
   );
 });

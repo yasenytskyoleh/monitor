@@ -1,24 +1,30 @@
 # Research Feedback Decision Relational Persistence Model
 
 ## Purpose
-Define the durable relational contract for `ResearchFeedbackDecision` before physical schema or adapter implementation.
+Define the durable relational contract and physical schema for `ResearchFeedbackDecision` before adapter implementation.
 
-This step keeps the next downstream persistence slice narrow:
+This keeps the next downstream persistence slice narrow:
 - logical durable record contract
 - reference and nullability rules
 - versioning semantics
 - deterministic repository failure expectations
+- Prisma schema
+- SQL migration
 
 without yet introducing:
-- Prisma schema or SQL migration artifacts
 - repository mappers
 - in-memory durable adapters
 - concrete Prisma adapters
 
 ## Implemented artifact locations
 - `packages/domain-model/src/storage/research-feedback-decision-relational-slice.ts`
+- `packages/domain-model/src/storage/research-feedback-decision-relational-physical-schema.ts`
+- `packages/domain-model/prisma/schema.prisma`
+- `packages/domain-model/prisma/migrations/20260523091500_product_domain_research_feedback_decision_relational_v1/migration.sql`
 - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
+- `packages/domain-model/test/prisma-physical-schema-contracts.test.ts`
 - `docs/architecture/adr/ADR-034-research-feedback-decision-durable-relational-contract.md`
+- `docs/architecture/adr/ADR-035-research-feedback-decision-prisma-schema-layout.md`
 
 ## Durable record shape
 `ResearchFeedbackDecisionDurableRecord` keeps:
@@ -41,6 +47,7 @@ Optional domain fields are normalized to nullable durable fields rather than omi
 - `researchHypothesisId` is required and must remain compatible with the setup linkage already enforced by service validation
 - `setupAggregateResultId` is nullable; when present it must refer to an aggregate result that belongs to the same setup and, if linked, the same hypothesis
 - `reviewerMetadata` remains a logical JSON object in this contract; physical schema may normalize selected reviewer fields later as long as the domain shape is preserved
+- `reviewerMetadata` is stored as `JSONB` in the current physical layout to preserve the existing domain shape without inventing a separate reviewer-detail table
 - `createdAt` and `updatedAt` map directly to durable timestamps
 - `ProductRecordMetadata` remains attached to the durable product record and is not replaced by orchestration evidence artifacts
 
@@ -57,8 +64,42 @@ Optional domain fields are normalized to nullable durable fields rather than omi
 - stale `expectedVersion` -> `version mismatch`
 - invalid setup / hypothesis / aggregate linkage -> rejected before persistence
 
+## Physical schema rules
+The migration now enforces:
+- positive version
+- non-empty `rationale_summary`
+- non-empty `evidence_summary` when present
+- current manual-review semantics via `requires_manual_review = true`
+- `reviewer_metadata IS NULL` while `decision_status = proposed`
+- `reviewer_metadata IS NOT NULL` once `decision_status` leaves `proposed`
+- `updated_at_utc >= created_at_utc`
+- archived timestamp consistency with lifecycle status
+
+## Reference policy
+Physical FKs are enforced for:
+- `setup_definition_id`
+- `research_hypothesis_id`
+- optional `setup_aggregate_result_id`
+
+Still service-owned rather than compound-FK enforced in this step:
+- verifying that an optional `setup_aggregate_result_id` belongs to the same setup
+- verifying that an optional aggregate result, when hypothesis-linked, matches the same hypothesis
+
+## Physical layout summary
+Database schema:
+- `product_domain`
+
+Tables:
+- `research_feedback_decision`
+
+Enum families:
+- `research_feedback_decision_action`
+- `research_feedback_decision_status`
+- reused `hypothesis_evidence_status`
+- reused `persisted_lifecycle_status`
+- reused `product_record_source`
+
 ## What remains pending
-- Prisma physical schema and migration layout for `research_feedback_decision`
-- repository mappers and adapter contracts
-- concrete relational repository and Prisma adapter wiring
+- repository adapter contract and deterministic error mapping for `research_feedback_decision`
+- domain/durable mappers, adapter-backed repository, and concrete Prisma adapter wiring
 - later approval/review/execution durable slices

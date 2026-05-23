@@ -25,10 +25,10 @@ Durable relational coverage now exists for the core research chain:
   - `evaluation_result`
   - `setup_aggregate_result`
 - one shared Prisma-backed repository bundle and one end-to-end integration path for setup -> candidate -> evaluation -> aggregate
-- a logical durable relational contract now exists for `research_feedback_decision`
+- committed contract and physical schema artifacts now exist for `research_feedback_decision`
 
 Still pending:
-- physical schema, migration, and adapter rollout for `research_feedback_decision`
+- repository/adapter rollout for `research_feedback_decision`
 - later review/approval/execution durable slices
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
@@ -152,6 +152,7 @@ Ownership direction:
 ## Related contract source
 - `packages/domain-model/src/storage/first-durable-relational-slice.ts`
 - `packages/domain-model/src/storage/research-feedback-decision-relational-slice.ts`
+- `packages/domain-model/src/storage/research-feedback-decision-relational-physical-schema.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-mappers.ts`
 - `packages/domain-model/src/repositories/repository-error.ts`

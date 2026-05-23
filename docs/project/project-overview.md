@@ -109,6 +109,7 @@ Implemented today:
   - `docs/architecture/adr/ADR-032-setup-aggregate-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-033-shared-implemented-product-relational-composition.md`
   - `docs/architecture/adr/ADR-034-research-feedback-decision-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-035-research-feedback-decision-prisma-schema-layout.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -116,16 +117,16 @@ Current limitation:
   - narrow helper-file creation only
   - no broad refactors, schema/migration/architecture changes, or cross-package scope
 - durable relational persistence pending:
-  - durable relational contracts now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, `setup_aggregate_result`, and `research_feedback_decision`
+  - durable relational contracts and committed Prisma schema/migrations now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, `setup_aggregate_result`, and `research_feedback_decision`
   - adapter-backed relational repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now exist for all five core-chain service-owned product entities
   - one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now exist for the current core research chain
-  - `research_feedback_decision` is now the first downstream review/governance entity with a committed logical durable contract but without physical schema artifacts yet
+  - `research_feedback_decision` is now the first downstream review/governance entity with committed logical and physical schema artifacts but without repository/adapter rollout yet
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- define the Prisma physical schema and migration layout for `research_feedback_decision`
+- implement the adapter-backed relational repository and concrete Prisma adapter for `research_feedback_decision`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

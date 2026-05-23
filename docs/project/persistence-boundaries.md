@@ -76,7 +76,7 @@ Not allowed:
   - `signal_candidate`
   - `evaluation_result`
   - `setup_aggregate_result`
-- first downstream in-memory review entity with a logical durable contract is:
+- first downstream in-memory review entity with committed logical + physical durable artifacts is:
   - `research_feedback_decision`
 
 Shared durable repository composition for that current chain is now explicit in:

@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.13 — Codex-first workflow, bounded autonomous mode, core-chain durable relational parity, and feedback-decision contract coverage**
+**Phase 1.13 — Codex-first workflow, bounded autonomous mode, core-chain durable relational parity, and feedback-decision schema coverage**
 
 ## What this phase is about
 This phase is focused on:
@@ -21,7 +21,7 @@ The product side now proves that the repo can:
 - maintain implemented in-memory persistence,
 - enforce service-owned write paths,
 - extend durable relational persistence through setup/research and signal/evaluation entities,
-- extend logical durable relational contract coverage into the first downstream review entity,
+- extend durable relational contract and physical schema coverage into the first downstream review entity,
 - and run concrete Prisma-backed adapters and integration harnesses while keeping runtime engines pending.
 
 ## Implemented in this phase (current baseline)
@@ -145,10 +145,14 @@ The product side now proves that the repo can:
   - `docs/architecture/adr/ADR-033-shared-implemented-product-relational-composition.md`
   - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
   - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
-- research-feedback-decision durable relational contract:
+- research-feedback-decision durable relational contract and physical schema:
   - `docs/project/research-feedback-decision-relational-persistence-model.md`
   - `docs/architecture/adr/ADR-034-research-feedback-decision-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-035-research-feedback-decision-prisma-schema-layout.md`
   - `packages/domain-model/src/storage/research-feedback-decision-relational-slice.ts`
+  - `packages/domain-model/src/storage/research-feedback-decision-relational-physical-schema.ts`
+  - `packages/domain-model/prisma/schema.prisma`
+  - `packages/domain-model/prisma/migrations/20260523091500_product_domain_research_feedback_decision_relational_v1/migration.sql`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -182,7 +186,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- define the Prisma physical schema and migration layout for `research_feedback_decision`
+- implement the adapter-backed relational repository and concrete Prisma adapter for `research_feedback_decision`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -198,4 +202,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, shared core-chain composition, and one downstream feedback-decision storage contract that make the next review/governance persistence step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, shared core-chain composition, and one downstream feedback-decision storage contract plus physical schema layout that make the next review/governance persistence step straightforward instead of speculative**.

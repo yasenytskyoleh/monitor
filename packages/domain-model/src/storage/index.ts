@@ -94,6 +94,18 @@ export type {
   SetupAggregateRelationalTableName,
   SetupAggregateRelationalUniqueConstraintName
 } from "./setup-aggregate-relational-physical-schema.js";
+export {
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_TABLES
+} from "./research-feedback-decision-relational-physical-schema.js";
+export type {
+  ResearchFeedbackDecisionRelationalIndexName,
+  ResearchFeedbackDecisionRelationalPrismaModelName,
+  ResearchFeedbackDecisionRelationalTableName
+} from "./research-feedback-decision-relational-physical-schema.js";
 
 export type {
   EntityIdentity,
