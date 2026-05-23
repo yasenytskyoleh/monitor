@@ -7,6 +7,8 @@ import {
   type EvaluationResultDurableRecord,
   FIRST_DURABLE_RELATIONAL_ENTITY_TYPES,
   type ProductRecordMetadata,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_ENTITY_TYPES,
+  type ResearchFeedbackDecisionDurableRecord,
   type ResearchHypothesisDurableRecord,
   type ResearchHypothesisSetupDefinitionLinkRecord,
   SIGNAL_EVALUATION_RELATIONAL_ENTITY_TYPES,
@@ -230,4 +232,46 @@ test("supports typed setup-aggregate durable records and deterministic scope key
     'setup-001:{"setupDefinitionId":"setup-001","evaluationWindowId":"window-24h","symbolScope":{"kind":"symbol_set","symbolIds":["BTC-USDT","ETH-USDT"]},"timeRange":{"startAtUtc":"2026-05-01T00:00:00.000Z","endAtUtc":"2026-05-31T23:59:59.000Z"},"researchRunId":"run-aggregate-001","hypothesisId":"hypothesis-001"}'
   );
   assert.equal(aggregateRecord.aggregateStatus, "completed");
+});
+
+test("exposes research-feedback-decision durable relational storage planning constants", () => {
+  assert.deepEqual(RESEARCH_FEEDBACK_DECISION_RELATIONAL_ENTITY_TYPES, [
+    "research_feedback_decision"
+  ]);
+});
+
+test("supports typed research-feedback-decision durable records", () => {
+  const feedbackDecisionRecord: ResearchFeedbackDecisionDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "research_feedback_decision",
+      entityId: "feedback-001",
+      version: 2,
+      relatedEntityIds: ["setup-001", "hypothesis-001", "aggregate-001"]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-05-23T10:00:00.000Z",
+    updatedAtUtc: "2026-05-23T11:00:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    decisionStatus: "accepted",
+    setupDefinitionId: "setup-001",
+    researchHypothesisId: "hypothesis-001",
+    setupAggregateResultId: "aggregate-001",
+    evidenceStatus: "supports",
+    recommendedAction: "keep_active",
+    rationaleSummary: "latest aggregate evidence continues to support the active setup",
+    requiresManualReview: true,
+    evidenceSummary: "10 completed evaluations with positive asymmetry",
+    reviewerMetadata: {
+      reviewedBy: "reviewer-001",
+      reviewedAt: "2026-05-23T11:00:00.000Z",
+      approvalOutcome: "approved"
+    }
+  };
+
+  assert.equal(feedbackDecisionRecord.identity.version, 2);
+  assert.equal(feedbackDecisionRecord.decisionStatus, "accepted");
+  assert.equal(feedbackDecisionRecord.reviewerMetadata?.reviewedBy, "reviewer-001");
 });

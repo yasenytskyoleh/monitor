@@ -4,16 +4,20 @@
 Define what is persisted now vs later, identity expectations, and lifecycle semantics across storage boundaries.
 
 ## First-class persisted product entities
+Current implemented research/evidence chain plus the first downstream review entity:
 - `monitored_symbol`
 - `setup_definition`
 - `signal_candidate`
 - `evaluation_result`
 - `research_hypothesis`
 - `setup_aggregate_result`
+- `research_feedback_decision`
 
 These entity types are defined in:
 - `packages/domain-model/src/storage/storage-boundary.ts`
 - `packages/domain-model/src/storage/persisted-entity.ts`
+
+Later review/execution entity types are also reserved in the storage contracts, but their durable relational rollout remains pending.
 
 ## Ephemeral or derived concepts (current)
 - `detection_input_transient`
@@ -44,6 +48,8 @@ Identity contracts:
   created after evaluation closes/invalidates, updated before finalization, archive-capable
 - `SetupAggregateResult`:
   created on aggregation compute, may be recomputed under versioned identity, archive-capable
+- `ResearchFeedbackDecision`:
+  created when evidence is converted into a setup recommendation, updated on review-status changes, archive-capable
 - runtime `run.json` and related files:
   orchestration evidence only, not product-domain records
 
@@ -70,6 +76,8 @@ Not allowed:
   - `signal_candidate`
   - `evaluation_result`
   - `setup_aggregate_result`
+- first downstream in-memory review entity with a logical durable contract is:
+  - `research_feedback_decision`
 
 Shared durable repository composition for that current chain is now explicit in:
 - `docs/project/durable-relational-persistence-model.md`

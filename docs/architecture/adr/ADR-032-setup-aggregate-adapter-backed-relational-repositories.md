@@ -38,7 +38,7 @@ This includes:
 
 ## Consequences
 Positive:
-- all five implemented, service-owned product entities now have durable relational parity
+- all five core-chain, service-owned product entities now have durable relational parity
 - aggregate scope and reference semantics are now enforced consistently across in-memory and Prisma-backed persistence paths
 - the next persistence task moves from per-entity parity to broader cross-slice repository composition
 

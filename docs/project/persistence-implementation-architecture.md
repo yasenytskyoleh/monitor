@@ -1,7 +1,7 @@
 # Persistence Implementation Architecture
 
 ## Purpose
-Define the current implementation architecture for product-domain persistence across the implemented core research chain.
+Define the current implementation architecture for product-domain persistence across the implemented core research chain and the first downstream review entity.
 
 This document now reflects:
 - boundary contracts
@@ -15,8 +15,9 @@ Implemented in-memory persistence and service-owned write paths exist today for:
 - `SignalCandidate`
 - `EvaluationResult`
 - `SetupAggregateResult`
+- `ResearchFeedbackDecision`
 
-Durable relational coverage now exists for that same core chain:
+Durable relational coverage now exists for the core research chain:
 - committed contracts, schema/migrations, adapter-backed repositories, and concrete Prisma adapters for:
   - `setup_definition`
   - `research_hypothesis`
@@ -24,9 +25,10 @@ Durable relational coverage now exists for that same core chain:
   - `evaluation_result`
   - `setup_aggregate_result`
 - one shared Prisma-backed repository bundle and one end-to-end integration path for setup -> candidate -> evaluation -> aggregate
+- a logical durable relational contract now exists for `research_feedback_decision`
 
 Still pending:
-- durable relational planning for `research_feedback_decision`
+- physical schema, migration, and adapter rollout for `research_feedback_decision`
 - later review/approval/execution durable slices
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
@@ -42,6 +44,7 @@ Repository abstractions:
 - `EvaluationResultRepository`
 - `ResearchHypothesisRepository`
 - `SetupAggregateResultRepository`
+- `ResearchFeedbackDecisionRepository`
 
 Implemented concrete repositories in the current baseline:
 - `InMemorySetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-repository.impl.ts`)
@@ -49,6 +52,7 @@ Implemented concrete repositories in the current baseline:
 - `InMemorySignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-repository.impl.ts`)
 - `InMemoryEvaluationResultRepository` (`packages/domain-model/src/repositories/evaluation-result-repository.impl.ts`)
 - `InMemorySetupAggregateResultRepository` (`packages/domain-model/src/repositories/setup-aggregate-result-repository.impl.ts`)
+- `InMemoryResearchFeedbackDecisionRepository` (`packages/domain-model/src/repositories/research-feedback-decision-repository.impl.ts`)
 - `RelationalSetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-relational-repository.impl.ts`)
 - `RelationalResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-relational-repository.impl.ts`)
 - `RelationalSignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-relational-repository.impl.ts`)
@@ -77,7 +81,7 @@ Service layer:
 - `ResearchService`
 - `ResearchAggregationService`
 
-Implemented concrete service factories in this PR:
+Implemented concrete service factories in the current baseline:
 - `createSetupDefinitionService` (`packages/domain-model/src/services/setup-definition-service.ts`)
 - `createResearchService` (`packages/domain-model/src/services/research-service.ts`)
 - `createSignalCandidateService` (`packages/domain-model/src/services/signal-candidate-service.ts`)
@@ -99,6 +103,7 @@ First persisted slice write-path rules now implemented:
   - validates referenced setup definition ids before create/update/link
   - controls hypothesis status transitions
   - owns controlled setup linkage for hypotheses
+  - records `ResearchFeedbackDecision` recommendations from hypothesis evidence and owns decision-status review updates
 - `SignalCandidateService`
   - validates required fields (`id`, `setupDefinitionId`, `monitoredSymbolId`, `detectedAt`, `status`, `evidenceSummary`)
   - validates referenced setup definition and monitored symbol boundaries
@@ -130,6 +135,7 @@ Ownership direction:
 - `evaluation_result` -> `evaluation_service`
 - `research_hypothesis` -> `research_service`
 - `setup_aggregate_result` -> `research_aggregation_service`
+- `research_feedback_decision` -> `research_service`
 
 ## Mapping rules
 1. repositories return domain-shaped records (not runner artifact shapes)
@@ -145,6 +151,7 @@ Ownership direction:
 
 ## Related contract source
 - `packages/domain-model/src/storage/first-durable-relational-slice.ts`
+- `packages/domain-model/src/storage/research-feedback-decision-relational-slice.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-mappers.ts`
 - `packages/domain-model/src/repositories/repository-error.ts`

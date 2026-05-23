@@ -27,7 +27,7 @@ This step does not add new domain rules. It proves that the existing durable sli
 - the next persistence task can move downstream into review/governance entities instead of further core-chain composition work
 
 ## What remains pending
-- durable relational planning for `research_feedback_decision`
+- Prisma physical schema and migration layout for `research_feedback_decision`
 - later durable slices for approval/review/execution entities
 - runtime detection, evaluation, and aggregation engines
 - exchange ingestion and UI work

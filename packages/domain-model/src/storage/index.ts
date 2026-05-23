@@ -47,6 +47,13 @@ export type {
   SetupAggregateScopeSnapshot
 } from "./setup-aggregate-relational-slice.js";
 export {
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_ENTITY_TYPES
+} from "./research-feedback-decision-relational-slice.js";
+export type {
+  ResearchFeedbackDecisionDurableRecord,
+  ResearchFeedbackDecisionRelationalEntityType
+} from "./research-feedback-decision-relational-slice.js";
+export {
   FIRST_DURABLE_RELATIONAL_DATABASE_SCHEMA,
   FIRST_DURABLE_RELATIONAL_INDEXES,
   FIRST_DURABLE_RELATIONAL_MIGRATION_SLUG,

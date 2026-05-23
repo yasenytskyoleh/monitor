@@ -35,7 +35,7 @@ This step finishes the per-entity durable parity work for the current implemente
 - opt-in real-Postgres integration coverage for the aggregate slice
 
 ## What this step proves
-- all five implemented, service-owned product entities now have:
+- all five core-chain, service-owned product entities now have:
   - implemented in-memory persistence
   - durable relational contracts
   - committed Prisma schema/migrations

@@ -40,4 +40,4 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- plan the durable relational contract and schema for `research_feedback_decision`
+- define the Prisma physical schema and migration layout for `research_feedback_decision`
