@@ -25,10 +25,11 @@ Durable relational coverage now exists for the core research chain:
   - `evaluation_result`
   - `setup_aggregate_result`
 - one shared Prisma-backed repository bundle and one end-to-end integration path for setup -> candidate -> evaluation -> aggregate
-- committed contract and physical schema artifacts now exist for `research_feedback_decision`
+- committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-Postgres integration coverage now also exist for `research_feedback_decision`
 
 Still pending:
-- repository/adapter rollout for `research_feedback_decision`
+- extension of the shared implemented-product bundle through `research_feedback_decision`
+- extension of the end-to-end integration path through feedback decisions
 - later review/approval/execution durable slices
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
@@ -58,6 +59,7 @@ Implemented concrete repositories in the current baseline:
 - `RelationalSignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-relational-repository.impl.ts`)
 - `RelationalEvaluationResultRepository` (`packages/domain-model/src/repositories/evaluation-result-relational-repository.impl.ts`)
 - `RelationalSetupAggregateResultRepository` (`packages/domain-model/src/repositories/setup-aggregate-result-relational-repository.impl.ts`)
+- `RelationalResearchFeedbackDecisionRepository` (`packages/domain-model/src/repositories/research-feedback-decision-relational-repository.impl.ts`)
 - shared implemented-product composition (`packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`)
 
 Repository responsibilities:
@@ -142,7 +144,7 @@ Ownership direction:
 2. persistence metadata (`originRunId`, `traceId`) may be attached through metadata contracts
 3. runtime evidence files remain separate from product-domain storage
 4. one domain contract does not force one-table implementation in this slice
-5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, evaluation results, and setup aggregate results
+5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, and research feedback decisions
 
 ## Orchestrator handoff boundary
 - orchestrator workflows may trigger future product-domain services
@@ -155,4 +157,6 @@ Ownership direction:
 - `packages/domain-model/src/storage/research-feedback-decision-relational-physical-schema.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-mappers.ts`
+- `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-adapter.ts`
+- `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-mappers.ts`
 - `packages/domain-model/src/repositories/repository-error.ts`

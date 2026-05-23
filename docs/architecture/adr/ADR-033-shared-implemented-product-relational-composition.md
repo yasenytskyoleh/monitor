@@ -40,4 +40,4 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- implement the adapter-backed relational repository and concrete Prisma adapter for `research_feedback_decision`
+- extend the shared implemented-product repository bundle and end-to-end real-Postgres integration path through `research_feedback_decision`

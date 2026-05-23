@@ -27,7 +27,8 @@ This step does not add new domain rules. It proves that the existing durable sli
 - the next persistence task can move downstream into review/governance entities instead of further core-chain composition work
 
 ## What remains pending
-- repository/adapter rollout for `research_feedback_decision`
+- extend the shared implemented-product bundle through `research_feedback_decision`
+- extend the end-to-end integration path through setup -> candidate -> evaluation -> aggregate -> feedback decision
 - later durable slices for approval/review/execution entities
 - runtime detection, evaluation, and aggregation engines
 - exchange ingestion and UI work

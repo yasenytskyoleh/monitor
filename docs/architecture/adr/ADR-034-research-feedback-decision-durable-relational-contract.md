@@ -42,4 +42,4 @@ Tradeoffs:
 - runtime ingestion, evaluation, aggregation, or UI work
 
 ## Follow-up
-- implement the adapter-backed relational repository and concrete Prisma adapter for `research_feedback_decision`
+- commit the Prisma physical schema and SQL migration for `research_feedback_decision`

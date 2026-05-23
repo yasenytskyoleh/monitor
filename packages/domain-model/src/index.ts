@@ -320,6 +320,13 @@ export {
   SETUP_AGGREGATE_RELATIONAL_RETRYABLE_ERROR_CODES,
   isSetupAggregateRelationalDeterministicErrorCode
 } from "./repositories/setup-aggregate-relational-repository-adapter.js";
+export {
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_ADAPTER_OPERATIONS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isResearchFeedbackDecisionRelationalDeterministicErrorCode
+} from "./repositories/research-feedback-decision-relational-repository-adapter.js";
 export { composeFirstDurableRelationalRepositories } from "./repositories/first-durable-relational-repositories.js";
 export type {
   FirstDurableRelationalRepositories
@@ -343,6 +350,12 @@ export {
 export type {
   SetupAggregateRelationalRepositories
 } from "./repositories/setup-aggregate-relational-repositories.js";
+export {
+  composeResearchFeedbackDecisionRelationalRepositories
+} from "./repositories/research-feedback-decision-relational-repositories.js";
+export type {
+  ResearchFeedbackDecisionRelationalRepositories
+} from "./repositories/research-feedback-decision-relational-repositories.js";
 export type {
   FirstDurableRelationalAdapterErrorMapping,
   FirstDurableRelationalAdapterOperation,
@@ -376,6 +389,14 @@ export type {
   SetupAggregateRelationalRetryableErrorCode,
   SetupAggregateResultRecordWriteRequest
 } from "./repositories/setup-aggregate-relational-repository-adapter.js";
+export type {
+  ResearchFeedbackDecisionRecordWriteRequest,
+  ResearchFeedbackDecisionRelationalAdapterErrorMapping,
+  ResearchFeedbackDecisionRelationalAdapterOperation,
+  ResearchFeedbackDecisionRelationalDeterministicErrorCode,
+  ResearchFeedbackDecisionRelationalRepositoryAdapter,
+  ResearchFeedbackDecisionRelationalRetryableErrorCode
+} from "./repositories/research-feedback-decision-relational-repository-adapter.js";
 export {
   dehydrateEvaluationResultToDurableRecord,
   dehydrateSignalCandidateToDurableRecord,
@@ -386,6 +407,10 @@ export {
   dehydrateSetupAggregateResultToDurableRecord,
   hydrateSetupAggregateResultFromDurableRecord
 } from "./repositories/setup-aggregate-relational-repository-mappers.js";
+export {
+  dehydrateResearchFeedbackDecisionToDurableRecord,
+  hydrateResearchFeedbackDecisionFromDurableRecord
+} from "./repositories/research-feedback-decision-relational-repository-mappers.js";
 export {
   InMemoryFirstDurableRelationalRepositoryAdapter
 } from "./repositories/first-durable-relational-repository-adapter.impl.js";
@@ -401,6 +426,12 @@ export type {
 export {
   InMemorySetupAggregateRelationalRepositoryAdapter
 } from "./repositories/setup-aggregate-relational-repository-adapter.impl.js";
+export type {
+  ResearchFeedbackDecisionRelationalReferenceReader
+} from "./repositories/research-feedback-decision-relational-repository-adapter.impl.js";
+export {
+  InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter
+} from "./repositories/research-feedback-decision-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,
@@ -446,12 +477,25 @@ export {
 export type {
   SetupAggregateRelationalPrismaRepositories
 } from "./repositories/setup-aggregate-relational-prisma-client.js";
+export {
+  createResearchFeedbackDecisionRelationalPrismaRepositories,
+  createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter
+} from "./repositories/research-feedback-decision-relational-prisma-client.js";
+export type {
+  ResearchFeedbackDecisionRelationalPrismaRepositories
+} from "./repositories/research-feedback-decision-relational-prisma-client.js";
 export type {
   SetupAggregateRelationalPrismaClient
 } from "./repositories/setup-aggregate-relational-prisma-adapter.js";
 export {
   PrismaSetupAggregateRelationalRepositoryAdapter
 } from "./repositories/setup-aggregate-relational-prisma-adapter.js";
+export type {
+  ResearchFeedbackDecisionRelationalPrismaClient
+} from "./repositories/research-feedback-decision-relational-prisma-adapter.js";
+export {
+  PrismaResearchFeedbackDecisionRelationalRepositoryAdapter
+} from "./repositories/research-feedback-decision-relational-prisma-adapter.js";
 export {
   REPOSITORY_ERROR_CODES,
   REPOSITORY_OPERATIONS,
@@ -502,6 +546,9 @@ export type {
 export {
   InMemoryResearchFeedbackDecisionRepository
 } from "./repositories/research-feedback-decision-repository.impl.js";
+export {
+  RelationalResearchFeedbackDecisionRepository
+} from "./repositories/research-feedback-decision-relational-repository.impl.js";
 export type {
   ResearchDecisionApprovalCreateRequest,
   ResearchDecisionApprovalRepository

@@ -37,7 +37,7 @@ Positive:
 
 Tradeoffs:
 - physical linkage between `setup_aggregate_result` and the same setup/hypothesis remains service-owned rather than fully encoded as compound foreign keys
-- repository adapters for this entity are still not implemented in this step
+- repository adapters for this entity were still deferred in this step and were completed later in ADR-036
 
 ## Explicitly not included
 - repository adapter contracts
@@ -47,4 +47,5 @@ Tradeoffs:
 - approval/review/execution entities beyond `research_feedback_decision`
 
 ## Follow-up
-- implement the adapter-backed relational repository and concrete Prisma adapter for `research_feedback_decision`
+- repository/adapter implementation for `research_feedback_decision` is completed in ADR-036
+- extend the shared implemented-product repository bundle and end-to-end real-Postgres integration path through `research_feedback_decision`

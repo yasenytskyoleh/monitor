@@ -48,6 +48,7 @@ Current product-domain scope includes:
   - `docs/project/setup-aggregate-relational-rollout-model.md`
   - `docs/project/implemented-product-relational-composition-model.md`
   - `docs/project/research-feedback-decision-relational-persistence-model.md`
+  - `docs/project/research-feedback-decision-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -64,6 +65,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-033-shared-implemented-product-relational-composition.md`
   - `docs/architecture/adr/ADR-034-research-feedback-decision-durable-relational-contract.md`
   - `docs/architecture/adr/ADR-035-research-feedback-decision-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-036-research-feedback-decision-adapter-backed-relational-repositories.md`
 
 ## Current constraints
 - spot-only scope
@@ -91,13 +93,14 @@ Current product-domain scope includes:
   - `signal_candidate`
   - `evaluation_result`
   - `setup_aggregate_result`
+  - `research_feedback_decision`
 - one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now exist for the current core research chain
-- `research_feedback_decision` is now the first downstream review/governance entity with committed logical and physical schema artifacts but without repository/adapter rollout yet
+- `research_feedback_decision` is now the first downstream review/governance entity with per-entity durable parity, but it is not yet included in the shared implemented-product bundle
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- implement the adapter-backed relational repository and concrete Prisma adapter for `research_feedback_decision`
+- extend the shared implemented-product repository bundle and end-to-end real-Postgres integration path through `research_feedback_decision`
 
 ## Behavioral instructions for future assistants
 When continuing this project:
