@@ -44,11 +44,10 @@ This step gives the first downstream review/governance entity the same per-entit
   - slice-level shared composition
   - opt-in real-database integration coverage
 - the first downstream review/governance entity now matches the per-entity durable parity already established for the core research chain
-- the next persistence task moves to extending shared bundle coverage through feedback decisions instead of doing more per-entity repository parity work
+- this step made the later shared-bundle extension through feedback decisions straightforward instead of speculative
 
 ## What remains pending
-- extend the shared implemented-product Prisma-backed repository bundle through `research_feedback_decision`
-- extend the end-to-end real-database integration path through setup -> candidate -> evaluation -> aggregate -> feedback decision
+- shared implemented-product bundle extension through `research_feedback_decision` is completed later in `docs/architecture/adr/ADR-037-implemented-product-feedback-decision-composition.md`
 - later durable slices for `research_decision_approval` and other review/execution entities
 - runtime detection, evaluation, aggregation, and review engines
 - exchange ingestion and UI work

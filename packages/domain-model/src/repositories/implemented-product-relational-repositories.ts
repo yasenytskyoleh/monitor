@@ -6,6 +6,13 @@ import {
   type FirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
 import {
+  composeResearchFeedbackDecisionRelationalRepositories,
+  type ResearchFeedbackDecisionRelationalRepositories
+} from "./research-feedback-decision-relational-repositories.js";
+import type {
+  ResearchFeedbackDecisionRelationalRepositoryAdapter
+} from "./research-feedback-decision-relational-repository-adapter.js";
+import {
   composeSetupAggregateRelationalRepositories,
   type SetupAggregateRelationalRepositories
 } from "./setup-aggregate-relational-repositories.js";
@@ -24,17 +31,20 @@ export type ImplementedProductRelationalAdapters = {
   firstDurableAdapter: FirstDurableRelationalRepositoryAdapter;
   signalEvaluationAdapter: SignalEvaluationRelationalRepositoryAdapter;
   setupAggregateAdapter: SetupAggregateRelationalRepositoryAdapter;
+  feedbackDecisionAdapter: ResearchFeedbackDecisionRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalRepositories =
   FirstDurableRelationalRepositories &
   SignalEvaluationRelationalRepositories &
-  SetupAggregateRelationalRepositories;
+  SetupAggregateRelationalRepositories &
+  ResearchFeedbackDecisionRelationalRepositories;
 
 export const composeImplementedProductRelationalRepositories = (
   adapters: ImplementedProductRelationalAdapters
 ): ImplementedProductRelationalRepositories => ({
   ...composeFirstDurableRelationalRepositories(adapters.firstDurableAdapter),
   ...composeSignalEvaluationRelationalRepositories(adapters.signalEvaluationAdapter),
-  ...composeSetupAggregateRelationalRepositories(adapters.setupAggregateAdapter)
+  ...composeSetupAggregateRelationalRepositories(adapters.setupAggregateAdapter),
+  ...composeResearchFeedbackDecisionRelationalRepositories(adapters.feedbackDecisionAdapter)
 });

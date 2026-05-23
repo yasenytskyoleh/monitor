@@ -9,6 +9,8 @@ import {
   type ImplementedProductRelationalAdapters,
   type ImplementedProductRelationalRepositories
 } from "./implemented-product-relational-repositories.js";
+import { createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter } from "./research-feedback-decision-relational-prisma-client.js";
+import { type PrismaResearchFeedbackDecisionRelationalRepositoryAdapter } from "./research-feedback-decision-relational-prisma-adapter.js";
 import { createSetupAggregateRelationalPrismaRepositoryAdapter } from "./setup-aggregate-relational-prisma-client.js";
 import { type PrismaSetupAggregateRelationalRepositoryAdapter } from "./setup-aggregate-relational-prisma-adapter.js";
 import { createSignalEvaluationRelationalPrismaRepositoryAdapter } from "./signal-evaluation-relational-prisma-client.js";
@@ -18,6 +20,7 @@ export type ImplementedProductRelationalPrismaAdapters = ImplementedProductRelat
   firstDurableAdapter: PrismaFirstDurableRelationalRepositoryAdapter;
   signalEvaluationAdapter: PrismaSignalEvaluationRelationalRepositoryAdapter;
   setupAggregateAdapter: PrismaSetupAggregateRelationalRepositoryAdapter;
+  feedbackDecisionAdapter: PrismaResearchFeedbackDecisionRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalPrismaRepositories =
@@ -32,7 +35,8 @@ export const createImplementedProductRelationalPrismaAdapters = (
 ): ImplementedProductRelationalPrismaAdapters => ({
   firstDurableAdapter: new PrismaFirstDurableRelationalRepositoryAdapter(client),
   signalEvaluationAdapter: createSignalEvaluationRelationalPrismaRepositoryAdapter(client),
-  setupAggregateAdapter: createSetupAggregateRelationalPrismaRepositoryAdapter(client)
+  setupAggregateAdapter: createSetupAggregateRelationalPrismaRepositoryAdapter(client),
+  feedbackDecisionAdapter: createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter(client)
 });
 
 export const createImplementedProductRelationalPrismaRepositories = (

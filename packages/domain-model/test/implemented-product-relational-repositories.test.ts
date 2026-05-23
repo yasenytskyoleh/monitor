@@ -4,10 +4,12 @@ import test from "node:test";
 import {
   composeImplementedProductRelationalRepositories,
   InMemoryFirstDurableRelationalRepositoryAdapter,
+  InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter,
   InMemorySetupAggregateRelationalRepositoryAdapter,
   InMemorySignalEvaluationRelationalRepositoryAdapter,
   type EvaluationResult,
   type ProductRecordMetadata,
+  type ResearchFeedbackDecision,
   type ResearchHypothesis,
   type SetupAggregateResult,
   type SetupDefinition,
@@ -115,16 +117,45 @@ const buildAggregate = (
   updatedAt: "2026-05-24T10:00:00.000Z"
 });
 
-test("implemented product repository composition supports the current end-to-end entity chain", async () => {
+const buildFeedbackDecision = (
+  id: string,
+  setupDefinitionId: string,
+  researchHypothesisId: string,
+  setupAggregateResultId: string
+): ResearchFeedbackDecision => ({
+  id,
+  setupDefinitionId,
+  researchHypothesisId,
+  setupAggregateResultId,
+  evidenceStatus: "supports",
+  recommendedAction: "keep_active",
+  rationaleSummary: "aggregate evidence supports keeping the setup active",
+  decisionStatus: "proposed",
+  requiresManualReview: true,
+  evidenceSummary: "shared bundle feedback decision",
+  createdAt: "2026-05-24T10:15:00.000Z",
+  updatedAt: "2026-05-24T10:15:00.000Z"
+});
+
+test("implemented product repository composition supports the current end-to-end entity chain through feedback decisions", async () => {
   const firstDurableAdapter = new InMemoryFirstDurableRelationalRepositoryAdapter();
+  const setupAggregateAdapter = new InMemorySetupAggregateRelationalRepositoryAdapter(
+    firstDurableAdapter
+  );
   const repositories = composeImplementedProductRelationalRepositories({
     firstDurableAdapter,
     signalEvaluationAdapter: new InMemorySignalEvaluationRelationalRepositoryAdapter(
       firstDurableAdapter
     ),
-    setupAggregateAdapter: new InMemorySetupAggregateRelationalRepositoryAdapter(
-      firstDurableAdapter
-    )
+    setupAggregateAdapter,
+    feedbackDecisionAdapter: new InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter({
+      loadSetupDefinitionRecord:
+        firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter),
+      loadResearchHypothesisBundle:
+        firstDurableAdapter.loadResearchHypothesisBundle.bind(firstDurableAdapter),
+      loadSetupAggregateResultRecord:
+        setupAggregateAdapter.loadSetupAggregateResultRecord.bind(setupAggregateAdapter)
+    })
   });
 
   await repositories.setupDefinitionRepository.create({
@@ -147,6 +178,15 @@ test("implemented product repository composition supports the current end-to-end
     aggregate: buildAggregate("aggregate-001", "setup-001", "hypothesis-001"),
     metadata
   });
+  await repositories.researchFeedbackDecisionRepository.create({
+    decision: buildFeedbackDecision(
+      "feedback-001",
+      "setup-001",
+      "hypothesis-001",
+      "aggregate-001"
+    ),
+    metadata
+  });
 
   const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
   const storedEvaluation = await repositories.evaluationResultRepository.getBySignalCandidateAndWindow(
@@ -158,8 +198,11 @@ test("implemented product repository composition supports the current end-to-end
       "setup-001",
       buildAggregate("aggregate-001", "setup-001", "hypothesis-001").aggregationScope
     );
+  const storedFeedbackDecision =
+    await repositories.researchFeedbackDecisionRepository.getById("feedback-001");
 
   assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
   assert.equal(storedEvaluation?.id, "result-001");
   assert.equal(storedAggregate?.researchHypothesisId, "hypothesis-001");
+  assert.equal(storedFeedbackDecision?.setupAggregateResultId, "aggregate-001");
 });

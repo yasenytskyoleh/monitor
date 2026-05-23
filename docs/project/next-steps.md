@@ -1,38 +1,33 @@
 # Next Steps
 
 ## Current recommended next step
-### Extend the shared implemented-product repository bundle and end-to-end real-Postgres integration path through `research_feedback_decision`
+### Define the durable relational contract for `research_decision_approval`
 
 Reason:
-- the core setup -> hypothesis -> candidate -> evaluation -> aggregate chain now has:
+- the full implemented research chain now has:
   - `setup_definition`
   - `research_hypothesis`
   - `signal_candidate`
   - `evaluation_result`
   - `setup_aggregate_result`
-- one shared Prisma-backed repository bundle and one end-to-end integration path
-- `research_feedback_decision` now also has:
-  - an explicit logical durable relational contract
-  - committed Prisma schema and SQL migration artifacts
-  - an adapter-backed relational repository
-  - a concrete Prisma adapter
-  - slice-level shared composition
-  - opt-in real-Postgres integration coverage
-- the remaining gap is that the shared implemented-product bundle and full end-to-end integration path still stop before `research_feedback_decision`
+- `research_feedback_decision`
+- one shared Prisma-backed repository bundle and one end-to-end integration path now span that full chain
+- the next downstream service-owned persistence gap is `research_decision_approval`
+- that entity already exists in the domain model and in implemented in-memory persistence, but it still has no durable relational contract or physical schema planning
 - runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
 
 ## Recommended near-future sequence
-1. add `research_feedback_decision` into the shared implemented-product relational repository composition
-2. extend the real-Postgres integration flow through setup -> candidate -> evaluation -> aggregate -> feedback decision
-3. verify the shared bundle still preserves service-owned write boundaries and deterministic repository errors
-4. keep `research_decision_approval` and later review/execution durable slices deferred until the expanded shared bundle is verified
+1. define the logical durable relational storage contract for `research_decision_approval`
+2. define the physical Prisma schema and SQL migration layout for that approval entity
+3. add the adapter-backed repository and concrete Prisma adapter after the contract/schema are approved
+4. keep later review/execution entities deferred until the approval slice pattern is verified
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
-- expanding into approval/execution workflow logic prematurely
-- mixing new review-policy behavior into the shared bundle extension step
+- expanding into runtime review/execution workflow logic prematurely
+- mixing setup-mutation or refinement execution behavior into the approval-contract step
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

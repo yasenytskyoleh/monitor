@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.14 — Codex-first workflow, bounded autonomous mode, core-chain durable relational parity, and feedback-decision repository parity**
+**Phase 1.15 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and approval-slice planning readiness**
 
 ## What this phase is about
 This phase is focused on:
@@ -145,6 +145,11 @@ The product side now proves that the repo can:
   - `docs/architecture/adr/ADR-033-shared-implemented-product-relational-composition.md`
   - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
   - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
+- shared Prisma-backed composition extended through feedback decisions:
+  - `docs/project/implemented-product-feedback-decision-composition-model.md`
+  - `docs/architecture/adr/ADR-037-implemented-product-feedback-decision-composition.md`
+  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
 - research-feedback-decision durable relational contract and physical schema:
   - `docs/project/research-feedback-decision-relational-persistence-model.md`
   - `docs/architecture/adr/ADR-034-research-feedback-decision-durable-relational-contract.md`
@@ -196,7 +201,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- extend the shared implemented-product repository bundle and end-to-end real-Postgres integration path through `research_feedback_decision`
+- define the durable relational contract for `research_decision_approval`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -212,4 +217,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, shared core-chain composition, and one downstream feedback-decision repository rollout that make the next shared-bundle extension step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented research chain, and one downstream feedback-decision repository rollout that make the next approval-slice planning step straightforward instead of speculative**.

@@ -11,6 +11,7 @@ import {
   type EvaluationResult,
   type ImplementedProductRelationalPrismaRepositories,
   type ProductRecordMetadata,
+  type ResearchFeedbackDecision,
   type ResearchHypothesis,
   type SetupAggregateResult,
   type SetupDefinition,
@@ -32,14 +33,18 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260522153000_product_domain_setup_aggregate_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260523091500_product_domain_research_feedback_decision_relational_v1/migration.sql"
   )
 ];
 
 const metadata: ProductRecordMetadata = {
   originRunId: "run-002",
   originTransitionId: "transition-002",
-  createdBySource: "research_aggregation_pipeline",
-  lastUpdatedBySource: "research_aggregation_pipeline",
+  createdBySource: "manual_curation",
+  lastUpdatedBySource: "manual_curation",
   traceId: "trace-002",
   sourceObservedAtUtc: "2026-05-23T09:00:00.000Z"
 };
@@ -136,6 +141,26 @@ const buildAggregate = (
   updatedAt: "2026-05-24T10:00:00.000Z"
 });
 
+const buildFeedbackDecision = (
+  id: string,
+  setupDefinitionId: string,
+  researchHypothesisId: string,
+  setupAggregateResultId: string
+): ResearchFeedbackDecision => ({
+  id,
+  setupDefinitionId,
+  researchHypothesisId,
+  setupAggregateResultId,
+  evidenceStatus: "supports",
+  recommendedAction: "keep_active",
+  rationaleSummary: "aggregate evidence supports keeping the setup active",
+  decisionStatus: "proposed",
+  requiresManualReview: true,
+  evidenceSummary: "shared bundle integration feedback decision",
+  createdAt: "2026-05-24T10:15:00.000Z",
+  updatedAt: "2026-05-24T10:15:00.000Z"
+});
+
 const withPgClient = async <T>(connectionString: string, work: (client: Client) => Promise<T>): Promise<T> => {
   const client = new Client({ connectionString });
   await client.connect();
@@ -186,7 +211,7 @@ const withIntegrationRepositories = async <T>(
 
 const integrationTest = INTEGRATION_DATABASE_URL ? test : test.skip;
 
-integrationTest("shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate against real Postgres", async () => {
+integrationTest("shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate -> feedback decision against real Postgres", async () => {
   await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
     await repositories.setupDefinitionRepository.create({
       definition: buildSetupDefinition("setup-001"),
@@ -208,6 +233,30 @@ integrationTest("shared implemented-product bundle persists setup -> candidate -
       aggregate: buildAggregate("aggregate-001", "setup-001", "hypothesis-001"),
       metadata
     });
+    await repositories.researchFeedbackDecisionRepository.create({
+      decision: buildFeedbackDecision(
+        "feedback-001",
+        "setup-001",
+        "hypothesis-001",
+        "aggregate-001"
+      ),
+      metadata
+    });
+    const updatedFeedbackDecision =
+      await repositories.researchFeedbackDecisionRepository.updateStatus({
+        researchFeedbackDecisionId: "feedback-001",
+        status: "accepted",
+        reviewerMetadata: {
+          reviewedBy: "reviewer-001",
+          reviewedAt: "2026-05-24T10:30:00.000Z",
+          approvalOutcome: "approved"
+        },
+        metadata: {
+          ...metadata,
+          sourceObservedAtUtc: "2026-05-24T10:30:00.000Z"
+        },
+        expectedVersion: 1
+      });
 
     const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
     const storedEvaluation =
@@ -220,14 +269,24 @@ integrationTest("shared implemented-product bundle persists setup -> candidate -
         "setup-001",
         buildAggregate("aggregate-001", "setup-001", "hypothesis-001").aggregationScope
       );
+    const storedFeedbackDecision =
+      await repositories.researchFeedbackDecisionRepository.getById("feedback-001");
     const aggregateRows = await repositories.prismaClient.setupAggregateResultRecord.findMany({
       orderBy: { setupAggregateResultId: "asc" }
     });
+    const feedbackDecisionRows =
+      await repositories.prismaClient.researchFeedbackDecisionRecord.findMany({
+        orderBy: { researchFeedbackDecisionId: "asc" }
+      });
 
     assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
     assert.equal(storedEvaluation?.id, "result-001");
     assert.equal(storedAggregate?.status, "completed");
+    assert.equal(updatedFeedbackDecision?.decisionStatus, "accepted");
+    assert.equal(storedFeedbackDecision?.reviewerMetadata?.reviewedBy, "reviewer-001");
     assert.equal(aggregateRows.length, 1);
     assert.equal(aggregateRows[0]?.completedEvaluations, 1);
+    assert.equal(feedbackDecisionRows.length, 1);
+    assert.equal(feedbackDecisionRows[0]?.decisionStatus, "accepted");
   });
 });

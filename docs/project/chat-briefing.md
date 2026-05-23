@@ -47,6 +47,7 @@ Current product-domain scope includes:
   - `docs/project/setup-aggregate-relational-persistence-model.md`
   - `docs/project/setup-aggregate-relational-rollout-model.md`
   - `docs/project/implemented-product-relational-composition-model.md`
+  - `docs/project/implemented-product-feedback-decision-composition-model.md`
   - `docs/project/research-feedback-decision-relational-persistence-model.md`
   - `docs/project/research-feedback-decision-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
@@ -66,6 +67,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-034-research-feedback-decision-durable-relational-contract.md`
   - `docs/architecture/adr/ADR-035-research-feedback-decision-prisma-schema-layout.md`
   - `docs/architecture/adr/ADR-036-research-feedback-decision-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-037-implemented-product-feedback-decision-composition.md`
 
 ## Current constraints
 - spot-only scope
@@ -94,13 +96,13 @@ Current product-domain scope includes:
   - `evaluation_result`
   - `setup_aggregate_result`
   - `research_feedback_decision`
-- one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now exist for the current core research chain
-- `research_feedback_decision` is now the first downstream review/governance entity with per-entity durable parity, but it is not yet included in the shared implemented-product bundle
+- one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now exist for the full implemented research chain through `research_feedback_decision`
+- the next downstream durable persistence gap is now `research_decision_approval`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- extend the shared implemented-product repository bundle and end-to-end real-Postgres integration path through `research_feedback_decision`
+- define the durable relational contract for `research_decision_approval`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

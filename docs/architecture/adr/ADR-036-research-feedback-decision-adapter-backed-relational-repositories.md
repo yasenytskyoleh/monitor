@@ -56,3 +56,4 @@ Tradeoffs:
 ## Follow-up
 - extend the shared implemented-product Prisma-backed repository bundle through `research_feedback_decision`
 - add end-to-end real-database integration coverage across setup -> candidate -> evaluation -> aggregate -> feedback decision flows
+- both follow-up items are completed later in ADR-037

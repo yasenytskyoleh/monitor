@@ -24,12 +24,11 @@ Durable relational coverage now exists for the core research chain:
   - `signal_candidate`
   - `evaluation_result`
   - `setup_aggregate_result`
-- one shared Prisma-backed repository bundle and one end-to-end integration path for setup -> candidate -> evaluation -> aggregate
+- one shared Prisma-backed repository bundle and one end-to-end integration path for setup -> candidate -> evaluation -> aggregate -> feedback decision
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-Postgres integration coverage now also exist for `research_feedback_decision`
 
 Still pending:
-- extension of the shared implemented-product bundle through `research_feedback_decision`
-- extension of the end-to-end integration path through feedback decisions
+- durable relational contract/schema planning for `research_decision_approval`
 - later review/approval/execution durable slices
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines

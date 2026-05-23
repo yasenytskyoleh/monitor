@@ -41,3 +41,4 @@ Tradeoffs:
 
 ## Follow-up
 - extend the shared implemented-product repository bundle and end-to-end real-Postgres integration path through `research_feedback_decision`
+- this follow-up is completed later in ADR-037
