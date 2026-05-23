@@ -16,6 +16,7 @@ Implemented in-memory persistence and service-owned write paths exist today for:
 - `EvaluationResult`
 - `SetupAggregateResult`
 - `ResearchFeedbackDecision`
+- `ResearchDecisionApproval`
 
 Durable relational coverage now exists for the core research chain:
 - committed contracts, schema/migrations, adapter-backed repositories, and concrete Prisma adapters for:
@@ -26,9 +27,11 @@ Durable relational coverage now exists for the core research chain:
   - `setup_aggregate_result`
 - one shared Prisma-backed repository bundle and one end-to-end integration path for setup -> candidate -> evaluation -> aggregate -> feedback decision
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-Postgres integration coverage now also exist for `research_feedback_decision`
+- a committed durable relational contract now also exists for `research_decision_approval`
 
 Still pending:
-- durable relational contract/schema planning for `research_decision_approval`
+- physical Prisma schema and SQL migration layout for `research_decision_approval`
+- adapter-backed repository, concrete Prisma adapter, shared composition extension, and opt-in real-Postgres integration rollout for `research_decision_approval`
 - later review/approval/execution durable slices
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
@@ -45,6 +48,7 @@ Repository abstractions:
 - `ResearchHypothesisRepository`
 - `SetupAggregateResultRepository`
 - `ResearchFeedbackDecisionRepository`
+- `ResearchDecisionApprovalRepository`
 
 Implemented concrete repositories in the current baseline:
 - `InMemorySetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-repository.impl.ts`)
@@ -53,6 +57,7 @@ Implemented concrete repositories in the current baseline:
 - `InMemoryEvaluationResultRepository` (`packages/domain-model/src/repositories/evaluation-result-repository.impl.ts`)
 - `InMemorySetupAggregateResultRepository` (`packages/domain-model/src/repositories/setup-aggregate-result-repository.impl.ts`)
 - `InMemoryResearchFeedbackDecisionRepository` (`packages/domain-model/src/repositories/research-feedback-decision-repository.impl.ts`)
+- `InMemoryResearchDecisionApprovalRepository` (`packages/domain-model/src/repositories/research-decision-approval-repository.impl.ts`)
 - `RelationalSetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-relational-repository.impl.ts`)
 - `RelationalResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-relational-repository.impl.ts`)
 - `RelationalSignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-relational-repository.impl.ts`)
@@ -105,6 +110,7 @@ First persisted slice write-path rules now implemented:
   - controls hypothesis status transitions
   - owns controlled setup linkage for hypotheses
   - records `ResearchFeedbackDecision` recommendations from hypothesis evidence and owns decision-status review updates
+  - records `ResearchDecisionApproval` artifacts from manual review outcomes
 - `SignalCandidateService`
   - validates required fields (`id`, `setupDefinitionId`, `monitoredSymbolId`, `detectedAt`, `status`, `evidenceSummary`)
   - validates referenced setup definition and monitored symbol boundaries
@@ -137,13 +143,14 @@ Ownership direction:
 - `research_hypothesis` -> `research_service`
 - `setup_aggregate_result` -> `research_aggregation_service`
 - `research_feedback_decision` -> `research_service`
+- `research_decision_approval` -> `research_service`
 
 ## Mapping rules
 1. repositories return domain-shaped records (not runner artifact shapes)
 2. persistence metadata (`originRunId`, `traceId`) may be attached through metadata contracts
 3. runtime evidence files remain separate from product-domain storage
 4. one domain contract does not force one-table implementation in this slice
-5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, and research feedback decisions
+5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, and research decision approvals
 
 ## Orchestrator handoff boundary
 - orchestrator workflows may trigger future product-domain services
@@ -154,6 +161,7 @@ Ownership direction:
 - `packages/domain-model/src/storage/first-durable-relational-slice.ts`
 - `packages/domain-model/src/storage/research-feedback-decision-relational-slice.ts`
 - `packages/domain-model/src/storage/research-feedback-decision-relational-physical-schema.ts`
+- `packages/domain-model/src/storage/research-decision-approval-relational-slice.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-mappers.ts`
 - `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-adapter.ts`

@@ -28,7 +28,8 @@ This step does not add new business rules. It extends the already-shared persist
 - the next persistence task can move from shared bundle extension into the next downstream review/governance durable slice
 
 ## What remains pending
-- durable relational contract and schema planning for `research_decision_approval`
+- durable relational contract for `research_decision_approval` is completed later in `docs/architecture/adr/ADR-038-research-decision-approval-durable-relational-contract.md`
+- physical Prisma schema and SQL migration layout for `research_decision_approval`
 - later durable slices for other review/execution entities
 - runtime detection, evaluation, aggregation, and review engines
 - exchange ingestion and UI work

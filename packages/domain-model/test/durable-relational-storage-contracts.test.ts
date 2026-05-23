@@ -7,6 +7,8 @@ import {
   type EvaluationResultDurableRecord,
   FIRST_DURABLE_RELATIONAL_ENTITY_TYPES,
   type ProductRecordMetadata,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_ENTITY_TYPES,
+  type ResearchDecisionApprovalDurableRecord,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_ENTITY_TYPES,
   type ResearchFeedbackDecisionDurableRecord,
   type ResearchHypothesisDurableRecord,
@@ -274,4 +276,40 @@ test("supports typed research-feedback-decision durable records", () => {
   assert.equal(feedbackDecisionRecord.identity.version, 2);
   assert.equal(feedbackDecisionRecord.decisionStatus, "accepted");
   assert.equal(feedbackDecisionRecord.reviewerMetadata?.reviewedBy, "reviewer-001");
+});
+
+test("exposes research-decision-approval durable relational storage planning constants", () => {
+  assert.deepEqual(RESEARCH_DECISION_APPROVAL_RELATIONAL_ENTITY_TYPES, [
+    "research_decision_approval"
+  ]);
+});
+
+test("supports typed research-decision-approval durable records", () => {
+  const approvalRecord: ResearchDecisionApprovalDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "research_decision_approval",
+      entityId: "approval-001",
+      version: 1,
+      relatedEntityIds: ["feedback-001", "setup-001"]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-05-24T09:00:00.000Z",
+    updatedAtUtc: "2026-05-24T09:00:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    approvalStatus: "recorded",
+    researchFeedbackDecisionId: "feedback-001",
+    setupDefinitionId: "setup-001",
+    reviewedBy: "reviewer-001",
+    reviewedAtUtc: "2026-05-24T09:00:00.000Z",
+    approvalOutcome: "approved",
+    reviewerNotes: "Approved after manual review.",
+    authorizedNextAction: "keep_active"
+  };
+
+  assert.equal(approvalRecord.identity.version, 1);
+  assert.equal(approvalRecord.approvalOutcome, "approved");
+  assert.equal(approvalRecord.authorizedNextAction, "keep_active");
 });

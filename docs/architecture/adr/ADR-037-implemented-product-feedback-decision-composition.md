@@ -27,7 +27,7 @@ This includes:
 Positive:
 - the full implemented research chain now has one coherent shared persistence bundle
 - shared bundle coverage now reaches the first downstream review/governance entity
-- the next persistence task can move into `research_decision_approval` durable planning
+- the next persistence task can move into the `research_decision_approval` slice
 
 Tradeoffs:
 - the shared bundle still stops before approval and later review/execution entities
@@ -41,4 +41,4 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- define the durable relational contract for `research_decision_approval`
+- the durable relational contract for `research_decision_approval` is completed later in `ADR-038`

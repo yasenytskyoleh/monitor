@@ -54,6 +54,13 @@ export type {
   ResearchFeedbackDecisionRelationalEntityType
 } from "./research-feedback-decision-relational-slice.js";
 export {
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_ENTITY_TYPES
+} from "./research-decision-approval-relational-slice.js";
+export type {
+  ResearchDecisionApprovalDurableRecord,
+  ResearchDecisionApprovalRelationalEntityType
+} from "./research-decision-approval-relational-slice.js";
+export {
   FIRST_DURABLE_RELATIONAL_DATABASE_SCHEMA,
   FIRST_DURABLE_RELATIONAL_INDEXES,
   FIRST_DURABLE_RELATIONAL_MIGRATION_SLUG,

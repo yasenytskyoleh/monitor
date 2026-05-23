@@ -22,10 +22,11 @@ Current product-domain scope includes:
   - evaluation contracts (`EvaluationInput`, `EvaluationWindow`, `EvaluationResult`, `EvaluationMetrics`, `EvaluationStatus`)
   - research evidence contracts (`AggregationScope`, `SetupAggregateResult`, `SetupComparison`, `ResearchHypothesisEvidenceLink`)
   - research feedback contracts (`ResearchFeedbackDecision`)
+  - research review contracts (`ResearchDecisionApproval`)
   - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
   - repository contracts (`*Repository` interfaces)
   - service contracts (`*Service` interfaces + write-path ownership)
-  - implemented in-memory persistence for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, and `ResearchFeedbackDecision`
+  - implemented in-memory persistence for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, `ResearchFeedbackDecision`, and `ResearchDecisionApproval`
   - hypothesis/run contracts (`ResearchHypothesis`, `ResearchRun`)
 - docs and ADRs:
   - `docs/project/domain-model.md`
@@ -50,6 +51,7 @@ Current product-domain scope includes:
   - `docs/project/implemented-product-feedback-decision-composition-model.md`
   - `docs/project/research-feedback-decision-relational-persistence-model.md`
   - `docs/project/research-feedback-decision-relational-rollout-model.md`
+  - `docs/project/research-decision-approval-relational-persistence-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -68,6 +70,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-035-research-feedback-decision-prisma-schema-layout.md`
   - `docs/architecture/adr/ADR-036-research-feedback-decision-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-037-implemented-product-feedback-decision-composition.md`
+  - `docs/architecture/adr/ADR-038-research-decision-approval-durable-relational-contract.md`
 
 ## Current constraints
 - spot-only scope
@@ -82,6 +85,7 @@ Current product-domain scope includes:
   - `evaluation_result`
   - `setup_aggregate_result`
   - `research_feedback_decision`
+  - `research_decision_approval`
 - committed Prisma schema/migrations now exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -97,12 +101,12 @@ Current product-domain scope includes:
   - `setup_aggregate_result`
   - `research_feedback_decision`
 - one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now exist for the full implemented research chain through `research_feedback_decision`
-- the next downstream durable persistence gap is now `research_decision_approval`
+- the next downstream durable persistence gap is now the physical schema and migration layout for `research_decision_approval`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- define the durable relational contract for `research_decision_approval`
+- define the physical Prisma schema and SQL migration layout for `research_decision_approval`
 
 ## Behavioral instructions for future assistants
 When continuing this project:
