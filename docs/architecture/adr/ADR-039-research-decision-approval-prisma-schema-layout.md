@@ -44,5 +44,6 @@ Tradeoffs:
 - shared implemented-product bundle extension through approvals
 
 ## Follow-up
+- repository adapter contract for `research_decision_approval` is completed later in ADR-040
 - repository/adapter implementation for `research_decision_approval`
 - extend the shared implemented-product repository bundle and end-to-end real-Postgres integration path through `research_decision_approval`

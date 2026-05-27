@@ -52,6 +52,7 @@ Current product-domain scope includes:
   - `docs/project/research-feedback-decision-relational-persistence-model.md`
   - `docs/project/research-feedback-decision-relational-rollout-model.md`
   - `docs/project/research-decision-approval-relational-persistence-model.md`
+  - `docs/project/research-decision-approval-relational-adapter-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -72,6 +73,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-037-implemented-product-feedback-decision-composition.md`
   - `docs/architecture/adr/ADR-038-research-decision-approval-durable-relational-contract.md`
   - `docs/architecture/adr/ADR-039-research-decision-approval-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-040-research-decision-approval-relational-adapter-contract.md`
 
 ## Current constraints
 - spot-only scope
@@ -95,6 +97,14 @@ Current product-domain scope includes:
   - `setup_aggregate_result`
   - `research_feedback_decision`
   - `research_decision_approval`
+- repository adapter contracts now also exist for:
+  - `setup_definition`
+  - `research_hypothesis`
+  - `signal_candidate`
+  - `evaluation_result`
+  - `setup_aggregate_result`
+  - `research_feedback_decision`
+  - `research_decision_approval`
 - adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -103,12 +113,12 @@ Current product-domain scope includes:
   - `setup_aggregate_result`
   - `research_feedback_decision`
 - one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now exist for the full implemented research chain through `research_feedback_decision`
-- the next downstream durable persistence gap is now the adapter-backed repository and concrete Prisma adapter rollout for `research_decision_approval`
+- the next downstream durable persistence gap is now the domain/durable mapper, adapter-backed repository, and concrete Prisma adapter rollout for `research_decision_approval`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- add the adapter-backed repository and concrete Prisma adapter for `research_decision_approval`
+- add the domain/durable mappers, adapter-backed repository, and concrete Prisma adapter for `research_decision_approval`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

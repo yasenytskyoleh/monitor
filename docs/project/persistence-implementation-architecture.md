@@ -27,10 +27,10 @@ Durable relational coverage now exists for the core research chain:
   - `setup_aggregate_result`
 - one shared Prisma-backed repository bundle and one end-to-end integration path for setup -> candidate -> evaluation -> aggregate -> feedback decision
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-Postgres integration coverage now also exist for `research_feedback_decision`
-- a committed durable relational contract and physical schema now also exist for `research_decision_approval`
+- a committed durable relational contract, physical schema, and adapter contract now also exist for `research_decision_approval`
 
 Still pending:
-- adapter-backed repository, concrete Prisma adapter, shared composition extension, and opt-in real-Postgres integration rollout for `research_decision_approval`
+- domain/durable mappers, adapter-backed repository, concrete Prisma adapter, shared composition extension, and opt-in real-Postgres integration rollout for `research_decision_approval`
 - later review/approval/execution durable slices
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
@@ -162,6 +162,7 @@ Ownership direction:
 - `packages/domain-model/src/storage/research-feedback-decision-relational-physical-schema.ts`
 - `packages/domain-model/src/storage/research-decision-approval-relational-slice.ts`
 - `packages/domain-model/src/storage/research-decision-approval-relational-physical-schema.ts`
+- `packages/domain-model/src/repositories/research-decision-approval-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-mappers.ts`
 - `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-adapter.ts`

@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.17 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and approval-slice schema coverage**
+**Phase 1.18 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and approval-slice adapter-contract coverage**
 
 ## What this phase is about
 This phase is focused on:
@@ -22,7 +22,7 @@ The product side now proves that the repo can:
 - enforce service-owned write paths,
 - extend durable relational persistence through setup/research and signal/evaluation entities,
 - extend durable relational repository coverage into the first downstream review entity,
-- extend durable relational contract and physical-schema coverage into the next downstream approval entity,
+- extend durable relational contract, physical-schema, and adapter-contract coverage into the next downstream approval entity,
 - and run concrete Prisma-backed adapters and integration harnesses while keeping runtime engines pending.
 
 ## Implemented in this phase (current baseline)
@@ -176,6 +176,11 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/storage/research-decision-approval-relational-slice.ts`
   - `packages/domain-model/src/storage/research-decision-approval-relational-physical-schema.ts`
   - `packages/domain-model/prisma/migrations/20260527103000_product_domain_research_decision_approval_relational_v1/migration.sql`
+- research-decision-approval relational adapter contract:
+  - `docs/project/research-decision-approval-relational-adapter-model.md`
+  - `docs/architecture/adr/ADR-040-research-decision-approval-relational-adapter-contract.md`
+  - `packages/domain-model/src/repositories/research-decision-approval-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/research-decision-approval-relational-repository-adapter.impl.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -210,7 +215,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- add the adapter-backed repository and concrete Prisma adapter for `research_decision_approval`
+- add the domain/durable mappers, adapter-backed repository, and concrete Prisma adapter for `research_decision_approval`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -226,4 +231,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented research chain, one downstream feedback-decision repository rollout, and one approval-slice storage contract plus physical schema that make the next approval-adapter step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented research chain, one downstream feedback-decision repository rollout, and one approval-slice storage contract plus physical schema plus adapter boundary that make the next approval-repository step straightforward instead of speculative**.

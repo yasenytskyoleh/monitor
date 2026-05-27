@@ -111,6 +111,7 @@
 - shared implemented-product composition now extends through research-feedback-decision
 - research-decision-approval durable relational contract now exists
 - research-decision-approval Prisma physical schema and migration layout now exist
+- research-decision-approval relational adapter contract now exists
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -120,4 +121,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **adding the adapter-backed repository and concrete Prisma adapter for `research_decision_approval`**
+- the currently recommended next step is **adding the domain/durable mappers, adapter-backed repository, and concrete Prisma adapter for `research_decision_approval`**

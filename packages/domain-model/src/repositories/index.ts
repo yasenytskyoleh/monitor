@@ -49,6 +49,14 @@ export type {
   ResearchFeedbackDecisionRelationalRepositoryAdapter,
   ResearchFeedbackDecisionRelationalRetryableErrorCode
 } from "./research-feedback-decision-relational-repository-adapter.js";
+export type {
+  ResearchDecisionApprovalRecordWriteRequest,
+  ResearchDecisionApprovalRelationalAdapterErrorMapping,
+  ResearchDecisionApprovalRelationalAdapterOperation,
+  ResearchDecisionApprovalRelationalDeterministicErrorCode,
+  ResearchDecisionApprovalRelationalRepositoryAdapter,
+  ResearchDecisionApprovalRelationalRetryableErrorCode
+} from "./research-decision-approval-relational-repository-adapter.js";
 export {
   FIRST_DURABLE_RELATIONAL_ADAPTER_ERROR_MAPPING,
   FIRST_DURABLE_RELATIONAL_ADAPTER_OPERATIONS,
@@ -77,6 +85,13 @@ export {
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_RETRYABLE_ERROR_CODES,
   isResearchFeedbackDecisionRelationalDeterministicErrorCode
 } from "./research-feedback-decision-relational-repository-adapter.js";
+export {
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_ADAPTER_OPERATIONS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isResearchDecisionApprovalRelationalDeterministicErrorCode
+} from "./research-decision-approval-relational-repository-adapter.js";
 export {
   composeFirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
@@ -147,6 +162,12 @@ export type {
 export {
   InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter
 } from "./research-feedback-decision-relational-repository-adapter.impl.js";
+export type {
+  ResearchDecisionApprovalRelationalReferenceReader
+} from "./research-decision-approval-relational-repository-adapter.impl.js";
+export {
+  InMemoryResearchDecisionApprovalRelationalRepositoryAdapter
+} from "./research-decision-approval-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,

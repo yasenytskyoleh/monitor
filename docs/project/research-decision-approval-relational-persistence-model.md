@@ -21,10 +21,12 @@ without yet introducing:
 - `packages/domain-model/src/storage/research-decision-approval-relational-physical-schema.ts`
 - `packages/domain-model/prisma/schema.prisma`
 - `packages/domain-model/prisma/migrations/20260527103000_product_domain_research_decision_approval_relational_v1/migration.sql`
+- `packages/domain-model/src/repositories/research-decision-approval-relational-repository-adapter.ts`
 - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
 - `packages/domain-model/test/prisma-physical-schema-contracts.test.ts`
 - `docs/architecture/adr/ADR-038-research-decision-approval-durable-relational-contract.md`
 - `docs/architecture/adr/ADR-039-research-decision-approval-prisma-schema-layout.md`
+- `docs/architecture/adr/ADR-040-research-decision-approval-relational-adapter-contract.md`
 
 ## Durable record shape
 `ResearchDecisionApprovalDurableRecord` keeps:
@@ -97,6 +99,5 @@ Enum families:
 - reused `product_record_source`
 
 ## What remains pending
-- repository adapter contract and deterministic error mapping for `research_decision_approval`
 - domain/durable mappers, adapter-backed repository, and concrete Prisma adapter wiring
 - later review/execution durable slices
