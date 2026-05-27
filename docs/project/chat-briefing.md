@@ -53,6 +53,7 @@ Current product-domain scope includes:
   - `docs/project/research-feedback-decision-relational-rollout-model.md`
   - `docs/project/research-decision-approval-relational-persistence-model.md`
   - `docs/project/research-decision-approval-relational-adapter-model.md`
+  - `docs/project/research-decision-approval-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -74,6 +75,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-038-research-decision-approval-durable-relational-contract.md`
   - `docs/architecture/adr/ADR-039-research-decision-approval-prisma-schema-layout.md`
   - `docs/architecture/adr/ADR-040-research-decision-approval-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-041-research-decision-approval-adapter-backed-relational-repositories.md`
 
 ## Current constraints
 - spot-only scope
@@ -112,13 +114,15 @@ Current product-domain scope includes:
   - `evaluation_result`
   - `setup_aggregate_result`
   - `research_feedback_decision`
+- adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for:
+  - `research_decision_approval`
 - one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now exist for the full implemented research chain through `research_feedback_decision`
-- the next downstream durable persistence gap is now the domain/durable mapper, adapter-backed repository, and concrete Prisma adapter rollout for `research_decision_approval`
+- the next downstream durable persistence gap is now extending the shared implemented-product bundle through `research_decision_approval`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- add the domain/durable mappers, adapter-backed repository, and concrete Prisma adapter for `research_decision_approval`
+- extend the shared implemented-product bundle through `research_decision_approval`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

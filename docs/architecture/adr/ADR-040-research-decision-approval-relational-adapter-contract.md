@@ -50,4 +50,4 @@ Tradeoffs:
 - shared implemented-product bundle extension through approvals
 
 ## Follow-up
-- add the domain/durable mappers, adapter-backed repository, and concrete Prisma adapter for `research_decision_approval`
+- domain/durable mappers, adapter-backed repository, and concrete Prisma adapter rollout for `research_decision_approval` is completed later in ADR-041

@@ -220,6 +220,26 @@ test("approval relational adapter rejects missing setup-definition references de
   );
 });
 
+test("approval relational adapter rejects feedback decisions linked to a different setup", async () => {
+  const adapter = new InMemoryResearchDecisionApprovalRelationalRepositoryAdapter({
+    loadResearchFeedbackDecisionRecord: async () => buildFeedbackDecisionRecord("feedback-001"),
+    loadSetupDefinitionRecord: async () => buildSetupDefinitionRecord("setup-002")
+  });
+
+  await assert.rejects(
+    async () =>
+      adapter.insertResearchDecisionApprovalRecord({
+        record: buildApprovalRecord("approval-006", "feedback-001", "setup-002")
+      }),
+    (error: unknown) =>
+      error instanceof RepositoryError &&
+      error.code === "invalid_reference" &&
+      error.entityType === "research_decision_approval" &&
+      error.referenceEntityType === "research_feedback_decision" &&
+      error.referenceEntityId === "feedback-001"
+  );
+});
+
 test("approval relational adapter rejects mismatched feedback-decision setup references", async () => {
   const adapter = new InMemoryResearchDecisionApprovalRelationalRepositoryAdapter({
     loadResearchFeedbackDecisionRecord: async () =>
