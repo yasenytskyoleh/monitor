@@ -11,6 +11,11 @@ import {
   FIRST_DURABLE_RELATIONAL_PRISMA_MODELS,
   FIRST_DURABLE_RELATIONAL_REQUIRED_COLUMNS,
   FIRST_DURABLE_RELATIONAL_TABLES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_MIGRATION_SLUG,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS,
@@ -59,6 +64,13 @@ const researchFeedbackDecisionMigrationPath = join(
   "prisma",
   "migrations",
   "20260523091500_product_domain_research_feedback_decision_relational_v1",
+  "migration.sql"
+);
+const researchDecisionApprovalMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260527103000_product_domain_research_decision_approval_relational_v1",
   "migration.sql"
 );
 
@@ -409,5 +421,97 @@ test("migration creates the research-feedback-decision relational table, indexes
   assert.match(
     migration,
     /"decision_status" = 'proposed' AND\s+"reviewer_metadata" IS NULL/
+  );
+});
+
+test("exposes research-decision-approval physical schema constants", () => {
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_research_decision_approval_relational_v1"
+  );
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS.researchDecisionApprovalRecord,
+    "ResearchDecisionApprovalRecord"
+  );
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES.researchDecisionApproval,
+    "research_decision_approval"
+  );
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS.research_decision_approval.includes(
+      "authorized_next_action"
+    ),
+    true
+  );
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES.includes(
+      "idx_research_decision_approval_research_feedback_decision_id"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the research-decision-approval relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum ResearchDecisionApprovalStatus \{/);
+  assert.match(schema, /enum ResearchDecisionApprovalOutcome \{/);
+  assert.match(schema, /model ResearchDecisionApprovalRecord \{/);
+  assert.match(schema, /@@map\("research_decision_approval"\)/);
+
+  for (const tableName of Object.values(RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES)) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS)) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the research-decision-approval relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(researchDecisionApprovalMigrationPath, "utf8");
+
+  for (const tableName of Object.values(RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES)) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("research_feedback_decision_id"\)\s+REFERENCES "product_domain"\."research_feedback_decision"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /CHECK \(\s*length\(trim\("reviewed_by"\)\) > 0/
+  );
+  assert.match(
+    migration,
+    /"approval_outcome" = 'approved' AND\s+"authorized_next_action" IS NOT NULL/
+  );
+  assert.match(
+    migration,
+    /"created_at_utc" <= "reviewed_at_utc" AND\s+"updated_at_utc" >= "reviewed_at_utc"/
   );
 });

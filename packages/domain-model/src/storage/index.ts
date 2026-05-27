@@ -113,6 +113,18 @@ export type {
   ResearchFeedbackDecisionRelationalPrismaModelName,
   ResearchFeedbackDecisionRelationalTableName
 } from "./research-feedback-decision-relational-physical-schema.js";
+export {
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES
+} from "./research-decision-approval-relational-physical-schema.js";
+export type {
+  ResearchDecisionApprovalRelationalIndexName,
+  ResearchDecisionApprovalRelationalPrismaModelName,
+  ResearchDecisionApprovalRelationalTableName
+} from "./research-decision-approval-relational-physical-schema.js";
 
 export type {
   EntityIdentity,

@@ -110,6 +110,7 @@
 - research-feedback-decision adapter-backed relational repository and concrete Prisma adapter now exist
 - shared implemented-product composition now extends through research-feedback-decision
 - research-decision-approval durable relational contract now exists
+- research-decision-approval Prisma physical schema and migration layout now exist
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -119,4 +120,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **defining the physical Prisma schema and SQL migration layout for `research_decision_approval`**
+- the currently recommended next step is **adding the adapter-backed repository and concrete Prisma adapter for `research_decision_approval`**

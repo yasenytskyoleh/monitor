@@ -42,3 +42,4 @@ Tradeoffs:
 
 ## Follow-up
 - the durable relational contract for `research_decision_approval` is completed later in `ADR-038`
+- the physical Prisma schema and SQL migration for `research_decision_approval` are completed later in `ADR-039`

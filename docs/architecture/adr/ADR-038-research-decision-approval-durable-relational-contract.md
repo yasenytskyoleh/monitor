@@ -42,4 +42,4 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- commit the Prisma physical schema and SQL migration for `research_decision_approval`
+- the Prisma physical schema and SQL migration for `research_decision_approval` are completed in ADR-039
