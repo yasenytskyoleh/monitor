@@ -28,7 +28,7 @@ This step does not add new product rules. It proves that the already-shared repo
 - the next persistence task can move to the next downstream durable slice instead of more approval-chain infrastructure work
 
 ## What remains pending
-- durable relational rollout for `research_review_decision`
+- physical schema and repository rollout for `research_review_decision`
 - later durable slices for other review/execution entities
 - runtime detection, evaluation, aggregation, and review engines
 - exchange ingestion and UI work

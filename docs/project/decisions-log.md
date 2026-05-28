@@ -88,6 +88,7 @@
   - `SetupAggregateResult`
   - `ResearchFeedbackDecision`
   - `ResearchDecisionApproval`
+  - `ResearchReviewDecision`
 - first durable relational persistence contract now exists for:
   - `setup_definition`
   - `research_hypothesis`
@@ -115,6 +116,7 @@
 - research-decision-approval adapter-backed relational repository and concrete Prisma adapter now exist
 - shared implemented-product composition now extends through research-decision-approval
 - shared implemented-product real-Postgres integration now extends through research-decision-approval
+- research-review-decision durable relational contract now exists
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -124,4 +126,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **defining the first durable relational contract for `research_review_decision`**
+- the currently recommended next step is **adding the physical Prisma schema and SQL migration for `research_review_decision`**

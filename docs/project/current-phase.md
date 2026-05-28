@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.21 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and approval-chain integration coverage**
+**Phase 1.22 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, approval-chain integration coverage, and review-decision contract planning**
 
 ## What this phase is about
 This phase is focused on:
@@ -21,7 +21,7 @@ The product side now proves that the repo can:
 - maintain implemented in-memory persistence,
 - enforce service-owned write paths,
 - extend durable relational persistence through setup/research and signal/evaluation entities,
-- extend durable relational repository coverage into the first downstream review entity,
+- extend durable relational contract coverage into the next downstream review entity,
 - extend durable relational repository coverage into the first downstream approval entity,
 - and run concrete Prisma-backed adapters and integration harnesses while keeping runtime engines pending.
 
@@ -198,6 +198,10 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/repositories/research-decision-approval-relational-repositories.ts`
   - `packages/domain-model/src/repositories/research-decision-approval-relational-prisma-adapter.ts`
   - `packages/domain-model/src/repositories/research-decision-approval-relational-prisma-client.ts`
+- research-review-decision durable relational contract:
+  - `docs/project/research-review-decision-relational-persistence-model.md`
+  - `docs/architecture/adr/ADR-044-research-review-decision-durable-relational-contract.md`
+  - `packages/domain-model/src/storage/research-review-decision-relational-slice.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -206,6 +210,7 @@ The product side now proves that the repo can:
   - `SetupAggregateResult`
   - `ResearchFeedbackDecision`
   - `ResearchDecisionApproval`
+  - `ResearchReviewDecision`
 - repository/service implementation architecture with durable relational persistence pending:
   - `docs/project/persistence-implementation-architecture.md`
   - `docs/project/first-persisted-slice.md`
@@ -232,7 +237,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- define the first durable relational contract for `research_review_decision`
+- add the physical Prisma schema and SQL migration for `research_review_decision`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -248,4 +253,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through approvals, one shared approval-chain real-database integration flow, one downstream feedback-decision repository rollout, and one approval-slice repository rollout that make the next review-decision contract step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through approvals, one shared approval-chain real-database integration flow, one downstream feedback-decision repository rollout, one approval-slice repository rollout, and one explicit review-decision contract step that make the next schema slice straightforward instead of speculative**.

@@ -33,11 +33,12 @@ Tradeoffs:
 - the approval integration harness is still opt-in and depends on `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL`
 
 ## Explicitly not included
-- durable relational contract work for `research_review_decision`
+- physical schema or repository rollout work for `research_review_decision`
 - later review/execution durable slices
 - runtime approval/review engines
 - exchange ingestion
 - UI work
 
 ## Follow-up
-- define the first durable relational contract for `research_review_decision`
+- the durable relational contract for `research_review_decision` is completed in ADR-044
+- add the Prisma physical schema and SQL migration for `research_review_decision`

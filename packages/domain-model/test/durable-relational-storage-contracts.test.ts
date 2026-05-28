@@ -9,6 +9,8 @@ import {
   type ProductRecordMetadata,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_ENTITY_TYPES,
   type ResearchDecisionApprovalDurableRecord,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_ENTITY_TYPES,
+  type ResearchReviewDecisionDurableRecord,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_ENTITY_TYPES,
   type ResearchFeedbackDecisionDurableRecord,
   type ResearchHypothesisDurableRecord,
@@ -312,4 +314,42 @@ test("supports typed research-decision-approval durable records", () => {
   assert.equal(approvalRecord.identity.version, 1);
   assert.equal(approvalRecord.approvalOutcome, "approved");
   assert.equal(approvalRecord.authorizedNextAction, "keep_active");
+});
+
+test("exposes research-review-decision durable relational storage planning constants", () => {
+  assert.deepEqual(RESEARCH_REVIEW_DECISION_RELATIONAL_ENTITY_TYPES, [
+    "research_review_decision"
+  ]);
+});
+
+test("supports typed research-review-decision durable records", () => {
+  const reviewDecisionRecord: ResearchReviewDecisionDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "research_review_decision",
+      entityId: "review-decision:packet-001:2026-05-28T09:30:00.000Z:reviewer-001",
+      version: 1,
+      relatedEntityIds: ["packet-001", "setup-family-001", "setup-rev-002", "hypothesis-001"]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-05-28T09:30:00.000Z",
+    updatedAtUtc: "2026-05-28T09:31:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    decisionStatus: "recorded",
+    researchReviewPacketId: "packet-001",
+    setupFamilyId: "setup-family-001",
+    setupRevisionId: "setup-rev-002",
+    researchHypothesisId: "hypothesis-001",
+    reviewedBy: "reviewer-001",
+    reviewedAtUtc: "2026-05-28T09:30:00.000Z",
+    decisionOutcome: "accepted",
+    reviewerNotes: "Evidence is sufficient for no-change confirmation.",
+    authorizedNextAction: "confirm_no_change"
+  };
+
+  assert.equal(reviewDecisionRecord.identity.version, 1);
+  assert.equal(reviewDecisionRecord.decisionOutcome, "accepted");
+  assert.equal(reviewDecisionRecord.authorizedNextAction, "confirm_no_change");
 });

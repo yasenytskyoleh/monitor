@@ -1,7 +1,7 @@
 # Next Steps
 
 ## Current recommended next step
-### Define the first durable relational contract for `research_review_decision`
+### Add the physical Prisma schema and SQL migration for `research_review_decision`
 
 Reason:
 - the full implemented research chain now has:
@@ -21,14 +21,16 @@ Reason:
   - slice-level shared composition
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_decision_approval`
 - one end-to-end real-Postgres integration path now also spans the full implemented product chain through `research_decision_approval`
-- the next downstream service-owned persistence gap is now `research_review_decision`
+- `research_review_decision` now also has:
+  - a durable relational contract
 - that entity already exists in the domain model and in implemented in-memory persistence
-- it still has no durable relational contract, physical schema, adapter boundary, or relational repository rollout
+- the next downstream service-owned persistence gap is now the physical schema layer for `research_review_decision`
+- it still has no committed Prisma schema, SQL migration, adapter boundary, or relational repository rollout
 - runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
 
 ## Recommended near-future sequence
-1. define the first durable relational contract for `research_review_decision`
-2. add the physical schema, adapter boundary, and repository rollout for `research_review_decision`
+1. add the physical Prisma schema and SQL migration for `research_review_decision`
+2. add the adapter boundary and repository rollout for `research_review_decision`
 3. keep later review/execution entities deferred until the review-decision slice pattern is verified
 
 ## Things to avoid while moving forward
@@ -36,7 +38,7 @@ Reason:
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
 - expanding into runtime review/execution workflow logic prematurely
-- mixing setup-mutation or refinement execution behavior into the review-decision contract step
+- mixing setup-mutation or refinement execution behavior into the review-decision schema step
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

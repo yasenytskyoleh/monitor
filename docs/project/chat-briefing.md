@@ -22,11 +22,11 @@ Current product-domain scope includes:
   - evaluation contracts (`EvaluationInput`, `EvaluationWindow`, `EvaluationResult`, `EvaluationMetrics`, `EvaluationStatus`)
   - research evidence contracts (`AggregationScope`, `SetupAggregateResult`, `SetupComparison`, `ResearchHypothesisEvidenceLink`)
   - research feedback contracts (`ResearchFeedbackDecision`)
-  - research review contracts (`ResearchDecisionApproval`)
+  - research review contracts (`ResearchDecisionApproval`, `ResearchReviewDecision`)
   - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
   - repository contracts (`*Repository` interfaces)
   - service contracts (`*Service` interfaces + write-path ownership)
-  - implemented in-memory persistence for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, `ResearchFeedbackDecision`, and `ResearchDecisionApproval`
+  - implemented in-memory persistence for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, `ResearchFeedbackDecision`, `ResearchDecisionApproval`, and `ResearchReviewDecision`
   - hypothesis/run contracts (`ResearchHypothesis`, `ResearchRun`)
 - docs and ADRs:
   - `docs/project/domain-model.md`
@@ -95,6 +95,7 @@ Current product-domain scope includes:
   - `setup_aggregate_result`
   - `research_feedback_decision`
   - `research_decision_approval`
+  - `research_review_decision`
 - committed Prisma schema/migrations now exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -122,12 +123,12 @@ Current product-domain scope includes:
   - `research_decision_approval`
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_decision_approval`
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `research_decision_approval`
-- the next downstream durable persistence gap is now `research_review_decision`
+- the next downstream durable persistence gap is now the physical schema layer for `research_review_decision`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- define the first durable relational contract for `research_review_decision`
+- add the physical Prisma schema and SQL migration for `research_review_decision`
 
 ## Behavioral instructions for future assistants
 When continuing this project:
