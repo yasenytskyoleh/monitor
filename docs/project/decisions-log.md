@@ -113,6 +113,7 @@
 - research-decision-approval Prisma physical schema and migration layout now exist
 - research-decision-approval relational adapter contract now exists
 - research-decision-approval adapter-backed relational repository and concrete Prisma adapter now exist
+- shared implemented-product composition now extends through research-decision-approval
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -122,4 +123,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **extending the shared implemented-product bundle through `research_decision_approval`**
+- the currently recommended next step is **adding opt-in real-Postgres integration coverage for the approval slice and extended shared bundle**

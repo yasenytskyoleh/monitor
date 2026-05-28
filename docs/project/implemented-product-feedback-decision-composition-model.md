@@ -32,6 +32,7 @@ This step does not add new business rules. It extends the already-shared persist
 - physical Prisma schema and SQL migration layout for `research_decision_approval` is completed later in `docs/architecture/adr/ADR-039-research-decision-approval-prisma-schema-layout.md`
 - repository adapter contract for `research_decision_approval` is completed later in `docs/architecture/adr/ADR-040-research-decision-approval-relational-adapter-contract.md`
 - domain/durable mappers, adapter-backed repository, and concrete Prisma adapter rollout for `research_decision_approval` is completed later in `docs/architecture/adr/ADR-041-research-decision-approval-adapter-backed-relational-repositories.md`
+- shared implemented-product bundle extension through `research_decision_approval` is completed later in `docs/architecture/adr/ADR-042-implemented-product-approval-composition.md`
 - later durable slices for other review/execution entities
 - runtime detection, evaluation, aggregation, and review engines
 - exchange ingestion and UI work

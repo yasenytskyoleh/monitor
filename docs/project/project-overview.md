@@ -96,6 +96,7 @@ Implemented today:
   - `docs/project/setup-aggregate-relational-rollout-model.md`
   - `docs/project/implemented-product-relational-composition-model.md`
   - `docs/project/implemented-product-feedback-decision-composition-model.md`
+  - `docs/project/implemented-product-approval-composition-model.md`
   - `docs/project/research-feedback-decision-relational-persistence-model.md`
   - `docs/project/research-feedback-decision-relational-rollout-model.md`
   - `docs/project/research-decision-approval-relational-persistence-model.md`
@@ -123,6 +124,7 @@ Implemented today:
   - `docs/architecture/adr/ADR-039-research-decision-approval-prisma-schema-layout.md`
   - `docs/architecture/adr/ADR-040-research-decision-approval-relational-adapter-contract.md`
   - `docs/architecture/adr/ADR-041-research-decision-approval-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-042-implemented-product-approval-composition.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -135,14 +137,15 @@ Current limitation:
   - repository adapter contracts now also exist through `research_decision_approval`
   - adapter-backed relational repositories, concrete Prisma adapters, and slice-level shared composition now exist for all five core-chain service-owned product entities, `research_feedback_decision`, and `research_decision_approval`
   - opt-in real-database integration coverage now exists for the five core-chain entities and for `research_feedback_decision`
-  - one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now exist for the full implemented research chain through `research_feedback_decision`
-  - the next downstream durable persistence gap is now extending the shared implemented-product bundle through `research_decision_approval`
+  - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_decision_approval`
+  - the end-to-end real-database integration flow still stops at `research_feedback_decision`
+  - the next downstream durable persistence gap is now approval-chain real-database integration coverage
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- extend the shared implemented-product bundle through `research_decision_approval`
+- add opt-in real-Postgres integration coverage for the approval slice and extended shared bundle
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

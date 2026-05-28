@@ -45,7 +45,7 @@ Tradeoffs:
 - opt-in real-Postgres integration coverage does not yet include the approval slice
 
 ## Explicitly not included
-- extending the shared implemented-product bundle through `research_decision_approval`
+- extending the shared implemented-product bundle through `research_decision_approval` is completed later in ADR-042
 - approval-slice opt-in real-Postgres integration coverage
 - later review/execution durable slices
 - runtime approval/review engines
@@ -53,5 +53,5 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- extend the shared implemented-product Prisma-backed repository bundle through `research_decision_approval`
+- shared implemented-product Prisma-backed repository bundle extension through `research_decision_approval` is completed later in ADR-042
 - add opt-in real-database integration coverage across setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval flows

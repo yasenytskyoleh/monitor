@@ -41,10 +41,10 @@ This step gives the first downstream approval entity the same per-entity durable
   - a concrete Prisma adapter
   - slice-level shared composition
 - the first downstream approval entity now matches the per-entity durable parity already established for the core research chain and for `research_feedback_decision`
-- the remaining approval-persistence work is now shared-bundle composition and real-database integration, not another speculative per-entity design pass
+- the remaining approval-persistence work is now real-database integration coverage, not another speculative per-entity or shared-composition design pass
 
 ## What remains pending
-- extend the shared implemented-product bundle through `research_decision_approval`
+- shared implemented-product bundle extension through `research_decision_approval` is completed later in `docs/architecture/adr/ADR-042-implemented-product-approval-composition.md`
 - add opt-in real-Postgres integration coverage for the approval slice and extended shared bundle
 - later review/execution durable slices
 - runtime detection, evaluation, aggregation, and review engines

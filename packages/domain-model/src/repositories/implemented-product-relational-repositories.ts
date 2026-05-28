@@ -5,6 +5,13 @@ import {
   composeFirstDurableRelationalRepositories,
   type FirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
+import type {
+  ResearchDecisionApprovalRelationalRepositoryAdapter
+} from "./research-decision-approval-relational-repository-adapter.js";
+import {
+  composeResearchDecisionApprovalRelationalRepositories,
+  type ResearchDecisionApprovalRelationalRepositories
+} from "./research-decision-approval-relational-repositories.js";
 import {
   composeResearchFeedbackDecisionRelationalRepositories,
   type ResearchFeedbackDecisionRelationalRepositories
@@ -32,13 +39,15 @@ export type ImplementedProductRelationalAdapters = {
   signalEvaluationAdapter: SignalEvaluationRelationalRepositoryAdapter;
   setupAggregateAdapter: SetupAggregateRelationalRepositoryAdapter;
   feedbackDecisionAdapter: ResearchFeedbackDecisionRelationalRepositoryAdapter;
+  approvalAdapter: ResearchDecisionApprovalRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalRepositories =
   FirstDurableRelationalRepositories &
   SignalEvaluationRelationalRepositories &
   SetupAggregateRelationalRepositories &
-  ResearchFeedbackDecisionRelationalRepositories;
+  ResearchFeedbackDecisionRelationalRepositories &
+  ResearchDecisionApprovalRelationalRepositories;
 
 export const composeImplementedProductRelationalRepositories = (
   adapters: ImplementedProductRelationalAdapters
@@ -46,5 +55,6 @@ export const composeImplementedProductRelationalRepositories = (
   ...composeFirstDurableRelationalRepositories(adapters.firstDurableAdapter),
   ...composeSignalEvaluationRelationalRepositories(adapters.signalEvaluationAdapter),
   ...composeSetupAggregateRelationalRepositories(adapters.setupAggregateAdapter),
-  ...composeResearchFeedbackDecisionRelationalRepositories(adapters.feedbackDecisionAdapter)
+  ...composeResearchFeedbackDecisionRelationalRepositories(adapters.feedbackDecisionAdapter),
+  ...composeResearchDecisionApprovalRelationalRepositories(adapters.approvalAdapter)
 });

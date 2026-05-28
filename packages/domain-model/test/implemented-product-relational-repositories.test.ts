@@ -4,11 +4,13 @@ import test from "node:test";
 import {
   composeImplementedProductRelationalRepositories,
   InMemoryFirstDurableRelationalRepositoryAdapter,
+  InMemoryResearchDecisionApprovalRelationalRepositoryAdapter,
   InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter,
   InMemorySetupAggregateRelationalRepositoryAdapter,
   InMemorySignalEvaluationRelationalRepositoryAdapter,
   type EvaluationResult,
   type ProductRecordMetadata,
+  type ResearchDecisionApproval,
   type ResearchFeedbackDecision,
   type ResearchHypothesis,
   type SetupAggregateResult,
@@ -137,24 +139,49 @@ const buildFeedbackDecision = (
   updatedAt: "2026-05-24T10:15:00.000Z"
 });
 
-test("implemented product repository composition supports the current end-to-end entity chain through feedback decisions", async () => {
+const buildApproval = (
+  id: string,
+  researchFeedbackDecisionId: string,
+  setupDefinitionId: string
+): ResearchDecisionApproval => ({
+  id,
+  researchFeedbackDecisionId,
+  setupDefinitionId,
+  reviewedBy: "reviewer-001",
+  reviewedAt: "2026-05-24T10:30:00.000Z",
+  approvalOutcome: "approved",
+  reviewerNotes: "Approved in composed bundle test.",
+  approvalStatus: "recorded",
+  authorizedNextAction: "keep_active",
+  createdAt: "2026-05-24T10:30:00.000Z",
+  updatedAt: "2026-05-24T10:30:00.000Z"
+});
+
+test("implemented product repository composition supports the current end-to-end entity chain through approvals", async () => {
   const firstDurableAdapter = new InMemoryFirstDurableRelationalRepositoryAdapter();
   const setupAggregateAdapter = new InMemorySetupAggregateRelationalRepositoryAdapter(
     firstDurableAdapter
   );
+  const feedbackDecisionAdapter = new InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter({
+    loadSetupDefinitionRecord:
+      firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter),
+    loadResearchHypothesisBundle:
+      firstDurableAdapter.loadResearchHypothesisBundle.bind(firstDurableAdapter),
+    loadSetupAggregateResultRecord:
+      setupAggregateAdapter.loadSetupAggregateResultRecord.bind(setupAggregateAdapter)
+  });
   const repositories = composeImplementedProductRelationalRepositories({
     firstDurableAdapter,
     signalEvaluationAdapter: new InMemorySignalEvaluationRelationalRepositoryAdapter(
       firstDurableAdapter
     ),
     setupAggregateAdapter,
-    feedbackDecisionAdapter: new InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter({
+    feedbackDecisionAdapter,
+    approvalAdapter: new InMemoryResearchDecisionApprovalRelationalRepositoryAdapter({
+      loadResearchFeedbackDecisionRecord:
+        feedbackDecisionAdapter.loadResearchFeedbackDecisionRecord.bind(feedbackDecisionAdapter),
       loadSetupDefinitionRecord:
-        firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter),
-      loadResearchHypothesisBundle:
-        firstDurableAdapter.loadResearchHypothesisBundle.bind(firstDurableAdapter),
-      loadSetupAggregateResultRecord:
-        setupAggregateAdapter.loadSetupAggregateResultRecord.bind(setupAggregateAdapter)
+        firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter)
     })
   });
 
@@ -187,6 +214,10 @@ test("implemented product repository composition supports the current end-to-end
     ),
     metadata
   });
+  await repositories.researchDecisionApprovalRepository.create({
+    approval: buildApproval("approval-001", "feedback-001", "setup-001"),
+    metadata
+  });
 
   const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
   const storedEvaluation = await repositories.evaluationResultRepository.getBySignalCandidateAndWindow(
@@ -200,9 +231,13 @@ test("implemented product repository composition supports the current end-to-end
     );
   const storedFeedbackDecision =
     await repositories.researchFeedbackDecisionRepository.getById("feedback-001");
+  const storedApproval =
+    await repositories.researchDecisionApprovalRepository.getById("approval-001");
 
   assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
   assert.equal(storedEvaluation?.id, "result-001");
   assert.equal(storedAggregate?.researchHypothesisId, "hypothesis-001");
   assert.equal(storedFeedbackDecision?.setupAggregateResultId, "aggregate-001");
+  assert.equal(storedApproval?.researchFeedbackDecisionId, "feedback-001");
+  assert.equal(storedApproval?.authorizedNextAction, "keep_active");
 });
