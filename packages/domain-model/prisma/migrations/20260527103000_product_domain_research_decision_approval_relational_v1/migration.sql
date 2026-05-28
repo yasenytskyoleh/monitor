@@ -70,11 +70,11 @@ CREATE TABLE "product_domain"."research_decision_approval" (
   )
 );
 
-CREATE INDEX "idx_research_decision_approval_research_feedback_decision_id"
-  ON "product_domain"."research_decision_approval" ("research_feedback_decision_id");
 CREATE INDEX "idx_research_decision_approval_setup_definition_id"
   ON "product_domain"."research_decision_approval" ("setup_definition_id");
 CREATE INDEX "idx_research_decision_approval_approval_outcome"
   ON "product_domain"."research_decision_approval" ("approval_outcome");
 CREATE INDEX "idx_research_decision_approval_authorized_next_action"
   ON "product_domain"."research_decision_approval" ("authorized_next_action");
+CREATE UNIQUE INDEX "uq_research_decision_approval_feedback_decision_id"
+  ON "product_domain"."research_decision_approval" ("research_feedback_decision_id");

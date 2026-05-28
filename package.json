@@ -7,7 +7,9 @@
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
+    "test:integration": "pnpm --filter @monitor/domain-model run test:integration",
     "typecheck": "turbo run typecheck",
+    "verify:persistence": "pnpm --filter @monitor/domain-model run verify:persistence",
     "lint": "turbo run lint",
     "runner": "pnpm --filter @monitor/orchestrator-runner run run --"
   },

@@ -396,10 +396,10 @@ model ResearchDecisionApprovalRecord {
   researchFeedbackDecision   ResearchFeedbackDecisionRecord  @relation(fields: [researchFeedbackDecisionId], references: [researchFeedbackDecisionId], onDelete: Restrict, onUpdate: Cascade)
   setupDefinition            SetupDefinitionRecord           @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
 
-  @@index([researchFeedbackDecisionId], map: "idx_research_decision_approval_research_feedback_decision_id")
   @@index([setupDefinitionId], map: "idx_research_decision_approval_setup_definition_id")
   @@index([approvalOutcome], map: "idx_research_decision_approval_approval_outcome")
   @@index([authorizedNextAction], map: "idx_research_decision_approval_authorized_next_action")
+  @@unique([researchFeedbackDecisionId], map: "uq_research_decision_approval_feedback_decision_id")
   @@map("research_decision_approval")
   @@schema("product_domain")
 }

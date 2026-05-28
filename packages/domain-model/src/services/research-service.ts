@@ -12,6 +12,9 @@ import type { ResearchHypothesis } from "../research-hypothesis.js";
 import type { ResearchHypothesisRepository } from "../repositories/research-hypothesis-repository.js";
 import type { ResearchFeedbackDecisionRepository } from "../repositories/research-feedback-decision-repository.js";
 import type { ResearchDecisionApprovalRepository } from "../repositories/research-decision-approval-repository.js";
+import type {
+  FeedbackDecisionApprovalReviewPersistence
+} from "../repositories/feedback-decision-approval-review-persistence.js";
 import type { SetupRefinementRequestRepository } from "../repositories/setup-refinement-request-repository.js";
 import type { SetupDefinitionRepository } from "../repositories/setup-definition-repository.js";
 import type { SetupAggregateResultRepository } from "../repositories/setup-aggregate-result-repository.js";
@@ -106,7 +109,6 @@ export type ApproveFeedbackDecisionRequest = {
   originRunId?: string;
   sourceMetadata?: JsonObject;
   metadata: ProductRecordMetadata;
-  expectedVersion: number | null;
 };
 
 export type FeedbackDecisionApproval = {
@@ -139,6 +141,7 @@ export type ResearchServiceDependencies = {
   setupDefinitionRepository: SetupDefinitionRepository;
   researchFeedbackDecisionRepository?: ResearchFeedbackDecisionRepository;
   researchDecisionApprovalRepository?: ResearchDecisionApprovalRepository;
+  feedbackDecisionApprovalReviewPersistence?: FeedbackDecisionApprovalReviewPersistence;
   setupRefinementRequestRepository?: SetupRefinementRequestRepository;
   setupAggregateResultRepository?: Pick<SetupAggregateResultRepository, "getById">;
 };
@@ -416,6 +419,7 @@ export const createResearchService = (dependencies: ResearchServiceDependencies)
     setupDefinitionRepository,
     researchFeedbackDecisionRepository,
     researchDecisionApprovalRepository,
+    feedbackDecisionApprovalReviewPersistence,
     setupRefinementRequestRepository,
     setupAggregateResultRepository
   } = dependencies;
@@ -682,9 +686,9 @@ export const createResearchService = (dependencies: ResearchServiceDependencies)
         );
       }
 
-      if (!researchDecisionApprovalRepository) {
+      if (!feedbackDecisionApprovalReviewPersistence) {
         throw new ResearchHypothesisValidationError(
-          "research_decision_approval repository is required for approval review"
+          "atomic feedback-decision approval persistence is required for approval review"
         );
       }
 
@@ -727,41 +731,38 @@ export const createResearchService = (dependencies: ResearchServiceDependencies)
         ...(request.reviewerNotes ? { reviewerNotes: request.reviewerNotes } : {})
       };
 
-      const updatedDecision = await researchFeedbackDecisionRepository.updateStatus({
-        researchFeedbackDecisionId: decision.id,
-        status: nextDecisionStatus,
-        reviewerMetadata,
-        metadata: request.metadata,
-        expectedVersion: request.expectedVersion
-      });
+      const persistenceResult =
+        await feedbackDecisionApprovalReviewPersistence.recordFeedbackDecisionApproval({
+          researchFeedbackDecisionId: decision.id,
+          nextDecisionStatus,
+          reviewerMetadata,
+          approval: {
+            id: buildApprovalId(request),
+            researchFeedbackDecisionId: decision.id,
+            setupDefinitionId: setupDefinition.id,
+            reviewedBy: request.reviewedBy,
+            reviewedAt: request.reviewedAt,
+            approvalOutcome: request.decisionOutcome,
+            reviewerNotes: request.reviewerNotes,
+            approvalStatus: "recorded",
+            authorizedNextAction,
+            createdAt: request.reviewedAt,
+            updatedAt: request.reviewedAt
+          },
+          metadata: request.metadata
+        });
 
-      if (!updatedDecision) {
+      if (persistenceResult.status === "not_found") {
+        return null;
+      }
+
+      if (persistenceResult.status === "conflict") {
         throw new ResearchHypothesisValidationError(
-          `research_feedback_decision not found during approval update: ${decision.id}`
+          `research_feedback_decision is not eligible for approval in status: ${persistenceResult.currentDecision.decisionStatus}`
         );
       }
 
-      const approval = await researchDecisionApprovalRepository.create({
-        approval: {
-          id: buildApprovalId(request),
-          researchFeedbackDecisionId: decision.id,
-          setupDefinitionId: setupDefinition.id,
-          reviewedBy: request.reviewedBy,
-          reviewedAt: request.reviewedAt,
-          approvalOutcome: request.decisionOutcome,
-          reviewerNotes: request.reviewerNotes,
-          approvalStatus: "recorded",
-          authorizedNextAction,
-          createdAt: request.reviewedAt,
-          updatedAt: request.reviewedAt
-        },
-        metadata: request.metadata
-      });
-
-      return {
-        approval,
-        decision: updatedDecision
-      };
+      return persistenceResult;
     },
     async createRefinementRequest(request) {
       assertNonEmptyString(request.researchDecisionApprovalId, "researchDecisionApprovalId");

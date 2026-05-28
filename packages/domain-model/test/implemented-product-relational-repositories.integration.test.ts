@@ -19,8 +19,11 @@ import {
   type SetupDefinition,
   type SignalCandidate
 } from "../src/index.js";
+import { resolveIntegrationDatabaseUrl } from "./integration-test-helpers.js";
 
-const INTEGRATION_DATABASE_URL = process.env.PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL?.trim() ?? "";
+const INTEGRATION_DATABASE_URL = resolveIntegrationDatabaseUrl(
+  process.env.PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL
+);
 const PRODUCT_DOMAIN_SCHEMA = "product_domain";
 const migrationsDirectory = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -268,28 +271,26 @@ integrationTest(
         ),
         metadata
       });
-      const updatedFeedbackDecision =
-        await repositories.researchFeedbackDecisionRepository.updateStatus({
+      const approvalPersistenceResult =
+        await repositories.feedbackDecisionApprovalReviewPersistence.recordFeedbackDecisionApproval({
           researchFeedbackDecisionId: "feedback-001",
-          status: "accepted",
+          nextDecisionStatus: "accepted",
           reviewerMetadata: {
             reviewedBy: "reviewer-001",
             reviewedAt: "2026-05-24T10:30:00.000Z",
             approvalOutcome: "approved"
           },
+          approval: buildApproval("approval-001", "feedback-001", "setup-001"),
           metadata: {
             ...metadata,
-            sourceObservedAtUtc: "2026-05-24T10:30:00.000Z"
-          },
-          expectedVersion: 1
+            sourceObservedAtUtc: "2026-05-24T10:35:00.000Z"
+          }
         });
-      const createdApproval = await repositories.researchDecisionApprovalRepository.create({
-        approval: buildApproval("approval-001", "feedback-001", "setup-001"),
-        metadata: {
-          ...metadata,
-          sourceObservedAtUtc: "2026-05-24T10:35:00.000Z"
-        }
-      });
+
+      assert.equal(approvalPersistenceResult.status, "recorded");
+      if (approvalPersistenceResult.status !== "recorded") {
+        assert.fail("approval persistence should have recorded the approval");
+      }
 
       const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
       const storedEvaluation =
@@ -320,9 +321,9 @@ integrationTest(
       assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
       assert.equal(storedEvaluation?.id, "result-001");
       assert.equal(storedAggregate?.status, "completed");
-      assert.equal(updatedFeedbackDecision?.decisionStatus, "accepted");
+      assert.equal(approvalPersistenceResult.decision.decisionStatus, "accepted");
       assert.equal(storedFeedbackDecision?.reviewerMetadata?.reviewedBy, "reviewer-001");
-      assert.equal(createdApproval.approvalOutcome, "approved");
+      assert.equal(approvalPersistenceResult.approval.approvalOutcome, "approved");
       assert.equal(storedApproval?.authorizedNextAction, "keep_active");
       assert.equal(aggregateRows.length, 1);
       assert.equal(aggregateRows[0]?.completedEvaluations, 1);

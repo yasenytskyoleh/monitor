@@ -11,6 +11,7 @@ type PersistedResearchFeedbackDecisionRecord = {
   version: number;
   metadata: ProductRecordMetadata;
 };
+export type PersistedResearchFeedbackDecisionRecordSnapshot = PersistedResearchFeedbackDecisionRecord;
 
 const cloneResearchFeedbackDecision = (
   decision: ResearchFeedbackDecision
@@ -35,6 +36,32 @@ const buildUpdateTimestamp = (metadata: ProductRecordMetadata): string =>
 export class InMemoryResearchFeedbackDecisionRepository
 implements ResearchFeedbackDecisionRepository {
   private readonly recordsById = new Map<string, PersistedResearchFeedbackDecisionRecord>();
+
+  getPersistedRecordSnapshot(
+    researchFeedbackDecisionId: string
+  ): PersistedResearchFeedbackDecisionRecordSnapshot | null {
+    const record = this.recordsById.get(researchFeedbackDecisionId);
+    if (!record) {
+      return null;
+    }
+
+    return {
+      decision: cloneResearchFeedbackDecision(record.decision),
+      version: record.version,
+      metadata: cloneMetadata(record.metadata)
+    };
+  }
+
+  restorePersistedRecordSnapshot(
+    researchFeedbackDecisionId: string,
+    snapshot: PersistedResearchFeedbackDecisionRecordSnapshot
+  ): void {
+    this.recordsById.set(researchFeedbackDecisionId, {
+      decision: cloneResearchFeedbackDecision(snapshot.decision),
+      version: snapshot.version,
+      metadata: cloneMetadata(snapshot.metadata)
+    });
+  }
 
   async getById(researchFeedbackDecisionId: string): Promise<ResearchFeedbackDecision | null> {
     const record = this.recordsById.get(researchFeedbackDecisionId);

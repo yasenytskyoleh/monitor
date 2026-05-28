@@ -37,13 +37,18 @@ export const RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS = {
 } as const;
 
 export const RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES = [
-  "idx_research_decision_approval_research_feedback_decision_id",
   "idx_research_decision_approval_setup_definition_id",
   "idx_research_decision_approval_approval_outcome",
   "idx_research_decision_approval_authorized_next_action"
 ] as const;
 export type ResearchDecisionApprovalRelationalIndexName =
   (typeof RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES)[number];
+
+export const RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS = [
+  "uq_research_decision_approval_feedback_decision_id"
+] as const;
+export type ResearchDecisionApprovalRelationalUniqueConstraintName =
+  (typeof RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS)[number];
 
 export const RESEARCH_DECISION_APPROVAL_RELATIONAL_MIGRATION_SLUG =
   "product_domain_research_decision_approval_relational_v1" as const;

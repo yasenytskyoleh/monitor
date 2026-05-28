@@ -16,6 +16,7 @@ import {
   RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_MIGRATION_SLUG,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS,
@@ -445,7 +446,13 @@ test("exposes research-decision-approval physical schema constants", () => {
   );
   assert.equal(
     RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES.includes(
-      "idx_research_decision_approval_research_feedback_decision_id"
+      "idx_research_decision_approval_setup_definition_id"
+    ),
+    true
+  );
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS.includes(
+      "uq_research_decision_approval_feedback_decision_id"
     ),
     true
   );
@@ -458,6 +465,10 @@ test("prisma schema defines the research-decision-approval relational model and 
   assert.match(schema, /enum ResearchDecisionApprovalOutcome \{/);
   assert.match(schema, /model ResearchDecisionApprovalRecord \{/);
   assert.match(schema, /@@map\("research_decision_approval"\)/);
+  assert.match(
+    schema,
+    /@@unique\(\[researchFeedbackDecisionId\], map: "uq_research_decision_approval_feedback_decision_id"\)/
+  );
 
   for (const tableName of Object.values(RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES)) {
     assert.equal(schema.includes(`@@map("${tableName}")`), true);
@@ -480,6 +491,13 @@ test("migration creates the research-decision-approval relational table, indexes
 
   for (const indexName of RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES) {
     assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const uniqueConstraintName of RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS) {
+    assert.equal(
+      migration.includes(`CREATE UNIQUE INDEX "${uniqueConstraintName}"`),
+      true
+    );
   }
 
   for (const [tableName, columns] of Object.entries(

@@ -109,7 +109,13 @@ const createFakePrismaClient = (): ResearchDecisionApprovalRelationalPrismaClien
       async create(args: {
         data: Prisma.ResearchDecisionApprovalRecordUncheckedCreateInput;
       }) {
-        if (rows.has(args.data.researchDecisionApprovalId)) {
+        if (
+          rows.has(args.data.researchDecisionApprovalId) ||
+          [...rows.values()].some(
+            (row) =>
+              row.researchFeedbackDecisionId === args.data.researchFeedbackDecisionId
+          )
+        ) {
           throw { code: "P2002" };
         }
 
@@ -217,6 +223,27 @@ test("prisma approval adapter maps unique-constraint failures to already_exists"
     async () =>
       adapter.insertResearchDecisionApprovalRecord({
         record: buildApprovalRecord("approval-002")
+      }),
+    (error: unknown) =>
+      error instanceof RepositoryError &&
+      error.code === "already_exists" &&
+      error.entityType === "research_decision_approval"
+  );
+});
+
+test("prisma approval adapter rejects a second approval for the same feedback decision", async () => {
+  const adapter = new PrismaResearchDecisionApprovalRelationalRepositoryAdapter(
+    createFakePrismaClient()
+  );
+
+  await adapter.insertResearchDecisionApprovalRecord({
+    record: buildApprovalRecord("approval-010", "feedback-001", "setup-001")
+  });
+
+  await assert.rejects(
+    async () =>
+      adapter.insertResearchDecisionApprovalRecord({
+        record: buildApprovalRecord("approval-011", "feedback-001", "setup-001")
       }),
     (error: unknown) =>
       error instanceof RepositoryError &&

@@ -50,6 +50,21 @@ export type {
   ResearchFeedbackDecisionRelationalRetryableErrorCode
 } from "./research-feedback-decision-relational-repository-adapter.js";
 export type {
+  FeedbackDecisionApprovalReviewPersistence,
+  FeedbackDecisionApprovalReviewPersistenceResult,
+  RecordFeedbackDecisionApprovalRequest
+} from "./feedback-decision-approval-review-persistence.js";
+export {
+  InMemoryFeedbackDecisionApprovalReviewPersistence
+} from "./feedback-decision-approval-review-persistence.impl.js";
+export {
+  createPrismaFeedbackDecisionApprovalReviewPersistence,
+  PrismaFeedbackDecisionApprovalReviewPersistence
+} from "./feedback-decision-approval-review-persistence.prisma.js";
+export type {
+  FeedbackDecisionApprovalReviewPrismaClient
+} from "./feedback-decision-approval-review-persistence.prisma.js";
+export type {
   ResearchDecisionApprovalRecordWriteRequest,
   ResearchDecisionApprovalRelationalAdapterErrorMapping,
   ResearchDecisionApprovalRelationalAdapterOperation,

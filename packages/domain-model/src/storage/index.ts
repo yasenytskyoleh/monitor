@@ -125,12 +125,14 @@ export {
   RESEARCH_DECISION_APPROVAL_RELATIONAL_MIGRATION_SLUG,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS,
-  RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS
 } from "./research-decision-approval-relational-physical-schema.js";
 export type {
   ResearchDecisionApprovalRelationalIndexName,
   ResearchDecisionApprovalRelationalPrismaModelName,
-  ResearchDecisionApprovalRelationalTableName
+  ResearchDecisionApprovalRelationalTableName,
+  ResearchDecisionApprovalRelationalUniqueConstraintName
 } from "./research-decision-approval-relational-physical-schema.js";
 
 export type {

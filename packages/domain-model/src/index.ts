@@ -251,6 +251,7 @@ export {
   RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_ENTITY_TYPES,
   RESEARCH_REVIEW_DECISION_RELATIONAL_ENTITY_TYPES,
   RUNTIME_EVIDENCE_ARTIFACT_TYPES,
@@ -283,6 +284,7 @@ export type {
   ResearchDecisionApprovalRelationalIndexName,
   ResearchDecisionApprovalRelationalPrismaModelName,
   ResearchDecisionApprovalRelationalTableName,
+  ResearchDecisionApprovalRelationalUniqueConstraintName,
   ResearchDecisionApprovalRelationalEntityType,
   ResearchReviewDecisionDurableRecord,
   ResearchReviewDecisionRelationalEntityType,
@@ -424,6 +426,21 @@ export type {
   ResearchFeedbackDecisionRelationalRepositoryAdapter,
   ResearchFeedbackDecisionRelationalRetryableErrorCode
 } from "./repositories/research-feedback-decision-relational-repository-adapter.js";
+export type {
+  FeedbackDecisionApprovalReviewPersistence,
+  FeedbackDecisionApprovalReviewPersistenceResult,
+  RecordFeedbackDecisionApprovalRequest
+} from "./repositories/feedback-decision-approval-review-persistence.js";
+export {
+  InMemoryFeedbackDecisionApprovalReviewPersistence
+} from "./repositories/feedback-decision-approval-review-persistence.impl.js";
+export {
+  createPrismaFeedbackDecisionApprovalReviewPersistence,
+  PrismaFeedbackDecisionApprovalReviewPersistence
+} from "./repositories/feedback-decision-approval-review-persistence.prisma.js";
+export type {
+  FeedbackDecisionApprovalReviewPrismaClient
+} from "./repositories/feedback-decision-approval-review-persistence.prisma.js";
 export type {
   ResearchDecisionApprovalRecordWriteRequest,
   ResearchDecisionApprovalRelationalAdapterErrorMapping,
