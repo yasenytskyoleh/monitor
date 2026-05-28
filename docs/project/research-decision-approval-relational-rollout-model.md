@@ -45,7 +45,7 @@ This step gives the first downstream approval entity the same per-entity durable
 
 ## What remains pending
 - shared implemented-product bundle extension through `research_decision_approval` is completed later in `docs/architecture/adr/ADR-042-implemented-product-approval-composition.md`
-- add opt-in real-Postgres integration coverage for the approval slice and extended shared bundle
+- opt-in real-Postgres integration coverage for the approval slice and extended shared bundle is completed later in `docs/architecture/adr/ADR-043-implemented-product-approval-integration-coverage.md`
 - later review/execution durable slices
 - runtime detection, evaluation, aggregation, and review engines
 - exchange ingestion and UI work

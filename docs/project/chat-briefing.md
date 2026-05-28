@@ -50,6 +50,7 @@ Current product-domain scope includes:
   - `docs/project/implemented-product-relational-composition-model.md`
   - `docs/project/implemented-product-feedback-decision-composition-model.md`
   - `docs/project/implemented-product-approval-composition-model.md`
+  - `docs/project/implemented-product-approval-integration-model.md`
   - `docs/project/research-feedback-decision-relational-persistence-model.md`
   - `docs/project/research-feedback-decision-relational-rollout-model.md`
   - `docs/project/research-decision-approval-relational-persistence-model.md`
@@ -78,6 +79,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-040-research-decision-approval-relational-adapter-contract.md`
   - `docs/architecture/adr/ADR-041-research-decision-approval-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-042-implemented-product-approval-composition.md`
+  - `docs/architecture/adr/ADR-043-implemented-product-approval-integration-coverage.md`
 
 ## Current constraints
 - spot-only scope
@@ -119,13 +121,13 @@ Current product-domain scope includes:
 - adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for:
   - `research_decision_approval`
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_decision_approval`
-- the end-to-end real-database integration flow still stops at `research_feedback_decision`
-- the next downstream durable persistence gap is now approval-chain real-database integration coverage
+- one end-to-end real-database integration flow now also spans the full implemented product chain through `research_decision_approval`
+- the next downstream durable persistence gap is now `research_review_decision`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- add opt-in real-Postgres integration coverage for the approval slice and extended shared bundle
+- define the first durable relational contract for `research_review_decision`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

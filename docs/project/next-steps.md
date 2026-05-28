@@ -1,7 +1,7 @@
 # Next Steps
 
 ## Current recommended next step
-### Add opt-in real-Postgres integration coverage for the approval slice and extended shared bundle
+### Define the first durable relational contract for `research_review_decision`
 
 Reason:
 - the full implemented research chain now has:
@@ -20,20 +20,23 @@ Reason:
   - a concrete Prisma adapter
   - slice-level shared composition
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_decision_approval`
-- the end-to-end real-Postgres integration path still stops at `research_feedback_decision`
-- the next bounded gap is proving the approval chain against real Postgres before broadening into later review/execution slices
+- one end-to-end real-Postgres integration path now also spans the full implemented product chain through `research_decision_approval`
+- the next downstream service-owned persistence gap is now `research_review_decision`
+- that entity already exists in the domain model and in implemented in-memory persistence
+- it still has no durable relational contract, physical schema, adapter boundary, or relational repository rollout
 - runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
 
 ## Recommended near-future sequence
-1. add opt-in real-Postgres integration coverage for the approval slice and extended shared bundle
-2. keep later review/execution entities deferred until the approval slice pattern is verified
+1. define the first durable relational contract for `research_review_decision`
+2. add the physical schema, adapter boundary, and repository rollout for `research_review_decision`
+3. keep later review/execution entities deferred until the review-decision slice pattern is verified
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
 - expanding into runtime review/execution workflow logic prematurely
-- mixing setup-mutation or refinement execution behavior into the approval integration step
+- mixing setup-mutation or refinement execution behavior into the review-decision contract step
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

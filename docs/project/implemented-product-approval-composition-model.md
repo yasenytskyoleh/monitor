@@ -28,7 +28,7 @@ This step does not add new business rules. It extends the already-shared persist
 - the next persistence task can stay narrow and move to real-database integration coverage instead of more shared-composition work
 
 ## What remains pending
-- opt-in real-Postgres integration coverage for setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval
+- opt-in real-Postgres integration coverage for setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval is completed later in `docs/architecture/adr/ADR-043-implemented-product-approval-integration-coverage.md`
 - later durable slices for other review/execution entities
 - runtime detection, evaluation, aggregation, and review engines
 - exchange ingestion and UI work
