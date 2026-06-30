@@ -139,7 +139,7 @@ test("invalid decision outcome rejected", async () => {
 });
 
 test("accepted keeps explicit authorized-next-action semantics", async () => {
-  const { packetLookup, service } = createFixture();
+  const { packetLookup, researchReviewDecisionRepository, service } = createFixture();
   packetLookup.seed(buildPacket());
 
   const explicitAction = await service.applyDecision({
@@ -170,6 +170,12 @@ test("accepted keeps explicit authorized-next-action semantics", async () => {
 
   assert.equal(defaultAction.status, "recorded");
   assert.equal(defaultAction.authorizedNextAction, "confirm_no_change");
+
+  const recordedDecision = await researchReviewDecisionRepository.getById(
+    "review-decision:review-packet:setup-family-700:revision-family-700-v2:2026-06-12T09:00:00.000Z:2026-06-12T10:05:00.000Z:reviewer-2"
+  );
+  assert.equal(recordedDecision?.createdAt, "2026-06-12T10:05:00.000Z");
+  assert.equal(recordedDecision?.updatedAt, "2026-06-12T10:05:00.000Z");
 });
 
 test("revise does not imply automatic lifecycle mutation", async () => {

@@ -41,4 +41,5 @@ Tradeoffs:
 
 ## Follow-up
 - the durable relational contract for `research_review_decision` is completed in ADR-044
-- add the Prisma physical schema and SQL migration for `research_review_decision`
+- the physical Prisma schema and SQL migration for `research_review_decision` are completed in ADR-045
+- add the repository adapter and repository rollout for `research_review_decision`

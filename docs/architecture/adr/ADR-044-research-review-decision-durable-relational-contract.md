@@ -46,4 +46,5 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- add the Prisma physical schema and SQL migration for `research_review_decision`
+- the Prisma physical schema and SQL migration for `research_review_decision` are completed in ADR-045
+- add the repository adapter contract and repository rollout for `research_review_decision`

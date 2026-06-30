@@ -134,6 +134,18 @@ export type {
   ResearchDecisionApprovalRelationalTableName,
   ResearchDecisionApprovalRelationalUniqueConstraintName
 } from "./research-decision-approval-relational-physical-schema.js";
+export {
+  RESEARCH_REVIEW_DECISION_RELATIONAL_INDEXES,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES
+} from "./research-review-decision-relational-physical-schema.js";
+export type {
+  ResearchReviewDecisionRelationalIndexName,
+  ResearchReviewDecisionRelationalPrismaModelName,
+  ResearchReviewDecisionRelationalTableName
+} from "./research-review-decision-relational-physical-schema.js";
 
 export type {
   EntityIdentity,

@@ -145,13 +145,13 @@ Current limitation:
   - opt-in real-database integration coverage now exists for the five core-chain entities, `research_feedback_decision`, and the shared implemented-product chain through `research_decision_approval`
   - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_decision_approval`
   - one end-to-end real-database integration flow now also spans the full implemented product chain through `research_decision_approval`
-  - the next downstream durable persistence gap is now the physical schema layer for `research_review_decision`
+  - the next downstream durable persistence gap is now the adapter/repository layer for `research_review_decision`
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- add the physical Prisma schema and SQL migration for `research_review_decision`
+- add the adapter boundary and repository rollout for `research_review_decision`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

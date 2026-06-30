@@ -17,6 +17,11 @@ import {
   RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_INDEXES,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_MIGRATION_SLUG,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS,
@@ -72,6 +77,13 @@ const researchDecisionApprovalMigrationPath = join(
   "prisma",
   "migrations",
   "20260527103000_product_domain_research_decision_approval_relational_v1",
+  "migration.sql"
+);
+const researchReviewDecisionMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260630113000_product_domain_research_review_decision_relational_v1",
   "migration.sql"
 );
 
@@ -527,6 +539,95 @@ test("migration creates the research-decision-approval relational table, indexes
   assert.match(
     migration,
     /"approval_outcome" = 'approved' AND\s+"authorized_next_action" IS NOT NULL/
+  );
+  assert.match(
+    migration,
+    /"created_at_utc" <= "reviewed_at_utc" AND\s+"updated_at_utc" >= "reviewed_at_utc"/
+  );
+});
+
+test("exposes research-review-decision physical schema constants", () => {
+  assert.equal(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_research_review_decision_relational_v1"
+  );
+  assert.equal(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_PRISMA_MODELS.researchReviewDecisionRecord,
+    "ResearchReviewDecisionRecord"
+  );
+  assert.equal(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES.researchReviewDecision,
+    "research_review_decision"
+  );
+  assert.equal(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_REQUIRED_COLUMNS.research_review_decision.includes(
+      "research_review_packet_id"
+    ),
+    true
+  );
+  assert.equal(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_INDEXES.includes(
+      "idx_research_review_decision_review_packet_id"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the research-review-decision relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum ResearchReviewAuthorizedNextAction \{/);
+  assert.match(schema, /enum ResearchReviewDecisionStatus \{/);
+  assert.match(schema, /enum ResearchReviewDecisionOutcome \{/);
+  assert.match(schema, /model ResearchReviewDecisionRecord \{/);
+  assert.match(schema, /@@map\("research_review_decision"\)/);
+
+  for (const tableName of Object.values(RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES)) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(RESEARCH_REVIEW_DECISION_RELATIONAL_PRISMA_MODELS)) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the research-review-decision relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(researchReviewDecisionMigrationPath, "utf8");
+
+  for (const tableName of Object.values(RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES)) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of RESEARCH_REVIEW_DECISION_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("research_hypothesis_id"\)\s+REFERENCES "product_domain"\."research_hypothesis"/
+  );
+  assert.match(
+    migration,
+    /CHECK \(\s*length\(trim\("research_review_packet_id"\)\) > 0/
+  );
+  assert.match(
+    migration,
+    /"decision_outcome" = 'revise' AND\s+"authorized_next_action" = 'prepare_refinement_follow_up'/
   );
   assert.match(
     migration,

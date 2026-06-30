@@ -29,12 +29,12 @@ Durable relational coverage now exists for the core research chain:
 - one shared Prisma-backed repository bundle and one end-to-end integration path for setup -> candidate -> evaluation -> aggregate -> feedback decision
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-Postgres integration coverage now also exist for `research_feedback_decision`
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_decision_approval`
-- one committed logical durable relational contract now also exists for `research_review_decision`
+- committed contract and schema/migration artifacts now also exist for `research_review_decision`
 - one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval
 - one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval
 
 Still pending:
-- physical schema, adapter boundary, and relational repository rollout for `research_review_decision`
+- adapter boundary and relational repository rollout for `research_review_decision`
 - later review/execution durable slices after `research_review_decision`
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
@@ -156,7 +156,7 @@ Ownership direction:
 2. persistence metadata (`originRunId`, `traceId`) may be attached through metadata contracts
 3. runtime evidence files remain separate from product-domain storage
 4. one domain contract does not force one-table implementation in this slice
-5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, and research decision approvals, while research review decisions now also have an explicit durable relational contract boundary
+5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, and research decision approvals, while research review decisions now also have explicit durable relational contract and physical schema boundaries
 
 ## Orchestrator handoff boundary
 - orchestrator workflows may trigger future product-domain services
@@ -170,6 +170,7 @@ Ownership direction:
 - `packages/domain-model/src/storage/research-decision-approval-relational-slice.ts`
 - `packages/domain-model/src/storage/research-decision-approval-relational-physical-schema.ts`
 - `packages/domain-model/src/storage/research-review-decision-relational-slice.ts`
+- `packages/domain-model/src/storage/research-review-decision-relational-physical-schema.ts`
 - `packages/domain-model/src/repositories/research-decision-approval-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/research-decision-approval-relational-repository-mappers.ts`
 - `packages/domain-model/src/repositories/research-decision-approval-relational-repository.impl.ts`

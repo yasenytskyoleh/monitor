@@ -1,24 +1,29 @@
 # Research Review Decision Relational Persistence Model
 
 ## Purpose
-Define the durable relational contract for `ResearchReviewDecision` before physical schema implementation.
+Define the durable relational contract and physical schema for `ResearchReviewDecision` before adapter implementation.
 
 This keeps the next downstream review persistence slice narrow:
 - logical durable record contract
 - review-packet linkage and nullability rules
 - versioning semantics
 - deterministic repository failure expectations
-
-without yet introducing:
 - Prisma schema
 - SQL migration
+
+without yet introducing:
 - repository adapters
 - concrete relational repositories
 
 ## Implemented artifact locations
 - `packages/domain-model/src/storage/research-review-decision-relational-slice.ts`
+- `packages/domain-model/src/storage/research-review-decision-relational-physical-schema.ts`
+- `packages/domain-model/prisma/schema.prisma`
+- `packages/domain-model/prisma/migrations/20260630113000_product_domain_research_review_decision_relational_v1/migration.sql`
 - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
+- `packages/domain-model/test/prisma-physical-schema-contracts.test.ts`
 - `docs/architecture/adr/ADR-044-research-review-decision-durable-relational-contract.md`
+- `docs/architecture/adr/ADR-045-research-review-decision-prisma-schema-layout.md`
 
 ## Durable record shape
 `ResearchReviewDecisionDurableRecord` keeps:
@@ -59,8 +64,46 @@ Optional domain fields are normalized to nullable durable fields rather than omi
 - packet / setup-family / setup-revision / hypothesis mismatch -> rejected before persistence
 - missing reads remain `null` / empty-list semantics at the repository boundary
 
+## Physical schema rules
+The migration now enforces:
+- positive version
+- non-empty `research_review_packet_id`
+- non-empty `setup_family_id`
+- non-empty `reviewed_by`
+- non-empty `reviewer_notes` when present
+- non-empty `setup_revision_id` and `research_hypothesis_id` when present
+- current authorized-next-action semantics:
+  - `accepted` outcomes require `authorized_next_action`
+  - `rejected` outcomes require `authorized_next_action IS NULL`
+  - `revise` outcomes require `authorized_next_action = prepare_refinement_follow_up`
+- review timestamp consistency with created/updated timestamps
+- `updated_at_utc >= created_at_utc`
+- archived timestamp consistency with lifecycle status
+
+## Reference policy
+Physical FKs are enforced for:
+- optional `research_hypothesis_id`
+
+Still service-owned rather than encoded as relational FKs in this step:
+- `research_review_packet_id`
+- `setup_family_id`
+- `setup_revision_id`
+
+## Physical layout summary
+Database schema:
+- `product_domain`
+
+Tables:
+- `research_review_decision`
+
+Enum families:
+- `research_review_authorized_next_action`
+- `research_review_decision_status`
+- `research_review_decision_outcome`
+- reused `persisted_lifecycle_status`
+- reused `product_record_source`
+
 ## What remains pending
-- Prisma physical schema and SQL migration for `research_review_decision`
 - repository adapter contract and deterministic relational error mapping
 - domain/durable mappers, adapter-backed repository, and concrete Prisma adapter wiring
 - later review/execution durable slices

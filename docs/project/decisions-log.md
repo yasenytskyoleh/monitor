@@ -126,4 +126,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **adding the physical Prisma schema and SQL migration for `research_review_decision`**
+- the currently recommended next step is **adding the adapter boundary and repository rollout for `research_review_decision`**

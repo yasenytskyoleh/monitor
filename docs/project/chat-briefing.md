@@ -123,12 +123,12 @@ Current product-domain scope includes:
   - `research_decision_approval`
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_decision_approval`
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `research_decision_approval`
-- the next downstream durable persistence gap is now the physical schema layer for `research_review_decision`
+- the next downstream durable persistence gap is now the adapter/repository layer for `research_review_decision`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- add the physical Prisma schema and SQL migration for `research_review_decision`
+- add the adapter boundary and repository rollout for `research_review_decision`
 
 ## Behavioral instructions for future assistants
 When continuing this project:
