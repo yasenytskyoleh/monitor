@@ -44,5 +44,6 @@ Tradeoffs:
 - shared implemented-product bundle extension through review decisions
 
 ## Follow-up
-- add the repository adapter contract for `research_review_decision`
-- implement the repository/Prisma adapter rollout for `research_review_decision`
+- the repository adapter contract for `research_review_decision` is completed in ADR-046
+- the repository/Prisma adapter rollout for `research_review_decision` is completed in ADR-047
+- extend the shared implemented-product bundle and opt-in real-database integration path through `research_review_decision`

@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.23 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, approval-path hardening, and review-decision physical schema layout**
+**Phase 1.24 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, approval-path hardening, and review-decision repository rollout**
 
 ## What this phase is about
 This phase is focused on:
@@ -211,6 +211,19 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/storage/research-review-decision-relational-slice.ts`
   - `packages/domain-model/src/storage/research-review-decision-relational-physical-schema.ts`
   - `packages/domain-model/prisma/migrations/20260630113000_product_domain_research_review_decision_relational_v1/migration.sql`
+- research-review-decision relational adapter contract:
+  - `docs/project/research-review-decision-relational-adapter-model.md`
+  - `docs/architecture/adr/ADR-046-research-review-decision-relational-adapter-contract.md`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-repository-adapter.impl.ts`
+- research-review-decision adapter-backed relational repository and Prisma adapter:
+  - `docs/project/research-review-decision-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-047-research-review-decision-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-prisma-client.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -246,7 +259,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- add the adapter boundary and repository rollout for `research_review_decision`
+- extend the shared implemented-product composition and real-Postgres integration path through `research_review_decision`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -262,4 +275,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through approvals, one shared approval-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, and one explicit review-decision physical schema step that make the next adapter slice straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through approvals, one shared approval-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, and one explicit review-decision repository rollout that make the next shared-bundle extension straightforward instead of speculative**.

@@ -72,6 +72,14 @@ export type {
   ResearchDecisionApprovalRelationalRepositoryAdapter,
   ResearchDecisionApprovalRelationalRetryableErrorCode
 } from "./research-decision-approval-relational-repository-adapter.js";
+export type {
+  ResearchReviewDecisionRecordWriteRequest,
+  ResearchReviewDecisionRelationalAdapterErrorMapping,
+  ResearchReviewDecisionRelationalAdapterOperation,
+  ResearchReviewDecisionRelationalDeterministicErrorCode,
+  ResearchReviewDecisionRelationalRepositoryAdapter,
+  ResearchReviewDecisionRelationalRetryableErrorCode
+} from "./research-review-decision-relational-repository-adapter.js";
 export {
   FIRST_DURABLE_RELATIONAL_ADAPTER_ERROR_MAPPING,
   FIRST_DURABLE_RELATIONAL_ADAPTER_OPERATIONS,
@@ -107,6 +115,13 @@ export {
   RESEARCH_DECISION_APPROVAL_RELATIONAL_RETRYABLE_ERROR_CODES,
   isResearchDecisionApprovalRelationalDeterministicErrorCode
 } from "./research-decision-approval-relational-repository-adapter.js";
+export {
+  RESEARCH_REVIEW_DECISION_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_ADAPTER_OPERATIONS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isResearchReviewDecisionRelationalDeterministicErrorCode
+} from "./research-review-decision-relational-repository-adapter.js";
 export {
   composeFirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
@@ -145,6 +160,12 @@ export type {
   ResearchDecisionApprovalRelationalRepositories
 } from "./research-decision-approval-relational-repositories.js";
 export {
+  composeResearchReviewDecisionRelationalRepositories
+} from "./research-review-decision-relational-repositories.js";
+export type {
+  ResearchReviewDecisionRelationalRepositories
+} from "./research-review-decision-relational-repositories.js";
+export {
   dehydrateResearchHypothesisToDurableBundle,
   dehydrateSetupDefinitionToDurableRecord,
   hydrateResearchHypothesisFromDurableBundle,
@@ -168,6 +189,10 @@ export {
   dehydrateResearchDecisionApprovalToDurableRecord,
   hydrateResearchDecisionApprovalFromDurableRecord
 } from "./research-decision-approval-relational-repository-mappers.js";
+export {
+  dehydrateResearchReviewDecisionToDurableRecord,
+  hydrateResearchReviewDecisionFromDurableRecord
+} from "./research-review-decision-relational-repository-mappers.js";
 export { InMemoryFirstDurableRelationalRepositoryAdapter } from "./first-durable-relational-repository-adapter.impl.js";
 export type {
   SignalEvaluationRelationalReferenceReader
@@ -193,6 +218,12 @@ export type {
 export {
   InMemoryResearchDecisionApprovalRelationalRepositoryAdapter
 } from "./research-decision-approval-relational-repository-adapter.impl.js";
+export type {
+  ResearchReviewDecisionRelationalReferenceReader
+} from "./research-review-decision-relational-repository-adapter.impl.js";
+export {
+  InMemoryResearchReviewDecisionRelationalRepositoryAdapter
+} from "./research-review-decision-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,
@@ -252,6 +283,13 @@ export {
 export type {
   ResearchDecisionApprovalRelationalPrismaRepositories
 } from "./research-decision-approval-relational-prisma-client.js";
+export {
+  createResearchReviewDecisionRelationalPrismaRepositories,
+  createResearchReviewDecisionRelationalPrismaRepositoryAdapter
+} from "./research-review-decision-relational-prisma-client.js";
+export type {
+  ResearchReviewDecisionRelationalPrismaRepositories
+} from "./research-review-decision-relational-prisma-client.js";
 export type {
   SetupAggregateRelationalPrismaClient
 } from "./setup-aggregate-relational-prisma-adapter.js";
@@ -270,6 +308,12 @@ export type {
 export {
   PrismaResearchDecisionApprovalRelationalRepositoryAdapter
 } from "./research-decision-approval-relational-prisma-adapter.js";
+export type {
+  ResearchReviewDecisionRelationalPrismaClient
+} from "./research-review-decision-relational-prisma-adapter.js";
+export {
+  PrismaResearchReviewDecisionRelationalRepositoryAdapter
+} from "./research-review-decision-relational-prisma-adapter.js";
 export type {
   MonitoredSymbolCreateRequest,
   MonitoredSymbolRepository,
@@ -330,6 +374,9 @@ export type {
   ResearchReviewDecisionRepository
 } from "./research-review-decision-repository.js";
 export { InMemoryResearchReviewDecisionRepository } from "./research-review-decision-repository.impl.js";
+export {
+  RelationalResearchReviewDecisionRepository
+} from "./research-review-decision-relational-repository.impl.js";
 export type {
   ReviewDecisionRoutingResultCreateRequest,
   ReviewDecisionRoutingResultRepository

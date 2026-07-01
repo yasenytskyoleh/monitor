@@ -117,6 +117,9 @@
 - shared implemented-product composition now extends through research-decision-approval
 - shared implemented-product real-Postgres integration now extends through research-decision-approval
 - research-review-decision durable relational contract now exists
+- research-review-decision Prisma physical schema and migration layout now exist
+- research-review-decision relational adapter contract now exists
+- research-review-decision adapter-backed relational repository and concrete Prisma adapter now exist
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -126,4 +129,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **adding the adapter boundary and repository rollout for `research_review_decision`**
+- the currently recommended next step is **extending the shared implemented-product composition and real-Postgres integration path through `research_review_decision`**

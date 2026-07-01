@@ -104,6 +104,11 @@ Enum families:
 - reused `product_record_source`
 
 ## What remains pending
-- repository adapter contract and deterministic relational error mapping
-- domain/durable mappers, adapter-backed repository, and concrete Prisma adapter wiring
+- repository adapter contract and repository rollout are completed in:
+  - `docs/project/research-review-decision-relational-adapter-model.md`
+  - `docs/project/research-review-decision-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-046-research-review-decision-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-047-research-review-decision-adapter-backed-relational-repositories.md`
+- shared implemented-product bundle extension through `research_review_decision`
+- opt-in real-Postgres integration coverage through `research_review_decision`
 - later review/execution durable slices
