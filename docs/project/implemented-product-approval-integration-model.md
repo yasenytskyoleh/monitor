@@ -28,7 +28,8 @@ This step does not add new product rules. It proves that the already-shared repo
 - the next persistence task can move to the next downstream durable slice instead of more approval-chain infrastructure work
 
 ## What remains pending
-- physical schema and repository rollout for `research_review_decision`
-- later durable slices for other review/execution entities
-- runtime detection, evaluation, aggregation, and review engines
+- shared implemented-product composition through `research_review_decision` is completed later in `docs/architecture/adr/ADR-048-implemented-product-review-decision-composition.md`
+- shared real-Postgres integration coverage through `research_review_decision` is completed later in `docs/architecture/adr/ADR-049-implemented-product-review-decision-integration-coverage.md`
+- later durable slices for downstream review/execution entities
+- runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

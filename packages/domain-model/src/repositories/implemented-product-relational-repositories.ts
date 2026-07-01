@@ -12,6 +12,13 @@ import {
   composeResearchDecisionApprovalRelationalRepositories,
   type ResearchDecisionApprovalRelationalRepositories
 } from "./research-decision-approval-relational-repositories.js";
+import type {
+  ResearchReviewDecisionRelationalRepositoryAdapter
+} from "./research-review-decision-relational-repository-adapter.js";
+import {
+  composeResearchReviewDecisionRelationalRepositories,
+  type ResearchReviewDecisionRelationalRepositories
+} from "./research-review-decision-relational-repositories.js";
 import {
   composeResearchFeedbackDecisionRelationalRepositories,
   type ResearchFeedbackDecisionRelationalRepositories
@@ -40,6 +47,7 @@ export type ImplementedProductRelationalAdapters = {
   setupAggregateAdapter: SetupAggregateRelationalRepositoryAdapter;
   feedbackDecisionAdapter: ResearchFeedbackDecisionRelationalRepositoryAdapter;
   approvalAdapter: ResearchDecisionApprovalRelationalRepositoryAdapter;
+  reviewDecisionAdapter: ResearchReviewDecisionRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalRepositories =
@@ -47,7 +55,8 @@ export type ImplementedProductRelationalRepositories =
   SignalEvaluationRelationalRepositories &
   SetupAggregateRelationalRepositories &
   ResearchFeedbackDecisionRelationalRepositories &
-  ResearchDecisionApprovalRelationalRepositories;
+  ResearchDecisionApprovalRelationalRepositories &
+  ResearchReviewDecisionRelationalRepositories;
 
 export const composeImplementedProductRelationalRepositories = (
   adapters: ImplementedProductRelationalAdapters
@@ -56,5 +65,6 @@ export const composeImplementedProductRelationalRepositories = (
   ...composeSignalEvaluationRelationalRepositories(adapters.signalEvaluationAdapter),
   ...composeSetupAggregateRelationalRepositories(adapters.setupAggregateAdapter),
   ...composeResearchFeedbackDecisionRelationalRepositories(adapters.feedbackDecisionAdapter),
-  ...composeResearchDecisionApprovalRelationalRepositories(adapters.approvalAdapter)
+  ...composeResearchDecisionApprovalRelationalRepositories(adapters.approvalAdapter),
+  ...composeResearchReviewDecisionRelationalRepositories(adapters.reviewDecisionAdapter)
 });

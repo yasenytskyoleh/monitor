@@ -54,5 +54,5 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- extend the shared implemented-product Prisma-backed repository bundle through `research_review_decision`
-- extend the opt-in real-database integration path through `research_review_decision`
+- shared implemented-product Prisma-backed repository bundle extension through `research_review_decision` is completed in ADR-048
+- opt-in real-database integration path through `research_review_decision` is completed in ADR-049

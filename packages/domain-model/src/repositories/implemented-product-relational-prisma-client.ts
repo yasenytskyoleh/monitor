@@ -17,6 +17,8 @@ import {
 } from "./implemented-product-relational-repositories.js";
 import { createResearchDecisionApprovalRelationalPrismaRepositoryAdapter } from "./research-decision-approval-relational-prisma-client.js";
 import { type PrismaResearchDecisionApprovalRelationalRepositoryAdapter } from "./research-decision-approval-relational-prisma-adapter.js";
+import { createResearchReviewDecisionRelationalPrismaRepositoryAdapter } from "./research-review-decision-relational-prisma-client.js";
+import { type PrismaResearchReviewDecisionRelationalRepositoryAdapter } from "./research-review-decision-relational-prisma-adapter.js";
 import { createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter } from "./research-feedback-decision-relational-prisma-client.js";
 import { type PrismaResearchFeedbackDecisionRelationalRepositoryAdapter } from "./research-feedback-decision-relational-prisma-adapter.js";
 import { createSetupAggregateRelationalPrismaRepositoryAdapter } from "./setup-aggregate-relational-prisma-client.js";
@@ -30,6 +32,7 @@ export type ImplementedProductRelationalPrismaAdapters = ImplementedProductRelat
   setupAggregateAdapter: PrismaSetupAggregateRelationalRepositoryAdapter;
   feedbackDecisionAdapter: PrismaResearchFeedbackDecisionRelationalRepositoryAdapter;
   approvalAdapter: PrismaResearchDecisionApprovalRelationalRepositoryAdapter;
+  reviewDecisionAdapter: PrismaResearchReviewDecisionRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalPrismaRepositories =
@@ -47,7 +50,8 @@ export const createImplementedProductRelationalPrismaAdapters = (
   signalEvaluationAdapter: createSignalEvaluationRelationalPrismaRepositoryAdapter(client),
   setupAggregateAdapter: createSetupAggregateRelationalPrismaRepositoryAdapter(client),
   feedbackDecisionAdapter: createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter(client),
-  approvalAdapter: createResearchDecisionApprovalRelationalPrismaRepositoryAdapter(client)
+  approvalAdapter: createResearchDecisionApprovalRelationalPrismaRepositoryAdapter(client),
+  reviewDecisionAdapter: createResearchReviewDecisionRelationalPrismaRepositoryAdapter(client)
 });
 
 export const createImplementedProductRelationalPrismaRepositories = (

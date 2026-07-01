@@ -30,12 +30,12 @@ Durable relational coverage now exists for the core research chain:
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-Postgres integration coverage now also exist for `research_feedback_decision`
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_decision_approval`
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_review_decision`
-- one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval
-- one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval
+- one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision
+- one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision
 
 Still pending:
-- shared implemented-product bundle extension through `research_review_decision`
-- opt-in real-Postgres integration coverage through `research_review_decision`
+- durable relational contract for `routed_action_execution_envelope`
+- later shared-bundle/integration extension for downstream execution and mutation entities after `research_review_decision`
 - later review/execution durable slices after `research_review_decision`
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
@@ -159,7 +159,7 @@ Ownership direction:
 2. persistence metadata (`originRunId`, `traceId`) may be attached through metadata contracts
 3. runtime evidence files remain separate from product-domain storage
 4. one domain contract does not force one-table implementation in this slice
-5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, research decision approvals, and research review decisions, while shared-bundle and real-database integration coverage still stop one step earlier
+5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, research decision approvals, and research review decisions, with shared-bundle and real-database integration coverage now reaching the same boundary
 
 ## Orchestrator handoff boundary
 - orchestrator workflows may trigger future product-domain services

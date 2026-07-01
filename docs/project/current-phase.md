@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.24 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, approval-path hardening, and review-decision repository rollout**
+**Phase 1.25 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and review-decision shared composition/integration**
 
 ## What this phase is about
 This phase is focused on:
@@ -224,6 +224,15 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/repositories/research-review-decision-relational-repositories.ts`
   - `packages/domain-model/src/repositories/research-review-decision-relational-prisma-adapter.ts`
   - `packages/domain-model/src/repositories/research-review-decision-relational-prisma-client.ts`
+- shared Prisma-backed composition extended through review decisions:
+  - `docs/project/implemented-product-review-decision-composition-model.md`
+  - `docs/architecture/adr/ADR-048-implemented-product-review-decision-composition.md`
+  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
+- shared real-Postgres integration extended through review decisions:
+  - `docs/project/implemented-product-review-decision-integration-model.md`
+  - `docs/architecture/adr/ADR-049-implemented-product-review-decision-integration-coverage.md`
+  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -259,7 +268,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- extend the shared implemented-product composition and real-Postgres integration path through `research_review_decision`
+- add the durable relational contract for `routed_action_execution_envelope`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -275,4 +284,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through approvals, one shared approval-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, and one explicit review-decision repository rollout that make the next shared-bundle extension straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through review decisions, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, and one downstream review-decision rollout that make the next later execution slice straightforward instead of speculative**.

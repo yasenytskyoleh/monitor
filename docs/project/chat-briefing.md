@@ -122,14 +122,14 @@ Current product-domain scope includes:
 - adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for:
   - `research_decision_approval`
   - `research_review_decision`
-- one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_decision_approval`
-- one end-to-end real-database integration flow now also spans the full implemented product chain through `research_decision_approval`
-- the next downstream durable persistence gap is now the shared implemented-product bundle and real-database integration path through `research_review_decision`
+- one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_review_decision`
+- one end-to-end real-database integration flow now also spans the full implemented product chain through `research_review_decision`
+- the next downstream durable persistence gap is now the first later review/execution durable slice after review decisions
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- extend the shared implemented-product composition and real-Postgres integration path through `research_review_decision`
+- add the durable relational contract for `routed_action_execution_envelope`
 
 ## Behavioral instructions for future assistants
 When continuing this project:
