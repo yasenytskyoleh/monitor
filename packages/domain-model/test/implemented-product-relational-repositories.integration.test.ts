@@ -11,13 +11,20 @@ import {
   type EvaluationResult,
   type ImplementedProductRelationalPrismaRepositories,
   type ProductRecordMetadata,
+  RepositoryError,
+  type ResearchDecisionApproval,
+  type ResearchFeedbackDecision,
   type ResearchHypothesis,
+  type ResearchReviewDecision,
   type SetupAggregateResult,
   type SetupDefinition,
   type SignalCandidate
 } from "../src/index.js";
+import { resolveIntegrationDatabaseUrl } from "./integration-test-helpers.js";
 
-const INTEGRATION_DATABASE_URL = process.env.PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL?.trim() ?? "";
+const INTEGRATION_DATABASE_URL = resolveIntegrationDatabaseUrl(
+  process.env.PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL
+);
 const PRODUCT_DOMAIN_SCHEMA = "product_domain";
 const migrationsDirectory = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -32,14 +39,26 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260522153000_product_domain_setup_aggregate_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260523091500_product_domain_research_feedback_decision_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260527103000_product_domain_research_decision_approval_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260630113000_product_domain_research_review_decision_relational_v1/migration.sql"
   )
 ];
 
 const metadata: ProductRecordMetadata = {
   originRunId: "run-002",
   originTransitionId: "transition-002",
-  createdBySource: "research_aggregation_pipeline",
-  lastUpdatedBySource: "research_aggregation_pipeline",
+  createdBySource: "manual_curation",
+  lastUpdatedBySource: "manual_curation",
   traceId: "trace-002",
   sourceObservedAtUtc: "2026-05-23T09:00:00.000Z"
 };
@@ -136,6 +155,63 @@ const buildAggregate = (
   updatedAt: "2026-05-24T10:00:00.000Z"
 });
 
+const buildFeedbackDecision = (
+  id: string,
+  setupDefinitionId: string,
+  researchHypothesisId: string,
+  setupAggregateResultId: string
+): ResearchFeedbackDecision => ({
+  id,
+  setupDefinitionId,
+  researchHypothesisId,
+  setupAggregateResultId,
+  evidenceStatus: "supports",
+  recommendedAction: "keep_active",
+  rationaleSummary: "aggregate evidence supports keeping the setup active",
+  decisionStatus: "proposed",
+  requiresManualReview: true,
+  evidenceSummary: "shared bundle integration feedback decision",
+  createdAt: "2026-05-24T10:15:00.000Z",
+  updatedAt: "2026-05-24T10:15:00.000Z"
+});
+
+const buildApproval = (
+  id: string,
+  researchFeedbackDecisionId: string,
+  setupDefinitionId: string
+): ResearchDecisionApproval => ({
+  id,
+  researchFeedbackDecisionId,
+  setupDefinitionId,
+  reviewedBy: "reviewer-001",
+  reviewedAt: "2026-05-24T10:35:00.000Z",
+  approvalOutcome: "approved",
+  reviewerNotes: "Approved in shared integration test.",
+  approvalStatus: "recorded",
+  authorizedNextAction: "keep_active",
+  createdAt: "2026-05-24T10:35:00.000Z",
+  updatedAt: "2026-05-24T10:35:00.000Z"
+});
+
+const buildReviewDecision = (
+  id: string,
+  researchHypothesisId: string
+): ResearchReviewDecision => ({
+  id,
+  researchReviewPacketId: "review-packet-001",
+  setupFamilyId: "setup-family-001",
+  setupRevisionId: "setup-family-001-v2",
+  researchHypothesisId,
+  reviewedBy: "reviewer-001",
+  reviewedAt: "2026-05-24T10:45:00.000Z",
+  decisionOutcome: "accepted",
+  reviewerNotes: "Review confirms the current setup family revision should stay active.",
+  authorizedNextAction: "confirm_no_change",
+  decisionStatus: "recorded",
+  createdAt: "2026-05-24T10:45:00.000Z",
+  updatedAt: "2026-05-24T10:45:00.000Z"
+});
+
 const withPgClient = async <T>(connectionString: string, work: (client: Client) => Promise<T>): Promise<T> => {
   const client = new Client({ connectionString });
   await client.connect();
@@ -186,48 +262,171 @@ const withIntegrationRepositories = async <T>(
 
 const integrationTest = INTEGRATION_DATABASE_URL ? test : test.skip;
 
-integrationTest("shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate against real Postgres", async () => {
-  await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
-    await repositories.setupDefinitionRepository.create({
-      definition: buildSetupDefinition("setup-001"),
-      metadata
-    });
-    await repositories.researchHypothesisRepository.create({
-      hypothesis: buildResearchHypothesis("hypothesis-001", "setup-001"),
-      metadata
-    });
-    await repositories.signalCandidateRepository.create({
-      candidate: buildSignalCandidate("candidate-001", "setup-001"),
-      metadata
-    });
-    await repositories.evaluationResultRepository.create({
-      result: buildEvaluationResult("result-001", "candidate-001"),
-      metadata
-    });
-    await repositories.setupAggregateResultRepository.create({
-      aggregate: buildAggregate("aggregate-001", "setup-001", "hypothesis-001"),
-      metadata
-    });
+integrationTest(
+  "shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision against real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      await repositories.setupDefinitionRepository.create({
+        definition: buildSetupDefinition("setup-001"),
+        metadata
+      });
+      await repositories.researchHypothesisRepository.create({
+        hypothesis: buildResearchHypothesis("hypothesis-001", "setup-001"),
+        metadata
+      });
+      await repositories.signalCandidateRepository.create({
+        candidate: buildSignalCandidate("candidate-001", "setup-001"),
+        metadata
+      });
+      await repositories.evaluationResultRepository.create({
+        result: buildEvaluationResult("result-001", "candidate-001"),
+        metadata
+      });
+      await repositories.setupAggregateResultRepository.create({
+        aggregate: buildAggregate("aggregate-001", "setup-001", "hypothesis-001"),
+        metadata
+      });
+      await repositories.researchFeedbackDecisionRepository.create({
+        decision: buildFeedbackDecision(
+          "feedback-001",
+          "setup-001",
+          "hypothesis-001",
+          "aggregate-001"
+        ),
+        metadata
+      });
+      const approvalPersistenceResult =
+        await repositories.feedbackDecisionApprovalReviewPersistence.recordFeedbackDecisionApproval({
+          researchFeedbackDecisionId: "feedback-001",
+          nextDecisionStatus: "accepted",
+          reviewerMetadata: {
+            reviewedBy: "reviewer-001",
+            reviewedAt: "2026-05-24T10:30:00.000Z",
+            approvalOutcome: "approved"
+          },
+          approval: buildApproval("approval-001", "feedback-001", "setup-001"),
+          metadata: {
+            ...metadata,
+            sourceObservedAtUtc: "2026-05-24T10:35:00.000Z"
+          }
+        });
 
-    const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
-    const storedEvaluation =
-      await repositories.evaluationResultRepository.getBySignalCandidateAndWindow(
-        "candidate-001",
-        "window-24h"
-      );
-    const storedAggregate =
-      await repositories.setupAggregateResultRepository.getBySetupDefinitionAndScope(
-        "setup-001",
-        buildAggregate("aggregate-001", "setup-001", "hypothesis-001").aggregationScope
-      );
-    const aggregateRows = await repositories.prismaClient.setupAggregateResultRecord.findMany({
-      orderBy: { setupAggregateResultId: "asc" }
-    });
+      assert.equal(approvalPersistenceResult.status, "recorded");
+      if (approvalPersistenceResult.status !== "recorded") {
+        assert.fail("approval persistence should have recorded the approval");
+      }
 
-    assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
-    assert.equal(storedEvaluation?.id, "result-001");
-    assert.equal(storedAggregate?.status, "completed");
-    assert.equal(aggregateRows.length, 1);
-    assert.equal(aggregateRows[0]?.completedEvaluations, 1);
-  });
-});
+      await repositories.researchReviewDecisionRepository.create({
+        decision: buildReviewDecision("review-decision-001", "hypothesis-001"),
+        metadata: {
+          ...metadata,
+          sourceObservedAtUtc: "2026-05-24T10:45:00.000Z"
+        }
+      });
+
+      const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
+      const storedEvaluation =
+        await repositories.evaluationResultRepository.getBySignalCandidateAndWindow(
+          "candidate-001",
+          "window-24h"
+        );
+      const storedAggregate =
+        await repositories.setupAggregateResultRepository.getBySetupDefinitionAndScope(
+          "setup-001",
+          buildAggregate("aggregate-001", "setup-001", "hypothesis-001").aggregationScope
+        );
+      const storedFeedbackDecision =
+        await repositories.researchFeedbackDecisionRepository.getById("feedback-001");
+      const storedApproval =
+        await repositories.researchDecisionApprovalRepository.getById("approval-001");
+      const storedReviewDecision =
+        await repositories.researchReviewDecisionRepository.getById("review-decision-001");
+      const aggregateRows = await repositories.prismaClient.setupAggregateResultRecord.findMany({
+        orderBy: { setupAggregateResultId: "asc" }
+      });
+      const feedbackDecisionRows =
+        await repositories.prismaClient.researchFeedbackDecisionRecord.findMany({
+          orderBy: { researchFeedbackDecisionId: "asc" }
+        });
+      const approvalRows = await repositories.prismaClient.researchDecisionApprovalRecord.findMany({
+        orderBy: { researchDecisionApprovalId: "asc" }
+      });
+      const reviewDecisionRows =
+        await repositories.prismaClient.researchReviewDecisionRecord.findMany({
+          where: { researchReviewPacketId: "review-packet-001" },
+          orderBy: { researchReviewDecisionId: "asc" }
+        });
+
+      assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
+      assert.equal(storedEvaluation?.id, "result-001");
+      assert.equal(storedAggregate?.status, "completed");
+      assert.equal(approvalPersistenceResult.decision.decisionStatus, "accepted");
+      assert.equal(storedFeedbackDecision?.reviewerMetadata?.reviewedBy, "reviewer-001");
+      assert.equal(approvalPersistenceResult.approval.approvalOutcome, "approved");
+      assert.equal(storedApproval?.authorizedNextAction, "keep_active");
+      assert.equal(storedReviewDecision?.researchHypothesisId, "hypothesis-001");
+      assert.equal(storedReviewDecision?.authorizedNextAction, "confirm_no_change");
+      assert.equal(aggregateRows.length, 1);
+      assert.equal(aggregateRows[0]?.completedEvaluations, 1);
+      assert.equal(feedbackDecisionRows.length, 1);
+      assert.equal(feedbackDecisionRows[0]?.decisionStatus, "accepted");
+      assert.equal(approvalRows.length, 1);
+      assert.equal(approvalRows[0]?.researchFeedbackDecisionId, "feedback-001");
+      assert.equal(approvalRows[0]?.authorizedNextAction, "keep_active");
+      assert.equal(reviewDecisionRows.length, 1);
+      assert.equal(reviewDecisionRows[0]?.researchHypothesisId, "hypothesis-001");
+      assert.equal(reviewDecisionRows[0]?.authorizedNextAction, "confirm_no_change");
+    });
+  }
+);
+
+integrationTest(
+  "shared implemented-product bundle maps invalid review-decision hypothesis linkage from real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      await repositories.setupDefinitionRepository.create({
+        definition: buildSetupDefinition("setup-001"),
+        metadata
+      });
+      await repositories.setupDefinitionRepository.create({
+        definition: buildSetupDefinition("setup-002"),
+        metadata
+      });
+      await repositories.researchHypothesisRepository.create({
+        hypothesis: buildResearchHypothesis("hypothesis-001", "setup-001"),
+        metadata
+      });
+      await repositories.setupAggregateResultRepository.create({
+        aggregate: buildAggregate("aggregate-001", "setup-001", "hypothesis-001"),
+        metadata
+      });
+      await repositories.researchFeedbackDecisionRepository.create({
+        decision: buildFeedbackDecision(
+          "feedback-001",
+          "setup-001",
+          "hypothesis-001",
+          "aggregate-001"
+        ),
+        metadata
+      });
+      await repositories.researchDecisionApprovalRepository.create({
+        approval: buildApproval("approval-002", "feedback-001", "setup-001"),
+        metadata
+      });
+
+      await assert.rejects(
+        async () =>
+          repositories.researchReviewDecisionRepository.create({
+            decision: buildReviewDecision("review-decision-002", "hypothesis-missing"),
+            metadata
+          }),
+        (error: unknown) =>
+          error instanceof RepositoryError &&
+          error.code === "invalid_reference" &&
+          error.entityType === "research_review_decision" &&
+          error.referenceEntityType === "research_hypothesis" &&
+          error.referenceEntityId === "hypothesis-missing"
+      );
+    });
+  }
+);

@@ -59,6 +59,10 @@ Implemented today:
   - `SetupAggregateResult`
   - `SetupComparison`
   - `ResearchHypothesisEvidenceLink`
+  - `ResearchFeedbackDecision`
+  - `ResearchDecisionApproval`
+  - `ResearchReviewDecision`
+  - `RoutedActionExecutionEnvelope`
   - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
   - repository contracts (`*Repository`)
   - service contracts (`*Service`) with explicit write ownership
@@ -70,6 +74,10 @@ Implemented today:
   - `SignalCandidate`
   - `EvaluationResult`
   - `SetupAggregateResult`
+  - `ResearchFeedbackDecision`
+  - `ResearchDecisionApproval`
+  - `ResearchReviewDecision`
+  - `RoutedActionExecutionEnvelope`
 - product-domain docs and ADR:
   - `docs/project/domain-model.md`
   - `docs/project/research-model.md`
@@ -91,6 +99,22 @@ Implemented today:
   - `docs/project/setup-aggregate-relational-persistence-model.md`
   - `docs/project/setup-aggregate-relational-rollout-model.md`
   - `docs/project/implemented-product-relational-composition-model.md`
+  - `docs/project/implemented-product-feedback-decision-composition-model.md`
+  - `docs/project/implemented-product-approval-composition-model.md`
+  - `docs/project/implemented-product-approval-integration-model.md`
+  - `docs/project/research-feedback-decision-relational-persistence-model.md`
+  - `docs/project/research-feedback-decision-relational-rollout-model.md`
+  - `docs/project/research-decision-approval-relational-persistence-model.md`
+  - `docs/project/research-decision-approval-relational-adapter-model.md`
+  - `docs/project/research-decision-approval-relational-rollout-model.md`
+  - `docs/project/research-review-decision-relational-persistence-model.md`
+  - `docs/project/research-review-decision-relational-adapter-model.md`
+  - `docs/project/research-review-decision-relational-rollout-model.md`
+  - `docs/project/implemented-product-review-decision-composition-model.md`
+  - `docs/project/implemented-product-review-decision-integration-model.md`
+  - `docs/project/routed-action-execution-envelope-relational-persistence-model.md`
+  - `docs/project/routed-action-execution-envelope-relational-adapter-model.md`
+  - `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -105,23 +129,48 @@ Implemented today:
   - `docs/architecture/adr/ADR-031-setup-aggregate-durable-relational-contract-and-schema.md`
   - `docs/architecture/adr/ADR-032-setup-aggregate-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-033-shared-implemented-product-relational-composition.md`
+  - `docs/architecture/adr/ADR-034-research-feedback-decision-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-035-research-feedback-decision-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-036-research-feedback-decision-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-037-implemented-product-feedback-decision-composition.md`
+  - `docs/architecture/adr/ADR-038-research-decision-approval-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-039-research-decision-approval-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-040-research-decision-approval-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-041-research-decision-approval-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-042-implemented-product-approval-composition.md`
+  - `docs/architecture/adr/ADR-043-implemented-product-approval-integration-coverage.md`
+  - `docs/architecture/adr/ADR-044-research-review-decision-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-045-research-review-decision-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-046-research-review-decision-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-047-research-review-decision-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-048-implemented-product-review-decision-composition.md`
+  - `docs/architecture/adr/ADR-049-implemented-product-review-decision-integration-coverage.md`
+  - `docs/architecture/adr/ADR-050-routed-action-execution-envelope-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-051-routed-action-execution-envelope-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-053-routed-action-execution-envelope-adapter-backed-relational-repositories.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
   - isolated apply + verification + rollback + controlled promotion
   - narrow helper-file creation only
   - no broad refactors, schema/migration/architecture changes, or cross-package scope
-- durable relational persistence pending:
-  - durable relational contracts and committed Prisma schema/migrations now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, and `setup_aggregate_result`
-  - adapter-backed relational repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now exist for all five implemented service-owned product entities
-  - one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now exist for the current core research chain
-  - the next persistence gap is downstream review/governance entities, starting with `research_feedback_decision`
+- durable relational persistence is partially implemented, with later expansion still pending:
+  - durable relational contracts now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, `setup_aggregate_result`, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, and `routed_action_execution_envelope`
+  - committed Prisma schema/migrations now exist through `routed_action_execution_envelope`
+  - repository adapter contracts now also exist through `routed_action_execution_envelope`
+  - adapter-backed relational repositories, concrete Prisma adapters, and slice-level shared composition now exist for all five core-chain service-owned product entities, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, and `routed_action_execution_envelope`
+  - opt-in real-database integration coverage now exists for the five core-chain entities, `research_feedback_decision`, and the shared implemented-product chain through `research_review_decision`
+  - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_review_decision`
+  - one end-to-end real-database integration flow now also spans the full implemented product chain through `research_review_decision`
+  - `routed_action_execution_envelope` now also has a durable relational contract, committed Prisma schema/migration, repository adapter contract, domain/durable mappers, adapter-backed relational repository, concrete Prisma adapter, and slice-level shared composition, but it still has no shared-bundle or real-database integration coverage
+  - the next downstream durable persistence gap is now the shared implemented-product relational bundle extension through `routed_action_execution_envelope`
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- plan the durable relational contract and schema for `research_feedback_decision`
+- extend the shared implemented-product relational bundle through `routed_action_execution_envelope`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

@@ -1,34 +1,57 @@
 # Next Steps
 
 ## Current recommended next step
-### Plan the durable relational contract and schema for `research_feedback_decision`
+### Extend the shared implemented-product relational bundle through `routed_action_execution_envelope`
 
 Reason:
-- the core setup -> hypothesis -> candidate -> evaluation -> aggregate chain now has:
+- the full implemented research chain now has:
   - `setup_definition`
   - `research_hypothesis`
   - `signal_candidate`
   - `evaluation_result`
   - `setup_aggregate_result`
-- one shared Prisma-backed repository bundle and one end-to-end integration path
-- `research_feedback_decision` is the next service-owned product entity downstream of aggregate evidence and upstream of approval/refinement flows
-- runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
+  - `research_feedback_decision`
+- `research_decision_approval` now also has:
+  - a durable relational contract
+  - committed Prisma schema and migration artifacts
+  - a repository adapter contract
+  - domain/durable mappers
+  - an adapter-backed relational repository
+  - a concrete Prisma adapter
+  - slice-level shared composition
+- `research_review_decision` now also has:
+  - a durable relational contract
+  - committed Prisma schema and migration artifacts
+  - a repository adapter contract
+  - domain/durable mappers
+  - an adapter-backed relational repository
+  - a concrete Prisma adapter
+  - slice-level shared composition
+- that entity already exists in the domain model and in implemented in-memory persistence
+- one shared Prisma-backed bundle and one opt-in real-Postgres integration path now span the full implemented product chain through `research_review_decision`
+- `routed_action_execution_envelope` already exists in the domain model and in implemented in-memory persistence
+- `routed_action_execution_envelope` now also has:
+  - a durable relational contract
+  - committed Prisma schema and migration artifacts
+  - a repository adapter contract
+  - domain/durable mappers
+  - an adapter-backed relational repository
+  - a concrete Prisma adapter
+  - slice-level shared composition
+- the shared implemented-product bundle and the opt-in real-Postgres integration path still stop at `research_review_decision`
+- runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and shared-bundle-focused
 
 ## Recommended near-future sequence
-1. define the durable record contract for `research_feedback_decision`
-2. define reference, version, and metadata mapping rules for:
-   - `setup_definition`
-   - `research_hypothesis`
-   - optional `setup_aggregate_result`
-3. define the Prisma schema and migration plan, but stop before repository/adapter implementation
-4. keep approval/review/execution durable slices deferred until the feedback-decision persistence direction is explicit
+1. extend the shared implemented-product relational bundle through `routed_action_execution_envelope`
+2. extend opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
+3. keep later review/execution entities deferred until the routed-action shared-bundle pattern is verified
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
-- expanding the durable rollout slice prematurely
-- mixing approval/execution workflow logic into the feedback-decision contract/schema step
+- expanding into runtime review/execution workflow logic prematurely
+- mixing real-database integration expansion or setup-mutation runtime behavior into the routed-action shared-bundle step
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

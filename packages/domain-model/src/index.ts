@@ -240,6 +240,31 @@ export {
   PRODUCT_PERSISTED_ENTITY_TYPES,
   PRODUCT_RECORD_SOURCES,
   PERSISTED_ENTITY_LIFECYCLE_STATUSES,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_TABLES,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_ENTITY_TYPES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_ENTITY_TYPES,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_INDEXES,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_ENTITY_TYPES,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_INDEXES,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_MIGRATION_SLUG,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_PRISMA_MODELS,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_REQUIRED_COLUMNS,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_TABLES,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES,
   RUNTIME_EVIDENCE_ARTIFACT_TYPES,
   STORAGE_BOUNDARIES,
   buildSetupAggregateScopeKey,
@@ -266,6 +291,27 @@ export type {
   ProductPersistedEntityType,
   ProductRecordMetadata,
   ProductRecordSource,
+  ResearchDecisionApprovalDurableRecord,
+  ResearchDecisionApprovalRelationalIndexName,
+  ResearchDecisionApprovalRelationalPrismaModelName,
+  ResearchDecisionApprovalRelationalTableName,
+  ResearchDecisionApprovalRelationalUniqueConstraintName,
+  ResearchDecisionApprovalRelationalEntityType,
+  RoutedActionExecutionEnvelopeDurableRecord,
+  RoutedActionExecutionEnvelopeRelationalIndexName,
+  RoutedActionExecutionEnvelopeRelationalPrismaModelName,
+  RoutedActionExecutionEnvelopeRelationalEntityType,
+  RoutedActionExecutionEnvelopeRelationalTableName,
+  ResearchReviewDecisionDurableRecord,
+  ResearchReviewDecisionRelationalIndexName,
+  ResearchReviewDecisionRelationalPrismaModelName,
+  ResearchReviewDecisionRelationalEntityType,
+  ResearchReviewDecisionRelationalTableName,
+  ResearchFeedbackDecisionDurableRecord,
+  ResearchFeedbackDecisionRelationalIndexName,
+  ResearchFeedbackDecisionRelationalPrismaModelName,
+  ResearchFeedbackDecisionRelationalEntityType,
+  ResearchFeedbackDecisionRelationalTableName,
   ResearchHypothesisDurableRecord,
   ResearchHypothesisSetupDefinitionLinkRecord,
   RuntimeEvidenceArtifactType,
@@ -309,6 +355,34 @@ export {
   SETUP_AGGREGATE_RELATIONAL_RETRYABLE_ERROR_CODES,
   isSetupAggregateRelationalDeterministicErrorCode
 } from "./repositories/setup-aggregate-relational-repository-adapter.js";
+export {
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_ADAPTER_OPERATIONS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isResearchFeedbackDecisionRelationalDeterministicErrorCode
+} from "./repositories/research-feedback-decision-relational-repository-adapter.js";
+export {
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_ADAPTER_OPERATIONS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isResearchDecisionApprovalRelationalDeterministicErrorCode
+} from "./repositories/research-decision-approval-relational-repository-adapter.js";
+export {
+  RESEARCH_REVIEW_DECISION_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_ADAPTER_OPERATIONS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isResearchReviewDecisionRelationalDeterministicErrorCode
+} from "./repositories/research-review-decision-relational-repository-adapter.js";
+export {
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ADAPTER_OPERATIONS,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isRoutedActionExecutionEnvelopeRelationalDeterministicErrorCode
+} from "./repositories/routed-action-execution-envelope-relational-repository-adapter.js";
 export { composeFirstDurableRelationalRepositories } from "./repositories/first-durable-relational-repositories.js";
 export type {
   FirstDurableRelationalRepositories
@@ -332,6 +406,30 @@ export {
 export type {
   SetupAggregateRelationalRepositories
 } from "./repositories/setup-aggregate-relational-repositories.js";
+export {
+  composeResearchFeedbackDecisionRelationalRepositories
+} from "./repositories/research-feedback-decision-relational-repositories.js";
+export type {
+  ResearchFeedbackDecisionRelationalRepositories
+} from "./repositories/research-feedback-decision-relational-repositories.js";
+export {
+  composeResearchDecisionApprovalRelationalRepositories
+} from "./repositories/research-decision-approval-relational-repositories.js";
+export type {
+  ResearchDecisionApprovalRelationalRepositories
+} from "./repositories/research-decision-approval-relational-repositories.js";
+export {
+  composeResearchReviewDecisionRelationalRepositories
+} from "./repositories/research-review-decision-relational-repositories.js";
+export type {
+  ResearchReviewDecisionRelationalRepositories
+} from "./repositories/research-review-decision-relational-repositories.js";
+export {
+  composeRoutedActionExecutionEnvelopeRelationalRepositories
+} from "./repositories/routed-action-execution-envelope-relational-repositories.js";
+export type {
+  RoutedActionExecutionEnvelopeRelationalRepositories
+} from "./repositories/routed-action-execution-envelope-relational-repositories.js";
 export type {
   FirstDurableRelationalAdapterErrorMapping,
   FirstDurableRelationalAdapterOperation,
@@ -365,6 +463,57 @@ export type {
   SetupAggregateRelationalRetryableErrorCode,
   SetupAggregateResultRecordWriteRequest
 } from "./repositories/setup-aggregate-relational-repository-adapter.js";
+export type {
+  ResearchFeedbackDecisionRecordWriteRequest,
+  ResearchFeedbackDecisionRelationalAdapterErrorMapping,
+  ResearchFeedbackDecisionRelationalAdapterOperation,
+  ResearchFeedbackDecisionRelationalDeterministicErrorCode,
+  ResearchFeedbackDecisionRelationalRepositoryAdapter,
+  ResearchFeedbackDecisionRelationalRetryableErrorCode
+} from "./repositories/research-feedback-decision-relational-repository-adapter.js";
+export type {
+  FeedbackDecisionApprovalReviewPersistence,
+  FeedbackDecisionApprovalReviewPersistenceResult,
+  RecordFeedbackDecisionApprovalRequest
+} from "./repositories/feedback-decision-approval-review-persistence.js";
+export {
+  InMemoryFeedbackDecisionApprovalReviewPersistence
+} from "./repositories/feedback-decision-approval-review-persistence.impl.js";
+export {
+  createPrismaFeedbackDecisionApprovalReviewPersistence,
+  PrismaFeedbackDecisionApprovalReviewPersistence
+} from "./repositories/feedback-decision-approval-review-persistence.prisma.js";
+export type {
+  FeedbackDecisionApprovalReviewPrismaClient
+} from "./repositories/feedback-decision-approval-review-persistence.prisma.js";
+export type {
+  ResearchDecisionApprovalRecordWriteRequest,
+  ResearchDecisionApprovalRelationalAdapterErrorMapping,
+  ResearchDecisionApprovalRelationalAdapterOperation,
+  ResearchDecisionApprovalRelationalDeterministicErrorCode,
+  ResearchDecisionApprovalRelationalRepositoryAdapter,
+  ResearchDecisionApprovalRelationalRetryableErrorCode
+} from "./repositories/research-decision-approval-relational-repository-adapter.js";
+export type {
+  ResearchReviewDecisionRecordWriteRequest,
+  ResearchReviewDecisionRelationalAdapterErrorMapping,
+  ResearchReviewDecisionRelationalAdapterOperation,
+  ResearchReviewDecisionRelationalDeterministicErrorCode,
+  ResearchReviewDecisionRelationalRepositoryAdapter,
+  ResearchReviewDecisionRelationalRetryableErrorCode
+} from "./repositories/research-review-decision-relational-repository-adapter.js";
+export type {
+  RoutedActionExecutionEnvelopeRecordWriteRequest,
+  RoutedActionExecutionEnvelopeRelationalAdapterErrorMapping,
+  RoutedActionExecutionEnvelopeRelationalAdapterOperation,
+  RoutedActionExecutionEnvelopeRelationalDeterministicErrorCode,
+  RoutedActionExecutionEnvelopeRelationalRepositoryAdapter,
+  RoutedActionExecutionEnvelopeRelationalRetryableErrorCode
+} from "./repositories/routed-action-execution-envelope-relational-repository-adapter.js";
+export {
+  dehydrateRoutedActionExecutionEnvelopeToDurableRecord,
+  hydrateRoutedActionExecutionEnvelopeFromDurableRecord
+} from "./repositories/routed-action-execution-envelope-relational-repository-mappers.js";
 export {
   dehydrateEvaluationResultToDurableRecord,
   dehydrateSignalCandidateToDurableRecord,
@@ -375,6 +524,18 @@ export {
   dehydrateSetupAggregateResultToDurableRecord,
   hydrateSetupAggregateResultFromDurableRecord
 } from "./repositories/setup-aggregate-relational-repository-mappers.js";
+export {
+  dehydrateResearchFeedbackDecisionToDurableRecord,
+  hydrateResearchFeedbackDecisionFromDurableRecord
+} from "./repositories/research-feedback-decision-relational-repository-mappers.js";
+export {
+  dehydrateResearchDecisionApprovalToDurableRecord,
+  hydrateResearchDecisionApprovalFromDurableRecord
+} from "./repositories/research-decision-approval-relational-repository-mappers.js";
+export {
+  dehydrateResearchReviewDecisionToDurableRecord,
+  hydrateResearchReviewDecisionFromDurableRecord
+} from "./repositories/research-review-decision-relational-repository-mappers.js";
 export {
   InMemoryFirstDurableRelationalRepositoryAdapter
 } from "./repositories/first-durable-relational-repository-adapter.impl.js";
@@ -390,6 +551,30 @@ export type {
 export {
   InMemorySetupAggregateRelationalRepositoryAdapter
 } from "./repositories/setup-aggregate-relational-repository-adapter.impl.js";
+export type {
+  ResearchFeedbackDecisionRelationalReferenceReader
+} from "./repositories/research-feedback-decision-relational-repository-adapter.impl.js";
+export {
+  InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter
+} from "./repositories/research-feedback-decision-relational-repository-adapter.impl.js";
+export type {
+  ResearchDecisionApprovalRelationalReferenceReader
+} from "./repositories/research-decision-approval-relational-repository-adapter.impl.js";
+export {
+  InMemoryResearchDecisionApprovalRelationalRepositoryAdapter
+} from "./repositories/research-decision-approval-relational-repository-adapter.impl.js";
+export type {
+  ResearchReviewDecisionRelationalReferenceReader
+} from "./repositories/research-review-decision-relational-repository-adapter.impl.js";
+export {
+  InMemoryResearchReviewDecisionRelationalRepositoryAdapter
+} from "./repositories/research-review-decision-relational-repository-adapter.impl.js";
+export type {
+  RoutedActionExecutionEnvelopeRelationalReferenceReader
+} from "./repositories/routed-action-execution-envelope-relational-repository-adapter.impl.js";
+export {
+  InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter
+} from "./repositories/routed-action-execution-envelope-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,
@@ -435,12 +620,64 @@ export {
 export type {
   SetupAggregateRelationalPrismaRepositories
 } from "./repositories/setup-aggregate-relational-prisma-client.js";
+export {
+  createResearchFeedbackDecisionRelationalPrismaRepositories,
+  createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter
+} from "./repositories/research-feedback-decision-relational-prisma-client.js";
+export type {
+  ResearchFeedbackDecisionRelationalPrismaRepositories
+} from "./repositories/research-feedback-decision-relational-prisma-client.js";
+export {
+  createResearchDecisionApprovalRelationalPrismaRepositories,
+  createResearchDecisionApprovalRelationalPrismaRepositoryAdapter
+} from "./repositories/research-decision-approval-relational-prisma-client.js";
+export type {
+  ResearchDecisionApprovalRelationalPrismaRepositories
+} from "./repositories/research-decision-approval-relational-prisma-client.js";
+export {
+  createResearchReviewDecisionRelationalPrismaRepositories,
+  createResearchReviewDecisionRelationalPrismaRepositoryAdapter
+} from "./repositories/research-review-decision-relational-prisma-client.js";
+export type {
+  ResearchReviewDecisionRelationalPrismaRepositories
+} from "./repositories/research-review-decision-relational-prisma-client.js";
+export {
+  createRoutedActionExecutionEnvelopeRelationalPrismaRepositories,
+  createRoutedActionExecutionEnvelopeRelationalPrismaRepositoryAdapter
+} from "./repositories/routed-action-execution-envelope-relational-prisma-client.js";
+export type {
+  RoutedActionExecutionEnvelopeRelationalPrismaRepositories
+} from "./repositories/routed-action-execution-envelope-relational-prisma-client.js";
 export type {
   SetupAggregateRelationalPrismaClient
 } from "./repositories/setup-aggregate-relational-prisma-adapter.js";
 export {
   PrismaSetupAggregateRelationalRepositoryAdapter
 } from "./repositories/setup-aggregate-relational-prisma-adapter.js";
+export type {
+  ResearchFeedbackDecisionRelationalPrismaClient
+} from "./repositories/research-feedback-decision-relational-prisma-adapter.js";
+export {
+  PrismaResearchFeedbackDecisionRelationalRepositoryAdapter
+} from "./repositories/research-feedback-decision-relational-prisma-adapter.js";
+export type {
+  ResearchDecisionApprovalRelationalPrismaClient
+} from "./repositories/research-decision-approval-relational-prisma-adapter.js";
+export {
+  PrismaResearchDecisionApprovalRelationalRepositoryAdapter
+} from "./repositories/research-decision-approval-relational-prisma-adapter.js";
+export type {
+  ResearchReviewDecisionRelationalPrismaClient
+} from "./repositories/research-review-decision-relational-prisma-adapter.js";
+export {
+  PrismaResearchReviewDecisionRelationalRepositoryAdapter
+} from "./repositories/research-review-decision-relational-prisma-adapter.js";
+export type {
+  RoutedActionExecutionEnvelopeRelationalPrismaClient
+} from "./repositories/routed-action-execution-envelope-relational-prisma-adapter.js";
+export {
+  PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter
+} from "./repositories/routed-action-execution-envelope-relational-prisma-adapter.js";
 export {
   REPOSITORY_ERROR_CODES,
   REPOSITORY_OPERATIONS,
@@ -491,6 +728,9 @@ export type {
 export {
   InMemoryResearchFeedbackDecisionRepository
 } from "./repositories/research-feedback-decision-repository.impl.js";
+export {
+  RelationalResearchFeedbackDecisionRepository
+} from "./repositories/research-feedback-decision-relational-repository.impl.js";
 export type {
   ResearchDecisionApprovalCreateRequest,
   ResearchDecisionApprovalRepository
@@ -498,6 +738,9 @@ export type {
 export {
   InMemoryResearchDecisionApprovalRepository
 } from "./repositories/research-decision-approval-repository.impl.js";
+export {
+  RelationalResearchDecisionApprovalRepository
+} from "./repositories/research-decision-approval-relational-repository.impl.js";
 export type {
   ResearchReviewDecisionCreateRequest,
   ResearchReviewDecisionRepository
@@ -505,6 +748,9 @@ export type {
 export {
   InMemoryResearchReviewDecisionRepository
 } from "./repositories/research-review-decision-repository.impl.js";
+export {
+  RelationalResearchReviewDecisionRepository
+} from "./repositories/research-review-decision-relational-repository.impl.js";
 export type {
   ReviewDecisionRoutingResultCreateRequest,
   ReviewDecisionRoutingResultRepository
@@ -519,6 +765,9 @@ export type {
 export {
   InMemoryRoutedActionExecutionEnvelopeRepository
 } from "./repositories/routed-action-execution-envelope-repository.impl.js";
+export {
+  RelationalRoutedActionExecutionEnvelopeRepository
+} from "./repositories/routed-action-execution-envelope-relational-repository.impl.js";
 export type {
   SetupDefinitionRevisionCreateRequest,
   SetupDefinitionRevisionRepository,

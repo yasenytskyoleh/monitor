@@ -16,8 +16,9 @@ The package remains intentionally narrow, and now includes **implemented in-memo
 - `SignalCandidate`
 - `EvaluationResult`
 - `SetupAggregateResult`
+- `ResearchFeedbackDecision`
 
-It still does not implement durable relational runtime adapters, ingestion, execution, or statistics engines.
+It still does not implement runtime ingestion, execution, or statistics engines, and downstream durable relational rollout is only partially extended beyond the core research chain.
 
 ## Current implementation status
 Implemented in-memory persistence exists today for:
@@ -26,26 +27,36 @@ Implemented in-memory persistence exists today for:
 - `SignalCandidate`
 - `EvaluationResult`
 - `SetupAggregateResult`
+- `ResearchFeedbackDecision`
 
-First durable relational contract exists today for:
+Durable relational contracts exist today for:
 - `SetupDefinition`
 - `ResearchHypothesis`
+- `SignalCandidate`
+- `EvaluationResult`
+- `SetupAggregateResult`
+- `ResearchFeedbackDecision`
 
-First relational adapter rollout design exists today for:
+Committed Prisma schema/migrations, adapter-backed relational repositories, and concrete Prisma adapters exist today for:
 - `SetupDefinition`
 - `ResearchHypothesis`
+- `SignalCandidate`
+- `EvaluationResult`
+- `SetupAggregateResult`
 
-First physical Prisma schema and initial migration exist today for:
+Committed Prisma schema/migrations now also exist for:
+- `ResearchFeedbackDecision`
+
+Shared Prisma-backed composition and opt-in real-database integration coverage exist today for:
 - `SetupDefinition`
 - `ResearchHypothesis`
-
-Adapter-backed relational repositories and in-memory adapter harness exist today for:
-- `SetupDefinition`
-- `ResearchHypothesis`
+- `SignalCandidate`
+- `EvaluationResult`
+- `SetupAggregateResult`
 
 Durable relational persistence pending:
-- Prisma client/runtime wiring
-- concrete Prisma adapter
+- adapter rollout for `ResearchFeedbackDecision`
+- later approval/review/execution durable slices
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI
@@ -64,6 +75,7 @@ Durable relational persistence pending:
 - `ResearchHypothesisEvidenceLink`
 - `ResearchHypothesis`
 - `ResearchRun`
+- `ResearchFeedbackDecision`
 
 Code contracts live in:
 - `packages/domain-model/src`
@@ -86,6 +98,8 @@ Related product docs:
 - `docs/project/relational-adapter-rollout-model.md`
 - `docs/project/prisma-schema-implementation-model.md`
 - `docs/project/relational-repository-implementation-model.md`
+- `docs/project/implemented-product-relational-composition-model.md`
+- `docs/project/research-feedback-decision-relational-persistence-model.md`
 - `docs/project/signal-candidate-model.md`
 - `docs/project/first-application-flow.md`
 - `docs/project/product-service-flow.md`
@@ -101,7 +115,7 @@ Related product docs:
 - signal generation engine implementation
 - evaluation engine implementation
 - execution/trading logic
-- concrete Prisma adapter and DB runtime wiring
+- additional downstream relational schema/adapter rollout beyond the current core chain
 - UI/dashboard work
 - news/sentiment enrichment
 
@@ -143,11 +157,12 @@ Rule: orchestration executes workflows; product domain defines market/research m
 - `ResearchHypothesisEvidenceLink` ties aggregate evidence back to hypothesis status updates.
 - `ResearchHypothesis` expresses the research idea behind one or more setup definitions.
 - `ResearchRun` tracks one bounded execution of a hypothesis evaluation cycle.
+- `ResearchFeedbackDecision` captures the explicit recommendation boundary from evidence review into later manual review/approval flows.
 
 ## Storage direction (initial)
 Storage boundaries are now explicitly defined:
 - `runtime_evidence` (orchestrator file-based evidence)
-- `product_domain` (implemented in-memory persistence today; durable relational contracts, committed Prisma schema/migrations, adapter-backed repositories, and concrete Prisma adapters now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, and `setup_aggregate_result`)
+- `product_domain` (implemented in-memory persistence today; durable relational contracts and committed Prisma schema/migrations now also include `research_feedback_decision`, while adapter-backed repositories and concrete Prisma adapters currently exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, and `setup_aggregate_result`)
 - `derived_analytics` (deferred)
 
 Current package provides contract-level storage types in `packages/domain-model/src/storage/*`.
@@ -155,7 +170,7 @@ Current package provides contract-level storage types in `packages/domain-model/
 Deferred to later slices:
 - full detection runtime engine and event processing
 - aggregation runtime/job orchestration and advanced evidence analytics
-- durable relational planning for `research_feedback_decision` and later review/execution entities
+- physical durable relational rollout for `research_feedback_decision` and later review/execution entities
 - data retention policies
 
 ## Acceptance criteria for this slice

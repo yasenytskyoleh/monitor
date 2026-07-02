@@ -97,6 +97,100 @@ enum HypothesisEvidenceStatus {
   @@schema("product_domain")
 }
 
+enum ResearchFeedbackDecisionAction {
+  keep_active
+  refine_definition
+  pause_setup
+  archive_setup
+  manual_review_required
+
+  @@map("research_feedback_decision_action")
+  @@schema("product_domain")
+}
+
+enum ResearchFeedbackDecisionStatus {
+  proposed
+  reviewed
+  accepted
+  rejected
+
+  @@map("research_feedback_decision_status")
+  @@schema("product_domain")
+}
+
+enum ResearchDecisionApprovalStatus {
+  recorded
+
+  @@map("research_decision_approval_status")
+  @@schema("product_domain")
+}
+
+enum ResearchDecisionApprovalOutcome {
+  approved
+  rejected
+  needs_changes
+
+  @@map("research_decision_approval_outcome")
+  @@schema("product_domain")
+}
+
+enum ResearchReviewAuthorizedNextAction {
+  confirm_no_change
+  prepare_activation_follow_up
+  prepare_lifecycle_mutation_follow_up
+  prepare_refinement_follow_up
+
+  @@map("research_review_authorized_next_action")
+  @@schema("product_domain")
+}
+
+enum ResearchReviewDecisionStatus {
+  recorded
+
+  @@map("research_review_decision_status")
+  @@schema("product_domain")
+}
+
+enum ResearchReviewDecisionOutcome {
+  accepted
+  rejected
+  revise
+
+  @@map("research_review_decision_outcome")
+  @@schema("product_domain")
+}
+
+enum DownstreamActionTarget {
+  apply_setup_lifecycle_mutation
+  create_setup_refinement_request
+  activate_setup_revision
+  no_op_confirmed
+
+  @@map("downstream_action_target")
+  @@schema("product_domain")
+}
+
+enum ReviewDecisionDownstreamCommandType {
+  ApplyApprovedSetupMutationCommand
+  CreateSetupRefinementRequestCommand
+  ActivateSetupDefinitionRevisionCommand
+  NoOpConfirmed
+  None
+
+  @@map("review_decision_downstream_command_type")
+  @@schema("product_domain")
+}
+
+enum RoutedActionExecutionStatus {
+  prepared
+  ready
+  cancelled
+  failed
+
+  @@map("routed_action_execution_status")
+  @@schema("product_domain")
+}
+
 model SetupDefinitionRecord {
   setupDefinitionId         String                                       @id(map: "setup_definition_pkey") @map("setup_definition_id") @db.Text
   version                   Int                                          @map("version")
@@ -123,6 +217,8 @@ model SetupDefinitionRecord {
   hypothesisSetupLinks      ResearchHypothesisSetupDefinitionLinkRecord[]
   signalCandidates          SignalCandidateRecord[]
   aggregateResults          SetupAggregateResultRecord[]
+  feedbackDecisions         ResearchFeedbackDecisionRecord[]
+  decisionApprovals         ResearchDecisionApprovalRecord[]
 
   @@index([definitionStatus], map: "idx_setup_definition_definition_status")
   @@index([lifecycleStatus], map: "idx_setup_definition_lifecycle_status")
@@ -155,6 +251,8 @@ model ResearchHypothesisRecord {
   archivedAtUtc                 DateTime?                                    @map("archived_at_utc") @db.Timestamptz(3)
   setupDefinitionLinks          ResearchHypothesisSetupDefinitionLinkRecord[]
   aggregateResults              SetupAggregateResultRecord[]
+  feedbackDecisions             ResearchFeedbackDecisionRecord[]
+  reviewDecisions               ResearchReviewDecisionRecord[]
 
   @@index([hypothesisStatus], map: "idx_research_hypothesis_hypothesis_status")
   @@index([lifecycleStatus], map: "idx_research_hypothesis_lifecycle_status")
@@ -282,6 +380,7 @@ model SetupAggregateResultRecord {
   archivedAtUtc                  DateTime?                 @map("archived_at_utc") @db.Timestamptz(3)
   setupDefinition                SetupDefinitionRecord     @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
   researchHypothesis             ResearchHypothesisRecord? @relation(fields: [researchHypothesisId], references: [researchHypothesisId], onDelete: Restrict, onUpdate: Cascade)
+  feedbackDecisions              ResearchFeedbackDecisionRecord[]
 
   @@unique([setupDefinitionId, scopeKey], map: "uq_setup_aggregate_result_scope_key")
   @@index([setupDefinitionId], map: "idx_setup_aggregate_result_setup_definition_id")
@@ -289,5 +388,150 @@ model SetupAggregateResultRecord {
   @@index([aggregateStatus], map: "idx_setup_aggregate_result_aggregate_status")
   @@index([scopeEvaluationWindowId], map: "idx_setup_aggregate_result_scope_evaluation_window_id")
   @@map("setup_aggregate_result")
+  @@schema("product_domain")
+}
+
+model ResearchFeedbackDecisionRecord {
+  researchFeedbackDecisionId String                         @id(map: "research_feedback_decision_pkey") @map("research_feedback_decision_id") @db.Text
+  version                    Int                            @map("version")
+  lifecycleStatus            PersistedLifecycleStatus       @map("lifecycle_status")
+  decisionStatus             ResearchFeedbackDecisionStatus @map("decision_status")
+  setupDefinitionId          String                         @map("setup_definition_id") @db.Text
+  researchHypothesisId       String                         @map("research_hypothesis_id") @db.Text
+  setupAggregateResultId     String?                        @map("setup_aggregate_result_id") @db.Text
+  evidenceStatus             HypothesisEvidenceStatus       @map("evidence_status")
+  recommendedAction          ResearchFeedbackDecisionAction @map("recommended_action")
+  rationaleSummary           String                         @map("rationale_summary") @db.Text
+  requiresManualReview       Boolean                        @map("requires_manual_review")
+  evidenceSummary            String?                        @map("evidence_summary") @db.Text
+  reviewerMetadata           Json?                          @map("reviewer_metadata")
+  originRunId                String?                        @map("origin_run_id") @db.Text
+  originTransitionId         String?                        @map("origin_transition_id") @db.Text
+  createdBySource            ProductRecordSource            @map("created_by_source")
+  lastUpdatedBySource        ProductRecordSource            @map("last_updated_by_source")
+  traceId                    String?                        @map("trace_id") @db.Text
+  sourceObservedAtUtc        DateTime?                      @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes              String?                        @map("metadata_notes") @db.Text
+  createdAtUtc               DateTime                       @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc               DateTime                       @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc              DateTime?                      @map("archived_at_utc") @db.Timestamptz(3)
+  setupDefinition            SetupDefinitionRecord          @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+  researchHypothesis         ResearchHypothesisRecord       @relation(fields: [researchHypothesisId], references: [researchHypothesisId], onDelete: Restrict, onUpdate: Cascade)
+  setupAggregateResult       SetupAggregateResultRecord?    @relation(fields: [setupAggregateResultId], references: [setupAggregateResultId], onDelete: Restrict, onUpdate: Cascade)
+  approvals                  ResearchDecisionApprovalRecord[]
+
+  @@index([setupDefinitionId], map: "idx_research_feedback_decision_setup_definition_id")
+  @@index([researchHypothesisId], map: "idx_research_feedback_decision_research_hypothesis_id")
+  @@index([setupAggregateResultId], map: "idx_research_feedback_decision_setup_aggregate_result_id")
+  @@index([decisionStatus], map: "idx_research_feedback_decision_decision_status")
+  @@index([recommendedAction], map: "idx_research_feedback_decision_recommended_action")
+  @@map("research_feedback_decision")
+  @@schema("product_domain")
+}
+
+model ResearchDecisionApprovalRecord {
+  researchDecisionApprovalId String                          @id(map: "research_decision_approval_pkey") @map("research_decision_approval_id") @db.Text
+  version                    Int                             @map("version")
+  lifecycleStatus            PersistedLifecycleStatus        @map("lifecycle_status")
+  approvalStatus             ResearchDecisionApprovalStatus  @map("approval_status")
+  researchFeedbackDecisionId String                          @map("research_feedback_decision_id") @db.Text
+  setupDefinitionId          String                          @map("setup_definition_id") @db.Text
+  reviewedBy                 String                          @map("reviewed_by") @db.Text
+  reviewedAtUtc              DateTime                        @map("reviewed_at_utc") @db.Timestamptz(3)
+  approvalOutcome            ResearchDecisionApprovalOutcome @map("approval_outcome")
+  reviewerNotes              String?                         @map("reviewer_notes") @db.Text
+  authorizedNextAction       ResearchFeedbackDecisionAction? @map("authorized_next_action")
+  originRunId                String?                         @map("origin_run_id") @db.Text
+  originTransitionId         String?                         @map("origin_transition_id") @db.Text
+  createdBySource            ProductRecordSource             @map("created_by_source")
+  lastUpdatedBySource        ProductRecordSource             @map("last_updated_by_source")
+  traceId                    String?                         @map("trace_id") @db.Text
+  sourceObservedAtUtc        DateTime?                       @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes              String?                         @map("metadata_notes") @db.Text
+  createdAtUtc               DateTime                        @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc               DateTime                        @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc              DateTime?                       @map("archived_at_utc") @db.Timestamptz(3)
+  researchFeedbackDecision   ResearchFeedbackDecisionRecord  @relation(fields: [researchFeedbackDecisionId], references: [researchFeedbackDecisionId], onDelete: Restrict, onUpdate: Cascade)
+  setupDefinition            SetupDefinitionRecord           @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([setupDefinitionId], map: "idx_research_decision_approval_setup_definition_id")
+  @@index([approvalOutcome], map: "idx_research_decision_approval_approval_outcome")
+  @@index([authorizedNextAction], map: "idx_research_decision_approval_authorized_next_action")
+  @@unique([researchFeedbackDecisionId], map: "uq_research_decision_approval_feedback_decision_id")
+  @@map("research_decision_approval")
+  @@schema("product_domain")
+}
+
+model ResearchReviewDecisionRecord {
+  researchReviewDecisionId String                            @id(map: "research_review_decision_pkey") @map("research_review_decision_id") @db.Text
+  version                  Int                               @map("version")
+  lifecycleStatus          PersistedLifecycleStatus          @map("lifecycle_status")
+  decisionStatus           ResearchReviewDecisionStatus      @map("decision_status")
+  researchReviewPacketId   String                            @map("research_review_packet_id") @db.Text
+  setupFamilyId            String                            @map("setup_family_id") @db.Text
+  setupRevisionId          String?                           @map("setup_revision_id") @db.Text
+  researchHypothesisId     String?                           @map("research_hypothesis_id") @db.Text
+  reviewedBy               String                            @map("reviewed_by") @db.Text
+  reviewedAtUtc            DateTime                          @map("reviewed_at_utc") @db.Timestamptz(3)
+  decisionOutcome          ResearchReviewDecisionOutcome     @map("decision_outcome")
+  reviewerNotes            String?                           @map("reviewer_notes") @db.Text
+  authorizedNextAction     ResearchReviewAuthorizedNextAction? @map("authorized_next_action")
+  originRunId              String?                           @map("origin_run_id") @db.Text
+  originTransitionId       String?                           @map("origin_transition_id") @db.Text
+  createdBySource          ProductRecordSource               @map("created_by_source")
+  lastUpdatedBySource      ProductRecordSource               @map("last_updated_by_source")
+  traceId                  String?                           @map("trace_id") @db.Text
+  sourceObservedAtUtc      DateTime?                         @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes            String?                           @map("metadata_notes") @db.Text
+  createdAtUtc             DateTime                          @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc             DateTime                          @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc            DateTime?                         @map("archived_at_utc") @db.Timestamptz(3)
+  researchHypothesis       ResearchHypothesisRecord?         @relation(fields: [researchHypothesisId], references: [researchHypothesisId], onDelete: Restrict, onUpdate: Cascade)
+  routedActionExecutionEnvelopes RoutedActionExecutionEnvelopeRecord[]
+
+  @@index([researchReviewPacketId], map: "idx_research_review_decision_review_packet_id")
+  @@index([setupFamilyId], map: "idx_research_review_decision_setup_family_id")
+  @@index([setupRevisionId], map: "idx_research_review_decision_setup_revision_id")
+  @@index([researchHypothesisId], map: "idx_research_review_decision_research_hypothesis_id")
+  @@index([decisionOutcome], map: "idx_research_review_decision_decision_outcome")
+  @@index([authorizedNextAction], map: "idx_research_review_decision_authorized_next_action")
+  @@map("research_review_decision")
+  @@schema("product_domain")
+}
+
+model RoutedActionExecutionEnvelopeRecord {
+  routedActionExecutionEnvelopeId String                              @id(map: "routed_action_execution_envelope_pkey") @map("routed_action_execution_envelope_id") @db.Text
+  version                        Int                                 @map("version")
+  lifecycleStatus                PersistedLifecycleStatus             @map("lifecycle_status")
+  executionStatus                RoutedActionExecutionStatus          @map("execution_status")
+  sourceRoutingResultId          String                              @map("source_routing_result_id") @db.Text
+  sourceReviewDecisionId         String                              @map("source_review_decision_id") @db.Text
+  actionTarget                   DownstreamActionTarget              @map("action_target")
+  actionCommandType              ReviewDecisionDownstreamCommandType @map("action_command_type")
+  targetEntityRefs               Json                                @map("target_entity_refs")
+  routeMetadataSnapshot          Json                                @map("route_metadata_snapshot")
+  executionPayloadSnapshot       Json                                @map("execution_payload_snapshot")
+  preparedBy                     String                              @map("prepared_by") @db.Text
+  preparedAtUtc                  DateTime                            @map("prepared_at_utc") @db.Timestamptz(3)
+  envelopeOriginRunId            String?                             @map("envelope_origin_run_id") @db.Text
+  notes                          String?                             @map("notes") @db.Text
+  originRunId                    String?                             @map("origin_run_id") @db.Text
+  originTransitionId             String?                             @map("origin_transition_id") @db.Text
+  createdBySource                ProductRecordSource                 @map("created_by_source")
+  lastUpdatedBySource            ProductRecordSource                 @map("last_updated_by_source")
+  traceId                        String?                             @map("trace_id") @db.Text
+  sourceObservedAtUtc            DateTime?                           @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes                  String?                             @map("metadata_notes") @db.Text
+  createdAtUtc                   DateTime                            @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc                   DateTime                            @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc                  DateTime?                           @map("archived_at_utc") @db.Timestamptz(3)
+  researchReviewDecision         ResearchReviewDecisionRecord        @relation(fields: [sourceReviewDecisionId], references: [researchReviewDecisionId], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([sourceRoutingResultId], map: "idx_routed_action_execution_envelope_source_routing_result_id")
+  @@index([sourceReviewDecisionId], map: "idx_routed_action_execution_envelope_source_review_decision_id")
+  @@index([executionStatus], map: "idx_routed_action_execution_envelope_execution_status")
+  @@index([actionTarget], map: "idx_routed_action_execution_envelope_action_target")
+  @@index([actionCommandType], map: "idx_routed_action_execution_envelope_action_command_type")
+  @@map("routed_action_execution_envelope")
   @@schema("product_domain")
 }

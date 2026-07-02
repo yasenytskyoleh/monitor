@@ -52,6 +52,17 @@ const expectedCommandType = (
 const buildEnvelopeId = (command: BuildRoutedActionExecutionEnvelopeCommand): string =>
   `execution-envelope:${command.reviewDecisionRoutingResultId}:${command.preparedAt}`;
 
+const resolveUpdatedAt = (
+  preparedAt: string,
+  sourceObservedAtUtc: string | null | undefined
+): string => {
+  if (!sourceObservedAtUtc || sourceObservedAtUtc < preparedAt) {
+    return preparedAt;
+  }
+
+  return sourceObservedAtUtc;
+};
+
 const buildRouteMetadataSnapshot = (
   command: BuildRoutedActionExecutionEnvelopeCommand,
   fallback: {
@@ -324,7 +335,7 @@ export const createDownstreamActionExecutionPreparationService = (
           preparedAt: command.preparedAt,
           originRunId: command.originRunId,
           createdAt: command.preparedAt,
-          updatedAt: metadata.sourceObservedAtUtc ?? command.preparedAt
+          updatedAt: resolveUpdatedAt(command.preparedAt, metadata.sourceObservedAtUtc)
         };
 
         const persisted = await routedActionExecutionEnvelopeRepository.create({

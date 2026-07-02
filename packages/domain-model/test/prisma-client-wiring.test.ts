@@ -12,6 +12,7 @@ test("prisma client wiring exposes generated delegates for the first durable sli
     assert.equal(typeof prisma.setupDefinitionRecord.findUnique, "function");
     assert.equal(typeof prisma.researchHypothesisRecord.findMany, "function");
     assert.equal(typeof prisma.researchHypothesisSetupDefinitionLinkRecord.createMany, "function");
+    assert.equal(typeof prisma.researchDecisionApprovalRecord.findUnique, "function");
   } finally {
     await prisma.$disconnect();
   }

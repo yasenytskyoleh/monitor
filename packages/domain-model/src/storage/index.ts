@@ -47,6 +47,34 @@ export type {
   SetupAggregateScopeSnapshot
 } from "./setup-aggregate-relational-slice.js";
 export {
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_ENTITY_TYPES
+} from "./research-feedback-decision-relational-slice.js";
+export type {
+  ResearchFeedbackDecisionDurableRecord,
+  ResearchFeedbackDecisionRelationalEntityType
+} from "./research-feedback-decision-relational-slice.js";
+export {
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_ENTITY_TYPES
+} from "./research-decision-approval-relational-slice.js";
+export type {
+  ResearchDecisionApprovalDurableRecord,
+  ResearchDecisionApprovalRelationalEntityType
+} from "./research-decision-approval-relational-slice.js";
+export {
+  RESEARCH_REVIEW_DECISION_RELATIONAL_ENTITY_TYPES
+} from "./research-review-decision-relational-slice.js";
+export type {
+  ResearchReviewDecisionDurableRecord,
+  ResearchReviewDecisionRelationalEntityType
+} from "./research-review-decision-relational-slice.js";
+export {
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES
+} from "./routed-action-execution-envelope-relational-slice.js";
+export type {
+  RoutedActionExecutionEnvelopeDurableRecord,
+  RoutedActionExecutionEnvelopeRelationalEntityType
+} from "./routed-action-execution-envelope-relational-slice.js";
+export {
   FIRST_DURABLE_RELATIONAL_DATABASE_SCHEMA,
   FIRST_DURABLE_RELATIONAL_INDEXES,
   FIRST_DURABLE_RELATIONAL_MIGRATION_SLUG,
@@ -87,6 +115,56 @@ export type {
   SetupAggregateRelationalTableName,
   SetupAggregateRelationalUniqueConstraintName
 } from "./setup-aggregate-relational-physical-schema.js";
+export {
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_TABLES
+} from "./research-feedback-decision-relational-physical-schema.js";
+export type {
+  ResearchFeedbackDecisionRelationalIndexName,
+  ResearchFeedbackDecisionRelationalPrismaModelName,
+  ResearchFeedbackDecisionRelationalTableName
+} from "./research-feedback-decision-relational-physical-schema.js";
+export {
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS
+} from "./research-decision-approval-relational-physical-schema.js";
+export type {
+  ResearchDecisionApprovalRelationalIndexName,
+  ResearchDecisionApprovalRelationalPrismaModelName,
+  ResearchDecisionApprovalRelationalTableName,
+  ResearchDecisionApprovalRelationalUniqueConstraintName
+} from "./research-decision-approval-relational-physical-schema.js";
+export {
+  RESEARCH_REVIEW_DECISION_RELATIONAL_INDEXES,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES
+} from "./research-review-decision-relational-physical-schema.js";
+export type {
+  ResearchReviewDecisionRelationalIndexName,
+  ResearchReviewDecisionRelationalPrismaModelName,
+  ResearchReviewDecisionRelationalTableName
+} from "./research-review-decision-relational-physical-schema.js";
+export {
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_INDEXES,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_MIGRATION_SLUG,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_PRISMA_MODELS,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_REQUIRED_COLUMNS,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_TABLES
+} from "./routed-action-execution-envelope-relational-physical-schema.js";
+export type {
+  RoutedActionExecutionEnvelopeRelationalIndexName,
+  RoutedActionExecutionEnvelopeRelationalPrismaModelName,
+  RoutedActionExecutionEnvelopeRelationalTableName
+} from "./routed-action-execution-envelope-relational-physical-schema.js";
 
 export type {
   EntityIdentity,

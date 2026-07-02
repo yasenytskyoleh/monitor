@@ -147,6 +147,36 @@ test("valid revision-activation route builds envelope", async () => {
   assert.equal(result.envelope?.actionCommandType, "ActivateSetupDefinitionRevisionCommand");
 });
 
+test("prepared envelope keeps updatedAt at or after preparedAt", async () => {
+  const routingResult = buildRoutingResult(
+    "route-family-900-updated-at",
+    "create_setup_refinement_request",
+    "CreateSetupRefinementRequestCommand"
+  );
+  const { service } = await createFixture(routingResult);
+
+  const result = await service.prepare({
+    command: {
+      reviewDecisionRoutingResultId: "route-family-900-updated-at",
+      researchReviewDecisionId: "review-decision-family-900-v2",
+      downstreamActionTarget: "create_setup_refinement_request",
+      targetEntityRefs: {
+        setupFamilyId: "setup-family-900",
+        setupDefinitionId: "setup-family-900-v2"
+      },
+      preparedBy: "execution-preparer-1",
+      preparedAt: "2026-06-14T12:00:00.000Z"
+    },
+    metadata: {
+      ...metadata,
+      sourceObservedAtUtc: "2026-06-14T11:59:00.000Z"
+    }
+  });
+
+  assert.equal(result.status, "prepared");
+  assert.equal(result.envelope?.updatedAt, "2026-06-14T12:00:00.000Z");
+});
+
 test("no_op_confirmed produces explicit no-envelope outcome", async () => {
   const routingResult: ReviewDecisionRoutingResult = {
     status: "no_action",

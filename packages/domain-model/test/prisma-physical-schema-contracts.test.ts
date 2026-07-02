@@ -11,6 +11,27 @@ import {
   FIRST_DURABLE_RELATIONAL_PRISMA_MODELS,
   FIRST_DURABLE_RELATIONAL_REQUIRED_COLUMNS,
   FIRST_DURABLE_RELATIONAL_TABLES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES,
+  RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_INDEXES,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_INDEXES,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_MIGRATION_SLUG,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_PRISMA_MODELS,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_REQUIRED_COLUMNS,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_TABLES,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_FEEDBACK_DECISION_RELATIONAL_TABLES,
   SIGNAL_EVALUATION_RELATIONAL_INDEXES,
   SIGNAL_EVALUATION_RELATIONAL_MIGRATION_SLUG,
   SIGNAL_EVALUATION_RELATIONAL_PRISMA_MODELS,
@@ -47,6 +68,34 @@ const setupAggregateMigrationPath = join(
   "prisma",
   "migrations",
   "20260522153000_product_domain_setup_aggregate_relational_v1",
+  "migration.sql"
+);
+const researchFeedbackDecisionMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260523091500_product_domain_research_feedback_decision_relational_v1",
+  "migration.sql"
+);
+const researchDecisionApprovalMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260527103000_product_domain_research_decision_approval_relational_v1",
+  "migration.sql"
+);
+const researchReviewDecisionMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260630113000_product_domain_research_review_decision_relational_v1",
+  "migration.sql"
+);
+const routedActionExecutionEnvelopeMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260702103000_product_domain_routed_action_execution_envelope_relational_v1",
   "migration.sql"
 );
 
@@ -301,5 +350,394 @@ test("migration creates the setup-aggregate relational table, indexes, and key c
   assert.match(
     migration,
     /CHECK \(\s*"aggregate_status" <> 'completed' OR \(\s*"average_percentage_move" IS NOT NULL/
+  );
+});
+
+test("exposes research-feedback-decision physical schema constants", () => {
+  assert.equal(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_research_feedback_decision_relational_v1"
+  );
+  assert.equal(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS.researchFeedbackDecisionRecord,
+    "ResearchFeedbackDecisionRecord"
+  );
+  assert.equal(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_TABLES.researchFeedbackDecision,
+    "research_feedback_decision"
+  );
+  assert.equal(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_REQUIRED_COLUMNS.research_feedback_decision.includes(
+      "reviewer_metadata"
+    ),
+    true
+  );
+  assert.equal(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES.includes(
+      "idx_research_feedback_decision_decision_status"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the research-feedback-decision relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum ResearchFeedbackDecisionAction \{/);
+  assert.match(schema, /enum ResearchFeedbackDecisionStatus \{/);
+  assert.match(schema, /model ResearchFeedbackDecisionRecord \{/);
+  assert.match(schema, /@@map\("research_feedback_decision"\)/);
+
+  for (const tableName of Object.values(RESEARCH_FEEDBACK_DECISION_RELATIONAL_TABLES)) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS)) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the research-feedback-decision relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(researchFeedbackDecisionMigrationPath, "utf8");
+
+  for (const tableName of Object.values(RESEARCH_FEEDBACK_DECISION_RELATIONAL_TABLES)) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    RESEARCH_FEEDBACK_DECISION_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("research_hypothesis_id"\)\s+REFERENCES "product_domain"\."research_hypothesis"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("setup_aggregate_result_id"\)\s+REFERENCES "product_domain"\."setup_aggregate_result"/
+  );
+  assert.match(
+    migration,
+    /CHECK \(\s*length\(trim\("rationale_summary"\)\) > 0/
+  );
+  assert.match(
+    migration,
+    /"requires_manual_review" = TRUE/
+  );
+  assert.match(
+    migration,
+    /"decision_status" = 'proposed' AND\s+"reviewer_metadata" IS NULL/
+  );
+});
+
+test("exposes research-decision-approval physical schema constants", () => {
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_research_decision_approval_relational_v1"
+  );
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS.researchDecisionApprovalRecord,
+    "ResearchDecisionApprovalRecord"
+  );
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES.researchDecisionApproval,
+    "research_decision_approval"
+  );
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS.research_decision_approval.includes(
+      "authorized_next_action"
+    ),
+    true
+  );
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES.includes(
+      "idx_research_decision_approval_setup_definition_id"
+    ),
+    true
+  );
+  assert.equal(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS.includes(
+      "uq_research_decision_approval_feedback_decision_id"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the research-decision-approval relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum ResearchDecisionApprovalStatus \{/);
+  assert.match(schema, /enum ResearchDecisionApprovalOutcome \{/);
+  assert.match(schema, /model ResearchDecisionApprovalRecord \{/);
+  assert.match(schema, /@@map\("research_decision_approval"\)/);
+  assert.match(
+    schema,
+    /@@unique\(\[researchFeedbackDecisionId\], map: "uq_research_decision_approval_feedback_decision_id"\)/
+  );
+
+  for (const tableName of Object.values(RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES)) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS)) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the research-decision-approval relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(researchDecisionApprovalMigrationPath, "utf8");
+
+  for (const tableName of Object.values(RESEARCH_DECISION_APPROVAL_RELATIONAL_TABLES)) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const uniqueConstraintName of RESEARCH_DECISION_APPROVAL_RELATIONAL_UNIQUE_CONSTRAINTS) {
+    assert.equal(
+      migration.includes(`CREATE UNIQUE INDEX "${uniqueConstraintName}"`),
+      true
+    );
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    RESEARCH_DECISION_APPROVAL_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("research_feedback_decision_id"\)\s+REFERENCES "product_domain"\."research_feedback_decision"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /CHECK \(\s*length\(trim\("reviewed_by"\)\) > 0/
+  );
+  assert.match(
+    migration,
+    /"approval_outcome" = 'approved' AND\s+"authorized_next_action" IS NOT NULL/
+  );
+  assert.match(
+    migration,
+    /"created_at_utc" <= "reviewed_at_utc" AND\s+"updated_at_utc" >= "reviewed_at_utc"/
+  );
+});
+
+test("exposes research-review-decision physical schema constants", () => {
+  assert.equal(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_research_review_decision_relational_v1"
+  );
+  assert.equal(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_PRISMA_MODELS.researchReviewDecisionRecord,
+    "ResearchReviewDecisionRecord"
+  );
+  assert.equal(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES.researchReviewDecision,
+    "research_review_decision"
+  );
+  assert.equal(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_REQUIRED_COLUMNS.research_review_decision.includes(
+      "research_review_packet_id"
+    ),
+    true
+  );
+  assert.equal(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_INDEXES.includes(
+      "idx_research_review_decision_review_packet_id"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the research-review-decision relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum ResearchReviewAuthorizedNextAction \{/);
+  assert.match(schema, /enum ResearchReviewDecisionStatus \{/);
+  assert.match(schema, /enum ResearchReviewDecisionOutcome \{/);
+  assert.match(schema, /model ResearchReviewDecisionRecord \{/);
+  assert.match(schema, /@@map\("research_review_decision"\)/);
+
+  for (const tableName of Object.values(RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES)) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(RESEARCH_REVIEW_DECISION_RELATIONAL_PRISMA_MODELS)) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the research-review-decision relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(researchReviewDecisionMigrationPath, "utf8");
+
+  for (const tableName of Object.values(RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES)) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of RESEARCH_REVIEW_DECISION_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    RESEARCH_REVIEW_DECISION_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("research_hypothesis_id"\)\s+REFERENCES "product_domain"\."research_hypothesis"/
+  );
+  assert.match(
+    migration,
+    /CHECK \(\s*length\(trim\("research_review_packet_id"\)\) > 0/
+  );
+  assert.match(
+    migration,
+    /"decision_outcome" = 'revise' AND\s+"authorized_next_action" = 'prepare_refinement_follow_up'/
+  );
+  assert.match(
+    migration,
+    /"created_at_utc" <= "reviewed_at_utc" AND\s+"updated_at_utc" >= "reviewed_at_utc"/
+  );
+});
+
+test("exposes routed-action-execution-envelope physical schema constants", () => {
+  assert.equal(
+    ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_routed_action_execution_envelope_relational_v1"
+  );
+  assert.equal(
+    ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_PRISMA_MODELS
+      .routedActionExecutionEnvelopeRecord,
+    "RoutedActionExecutionEnvelopeRecord"
+  );
+  assert.equal(
+    ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_TABLES.routedActionExecutionEnvelope,
+    "routed_action_execution_envelope"
+  );
+  assert.equal(
+    ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_REQUIRED_COLUMNS
+      .routed_action_execution_envelope.includes("execution_payload_snapshot"),
+    true
+  );
+  assert.equal(
+    ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_INDEXES.includes(
+      "idx_routed_action_execution_envelope_source_review_decision_id"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the routed-action-execution-envelope relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum DownstreamActionTarget \{/);
+  assert.match(schema, /enum ReviewDecisionDownstreamCommandType \{/);
+  assert.match(schema, /enum RoutedActionExecutionStatus \{/);
+  assert.match(schema, /model RoutedActionExecutionEnvelopeRecord \{/);
+  assert.match(schema, /@@map\("routed_action_execution_envelope"\)/);
+
+  for (const tableName of Object.values(
+    ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_TABLES
+  )) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(
+    ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_PRISMA_MODELS
+  )) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the routed-action-execution-envelope relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(routedActionExecutionEnvelopeMigrationPath, "utf8");
+
+  for (const tableName of Object.values(
+    ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_TABLES
+  )) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("source_review_decision_id"\)\s+REFERENCES "product_domain"\."research_review_decision"/
+  );
+  assert.match(
+    migration,
+    /CHECK \(\s*jsonb_typeof\("target_entity_refs"\) = 'object'/
+  );
+  assert.match(
+    migration,
+    /"action_target" = 'create_setup_refinement_request' AND\s+"action_command_type" = 'CreateSetupRefinementRequestCommand'/
+  );
+  assert.match(
+    migration,
+    /"created_at_utc" <= "prepared_at_utc" AND\s+"updated_at_utc" >= "prepared_at_utc"/
   );
 });

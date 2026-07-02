@@ -14,8 +14,11 @@ import {
   type ResearchHypothesis,
   type SetupDefinition
 } from "../src/index.js";
+import { resolveIntegrationDatabaseUrl } from "./integration-test-helpers.js";
 
-const INTEGRATION_DATABASE_URL = process.env.PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL?.trim() ?? "";
+const INTEGRATION_DATABASE_URL = resolveIntegrationDatabaseUrl(
+  process.env.PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL
+);
 const PRODUCT_DOMAIN_SCHEMA = "product_domain";
 const migrationSqlPath = resolve(
   dirname(fileURLToPath(import.meta.url)),

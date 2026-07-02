@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  InMemoryFeedbackDecisionApprovalReviewPersistence,
   InMemoryResearchDecisionApprovalRepository,
   InMemoryResearchFeedbackDecisionRepository,
   InMemoryResearchHypothesisRepository,
@@ -73,12 +74,18 @@ const createFixture = () => {
   const researchHypothesisRepository = new InMemoryResearchHypothesisRepository();
   const researchFeedbackDecisionRepository = new InMemoryResearchFeedbackDecisionRepository();
   const researchDecisionApprovalRepository = new InMemoryResearchDecisionApprovalRepository();
+  const feedbackDecisionApprovalReviewPersistence =
+    new InMemoryFeedbackDecisionApprovalReviewPersistence(
+      researchFeedbackDecisionRepository,
+      researchDecisionApprovalRepository
+    );
 
   const researchService = createResearchService({
     setupDefinitionRepository,
     researchHypothesisRepository,
     researchFeedbackDecisionRepository,
-    researchDecisionApprovalRepository
+    researchDecisionApprovalRepository,
+    feedbackDecisionApprovalReviewPersistence
   });
 
   const approvalHandoff = createResearchDecisionApprovalHandoff({
@@ -335,4 +342,62 @@ test("rejected vs needs_changes outcome stays explicit", async () => {
   assert.equal(needsChanges.approvalOutcome, "needs_changes");
   assert.equal(needsChanges.decisionStatus, "reviewed");
   assert.equal(needsChanges.authorizedNextAction, undefined);
+});
+
+test("second approval attempt is rejected after the first review changes decision lifecycle", async () => {
+  const {
+    setupDefinitionRepository,
+    researchHypothesisRepository,
+    researchFeedbackDecisionRepository,
+    researchDecisionApprovalRepository,
+    approvalHandoff
+  } = createFixture();
+
+  await setupDefinitionRepository.create({
+    definition: buildSetupDefinition("setup-approval-007"),
+    metadata
+  });
+  await researchHypothesisRepository.create({
+    hypothesis: buildHypothesis("hypothesis-approval-007", "setup-approval-007"),
+    metadata
+  });
+  await researchFeedbackDecisionRepository.create({
+    decision: buildFeedbackDecision(
+      "feedback-approval-007",
+      "setup-approval-007",
+      "hypothesis-approval-007",
+      "keep_active"
+    ),
+    metadata
+  });
+
+  const firstReview = await approvalHandoff.review(
+    {
+      researchFeedbackDecisionId: "feedback-approval-007",
+      setupDefinitionId: "setup-approval-007",
+      reviewedBy: "research_reviewer_1",
+      reviewedAt: "2026-04-24T12:05:00.000Z",
+      decisionOutcome: "approved"
+    },
+    metadata
+  );
+  const secondReview = await approvalHandoff.review(
+    {
+      researchFeedbackDecisionId: "feedback-approval-007",
+      setupDefinitionId: "setup-approval-007",
+      reviewedBy: "research_reviewer_2",
+      reviewedAt: "2026-04-24T12:06:00.000Z",
+      decisionOutcome: "approved"
+    },
+    metadata
+  );
+
+  const approvals = await researchDecisionApprovalRepository.listByFeedbackDecisionId(
+    "feedback-approval-007"
+  );
+
+  assert.equal(firstReview.status, "recorded");
+  assert.equal(secondReview.status, "rejected_lifecycle");
+  assert.equal(secondReview.reason?.includes("not eligible for manual approval"), true);
+  assert.equal(approvals.length, 1);
 });

@@ -1,12 +1,12 @@
 # Persistence Implementation Architecture
 
 ## Purpose
-Define the current implementation architecture for product-domain persistence across the implemented core research chain.
+Define the current implementation architecture for product-domain persistence across the implemented core research chain, the downstream feedback/approval/review entities, and the first downstream execution-envelope repository rollout.
 
 This document now reflects:
 - boundary contracts
 - the current implemented in-memory persistence surface
-- current durable relational repository/adapter coverage for the core research chain
+- current durable relational repository/adapter coverage for the implemented product chain through review decisions, plus per-entity execution-envelope rollout coverage
 
 ## Canonical current-state summary
 Implemented in-memory persistence and service-owned write paths exist today for:
@@ -15,19 +15,31 @@ Implemented in-memory persistence and service-owned write paths exist today for:
 - `SignalCandidate`
 - `EvaluationResult`
 - `SetupAggregateResult`
+- `ResearchFeedbackDecision`
+- `ResearchDecisionApproval`
+- `ResearchReviewDecision`
+- `RoutedActionExecutionEnvelope`
 
-Durable relational coverage now exists for that same core chain:
+Durable relational coverage now exists through `research_review_decision`, with per-entity rollout now also existing for `routed_action_execution_envelope`:
 - committed contracts, schema/migrations, adapter-backed repositories, and concrete Prisma adapters for:
   - `setup_definition`
   - `research_hypothesis`
   - `signal_candidate`
   - `evaluation_result`
   - `setup_aggregate_result`
-- one shared Prisma-backed repository bundle and one end-to-end integration path for setup -> candidate -> evaluation -> aggregate
+- one shared Prisma-backed repository bundle and one end-to-end integration path for setup -> candidate -> evaluation -> aggregate -> feedback decision
+- committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-Postgres integration coverage now also exist for `research_feedback_decision`
+- committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_decision_approval`
+- committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_review_decision`
+- committed contracts, schema/migrations, repository adapter contract, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `routed_action_execution_envelope`
+- one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision
+- one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision
 
 Still pending:
-- durable relational planning for `research_feedback_decision`
-- later review/approval/execution durable slices
+- shared implemented-product relational bundle extension through `routed_action_execution_envelope`
+- opt-in real-Postgres integration extension through `routed_action_execution_envelope`
+- later shared-bundle/integration extension for downstream execution and mutation entities after `routed_action_execution_envelope`
+- later review/execution durable slices after `routed_action_execution_envelope`
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI
@@ -42,6 +54,10 @@ Repository abstractions:
 - `EvaluationResultRepository`
 - `ResearchHypothesisRepository`
 - `SetupAggregateResultRepository`
+- `ResearchFeedbackDecisionRepository`
+- `ResearchDecisionApprovalRepository`
+- `ResearchReviewDecisionRepository`
+- `RoutedActionExecutionEnvelopeRepository`
 
 Implemented concrete repositories in the current baseline:
 - `InMemorySetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-repository.impl.ts`)
@@ -49,11 +65,19 @@ Implemented concrete repositories in the current baseline:
 - `InMemorySignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-repository.impl.ts`)
 - `InMemoryEvaluationResultRepository` (`packages/domain-model/src/repositories/evaluation-result-repository.impl.ts`)
 - `InMemorySetupAggregateResultRepository` (`packages/domain-model/src/repositories/setup-aggregate-result-repository.impl.ts`)
+- `InMemoryResearchFeedbackDecisionRepository` (`packages/domain-model/src/repositories/research-feedback-decision-repository.impl.ts`)
+- `InMemoryResearchDecisionApprovalRepository` (`packages/domain-model/src/repositories/research-decision-approval-repository.impl.ts`)
+- `InMemoryResearchReviewDecisionRepository` (`packages/domain-model/src/repositories/research-review-decision-repository.impl.ts`)
+- `InMemoryRoutedActionExecutionEnvelopeRepository` (`packages/domain-model/src/repositories/routed-action-execution-envelope-repository.impl.ts`)
 - `RelationalSetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-relational-repository.impl.ts`)
 - `RelationalResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-relational-repository.impl.ts`)
 - `RelationalSignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-relational-repository.impl.ts`)
 - `RelationalEvaluationResultRepository` (`packages/domain-model/src/repositories/evaluation-result-relational-repository.impl.ts`)
 - `RelationalSetupAggregateResultRepository` (`packages/domain-model/src/repositories/setup-aggregate-result-relational-repository.impl.ts`)
+- `RelationalResearchFeedbackDecisionRepository` (`packages/domain-model/src/repositories/research-feedback-decision-relational-repository.impl.ts`)
+- `RelationalResearchDecisionApprovalRepository` (`packages/domain-model/src/repositories/research-decision-approval-relational-repository.impl.ts`)
+- `RelationalResearchReviewDecisionRepository` (`packages/domain-model/src/repositories/research-review-decision-relational-repository.impl.ts`)
+- `RelationalRoutedActionExecutionEnvelopeRepository` (`packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository.impl.ts`)
 - shared implemented-product composition (`packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`)
 
 Repository responsibilities:
@@ -77,7 +101,7 @@ Service layer:
 - `ResearchService`
 - `ResearchAggregationService`
 
-Implemented concrete service factories in this PR:
+Implemented concrete service factories in the current baseline:
 - `createSetupDefinitionService` (`packages/domain-model/src/services/setup-definition-service.ts`)
 - `createResearchService` (`packages/domain-model/src/services/research-service.ts`)
 - `createSignalCandidateService` (`packages/domain-model/src/services/signal-candidate-service.ts`)
@@ -99,6 +123,8 @@ First persisted slice write-path rules now implemented:
   - validates referenced setup definition ids before create/update/link
   - controls hypothesis status transitions
   - owns controlled setup linkage for hypotheses
+  - records `ResearchFeedbackDecision` recommendations from hypothesis evidence and owns decision-status review updates
+  - records `ResearchDecisionApproval` artifacts from manual review outcomes
 - `SignalCandidateService`
   - validates required fields (`id`, `setupDefinitionId`, `monitoredSymbolId`, `detectedAt`, `status`, `evidenceSummary`)
   - validates referenced setup definition and monitored symbol boundaries
@@ -130,13 +156,17 @@ Ownership direction:
 - `evaluation_result` -> `evaluation_service`
 - `research_hypothesis` -> `research_service`
 - `setup_aggregate_result` -> `research_aggregation_service`
+- `research_feedback_decision` -> `research_service`
+- `research_decision_approval` -> `research_service`
+- `research_review_decision` -> `research_service`
+- `routed_action_execution_envelope` -> `research_service`
 
 ## Mapping rules
 1. repositories return domain-shaped records (not runner artifact shapes)
 2. persistence metadata (`originRunId`, `traceId`) may be attached through metadata contracts
 3. runtime evidence files remain separate from product-domain storage
 4. one domain contract does not force one-table implementation in this slice
-5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, evaluation results, and setup aggregate results
+5. implemented persistence is now narrow but end-to-end in memory for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, research decision approvals, research review decisions, and routed action execution envelopes, while shared-bundle and real-database integration coverage still stop at research review decisions even though per-entity durable parity now also exists for routed action execution envelopes
 
 ## Orchestrator handoff boundary
 - orchestrator workflows may trigger future product-domain services
@@ -145,6 +175,35 @@ Ownership direction:
 
 ## Related contract source
 - `packages/domain-model/src/storage/first-durable-relational-slice.ts`
+- `packages/domain-model/src/storage/research-feedback-decision-relational-slice.ts`
+- `packages/domain-model/src/storage/research-feedback-decision-relational-physical-schema.ts`
+- `packages/domain-model/src/storage/research-decision-approval-relational-slice.ts`
+- `packages/domain-model/src/storage/research-decision-approval-relational-physical-schema.ts`
+- `packages/domain-model/src/storage/research-review-decision-relational-slice.ts`
+- `packages/domain-model/src/storage/research-review-decision-relational-physical-schema.ts`
+- `packages/domain-model/src/storage/routed-action-execution-envelope-relational-slice.ts`
+- `packages/domain-model/src/storage/routed-action-execution-envelope-relational-physical-schema.ts`
+- `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.ts`
+- `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.impl.ts`
+- `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-mappers.ts`
+- `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository.impl.ts`
+- `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repositories.ts`
+- `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-adapter.ts`
+- `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-client.ts`
+- `packages/domain-model/src/repositories/research-review-decision-relational-repository-adapter.ts`
+- `packages/domain-model/src/repositories/research-review-decision-relational-repository-mappers.ts`
+- `packages/domain-model/src/repositories/research-review-decision-relational-repository.impl.ts`
+- `packages/domain-model/src/repositories/research-review-decision-relational-repositories.ts`
+- `packages/domain-model/src/repositories/research-review-decision-relational-prisma-adapter.ts`
+- `packages/domain-model/src/repositories/research-review-decision-relational-prisma-client.ts`
+- `packages/domain-model/src/repositories/research-decision-approval-relational-repository-adapter.ts`
+- `packages/domain-model/src/repositories/research-decision-approval-relational-repository-mappers.ts`
+- `packages/domain-model/src/repositories/research-decision-approval-relational-repository.impl.ts`
+- `packages/domain-model/src/repositories/research-decision-approval-relational-repositories.ts`
+- `packages/domain-model/src/repositories/research-decision-approval-relational-prisma-adapter.ts`
+- `packages/domain-model/src/repositories/research-decision-approval-relational-prisma-client.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/first-durable-relational-repository-mappers.ts`
+- `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-adapter.ts`
+- `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-mappers.ts`
 - `packages/domain-model/src/repositories/repository-error.ts`

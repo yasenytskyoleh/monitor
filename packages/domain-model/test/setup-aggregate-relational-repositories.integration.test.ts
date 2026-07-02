@@ -18,8 +18,11 @@ import {
   type SetupAggregateRelationalRepositories,
   type SetupDefinition
 } from "../src/index.js";
+import { resolveIntegrationDatabaseUrl } from "./integration-test-helpers.js";
 
-const INTEGRATION_DATABASE_URL = process.env.PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL?.trim() ?? "";
+const INTEGRATION_DATABASE_URL = resolveIntegrationDatabaseUrl(
+  process.env.PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL
+);
 const PRODUCT_DOMAIN_SCHEMA = "product_domain";
 const migrationsDirectory = resolve(
   dirname(fileURLToPath(import.meta.url)),

@@ -5,6 +5,27 @@ import {
   composeFirstDurableRelationalRepositories,
   type FirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
+import type {
+  ResearchDecisionApprovalRelationalRepositoryAdapter
+} from "./research-decision-approval-relational-repository-adapter.js";
+import {
+  composeResearchDecisionApprovalRelationalRepositories,
+  type ResearchDecisionApprovalRelationalRepositories
+} from "./research-decision-approval-relational-repositories.js";
+import type {
+  ResearchReviewDecisionRelationalRepositoryAdapter
+} from "./research-review-decision-relational-repository-adapter.js";
+import {
+  composeResearchReviewDecisionRelationalRepositories,
+  type ResearchReviewDecisionRelationalRepositories
+} from "./research-review-decision-relational-repositories.js";
+import {
+  composeResearchFeedbackDecisionRelationalRepositories,
+  type ResearchFeedbackDecisionRelationalRepositories
+} from "./research-feedback-decision-relational-repositories.js";
+import type {
+  ResearchFeedbackDecisionRelationalRepositoryAdapter
+} from "./research-feedback-decision-relational-repository-adapter.js";
 import {
   composeSetupAggregateRelationalRepositories,
   type SetupAggregateRelationalRepositories
@@ -24,17 +45,26 @@ export type ImplementedProductRelationalAdapters = {
   firstDurableAdapter: FirstDurableRelationalRepositoryAdapter;
   signalEvaluationAdapter: SignalEvaluationRelationalRepositoryAdapter;
   setupAggregateAdapter: SetupAggregateRelationalRepositoryAdapter;
+  feedbackDecisionAdapter: ResearchFeedbackDecisionRelationalRepositoryAdapter;
+  approvalAdapter: ResearchDecisionApprovalRelationalRepositoryAdapter;
+  reviewDecisionAdapter: ResearchReviewDecisionRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalRepositories =
   FirstDurableRelationalRepositories &
   SignalEvaluationRelationalRepositories &
-  SetupAggregateRelationalRepositories;
+  SetupAggregateRelationalRepositories &
+  ResearchFeedbackDecisionRelationalRepositories &
+  ResearchDecisionApprovalRelationalRepositories &
+  ResearchReviewDecisionRelationalRepositories;
 
 export const composeImplementedProductRelationalRepositories = (
   adapters: ImplementedProductRelationalAdapters
 ): ImplementedProductRelationalRepositories => ({
   ...composeFirstDurableRelationalRepositories(adapters.firstDurableAdapter),
   ...composeSignalEvaluationRelationalRepositories(adapters.signalEvaluationAdapter),
-  ...composeSetupAggregateRelationalRepositories(adapters.setupAggregateAdapter)
+  ...composeSetupAggregateRelationalRepositories(adapters.setupAggregateAdapter),
+  ...composeResearchFeedbackDecisionRelationalRepositories(adapters.feedbackDecisionAdapter),
+  ...composeResearchDecisionApprovalRelationalRepositories(adapters.approvalAdapter),
+  ...composeResearchReviewDecisionRelationalRepositories(adapters.reviewDecisionAdapter)
 });

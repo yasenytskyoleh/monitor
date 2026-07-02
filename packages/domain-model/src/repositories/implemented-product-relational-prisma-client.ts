@@ -3,12 +3,24 @@ import type {
   FirstDurableRelationalRuntimePrismaClient
 } from "./first-durable-relational-prisma-client.js";
 import { createFirstDurableRelationalPrismaClient } from "./first-durable-relational-prisma-client.js";
+import type {
+  FeedbackDecisionApprovalReviewPersistence
+} from "./feedback-decision-approval-review-persistence.js";
+import {
+  createPrismaFeedbackDecisionApprovalReviewPersistence
+} from "./feedback-decision-approval-review-persistence.prisma.js";
 import { PrismaFirstDurableRelationalRepositoryAdapter } from "./first-durable-relational-prisma-adapter.js";
 import {
   composeImplementedProductRelationalRepositories,
   type ImplementedProductRelationalAdapters,
   type ImplementedProductRelationalRepositories
 } from "./implemented-product-relational-repositories.js";
+import { createResearchDecisionApprovalRelationalPrismaRepositoryAdapter } from "./research-decision-approval-relational-prisma-client.js";
+import { type PrismaResearchDecisionApprovalRelationalRepositoryAdapter } from "./research-decision-approval-relational-prisma-adapter.js";
+import { createResearchReviewDecisionRelationalPrismaRepositoryAdapter } from "./research-review-decision-relational-prisma-client.js";
+import { type PrismaResearchReviewDecisionRelationalRepositoryAdapter } from "./research-review-decision-relational-prisma-adapter.js";
+import { createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter } from "./research-feedback-decision-relational-prisma-client.js";
+import { type PrismaResearchFeedbackDecisionRelationalRepositoryAdapter } from "./research-feedback-decision-relational-prisma-adapter.js";
 import { createSetupAggregateRelationalPrismaRepositoryAdapter } from "./setup-aggregate-relational-prisma-client.js";
 import { type PrismaSetupAggregateRelationalRepositoryAdapter } from "./setup-aggregate-relational-prisma-adapter.js";
 import { createSignalEvaluationRelationalPrismaRepositoryAdapter } from "./signal-evaluation-relational-prisma-client.js";
@@ -18,12 +30,16 @@ export type ImplementedProductRelationalPrismaAdapters = ImplementedProductRelat
   firstDurableAdapter: PrismaFirstDurableRelationalRepositoryAdapter;
   signalEvaluationAdapter: PrismaSignalEvaluationRelationalRepositoryAdapter;
   setupAggregateAdapter: PrismaSetupAggregateRelationalRepositoryAdapter;
+  feedbackDecisionAdapter: PrismaResearchFeedbackDecisionRelationalRepositoryAdapter;
+  approvalAdapter: PrismaResearchDecisionApprovalRelationalRepositoryAdapter;
+  reviewDecisionAdapter: PrismaResearchReviewDecisionRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalPrismaRepositories =
   ImplementedProductRelationalRepositories & {
     prismaClient: FirstDurableRelationalRuntimePrismaClient;
     adapters: ImplementedProductRelationalPrismaAdapters;
+    feedbackDecisionApprovalReviewPersistence: FeedbackDecisionApprovalReviewPersistence;
     disconnect(): Promise<void>;
   };
 
@@ -32,7 +48,10 @@ export const createImplementedProductRelationalPrismaAdapters = (
 ): ImplementedProductRelationalPrismaAdapters => ({
   firstDurableAdapter: new PrismaFirstDurableRelationalRepositoryAdapter(client),
   signalEvaluationAdapter: createSignalEvaluationRelationalPrismaRepositoryAdapter(client),
-  setupAggregateAdapter: createSetupAggregateRelationalPrismaRepositoryAdapter(client)
+  setupAggregateAdapter: createSetupAggregateRelationalPrismaRepositoryAdapter(client),
+  feedbackDecisionAdapter: createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter(client),
+  approvalAdapter: createResearchDecisionApprovalRelationalPrismaRepositoryAdapter(client),
+  reviewDecisionAdapter: createResearchReviewDecisionRelationalPrismaRepositoryAdapter(client)
 });
 
 export const createImplementedProductRelationalPrismaRepositories = (
@@ -40,10 +59,13 @@ export const createImplementedProductRelationalPrismaRepositories = (
 ): ImplementedProductRelationalPrismaRepositories => {
   const prismaClient = createFirstDurableRelationalPrismaClient(options);
   const adapters = createImplementedProductRelationalPrismaAdapters(prismaClient);
+  const feedbackDecisionApprovalReviewPersistence =
+    createPrismaFeedbackDecisionApprovalReviewPersistence(prismaClient);
 
   return {
     prismaClient,
     adapters,
+    feedbackDecisionApprovalReviewPersistence,
     ...composeImplementedProductRelationalRepositories(adapters),
     disconnect: async () => prismaClient.$disconnect()
   };

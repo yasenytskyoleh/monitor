@@ -90,9 +90,6 @@ const resolveAuthorizedNextAction = (
 const buildDecisionId = (command: ApplyResearchReviewDecisionCommand): string =>
   `review-decision:${command.researchReviewPacketId}:${command.reviewedAt}:${command.reviewedBy}`;
 
-const buildUpdateTimestamp = (metadata: ProductRecordMetadata): string =>
-  metadata.sourceObservedAtUtc ?? new Date().toISOString();
-
 export const createResearchReviewDecisionService = (
   dependencies: ResearchReviewDecisionServiceDependencies
 ): ResearchReviewDecisionService => {
@@ -250,7 +247,7 @@ export const createResearchReviewDecisionService = (
           authorizedNextAction: nextActionResolution.resolvedAction,
           decisionStatus: "recorded",
           createdAt: command.reviewedAt,
-          updatedAt: buildUpdateTimestamp(metadata)
+          updatedAt: command.reviewedAt
         };
 
         const persisted = await researchReviewDecisionRepository.create({

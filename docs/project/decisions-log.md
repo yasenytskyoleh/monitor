@@ -86,6 +86,10 @@
   - `SignalCandidate`
   - `EvaluationResult`
   - `SetupAggregateResult`
+  - `ResearchFeedbackDecision`
+  - `ResearchDecisionApproval`
+  - `ResearchReviewDecision`
+  - `RoutedActionExecutionEnvelope`
 - first durable relational persistence contract now exists for:
   - `setup_definition`
   - `research_hypothesis`
@@ -102,7 +106,27 @@
   - `signal_candidate`
   - `evaluation_result`
 - setup-aggregate durable relational contract, adapter-backed repository, and concrete Prisma adapter now exist
-- shared Prisma-backed composition now exists for the current core research chain
+- shared Prisma-backed composition now exists and later extends through the full implemented research chain
+- research-feedback-decision durable relational contract now exists
+- research-feedback-decision Prisma physical schema and migration layout now exist
+- research-feedback-decision adapter-backed relational repository and concrete Prisma adapter now exist
+- shared implemented-product composition now extends through research-feedback-decision
+- research-decision-approval durable relational contract now exists
+- research-decision-approval Prisma physical schema and migration layout now exist
+- research-decision-approval relational adapter contract now exists
+- research-decision-approval adapter-backed relational repository and concrete Prisma adapter now exist
+- shared implemented-product composition now extends through research-decision-approval
+- shared implemented-product real-Postgres integration now extends through research-decision-approval
+- research-review-decision durable relational contract now exists
+- research-review-decision Prisma physical schema and migration layout now exist
+- research-review-decision relational adapter contract now exists
+- research-review-decision adapter-backed relational repository and concrete Prisma adapter now exist
+- shared implemented-product composition now extends through research-review-decision
+- shared implemented-product real-Postgres integration now extends through research-review-decision
+- routed-action-execution-envelope durable relational contract now exists
+- routed-action-execution-envelope Prisma physical schema and migration layout now exists
+- routed-action-execution-envelope relational adapter contract now exists
+- routed-action-execution-envelope adapter-backed relational repository and concrete Prisma adapter now exist
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -112,4 +136,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **planning the durable relational contract and schema for `research_feedback_decision`**
+- the currently recommended next step is: **extend the shared implemented-product relational bundle through `routed_action_execution_envelope`**

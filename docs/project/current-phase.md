@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.13 — Codex-first workflow, bounded autonomous mode, and durable relational parity across the implemented product entities**
+**Phase 1.29 — Codex-first workflow, bounded autonomous mode, review-decision-chain shared persistence, and routed-action repository rollout**
 
 ## What this phase is about
 This phase is focused on:
@@ -21,6 +21,7 @@ The product side now proves that the repo can:
 - maintain implemented in-memory persistence,
 - enforce service-owned write paths,
 - extend durable relational persistence through setup/research and signal/evaluation entities,
+- extend per-entity durable parity through downstream feedback, approval, review, and execution-envelope entities,
 - and run concrete Prisma-backed adapters and integration harnesses while keeping runtime engines pending.
 
 ## Implemented in this phase (current baseline)
@@ -144,13 +145,124 @@ The product side now proves that the repo can:
   - `docs/architecture/adr/ADR-033-shared-implemented-product-relational-composition.md`
   - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
   - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
+- shared Prisma-backed composition extended through feedback decisions:
+  - `docs/project/implemented-product-feedback-decision-composition-model.md`
+  - `docs/architecture/adr/ADR-037-implemented-product-feedback-decision-composition.md`
+  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
+- shared Prisma-backed composition extended through approvals:
+  - `docs/project/implemented-product-approval-composition-model.md`
+  - `docs/architecture/adr/ADR-042-implemented-product-approval-composition.md`
+  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
+- shared real-Postgres integration extended through approvals:
+  - `docs/project/implemented-product-approval-integration-model.md`
+  - `docs/architecture/adr/ADR-043-implemented-product-approval-integration-coverage.md`
+  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
+- research-feedback-decision durable relational contract and physical schema:
+  - `docs/project/research-feedback-decision-relational-persistence-model.md`
+  - `docs/architecture/adr/ADR-034-research-feedback-decision-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-035-research-feedback-decision-prisma-schema-layout.md`
+  - `packages/domain-model/src/storage/research-feedback-decision-relational-slice.ts`
+  - `packages/domain-model/src/storage/research-feedback-decision-relational-physical-schema.ts`
+  - `packages/domain-model/prisma/schema.prisma`
+  - `packages/domain-model/prisma/migrations/20260523091500_product_domain_research_feedback_decision_relational_v1/migration.sql`
+- research-feedback-decision adapter-backed relational repository and Prisma adapter:
+  - `docs/project/research-feedback-decision-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-036-research-feedback-decision-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-adapter.impl.ts`
+  - `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/research-feedback-decision-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/research-feedback-decision-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/research-feedback-decision-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/research-feedback-decision-relational-prisma-client.ts`
+- research-decision-approval durable relational contract and physical schema:
+  - `docs/project/research-decision-approval-relational-persistence-model.md`
+  - `docs/architecture/adr/ADR-038-research-decision-approval-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-039-research-decision-approval-prisma-schema-layout.md`
+  - `packages/domain-model/src/storage/research-decision-approval-relational-slice.ts`
+  - `packages/domain-model/src/storage/research-decision-approval-relational-physical-schema.ts`
+  - `packages/domain-model/prisma/migrations/20260527103000_product_domain_research_decision_approval_relational_v1/migration.sql`
+- research-decision-approval relational adapter contract:
+  - `docs/project/research-decision-approval-relational-adapter-model.md`
+  - `docs/architecture/adr/ADR-040-research-decision-approval-relational-adapter-contract.md`
+  - `packages/domain-model/src/repositories/research-decision-approval-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/research-decision-approval-relational-repository-adapter.impl.ts`
+- research-decision-approval adapter-backed relational repository and Prisma adapter:
+  - `docs/project/research-decision-approval-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-041-research-decision-approval-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/repositories/research-decision-approval-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/research-decision-approval-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/research-decision-approval-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/research-decision-approval-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/research-decision-approval-relational-prisma-client.ts`
+- approval-path atomic persistence hardening and safer verification:
+  - `packages/domain-model/src/repositories/feedback-decision-approval-review-persistence.ts`
+  - `packages/domain-model/src/repositories/feedback-decision-approval-review-persistence.impl.ts`
+  - `packages/domain-model/src/repositories/feedback-decision-approval-review-persistence.prisma.ts`
+  - `packages/domain-model/test/feedback-decision-approval-review-persistence.test.ts`
+  - `packages/domain-model/test/integration-test-helpers.ts`
+- research-review-decision durable relational contract and physical schema:
+  - `docs/project/research-review-decision-relational-persistence-model.md`
+  - `docs/architecture/adr/ADR-044-research-review-decision-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-045-research-review-decision-prisma-schema-layout.md`
+  - `packages/domain-model/src/storage/research-review-decision-relational-slice.ts`
+  - `packages/domain-model/src/storage/research-review-decision-relational-physical-schema.ts`
+  - `packages/domain-model/prisma/migrations/20260630113000_product_domain_research_review_decision_relational_v1/migration.sql`
+- research-review-decision relational adapter contract:
+  - `docs/project/research-review-decision-relational-adapter-model.md`
+  - `docs/architecture/adr/ADR-046-research-review-decision-relational-adapter-contract.md`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-repository-adapter.impl.ts`
+- research-review-decision adapter-backed relational repository and Prisma adapter:
+  - `docs/project/research-review-decision-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-047-research-review-decision-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/research-review-decision-relational-prisma-client.ts`
+- shared Prisma-backed composition extended through review decisions:
+  - `docs/project/implemented-product-review-decision-composition-model.md`
+  - `docs/architecture/adr/ADR-048-implemented-product-review-decision-composition.md`
+  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
+- shared real-Postgres integration extended through review decisions:
+  - `docs/project/implemented-product-review-decision-integration-model.md`
+  - `docs/architecture/adr/ADR-049-implemented-product-review-decision-integration-coverage.md`
+  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
+- routed-action-execution-envelope durable relational contract and physical schema:
+  - `docs/project/routed-action-execution-envelope-relational-persistence-model.md`
+  - `docs/architecture/adr/ADR-050-routed-action-execution-envelope-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-051-routed-action-execution-envelope-prisma-schema-layout.md`
+  - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-slice.ts`
+  - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-physical-schema.ts`
+  - `packages/domain-model/prisma/migrations/20260702103000_product_domain_routed_action_execution_envelope_relational_v1/migration.sql`
+- routed-action-execution-envelope relational adapter contract:
+  - `docs/project/routed-action-execution-envelope-relational-adapter-model.md`
+  - `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.impl.ts`
+- routed-action-execution-envelope adapter-backed relational repository and Prisma adapter:
+  - `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-053-routed-action-execution-envelope-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-client.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
   - `SignalCandidate`
   - `EvaluationResult`
   - `SetupAggregateResult`
-- repository/service implementation architecture with durable relational persistence pending:
+  - `ResearchFeedbackDecision`
+  - `ResearchDecisionApproval`
+  - `ResearchReviewDecision`
+  - `RoutedActionExecutionEnvelope`
+- repository/service implementation architecture with later durable relational expansion still pending:
   - `docs/project/persistence-implementation-architecture.md`
   - `docs/project/first-persisted-slice.md`
   - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
@@ -176,7 +288,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- plan the durable relational contract and schema for `research_feedback_decision`
+- extend the shared implemented-product relational bundle through `routed_action_execution_envelope`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -192,4 +304,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, and shared core-chain composition that make the next downstream review/governance persistence step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, seven committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through review decisions, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, and one first execution-envelope repository rollout that make the next shared-bundle step straightforward instead of speculative**.

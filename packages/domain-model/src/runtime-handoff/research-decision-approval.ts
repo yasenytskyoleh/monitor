@@ -108,8 +108,7 @@ export const createResearchDecisionApprovalHandoff = (
           decisionOutcome: command.decisionOutcome,
           reviewerNotes: command.reviewerNotes,
           originRunId: command.originRunId,
-          metadata,
-          expectedVersion: null
+          metadata
         });
 
         if (!approval) {

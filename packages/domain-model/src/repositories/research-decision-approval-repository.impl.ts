@@ -39,6 +39,17 @@ implements ResearchDecisionApprovalRepository {
       throw new Error(`research_decision_approval already exists: ${researchDecisionApprovalId}`);
     }
 
+    const existingApprovalForFeedbackDecision = [...this.recordsById.values()].find(
+      (record) =>
+        record.approval.researchFeedbackDecisionId === request.approval.researchFeedbackDecisionId
+    );
+    if (existingApprovalForFeedbackDecision) {
+      throw new Error(
+        "research_decision_approval already exists for research_feedback_decision: " +
+          request.approval.researchFeedbackDecisionId
+      );
+    }
+
     const approval = cloneApproval(request.approval);
     this.recordsById.set(researchDecisionApprovalId, {
       approval,
