@@ -69,8 +69,7 @@ This contract intentionally does not attempt to validate:
 Those remain service-owned/query-owned references rather than durable entity FKs in this step.
 
 ## Explicitly postponed
-- domain/durable mappers for routed-action execution envelopes
-- adapter-backed relational repository implementation
-- concrete Prisma adapter wiring
-- shared implemented-product bundle extension through routed-action execution envelopes
+- domain/durable mappers, adapter-backed relational repository implementation, and concrete Prisma adapter wiring are completed later in `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
+- shared implemented-product relational bundle extension through `routed_action_execution_envelope`
+- opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
 - runtime review/execution engines

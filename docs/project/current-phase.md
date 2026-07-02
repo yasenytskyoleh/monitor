@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.28 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and routed-action adapter boundary**
+**Phase 1.29 — Codex-first workflow, bounded autonomous mode, review-decision-chain shared persistence, and routed-action repository rollout**
 
 ## What this phase is about
 This phase is focused on:
@@ -21,9 +21,7 @@ The product side now proves that the repo can:
 - maintain implemented in-memory persistence,
 - enforce service-owned write paths,
 - extend durable relational persistence through setup/research and signal/evaluation entities,
-- extend durable relational contract coverage into the next downstream review and execution-envelope entities,
-- extend durable relational repository coverage into the first downstream approval entity,
-- extend durable relational adapter coverage into the first downstream execution-envelope entity,
+- extend per-entity durable parity through downstream feedback, approval, review, and execution-envelope entities,
 - and run concrete Prisma-backed adapters and integration harnesses while keeping runtime engines pending.
 
 ## Implemented in this phase (current baseline)
@@ -246,6 +244,14 @@ The product side now proves that the repo can:
   - `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
   - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.ts`
   - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.impl.ts`
+- routed-action-execution-envelope adapter-backed relational repository and Prisma adapter:
+  - `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-053-routed-action-execution-envelope-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-client.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -256,7 +262,7 @@ The product side now proves that the repo can:
   - `ResearchDecisionApproval`
   - `ResearchReviewDecision`
   - `RoutedActionExecutionEnvelope`
-- repository/service implementation architecture with durable relational persistence pending:
+- repository/service implementation architecture with later durable relational expansion still pending:
   - `docs/project/persistence-implementation-architecture.md`
   - `docs/project/first-persisted-slice.md`
   - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
@@ -282,7 +288,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- add the adapter-backed relational repository and concrete Prisma adapter for `routed_action_execution_envelope`
+- extend the shared implemented-product relational bundle through `routed_action_execution_envelope`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -298,4 +304,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, seven committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through review decisions, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, and one first execution-envelope adapter boundary that make the next repository-rollout step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, seven committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through review decisions, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, and one first execution-envelope repository rollout that make the next shared-bundle step straightforward instead of speculative**.

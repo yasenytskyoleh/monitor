@@ -1,7 +1,7 @@
 # Routed Action Execution Envelope Relational Persistence Model
 
 ## Purpose
-Define the durable relational contract and physical schema for `RoutedActionExecutionEnvelope` before adapter implementation.
+Define the durable relational contract and physical schema for `RoutedActionExecutionEnvelope` as the storage foundation for later adapter and repository implementation.
 
 This keeps the first downstream review/execution persistence slice narrow:
 - logical durable record contract
@@ -12,8 +12,8 @@ This keeps the first downstream review/execution persistence slice narrow:
 - Prisma schema
 - SQL migration
 
-without yet introducing:
-- repository adapters
+without yet requiring:
+- domain/durable mappers
 - concrete relational repositories
 - concrete Prisma adapters
 
@@ -122,7 +122,11 @@ Enum families:
 - repository adapter contract is completed in:
   - `docs/project/routed-action-execution-envelope-relational-adapter-model.md`
   - `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
-- domain/durable mappers, adapter-backed relational repository, and concrete Prisma adapter wiring for `routed_action_execution_envelope`
+- domain/durable mappers, adapter-backed relational repository, and concrete Prisma adapter wiring for `routed_action_execution_envelope` are completed later in:
+  - `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-053-routed-action-execution-envelope-adapter-backed-relational-repositories.md`
+- shared implemented-product relational bundle extension through `routed_action_execution_envelope`
+- opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
 - later shared-bundle and integration extension for downstream execution/mutation entities
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

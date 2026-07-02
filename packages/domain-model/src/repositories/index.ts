@@ -181,6 +181,12 @@ export type {
   ResearchReviewDecisionRelationalRepositories
 } from "./research-review-decision-relational-repositories.js";
 export {
+  composeRoutedActionExecutionEnvelopeRelationalRepositories
+} from "./routed-action-execution-envelope-relational-repositories.js";
+export type {
+  RoutedActionExecutionEnvelopeRelationalRepositories
+} from "./routed-action-execution-envelope-relational-repositories.js";
+export {
   dehydrateResearchHypothesisToDurableBundle,
   dehydrateSetupDefinitionToDurableRecord,
   hydrateResearchHypothesisFromDurableBundle,
@@ -208,6 +214,10 @@ export {
   dehydrateResearchReviewDecisionToDurableRecord,
   hydrateResearchReviewDecisionFromDurableRecord
 } from "./research-review-decision-relational-repository-mappers.js";
+export {
+  dehydrateRoutedActionExecutionEnvelopeToDurableRecord,
+  hydrateRoutedActionExecutionEnvelopeFromDurableRecord
+} from "./routed-action-execution-envelope-relational-repository-mappers.js";
 export { InMemoryFirstDurableRelationalRepositoryAdapter } from "./first-durable-relational-repository-adapter.impl.js";
 export type {
   SignalEvaluationRelationalReferenceReader
@@ -245,6 +255,13 @@ export type {
 export {
   InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter
 } from "./routed-action-execution-envelope-relational-repository-adapter.impl.js";
+export {
+  createRoutedActionExecutionEnvelopeRelationalPrismaRepositories,
+  createRoutedActionExecutionEnvelopeRelationalPrismaRepositoryAdapter
+} from "./routed-action-execution-envelope-relational-prisma-client.js";
+export type {
+  RoutedActionExecutionEnvelopeRelationalPrismaRepositories
+} from "./routed-action-execution-envelope-relational-prisma-client.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,
@@ -336,6 +353,12 @@ export {
   PrismaResearchReviewDecisionRelationalRepositoryAdapter
 } from "./research-review-decision-relational-prisma-adapter.js";
 export type {
+  RoutedActionExecutionEnvelopeRelationalPrismaClient
+} from "./routed-action-execution-envelope-relational-prisma-adapter.js";
+export {
+  PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter
+} from "./routed-action-execution-envelope-relational-prisma-adapter.js";
+export type {
   MonitoredSymbolCreateRequest,
   MonitoredSymbolRepository,
   MonitoredSymbolStatusUpdateRequest,
@@ -408,6 +431,9 @@ export type {
   RoutedActionExecutionEnvelopeRepository
 } from "./routed-action-execution-envelope-repository.js";
 export { InMemoryRoutedActionExecutionEnvelopeRepository } from "./routed-action-execution-envelope-repository.impl.js";
+export {
+  RelationalRoutedActionExecutionEnvelopeRepository
+} from "./routed-action-execution-envelope-relational-repository.impl.js";
 export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,

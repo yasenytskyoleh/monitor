@@ -45,13 +45,12 @@ Positive:
 
 Tradeoffs:
 - this adds another narrow contract layer before the repository implementation lands
-- the full repository/Prisma rollout is still incomplete until the next step
+- the full repository/Prisma rollout is completed later in ADR-053
 
 ## Explicitly postponed
-- domain/durable mappers
-- adapter-backed relational repository implementation
-- concrete Prisma adapter wiring
-- shared implemented-product bundle extension through routed-action execution envelopes
+- domain/durable mappers, adapter-backed relational repository implementation, and concrete Prisma adapter wiring are completed later in ADR-053
+- shared implemented-product relational bundle extension through `routed_action_execution_envelope`
+- opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
 
 ## Follow-up
-- add the adapter-backed relational repository and concrete Prisma adapter for `routed_action_execution_envelope`
+- the adapter-backed relational repository and concrete Prisma adapter for `routed_action_execution_envelope` are completed in ADR-053
