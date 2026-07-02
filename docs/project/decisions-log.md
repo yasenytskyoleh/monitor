@@ -125,6 +125,7 @@
 - shared implemented-product real-Postgres integration now extends through research-review-decision
 - routed-action-execution-envelope durable relational contract now exists
 - routed-action-execution-envelope Prisma physical schema and migration layout now exists
+- routed-action-execution-envelope relational adapter contract now exists
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -134,4 +135,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is **adding the repository adapter contract for `routed_action_execution_envelope`**
+- the currently recommended next step is **adding the adapter-backed relational repository and concrete Prisma adapter for `routed_action_execution_envelope`**

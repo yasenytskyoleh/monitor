@@ -376,6 +376,13 @@ export {
   RESEARCH_REVIEW_DECISION_RELATIONAL_RETRYABLE_ERROR_CODES,
   isResearchReviewDecisionRelationalDeterministicErrorCode
 } from "./repositories/research-review-decision-relational-repository-adapter.js";
+export {
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ADAPTER_OPERATIONS,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isRoutedActionExecutionEnvelopeRelationalDeterministicErrorCode
+} from "./repositories/routed-action-execution-envelope-relational-repository-adapter.js";
 export { composeFirstDurableRelationalRepositories } from "./repositories/first-durable-relational-repositories.js";
 export type {
   FirstDurableRelationalRepositories
@@ -489,6 +496,14 @@ export type {
   ResearchReviewDecisionRelationalRepositoryAdapter,
   ResearchReviewDecisionRelationalRetryableErrorCode
 } from "./repositories/research-review-decision-relational-repository-adapter.js";
+export type {
+  RoutedActionExecutionEnvelopeRecordWriteRequest,
+  RoutedActionExecutionEnvelopeRelationalAdapterErrorMapping,
+  RoutedActionExecutionEnvelopeRelationalAdapterOperation,
+  RoutedActionExecutionEnvelopeRelationalDeterministicErrorCode,
+  RoutedActionExecutionEnvelopeRelationalRepositoryAdapter,
+  RoutedActionExecutionEnvelopeRelationalRetryableErrorCode
+} from "./repositories/routed-action-execution-envelope-relational-repository-adapter.js";
 export {
   dehydrateEvaluationResultToDurableRecord,
   dehydrateSignalCandidateToDurableRecord,
@@ -544,6 +559,12 @@ export type {
 export {
   InMemoryResearchReviewDecisionRelationalRepositoryAdapter
 } from "./repositories/research-review-decision-relational-repository-adapter.impl.js";
+export type {
+  RoutedActionExecutionEnvelopeRelationalReferenceReader
+} from "./repositories/routed-action-execution-envelope-relational-repository-adapter.impl.js";
+export {
+  InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter
+} from "./repositories/routed-action-execution-envelope-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,

@@ -42,4 +42,5 @@ Tradeoffs:
 ## Follow-up
 - the durable relational contract for `routed_action_execution_envelope` is completed in ADR-050
 - the Prisma physical schema and SQL migration for `routed_action_execution_envelope` are completed in ADR-051
-- add the repository adapter contract for `routed_action_execution_envelope`
+- the repository adapter contract for `routed_action_execution_envelope` is completed in ADR-052
+- add the adapter-backed relational repository and concrete Prisma adapter for `routed_action_execution_envelope`

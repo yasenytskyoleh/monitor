@@ -80,6 +80,14 @@ export type {
   ResearchReviewDecisionRelationalRepositoryAdapter,
   ResearchReviewDecisionRelationalRetryableErrorCode
 } from "./research-review-decision-relational-repository-adapter.js";
+export type {
+  RoutedActionExecutionEnvelopeRecordWriteRequest,
+  RoutedActionExecutionEnvelopeRelationalAdapterErrorMapping,
+  RoutedActionExecutionEnvelopeRelationalAdapterOperation,
+  RoutedActionExecutionEnvelopeRelationalDeterministicErrorCode,
+  RoutedActionExecutionEnvelopeRelationalRepositoryAdapter,
+  RoutedActionExecutionEnvelopeRelationalRetryableErrorCode
+} from "./routed-action-execution-envelope-relational-repository-adapter.js";
 export {
   FIRST_DURABLE_RELATIONAL_ADAPTER_ERROR_MAPPING,
   FIRST_DURABLE_RELATIONAL_ADAPTER_OPERATIONS,
@@ -122,6 +130,13 @@ export {
   RESEARCH_REVIEW_DECISION_RELATIONAL_RETRYABLE_ERROR_CODES,
   isResearchReviewDecisionRelationalDeterministicErrorCode
 } from "./research-review-decision-relational-repository-adapter.js";
+export {
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ADAPTER_OPERATIONS,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isRoutedActionExecutionEnvelopeRelationalDeterministicErrorCode
+} from "./routed-action-execution-envelope-relational-repository-adapter.js";
 export {
   composeFirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
@@ -224,6 +239,12 @@ export type {
 export {
   InMemoryResearchReviewDecisionRelationalRepositoryAdapter
 } from "./research-review-decision-relational-repository-adapter.impl.js";
+export type {
+  RoutedActionExecutionEnvelopeRelationalReferenceReader
+} from "./routed-action-execution-envelope-relational-repository-adapter.impl.js";
+export {
+  InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter
+} from "./routed-action-execution-envelope-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,

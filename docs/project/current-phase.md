@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.27 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and routed-action durable schema layout**
+**Phase 1.28 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and routed-action adapter boundary**
 
 ## What this phase is about
 This phase is focused on:
@@ -23,6 +23,7 @@ The product side now proves that the repo can:
 - extend durable relational persistence through setup/research and signal/evaluation entities,
 - extend durable relational contract coverage into the next downstream review and execution-envelope entities,
 - extend durable relational repository coverage into the first downstream approval entity,
+- extend durable relational adapter coverage into the first downstream execution-envelope entity,
 - and run concrete Prisma-backed adapters and integration harnesses while keeping runtime engines pending.
 
 ## Implemented in this phase (current baseline)
@@ -240,6 +241,11 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-slice.ts`
   - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-physical-schema.ts`
   - `packages/domain-model/prisma/migrations/20260702103000_product_domain_routed_action_execution_envelope_relational_v1/migration.sql`
+- routed-action-execution-envelope relational adapter contract:
+  - `docs/project/routed-action-execution-envelope-relational-adapter-model.md`
+  - `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.impl.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -276,7 +282,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- add the repository adapter contract for `routed_action_execution_envelope`
+- add the adapter-backed relational repository and concrete Prisma adapter for `routed_action_execution_envelope`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -292,4 +298,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, seven committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through review decisions, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, and one first execution-envelope schema layout that make the next adapter-contract step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, seven committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through review decisions, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, and one first execution-envelope adapter boundary that make the next repository-rollout step straightforward instead of speculative**.

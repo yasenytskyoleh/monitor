@@ -22,12 +22,14 @@ without yet introducing:
 - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-physical-schema.ts`
 - `packages/domain-model/prisma/schema.prisma`
 - `packages/domain-model/prisma/migrations/20260702103000_product_domain_routed_action_execution_envelope_relational_v1/migration.sql`
+- `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.ts`
 - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
 - `packages/domain-model/test/prisma-physical-schema-contracts.test.ts`
 - `packages/domain-model/src/execution/downstream-action-execution-preparation-service.ts`
 - `packages/domain-model/test/routed-action-execution-envelope.test.ts`
 - `docs/architecture/adr/ADR-050-routed-action-execution-envelope-durable-relational-contract.md`
 - `docs/architecture/adr/ADR-051-routed-action-execution-envelope-prisma-schema-layout.md`
+- `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
 
 ## Durable record shape
 `RoutedActionExecutionEnvelopeDurableRecord` keeps:
@@ -117,7 +119,10 @@ Enum families:
 - reused `product_record_source`
 
 ## What remains pending
-- repository adapter contract and relational repository rollout for `routed_action_execution_envelope`
+- repository adapter contract is completed in:
+  - `docs/project/routed-action-execution-envelope-relational-adapter-model.md`
+  - `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
+- domain/durable mappers, adapter-backed relational repository, and concrete Prisma adapter wiring for `routed_action_execution_envelope`
 - later shared-bundle and integration extension for downstream execution/mutation entities
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

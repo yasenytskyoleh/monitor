@@ -46,4 +46,4 @@ Tradeoffs:
 - shared implemented-product bundle extension beyond `research_review_decision`
 
 ## Follow-up
-- add the repository adapter contract for `routed_action_execution_envelope`
+- the repository adapter contract for `routed_action_execution_envelope` is completed in ADR-052
