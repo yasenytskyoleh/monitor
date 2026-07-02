@@ -68,6 +68,13 @@ export type {
   ResearchReviewDecisionRelationalEntityType
 } from "./research-review-decision-relational-slice.js";
 export {
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES
+} from "./routed-action-execution-envelope-relational-slice.js";
+export type {
+  RoutedActionExecutionEnvelopeDurableRecord,
+  RoutedActionExecutionEnvelopeRelationalEntityType
+} from "./routed-action-execution-envelope-relational-slice.js";
+export {
   FIRST_DURABLE_RELATIONAL_DATABASE_SCHEMA,
   FIRST_DURABLE_RELATIONAL_INDEXES,
   FIRST_DURABLE_RELATIONAL_MIGRATION_SLUG,

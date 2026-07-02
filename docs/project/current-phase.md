@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.25 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and review-decision shared composition/integration**
+**Phase 1.26 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, review-decision shared composition/integration, and routed-action durable contract**
 
 ## What this phase is about
 This phase is focused on:
@@ -21,7 +21,7 @@ The product side now proves that the repo can:
 - maintain implemented in-memory persistence,
 - enforce service-owned write paths,
 - extend durable relational persistence through setup/research and signal/evaluation entities,
-- extend durable relational contract coverage into the next downstream review entity,
+- extend durable relational contract coverage into the next downstream review and execution-envelope entities,
 - extend durable relational repository coverage into the first downstream approval entity,
 - and run concrete Prisma-backed adapters and integration harnesses while keeping runtime engines pending.
 
@@ -233,6 +233,10 @@ The product side now proves that the repo can:
   - `docs/project/implemented-product-review-decision-integration-model.md`
   - `docs/architecture/adr/ADR-049-implemented-product-review-decision-integration-coverage.md`
   - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
+- routed-action-execution-envelope durable relational contract:
+  - `docs/project/routed-action-execution-envelope-relational-persistence-model.md`
+  - `docs/architecture/adr/ADR-050-routed-action-execution-envelope-durable-relational-contract.md`
+  - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-slice.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -242,6 +246,7 @@ The product side now proves that the repo can:
   - `ResearchFeedbackDecision`
   - `ResearchDecisionApproval`
   - `ResearchReviewDecision`
+  - `RoutedActionExecutionEnvelope`
 - repository/service implementation architecture with durable relational persistence pending:
   - `docs/project/persistence-implementation-architecture.md`
   - `docs/project/first-persisted-slice.md`
@@ -268,7 +273,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- add the durable relational contract for `routed_action_execution_envelope`
+- add the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -284,4 +289,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through review decisions, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, and one downstream review-decision rollout that make the next later execution slice straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through review decisions, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, and one first execution-envelope durable contract that make the next physical schema step straightforward instead of speculative**.

@@ -22,11 +22,11 @@ Current product-domain scope includes:
   - evaluation contracts (`EvaluationInput`, `EvaluationWindow`, `EvaluationResult`, `EvaluationMetrics`, `EvaluationStatus`)
   - research evidence contracts (`AggregationScope`, `SetupAggregateResult`, `SetupComparison`, `ResearchHypothesisEvidenceLink`)
   - research feedback contracts (`ResearchFeedbackDecision`)
-  - research review contracts (`ResearchDecisionApproval`, `ResearchReviewDecision`)
+  - research review/execution contracts (`ResearchDecisionApproval`, `ResearchReviewDecision`, `RoutedActionExecutionEnvelope`)
   - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
   - repository contracts (`*Repository` interfaces)
   - service contracts (`*Service` interfaces + write-path ownership)
-  - implemented in-memory persistence for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, `ResearchFeedbackDecision`, `ResearchDecisionApproval`, and `ResearchReviewDecision`
+  - implemented in-memory persistence for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, `ResearchFeedbackDecision`, `ResearchDecisionApproval`, `ResearchReviewDecision`, and `RoutedActionExecutionEnvelope`
   - hypothesis/run contracts (`ResearchHypothesis`, `ResearchRun`)
 - docs and ADRs:
   - `docs/project/domain-model.md`
@@ -56,6 +56,12 @@ Current product-domain scope includes:
   - `docs/project/research-decision-approval-relational-persistence-model.md`
   - `docs/project/research-decision-approval-relational-adapter-model.md`
   - `docs/project/research-decision-approval-relational-rollout-model.md`
+  - `docs/project/research-review-decision-relational-persistence-model.md`
+  - `docs/project/research-review-decision-relational-adapter-model.md`
+  - `docs/project/research-review-decision-relational-rollout-model.md`
+  - `docs/project/implemented-product-review-decision-composition-model.md`
+  - `docs/project/implemented-product-review-decision-integration-model.md`
+  - `docs/project/routed-action-execution-envelope-relational-persistence-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -80,6 +86,13 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-041-research-decision-approval-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-042-implemented-product-approval-composition.md`
   - `docs/architecture/adr/ADR-043-implemented-product-approval-integration-coverage.md`
+  - `docs/architecture/adr/ADR-044-research-review-decision-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-045-research-review-decision-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-046-research-review-decision-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-047-research-review-decision-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-048-implemented-product-review-decision-composition.md`
+  - `docs/architecture/adr/ADR-049-implemented-product-review-decision-integration-coverage.md`
+  - `docs/architecture/adr/ADR-050-routed-action-execution-envelope-durable-relational-contract.md`
 
 ## Current constraints
 - spot-only scope
@@ -96,6 +109,7 @@ Current product-domain scope includes:
   - `research_feedback_decision`
   - `research_decision_approval`
   - `research_review_decision`
+  - `routed_action_execution_envelope`
 - committed Prisma schema/migrations now exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -104,6 +118,7 @@ Current product-domain scope includes:
   - `setup_aggregate_result`
   - `research_feedback_decision`
   - `research_decision_approval`
+  - `research_review_decision`
 - repository adapter contracts now also exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -112,6 +127,7 @@ Current product-domain scope includes:
   - `setup_aggregate_result`
   - `research_feedback_decision`
   - `research_decision_approval`
+  - `research_review_decision`
 - adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -124,12 +140,13 @@ Current product-domain scope includes:
   - `research_review_decision`
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_review_decision`
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `research_review_decision`
-- the next downstream durable persistence gap is now the first later review/execution durable slice after review decisions
+- `routed_action_execution_envelope` now also has a durable relational contract, but still has no Prisma schema/migration, adapter boundary, relational repository rollout, or shared-bundle coverage
+- the next downstream durable persistence gap is now the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- add the durable relational contract for `routed_action_execution_envelope`
+- add the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

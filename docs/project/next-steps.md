@@ -1,7 +1,7 @@
 # Next Steps
 
 ## Current recommended next step
-### Add the durable relational contract for `routed_action_execution_envelope`
+### Add the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
 
 Reason:
 - the full implemented research chain now has:
@@ -29,14 +29,14 @@ Reason:
   - slice-level shared composition
 - that entity already exists in the domain model and in implemented in-memory persistence
 - one shared Prisma-backed bundle and one opt-in real-Postgres integration path now span the full implemented product chain through `research_review_decision`
-- the next downstream service-owned persistence gap is now the first later review/execution durable slice after review decisions
 - `routed_action_execution_envelope` already exists in the domain model and in implemented in-memory persistence
-- it still has no durable relational contract, Prisma schema/migration, adapter boundary, relational repository rollout, or shared-bundle coverage
-- runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
+- `routed_action_execution_envelope` now also has a durable relational contract
+- it still has no Prisma schema/migration, adapter boundary, relational repository rollout, or shared-bundle coverage
+- runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and schema-focused
 
 ## Recommended near-future sequence
-1. add the durable relational contract for `routed_action_execution_envelope`
-2. add the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
+1. add the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
+2. add the repository adapter contract for `routed_action_execution_envelope`
 3. keep later review/execution entities deferred until the routed-action slice pattern is verified
 
 ## Things to avoid while moving forward
@@ -44,7 +44,7 @@ Reason:
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
 - expanding into runtime review/execution workflow logic prematurely
-- mixing execution-envelope or setup-mutation runtime behavior into the routed-action durable-contract step
+- mixing adapter/repository rollout or setup-mutation runtime behavior into the routed-action physical-schema step
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

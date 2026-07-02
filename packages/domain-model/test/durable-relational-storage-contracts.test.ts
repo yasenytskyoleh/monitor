@@ -12,6 +12,8 @@ import {
   RESEARCH_REVIEW_DECISION_RELATIONAL_ENTITY_TYPES,
   type ResearchReviewDecisionDurableRecord,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_ENTITY_TYPES,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES,
+  type RoutedActionExecutionEnvelopeDurableRecord,
   type ResearchFeedbackDecisionDurableRecord,
   type ResearchHypothesisDurableRecord,
   type ResearchHypothesisSetupDefinitionLinkRecord,
@@ -352,4 +354,77 @@ test("supports typed research-review-decision durable records", () => {
   assert.equal(reviewDecisionRecord.identity.version, 1);
   assert.equal(reviewDecisionRecord.decisionOutcome, "accepted");
   assert.equal(reviewDecisionRecord.authorizedNextAction, "confirm_no_change");
+});
+
+test("exposes routed-action-execution-envelope durable relational storage planning constants", () => {
+  assert.deepEqual(ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES, [
+    "routed_action_execution_envelope"
+  ]);
+});
+
+test("supports typed routed-action-execution-envelope durable records", () => {
+  const routedActionExecutionEnvelopeRecord: RoutedActionExecutionEnvelopeDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "routed_action_execution_envelope",
+      entityId: "route-envelope-001",
+      version: 1,
+      relatedEntityIds: [
+        "route-001",
+        "review-decision-001",
+        "setup-family-001",
+        "setup-definition-001",
+        "hypothesis-001"
+      ]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-06-14T12:00:00.000Z",
+    updatedAtUtc: "2026-06-14T12:00:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    executionStatus: "prepared",
+    sourceRoutingResultId: "route-001",
+    sourceReviewDecisionId: "review-decision-001",
+    actionTarget: "create_setup_refinement_request",
+    actionCommandType: "CreateSetupRefinementRequestCommand",
+    targetEntityRefs: {
+      setupFamilyId: "setup-family-001",
+      setupDefinitionId: "setup-definition-001",
+      researchHypothesisId: "hypothesis-001",
+      researchFeedbackDecisionId: "feedback-001",
+      researchDecisionApprovalId: "approval-001"
+    },
+    routeMetadataSnapshot: {
+      routeStatus: "routed",
+      routedAt: "2026-06-14T11:55:00.000Z",
+      decisionOutcome: "accepted",
+      authorizedNextAction: "prepare_refinement_follow_up",
+      downstreamCommandType: "CreateSetupRefinementRequestCommand"
+    },
+    executionPayloadSnapshot: {
+      commandType: "CreateSetupRefinementRequestCommand",
+      target: "create_setup_refinement_request",
+      commandInput: {
+        setupDefinitionId: "setup-definition-001",
+        setupFamilyId: "setup-family-001",
+        sourceReviewDecisionId: "review-decision-001",
+        sourceRoutingResultId: "route-001"
+      }
+    },
+    preparedBy: "execution-preparer-001",
+    preparedAtUtc: "2026-06-14T12:00:00.000Z",
+    originRunId: "run-route-001",
+    notes: "Prepared for downstream refinement follow-up."
+  };
+
+  assert.equal(routedActionExecutionEnvelopeRecord.identity.version, 1);
+  assert.equal(
+    routedActionExecutionEnvelopeRecord.actionCommandType,
+    "CreateSetupRefinementRequestCommand"
+  );
+  assert.equal(
+    routedActionExecutionEnvelopeRecord.targetEntityRefs.setupDefinitionId,
+    "setup-definition-001"
+  );
 });

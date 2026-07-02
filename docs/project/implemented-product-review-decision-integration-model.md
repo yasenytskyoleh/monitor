@@ -29,7 +29,8 @@ This step does not add new product rules. It proves that the already-shared repo
 - the next persistence task can move to the first later review/execution durable slice instead of more review-decision-chain infrastructure work
 
 ## What remains pending
-- the durable relational contract for `routed_action_execution_envelope`
+- the durable relational contract for `routed_action_execution_envelope` is completed later in `docs/project/routed-action-execution-envelope-relational-persistence-model.md`
+- the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
 - later durable slices for downstream review/execution entities
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

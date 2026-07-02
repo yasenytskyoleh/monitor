@@ -33,11 +33,12 @@ Tradeoffs:
 - the review-decision integration harness is still opt-in and depends on `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL`
 
 ## Explicitly not included
-- durable relational contract work for `routed_action_execution_envelope`
+- physical schema and migration work for `routed_action_execution_envelope`
 - later review/execution durable slices
 - runtime review/execution engines
 - exchange ingestion
 - UI work
 
 ## Follow-up
-- add the durable relational contract for `routed_action_execution_envelope`
+- the durable relational contract for `routed_action_execution_envelope` is completed in ADR-050
+- add the Prisma physical schema and SQL migration for `routed_action_execution_envelope`

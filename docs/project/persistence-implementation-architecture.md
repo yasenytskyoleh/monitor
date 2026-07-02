@@ -1,7 +1,7 @@
 # Persistence Implementation Architecture
 
 ## Purpose
-Define the current implementation architecture for product-domain persistence across the implemented core research chain, the first downstream review entity, and the first downstream approval entity.
+Define the current implementation architecture for product-domain persistence across the implemented core research chain, the first downstream review entity, the first downstream approval entity, and the first downstream execution-envelope contract.
 
 This document now reflects:
 - boundary contracts
@@ -18,6 +18,7 @@ Implemented in-memory persistence and service-owned write paths exist today for:
 - `ResearchFeedbackDecision`
 - `ResearchDecisionApproval`
 - `ResearchReviewDecision`
+- `RoutedActionExecutionEnvelope`
 
 Durable relational coverage now exists for the core research chain:
 - committed contracts, schema/migrations, adapter-backed repositories, and concrete Prisma adapters for:
@@ -30,11 +31,13 @@ Durable relational coverage now exists for the core research chain:
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-Postgres integration coverage now also exist for `research_feedback_decision`
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_decision_approval`
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_review_decision`
+- committed durable relational contract now also exists for `routed_action_execution_envelope`
 - one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision
 - one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision
 
 Still pending:
-- durable relational contract for `routed_action_execution_envelope`
+- Prisma schema and SQL migration for `routed_action_execution_envelope`
+- repository adapter contract and relational repository rollout for `routed_action_execution_envelope`
 - later shared-bundle/integration extension for downstream execution and mutation entities after `research_review_decision`
 - later review/execution durable slices after `research_review_decision`
 - exchange ingestion runtime
@@ -54,6 +57,7 @@ Repository abstractions:
 - `ResearchFeedbackDecisionRepository`
 - `ResearchDecisionApprovalRepository`
 - `ResearchReviewDecisionRepository`
+- `RoutedActionExecutionEnvelopeRepository`
 
 Implemented concrete repositories in the current baseline:
 - `InMemorySetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-repository.impl.ts`)
@@ -64,6 +68,7 @@ Implemented concrete repositories in the current baseline:
 - `InMemoryResearchFeedbackDecisionRepository` (`packages/domain-model/src/repositories/research-feedback-decision-repository.impl.ts`)
 - `InMemoryResearchDecisionApprovalRepository` (`packages/domain-model/src/repositories/research-decision-approval-repository.impl.ts`)
 - `InMemoryResearchReviewDecisionRepository` (`packages/domain-model/src/repositories/research-review-decision-repository.impl.ts`)
+- `InMemoryRoutedActionExecutionEnvelopeRepository` (`packages/domain-model/src/repositories/routed-action-execution-envelope-repository.impl.ts`)
 - `RelationalSetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-relational-repository.impl.ts`)
 - `RelationalResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-relational-repository.impl.ts`)
 - `RelationalSignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-relational-repository.impl.ts`)
@@ -153,13 +158,14 @@ Ownership direction:
 - `research_feedback_decision` -> `research_service`
 - `research_decision_approval` -> `research_service`
 - `research_review_decision` -> `research_service`
+- `routed_action_execution_envelope` -> `research_service`
 
 ## Mapping rules
 1. repositories return domain-shaped records (not runner artifact shapes)
 2. persistence metadata (`originRunId`, `traceId`) may be attached through metadata contracts
 3. runtime evidence files remain separate from product-domain storage
 4. one domain contract does not force one-table implementation in this slice
-5. implemented persistence is now narrow but end-to-end for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, research decision approvals, and research review decisions, with shared-bundle and real-database integration coverage now reaching the same boundary
+5. implemented persistence is now narrow but end-to-end in memory for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, research decision approvals, research review decisions, and routed action execution envelopes, while shared-bundle and real-database integration coverage still stop at research review decisions
 
 ## Orchestrator handoff boundary
 - orchestrator workflows may trigger future product-domain services
@@ -174,6 +180,7 @@ Ownership direction:
 - `packages/domain-model/src/storage/research-decision-approval-relational-physical-schema.ts`
 - `packages/domain-model/src/storage/research-review-decision-relational-slice.ts`
 - `packages/domain-model/src/storage/research-review-decision-relational-physical-schema.ts`
+- `packages/domain-model/src/storage/routed-action-execution-envelope-relational-slice.ts`
 - `packages/domain-model/src/repositories/research-review-decision-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/research-review-decision-relational-repository-mappers.ts`
 - `packages/domain-model/src/repositories/research-review-decision-relational-repository.impl.ts`
