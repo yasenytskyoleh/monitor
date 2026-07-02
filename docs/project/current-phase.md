@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.26 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, review-decision shared composition/integration, and routed-action durable contract**
+**Phase 1.27 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and routed-action durable schema layout**
 
 ## What this phase is about
 This phase is focused on:
@@ -233,10 +233,13 @@ The product side now proves that the repo can:
   - `docs/project/implemented-product-review-decision-integration-model.md`
   - `docs/architecture/adr/ADR-049-implemented-product-review-decision-integration-coverage.md`
   - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
-- routed-action-execution-envelope durable relational contract:
+- routed-action-execution-envelope durable relational contract and physical schema:
   - `docs/project/routed-action-execution-envelope-relational-persistence-model.md`
   - `docs/architecture/adr/ADR-050-routed-action-execution-envelope-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-051-routed-action-execution-envelope-prisma-schema-layout.md`
   - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-slice.ts`
+  - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-physical-schema.ts`
+  - `packages/domain-model/prisma/migrations/20260702103000_product_domain_routed_action_execution_envelope_relational_v1/migration.sql`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -273,7 +276,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- add the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
+- add the repository adapter contract for `routed_action_execution_envelope`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -289,4 +292,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, three verified durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through review decisions, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, and one first execution-envelope durable contract that make the next physical schema step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, seven committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through review decisions, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, and one first execution-envelope schema layout that make the next adapter-contract step straightforward instead of speculative**.

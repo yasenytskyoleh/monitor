@@ -45,4 +45,4 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- add the Prisma physical schema and SQL migration for `routed_action_execution_envelope`
+- the Prisma physical schema and SQL migration for `routed_action_execution_envelope` are completed in ADR-051

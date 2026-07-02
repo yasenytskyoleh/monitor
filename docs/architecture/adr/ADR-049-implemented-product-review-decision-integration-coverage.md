@@ -26,14 +26,14 @@ Positive:
   - in-memory adapters
   - fake Prisma adapter tests
   - real Postgres integration coverage
-- the next persistence step can move to the next downstream durable slice
+- the next persistence step can move to the next downstream routed-action persistence layer
 
 Tradeoffs:
 - later review/execution entities still have only implemented in-memory persistence
 - the review-decision integration harness is still opt-in and depends on `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL`
 
 ## Explicitly not included
-- physical schema and migration work for `routed_action_execution_envelope`
+- repository adapter contract work for `routed_action_execution_envelope`
 - later review/execution durable slices
 - runtime review/execution engines
 - exchange ingestion
@@ -41,4 +41,5 @@ Tradeoffs:
 
 ## Follow-up
 - the durable relational contract for `routed_action_execution_envelope` is completed in ADR-050
-- add the Prisma physical schema and SQL migration for `routed_action_execution_envelope`
+- the Prisma physical schema and SQL migration for `routed_action_execution_envelope` are completed in ADR-051
+- add the repository adapter contract for `routed_action_execution_envelope`

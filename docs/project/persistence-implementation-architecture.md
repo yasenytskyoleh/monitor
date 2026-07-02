@@ -31,12 +31,11 @@ Durable relational coverage now exists for the core research chain:
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-Postgres integration coverage now also exist for `research_feedback_decision`
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_decision_approval`
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_review_decision`
-- committed durable relational contract now also exists for `routed_action_execution_envelope`
+- committed durable relational contract plus physical schema now also exist for `routed_action_execution_envelope`
 - one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision
 - one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision
 
 Still pending:
-- Prisma schema and SQL migration for `routed_action_execution_envelope`
 - repository adapter contract and relational repository rollout for `routed_action_execution_envelope`
 - later shared-bundle/integration extension for downstream execution and mutation entities after `research_review_decision`
 - later review/execution durable slices after `research_review_decision`
@@ -181,6 +180,7 @@ Ownership direction:
 - `packages/domain-model/src/storage/research-review-decision-relational-slice.ts`
 - `packages/domain-model/src/storage/research-review-decision-relational-physical-schema.ts`
 - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-slice.ts`
+- `packages/domain-model/src/storage/routed-action-execution-envelope-relational-physical-schema.ts`
 - `packages/domain-model/src/repositories/research-review-decision-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/research-review-decision-relational-repository-mappers.ts`
 - `packages/domain-model/src/repositories/research-review-decision-relational-repository.impl.ts`

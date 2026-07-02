@@ -93,6 +93,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-048-implemented-product-review-decision-composition.md`
   - `docs/architecture/adr/ADR-049-implemented-product-review-decision-integration-coverage.md`
   - `docs/architecture/adr/ADR-050-routed-action-execution-envelope-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-051-routed-action-execution-envelope-prisma-schema-layout.md`
 
 ## Current constraints
 - spot-only scope
@@ -119,6 +120,7 @@ Current product-domain scope includes:
   - `research_feedback_decision`
   - `research_decision_approval`
   - `research_review_decision`
+  - `routed_action_execution_envelope`
 - repository adapter contracts now also exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -140,13 +142,13 @@ Current product-domain scope includes:
   - `research_review_decision`
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_review_decision`
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `research_review_decision`
-- `routed_action_execution_envelope` now also has a durable relational contract, but still has no Prisma schema/migration, adapter boundary, relational repository rollout, or shared-bundle coverage
-- the next downstream durable persistence gap is now the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
+- `routed_action_execution_envelope` now also has a durable relational contract plus committed Prisma schema/migration, but still has no repository adapter contract, relational repository rollout, or shared-bundle coverage
+- the next downstream durable persistence gap is now the repository adapter contract for `routed_action_execution_envelope`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- add the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
+- add the repository adapter contract for `routed_action_execution_envelope`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

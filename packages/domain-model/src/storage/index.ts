@@ -153,6 +153,18 @@ export type {
   ResearchReviewDecisionRelationalPrismaModelName,
   ResearchReviewDecisionRelationalTableName
 } from "./research-review-decision-relational-physical-schema.js";
+export {
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_INDEXES,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_MIGRATION_SLUG,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_PRISMA_MODELS,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_REQUIRED_COLUMNS,
+  ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_TABLES
+} from "./routed-action-execution-envelope-relational-physical-schema.js";
+export type {
+  RoutedActionExecutionEnvelopeRelationalIndexName,
+  RoutedActionExecutionEnvelopeRelationalPrismaModelName,
+  RoutedActionExecutionEnvelopeRelationalTableName
+} from "./routed-action-execution-envelope-relational-physical-schema.js";
 
 export type {
   EntityIdentity,

@@ -144,6 +144,7 @@ Implemented today:
   - `docs/architecture/adr/ADR-048-implemented-product-review-decision-composition.md`
   - `docs/architecture/adr/ADR-049-implemented-product-review-decision-integration-coverage.md`
   - `docs/architecture/adr/ADR-050-routed-action-execution-envelope-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-051-routed-action-execution-envelope-prisma-schema-layout.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -152,20 +153,20 @@ Current limitation:
   - no broad refactors, schema/migration/architecture changes, or cross-package scope
 - durable relational persistence pending:
   - durable relational contracts now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, `setup_aggregate_result`, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, and `routed_action_execution_envelope`
-  - committed Prisma schema/migrations now exist through `research_review_decision`
+  - committed Prisma schema/migrations now exist through `routed_action_execution_envelope`
   - repository adapter contracts now also exist through `research_review_decision`
   - adapter-backed relational repositories, concrete Prisma adapters, and slice-level shared composition now exist for all five core-chain service-owned product entities, `research_feedback_decision`, `research_decision_approval`, and `research_review_decision`
   - opt-in real-database integration coverage now exists for the five core-chain entities, `research_feedback_decision`, and the shared implemented-product chain through `research_review_decision`
   - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_review_decision`
   - one end-to-end real-database integration flow now also spans the full implemented product chain through `research_review_decision`
-  - `routed_action_execution_envelope` now also has a durable relational contract, but it still has no Prisma schema/migration, adapter boundary, relational repository rollout, or shared-bundle coverage
-  - the next downstream durable persistence gap is now the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
+  - `routed_action_execution_envelope` now also has a durable relational contract plus committed Prisma schema/migration, but it still has no repository adapter contract, relational repository rollout, or shared-bundle coverage
+  - the next downstream durable persistence gap is now the repository adapter contract for `routed_action_execution_envelope`
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- add the physical Prisma schema and SQL migration for `routed_action_execution_envelope`
+- add the repository adapter contract for `routed_action_execution_envelope`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
