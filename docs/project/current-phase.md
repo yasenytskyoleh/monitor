@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.29 — Codex-first workflow, bounded autonomous mode, review-decision-chain shared persistence, and routed-action repository rollout**
+**Phase 1.30 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and routed-action bundle extension**
 
 ## What this phase is about
 This phase is focused on:
@@ -252,6 +252,11 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repositories.ts`
   - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-adapter.ts`
   - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-client.ts`
+- shared Prisma-backed composition extended through routed-action execution envelopes:
+  - `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
+  - `docs/architecture/adr/ADR-054-implemented-product-routed-action-execution-envelope-composition.md`
+  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -288,7 +293,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- extend the shared implemented-product relational bundle through `routed_action_execution_envelope`
+- extend opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -304,4 +309,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, seven committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through review decisions, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, and one first execution-envelope repository rollout that make the next shared-bundle step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, seven committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through routed-action execution envelopes, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, one first execution-envelope repository rollout, and one first execution-envelope shared-bundle extension that make the next integration step straightforward instead of speculative**.

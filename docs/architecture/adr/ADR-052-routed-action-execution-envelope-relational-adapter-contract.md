@@ -49,7 +49,7 @@ Tradeoffs:
 
 ## Explicitly postponed
 - domain/durable mappers, adapter-backed relational repository implementation, and concrete Prisma adapter wiring are completed later in ADR-053
-- shared implemented-product relational bundle extension through `routed_action_execution_envelope`
+- shared implemented-product relational bundle extension through `routed_action_execution_envelope` is completed later in ADR-054
 - opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
 
 ## Follow-up

@@ -45,7 +45,7 @@ This step gives the first downstream execution-envelope entity the same per-enti
 - the remaining work is shared-bundle extension and real-database integration coverage, not another speculative per-entity contract pass
 
 ## What remains pending
-- shared implemented-product relational bundle extension through `routed_action_execution_envelope`
+- shared implemented-product relational bundle extension through `routed_action_execution_envelope` is completed later in `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
 - opt-in real-Postgres integration coverage for the extended shared bundle through `routed_action_execution_envelope`
 - later execution/mutation durable slices after `routed_action_execution_envelope`
 - runtime detection, evaluation, aggregation, review, and execution engines

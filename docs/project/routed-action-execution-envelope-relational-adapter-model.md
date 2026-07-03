@@ -70,6 +70,6 @@ Those remain service-owned/query-owned references rather than durable entity FKs
 
 ## Explicitly postponed
 - domain/durable mappers, adapter-backed relational repository implementation, and concrete Prisma adapter wiring are completed later in `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
-- shared implemented-product relational bundle extension through `routed_action_execution_envelope`
+- shared implemented-product relational bundle extension through `routed_action_execution_envelope` is completed later in `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
 - opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
 - runtime review/execution engines

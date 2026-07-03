@@ -1,7 +1,7 @@
 # Next Steps
 
 ## Current recommended next step
-### Extend the shared implemented-product relational bundle through `routed_action_execution_envelope`
+### Extend opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
 
 Reason:
 - the full implemented research chain now has:
@@ -38,20 +38,21 @@ Reason:
   - an adapter-backed relational repository
   - a concrete Prisma adapter
   - slice-level shared composition
-- the shared implemented-product bundle and the opt-in real-Postgres integration path still stop at `research_review_decision`
-- runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and shared-bundle-focused
+- one shared Prisma-backed repository bundle now spans the full implemented product chain through `routed_action_execution_envelope`
+- the opt-in real-Postgres integration path still stops at `research_review_decision`
+- runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and integration-focused
 
 ## Recommended near-future sequence
-1. extend the shared implemented-product relational bundle through `routed_action_execution_envelope`
-2. extend opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
-3. keep later review/execution entities deferred until the routed-action shared-bundle pattern is verified
+1. extend opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
+2. keep later review/execution entities deferred until the routed-action full shared persistence pattern is verified
+3. only then move to the next downstream execution or mutation durable slice
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
 - expanding into runtime review/execution workflow logic prematurely
-- mixing real-database integration expansion or setup-mutation runtime behavior into the routed-action shared-bundle step
+- mixing later durable-slice work or setup-mutation runtime behavior into the routed-action integration step
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

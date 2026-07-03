@@ -7,6 +7,7 @@ import {
   InMemoryResearchDecisionApprovalRelationalRepositoryAdapter,
   InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter,
   InMemoryResearchReviewDecisionRelationalRepositoryAdapter,
+  InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter,
   InMemorySetupAggregateRelationalRepositoryAdapter,
   InMemorySignalEvaluationRelationalRepositoryAdapter,
   type EvaluationResult,
@@ -15,6 +16,7 @@ import {
   type ResearchFeedbackDecision,
   type ResearchHypothesis,
   type ResearchReviewDecision,
+  type RoutedActionExecutionEnvelope,
   type SetupAggregateResult,
   type SetupDefinition,
   type SignalCandidate
@@ -172,105 +174,170 @@ const buildReviewDecision = (
   reviewedAt: "2026-05-24T10:45:00.000Z",
   decisionOutcome: "accepted",
   reviewerNotes: "Review confirms the current setup family revision should stay active.",
-  authorizedNextAction: "confirm_no_change",
+  authorizedNextAction: "prepare_lifecycle_mutation_follow_up",
   decisionStatus: "recorded",
   createdAt: "2026-05-24T10:45:00.000Z",
   updatedAt: "2026-05-24T10:45:00.000Z"
 });
 
-test("implemented product repository composition supports the current end-to-end entity chain through review decisions", async () => {
-  const firstDurableAdapter = new InMemoryFirstDurableRelationalRepositoryAdapter();
-  const setupAggregateAdapter = new InMemorySetupAggregateRelationalRepositoryAdapter(
-    firstDurableAdapter
-  );
-  const feedbackDecisionAdapter = new InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter({
-    loadSetupDefinitionRecord:
-      firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter),
-    loadResearchHypothesisBundle:
-      firstDurableAdapter.loadResearchHypothesisBundle.bind(firstDurableAdapter),
-    loadSetupAggregateResultRecord:
-      setupAggregateAdapter.loadSetupAggregateResultRecord.bind(setupAggregateAdapter)
-  });
-  const repositories = composeImplementedProductRelationalRepositories({
-    firstDurableAdapter,
-    signalEvaluationAdapter: new InMemorySignalEvaluationRelationalRepositoryAdapter(
+const buildEnvelope = (
+  id: string,
+  sourceReviewDecisionId: string
+): RoutedActionExecutionEnvelope => ({
+  id,
+  sourceRoutingResultId: "routing-result-001",
+  sourceReviewDecisionId,
+  actionTarget: "apply_setup_lifecycle_mutation",
+  actionCommandType: "ApplyApprovedSetupMutationCommand",
+  targetEntityRefs: {
+    setupFamilyId: "setup-family-001",
+    setupDefinitionId: "setup-001",
+    researchDecisionApprovalId: "approval-001"
+  },
+  routeMetadataSnapshot: {
+    routeStatus: "routed",
+    routedAt: "2026-05-24T10:50:00.000Z",
+    decisionOutcome: "accepted",
+    authorizedNextAction: "prepare_lifecycle_mutation_follow_up",
+    downstreamCommandType: "ApplyApprovedSetupMutationCommand"
+  },
+  executionPayloadSnapshot: {
+    commandType: "ApplyApprovedSetupMutationCommand",
+    target: "apply_setup_lifecycle_mutation",
+    commandInput: {
+      setupDefinitionId: "setup-001",
+      setupFamilyId: "setup-family-001",
+      sourceReviewDecisionId,
+      sourceRoutingResultId: "routing-result-001"
+    }
+  },
+  executionStatus: "prepared",
+  preparedBy: "review-operator-001",
+  preparedAt: "2026-05-24T10:55:00.000Z",
+  notes: "Prepared in shared bundle test.",
+  createdAt: "2026-05-24T10:55:00.000Z",
+  updatedAt: "2026-05-24T10:55:00.000Z"
+});
+
+test(
+  "implemented product repository composition supports the current end-to-end entity chain through routed-action execution envelopes",
+  async () => {
+    const firstDurableAdapter = new InMemoryFirstDurableRelationalRepositoryAdapter();
+    const setupAggregateAdapter = new InMemorySetupAggregateRelationalRepositoryAdapter(
       firstDurableAdapter
-    ),
-    setupAggregateAdapter,
-    feedbackDecisionAdapter,
-    approvalAdapter: new InMemoryResearchDecisionApprovalRelationalRepositoryAdapter({
-      loadResearchFeedbackDecisionRecord:
-        feedbackDecisionAdapter.loadResearchFeedbackDecisionRecord.bind(feedbackDecisionAdapter),
-      loadSetupDefinitionRecord:
-        firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter)
-    }),
-    reviewDecisionAdapter: new InMemoryResearchReviewDecisionRelationalRepositoryAdapter({
+    );
+    const feedbackDecisionAdapter =
+      new InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter({
+        loadSetupDefinitionRecord:
+          firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter),
+        loadResearchHypothesisBundle:
+          firstDurableAdapter.loadResearchHypothesisBundle.bind(firstDurableAdapter),
+        loadSetupAggregateResultRecord:
+          setupAggregateAdapter.loadSetupAggregateResultRecord.bind(setupAggregateAdapter)
+      });
+    const reviewDecisionAdapter = new InMemoryResearchReviewDecisionRelationalRepositoryAdapter({
       loadResearchHypothesisBundle:
         firstDurableAdapter.loadResearchHypothesisBundle.bind(firstDurableAdapter)
-    })
-  });
+    });
+    const repositories = composeImplementedProductRelationalRepositories({
+      firstDurableAdapter,
+      signalEvaluationAdapter: new InMemorySignalEvaluationRelationalRepositoryAdapter(
+        firstDurableAdapter
+      ),
+      setupAggregateAdapter,
+      feedbackDecisionAdapter,
+      approvalAdapter: new InMemoryResearchDecisionApprovalRelationalRepositoryAdapter({
+        loadResearchFeedbackDecisionRecord:
+          feedbackDecisionAdapter.loadResearchFeedbackDecisionRecord.bind(feedbackDecisionAdapter),
+        loadSetupDefinitionRecord:
+          firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter)
+      }),
+      reviewDecisionAdapter,
+      routedActionAdapter: new InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter({
+        loadResearchReviewDecisionRecord:
+          reviewDecisionAdapter.loadResearchReviewDecisionRecord.bind(reviewDecisionAdapter)
+      })
+    });
 
-  await repositories.setupDefinitionRepository.create({
-    definition: buildSetupDefinition("setup-001"),
-    metadata
-  });
-  await repositories.researchHypothesisRepository.create({
-    hypothesis: buildResearchHypothesis("hypothesis-001", "setup-001"),
-    metadata
-  });
-  await repositories.signalCandidateRepository.create({
-    candidate: buildSignalCandidate("candidate-001", "setup-001"),
-    metadata
-  });
-  await repositories.evaluationResultRepository.create({
-    result: buildEvaluationResult("result-001", "candidate-001"),
-    metadata
-  });
-  await repositories.setupAggregateResultRepository.create({
-    aggregate: buildAggregate("aggregate-001", "setup-001", "hypothesis-001"),
-    metadata
-  });
-  await repositories.researchFeedbackDecisionRepository.create({
-    decision: buildFeedbackDecision(
-      "feedback-001",
-      "setup-001",
-      "hypothesis-001",
-      "aggregate-001"
-    ),
-    metadata
-  });
-  await repositories.researchDecisionApprovalRepository.create({
-    approval: buildApproval("approval-001", "feedback-001", "setup-001"),
-    metadata
-  });
-  await repositories.researchReviewDecisionRepository.create({
-    decision: buildReviewDecision("review-decision-001", "hypothesis-001"),
-    metadata
-  });
+    await repositories.setupDefinitionRepository.create({
+      definition: buildSetupDefinition("setup-001"),
+      metadata
+    });
+    await repositories.researchHypothesisRepository.create({
+      hypothesis: buildResearchHypothesis("hypothesis-001", "setup-001"),
+      metadata
+    });
+    await repositories.signalCandidateRepository.create({
+      candidate: buildSignalCandidate("candidate-001", "setup-001"),
+      metadata
+    });
+    await repositories.evaluationResultRepository.create({
+      result: buildEvaluationResult("result-001", "candidate-001"),
+      metadata
+    });
+    await repositories.setupAggregateResultRepository.create({
+      aggregate: buildAggregate("aggregate-001", "setup-001", "hypothesis-001"),
+      metadata
+    });
+    await repositories.researchFeedbackDecisionRepository.create({
+      decision: buildFeedbackDecision(
+        "feedback-001",
+        "setup-001",
+        "hypothesis-001",
+        "aggregate-001"
+      ),
+      metadata
+    });
+    await repositories.researchDecisionApprovalRepository.create({
+      approval: buildApproval("approval-001", "feedback-001", "setup-001"),
+      metadata
+    });
+    await repositories.researchReviewDecisionRepository.create({
+      decision: buildReviewDecision("review-decision-001", "hypothesis-001"),
+      metadata
+    });
+    await repositories.routedActionExecutionEnvelopeRepository.create({
+      envelope: buildEnvelope("execution-envelope-001", "review-decision-001"),
+      metadata
+    });
 
-  const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
-  const storedEvaluation = await repositories.evaluationResultRepository.getBySignalCandidateAndWindow(
-    "candidate-001",
-    "window-24h"
-  );
-  const storedAggregate =
-    await repositories.setupAggregateResultRepository.getBySetupDefinitionAndScope(
-      "setup-001",
-      buildAggregate("aggregate-001", "setup-001", "hypothesis-001").aggregationScope
+    const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
+    const storedEvaluation =
+      await repositories.evaluationResultRepository.getBySignalCandidateAndWindow(
+        "candidate-001",
+        "window-24h"
+      );
+    const storedAggregate =
+      await repositories.setupAggregateResultRepository.getBySetupDefinitionAndScope(
+        "setup-001",
+        buildAggregate("aggregate-001", "setup-001", "hypothesis-001").aggregationScope
+      );
+    const storedFeedbackDecision =
+      await repositories.researchFeedbackDecisionRepository.getById("feedback-001");
+    const storedApproval =
+      await repositories.researchDecisionApprovalRepository.getById("approval-001");
+    const storedReviewDecision =
+      await repositories.researchReviewDecisionRepository.getById("review-decision-001");
+    const storedEnvelope =
+      await repositories.routedActionExecutionEnvelopeRepository.getById(
+        "execution-envelope-001"
+      );
+
+    assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
+    assert.equal(storedEvaluation?.id, "result-001");
+    assert.equal(storedAggregate?.researchHypothesisId, "hypothesis-001");
+    assert.equal(storedFeedbackDecision?.setupAggregateResultId, "aggregate-001");
+    assert.equal(storedApproval?.researchFeedbackDecisionId, "feedback-001");
+    assert.equal(storedApproval?.authorizedNextAction, "keep_active");
+    assert.equal(storedReviewDecision?.researchHypothesisId, "hypothesis-001");
+    assert.equal(
+      storedReviewDecision?.authorizedNextAction,
+      "prepare_lifecycle_mutation_follow_up"
     );
-  const storedFeedbackDecision =
-    await repositories.researchFeedbackDecisionRepository.getById("feedback-001");
-  const storedApproval =
-    await repositories.researchDecisionApprovalRepository.getById("approval-001");
-  const storedReviewDecision =
-    await repositories.researchReviewDecisionRepository.getById("review-decision-001");
-
-  assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
-  assert.equal(storedEvaluation?.id, "result-001");
-  assert.equal(storedAggregate?.researchHypothesisId, "hypothesis-001");
-  assert.equal(storedFeedbackDecision?.setupAggregateResultId, "aggregate-001");
-  assert.equal(storedApproval?.researchFeedbackDecisionId, "feedback-001");
-  assert.equal(storedApproval?.authorizedNextAction, "keep_active");
-  assert.equal(storedReviewDecision?.researchHypothesisId, "hypothesis-001");
-  assert.equal(storedReviewDecision?.authorizedNextAction, "confirm_no_change");
-});
+    assert.equal(storedEnvelope?.sourceReviewDecisionId, "review-decision-001");
+    assert.equal(
+      storedEnvelope?.actionCommandType,
+      "ApplyApprovedSetupMutationCommand"
+    );
+  }
+);

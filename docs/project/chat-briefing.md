@@ -64,6 +64,7 @@ Current product-domain scope includes:
   - `docs/project/routed-action-execution-envelope-relational-persistence-model.md`
   - `docs/project/routed-action-execution-envelope-relational-adapter-model.md`
   - `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
+  - `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -98,6 +99,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-051-routed-action-execution-envelope-prisma-schema-layout.md`
   - `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
   - `docs/architecture/adr/ADR-053-routed-action-execution-envelope-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-054-implemented-product-routed-action-execution-envelope-composition.md`
 
 ## Current constraints
 - spot-only scope
@@ -147,15 +149,15 @@ Current product-domain scope includes:
   - `research_review_decision`
 - adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for:
   - `routed_action_execution_envelope`
-- one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_review_decision`
+- one shared Prisma-backed repository bundle now spans the full implemented product chain through `routed_action_execution_envelope`
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `research_review_decision`
-- `routed_action_execution_envelope` now also has a durable relational contract, committed Prisma schema/migration, repository adapter contract, domain/durable mappers, adapter-backed relational repository, concrete Prisma adapter, and slice-level shared composition, but still has no shared-bundle or real-database integration coverage
-- the next downstream durable persistence gap is now the shared implemented-product relational bundle extension through `routed_action_execution_envelope`
+- `routed_action_execution_envelope` now also composes into the shared implemented-product relational bundle, but still has no opt-in real-database integration coverage
+- the next downstream persistence gap is now opt-in real-database integration coverage through `routed_action_execution_envelope`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- extend the shared implemented-product relational bundle through `routed_action_execution_envelope`
+- extend opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
 
 ## Behavioral instructions for future assistants
 When continuing this project:
