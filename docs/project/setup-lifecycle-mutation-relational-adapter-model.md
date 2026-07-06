@@ -89,6 +89,10 @@ Those remain service-owned business rules rather than persistence-boundary refer
 - domain/durable mappers, adapter-backed relational repository implementation, and concrete Prisma adapter wiring are completed later in:
   - `docs/project/setup-lifecycle-mutation-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-059-setup-lifecycle-mutation-record-adapter-backed-relational-repositories.md`
-- shared implemented-product bundle extension through `setup_lifecycle_mutation_record`
-- opt-in real-Postgres integration coverage through `setup_lifecycle_mutation_record`
+- shared implemented-product bundle extension through `setup_lifecycle_mutation_record` is completed later in:
+  - `docs/project/implemented-product-setup-lifecycle-mutation-composition-model.md`
+  - `docs/architecture/adr/ADR-060-implemented-product-setup-lifecycle-mutation-composition.md`
+- opt-in real-Postgres integration coverage through `setup_lifecycle_mutation_record` is completed later in:
+  - `docs/project/implemented-product-setup-lifecycle-mutation-integration-model.md`
+  - `docs/architecture/adr/ADR-061-implemented-product-setup-lifecycle-mutation-integration-coverage.md`
 - runtime review/execution engines

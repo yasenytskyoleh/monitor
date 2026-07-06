@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.30 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, routed-action integration coverage, and the first mutation-audit durable repository rollout**
+**Phase 1.31 — Codex-first workflow, bounded autonomous mode, and full implemented-chain shared persistence plus real-database integration through setup-lifecycle mutation records**
 
 ## What this phase is about
 This phase is focused on:
@@ -23,7 +23,8 @@ The product side now proves that the repo can:
 - extend durable relational persistence through setup/research and signal/evaluation entities,
 - extend per-entity durable parity through downstream feedback, approval, review, and execution-envelope entities,
 - complete the first downstream mutation-audit durable repository rollout,
-- and run concrete Prisma-backed adapters plus one full routed-action-chain integration harness while keeping runtime engines pending.
+- extend the shared implemented-product bundle and one opt-in real-database integration path through that mutation-audit slice,
+- and keep runtime engines pending.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -282,6 +283,15 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-repositories.ts`
   - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-prisma-adapter.ts`
   - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-prisma-client.ts`
+- shared Prisma-backed composition extended through setup-lifecycle mutation records:
+  - `docs/project/implemented-product-setup-lifecycle-mutation-composition-model.md`
+  - `docs/architecture/adr/ADR-060-implemented-product-setup-lifecycle-mutation-composition.md`
+  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
+- shared real-Postgres integration extended through setup-lifecycle mutation records:
+  - `docs/project/implemented-product-setup-lifecycle-mutation-integration-model.md`
+  - `docs/architecture/adr/ADR-061-implemented-product-setup-lifecycle-mutation-integration-coverage.md`
+  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -319,7 +329,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- extend shared composition and opt-in real-Postgres integration through `setup_lifecycle_mutation_record`
+- define the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -335,4 +345,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, ten committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through routed-action execution envelopes, one shared full-chain real-database integration flow through routed-action execution envelopes, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, one first execution-envelope persistence rollout, and one first mutation-audit durable repository rollout that makes the next shared mutation-audit bundle and integration extension straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, ten committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through setup-lifecycle mutation records, one shared full-chain real-database integration flow through setup-lifecycle mutation records, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, one first execution-envelope persistence rollout, one first mutation-audit durable repository rollout, and one first mutation-audit shared-bundle plus integration extension that make the next downstream execution/mutation durable slice selection straightforward instead of speculative**.

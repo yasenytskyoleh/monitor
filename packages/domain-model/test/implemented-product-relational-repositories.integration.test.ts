@@ -19,6 +19,7 @@ import {
   type RoutedActionExecutionEnvelope,
   type SetupAggregateResult,
   type SetupDefinition,
+  type SetupLifecycleMutationRecord,
   type SignalCandidate
 } from "../src/index.js";
 import { resolveIntegrationDatabaseUrl } from "./integration-test-helpers.js";
@@ -56,6 +57,10 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260702103000_product_domain_routed_action_execution_envelope_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260706113000_product_domain_setup_lifecycle_mutation_record_relational_v1/migration.sql"
   )
 ];
 
@@ -256,6 +261,26 @@ const buildEnvelope = (
   updatedAt: "2026-05-24T10:55:00.000Z"
 });
 
+const buildMutation = (
+  id: string,
+  setupDefinitionId: string,
+  researchDecisionApprovalId: string,
+  researchFeedbackDecisionId: string
+): SetupLifecycleMutationRecord => ({
+  id,
+  setupDefinitionId,
+  researchDecisionApprovalId,
+  researchFeedbackDecisionId,
+  previousStatus: "active",
+  newStatus: "paused",
+  approvedAction: "pause_setup",
+  mutatedBy: "reviewer-001",
+  mutatedAt: "2026-05-24T11:00:00.000Z",
+  notes: "Paused after approved downstream review.",
+  createdAt: "2026-05-24T11:00:00.000Z",
+  updatedAt: "2026-05-24T11:00:00.000Z"
+});
+
 const withPgClient = async <T>(connectionString: string, work: (client: Client) => Promise<T>): Promise<T> => {
   const client = new Client({ connectionString });
   await client.connect();
@@ -307,7 +332,7 @@ const withIntegrationRepositories = async <T>(
 const integrationTest = INTEGRATION_DATABASE_URL ? test : test.skip;
 
 integrationTest(
-  "shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope against real Postgres",
+  "shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record against real Postgres",
   async () => {
     await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
       await repositories.setupDefinitionRepository.create({
@@ -374,6 +399,13 @@ integrationTest(
           sourceObservedAtUtc: "2026-05-24T10:55:00.000Z"
         }
       });
+      await repositories.setupLifecycleMutationRecordRepository.create({
+        mutation: buildMutation("mutation-001", "setup-001", "approval-001", "feedback-001"),
+        metadata: {
+          ...metadata,
+          sourceObservedAtUtc: "2026-05-24T11:00:00.000Z"
+        }
+      });
 
       const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
       const storedEvaluation =
@@ -396,10 +428,14 @@ integrationTest(
         await repositories.routedActionExecutionEnvelopeRepository.getById(
           "execution-envelope-001"
         );
+      const storedMutation =
+        await repositories.setupLifecycleMutationRecordRepository.getById("mutation-001");
       const envelopesForReviewDecision =
         await repositories.routedActionExecutionEnvelopeRepository.listByReviewDecisionId(
           "review-decision-001"
         );
+      const mutationsForApproval =
+        await repositories.setupLifecycleMutationRecordRepository.listByApprovalId("approval-001");
       const aggregateRows = await repositories.prismaClient.setupAggregateResultRecord.findMany({
         orderBy: { setupAggregateResultId: "asc" }
       });
@@ -420,6 +456,11 @@ integrationTest(
           where: { sourceReviewDecisionId: "review-decision-001" },
           orderBy: { routedActionExecutionEnvelopeId: "asc" }
         });
+      const setupLifecycleMutationRows =
+        await repositories.prismaClient.setupLifecycleMutationRecordRecord.findMany({
+          where: { researchDecisionApprovalId: "approval-001" },
+          orderBy: { setupLifecycleMutationRecordId: "asc" }
+        });
 
       assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
       assert.equal(storedEvaluation?.id, "result-001");
@@ -438,11 +479,16 @@ integrationTest(
         storedEnvelope?.actionCommandType,
         "ApplyApprovedSetupMutationCommand"
       );
+      assert.equal(storedMutation?.researchDecisionApprovalId, "approval-001");
+      assert.equal(storedMutation?.researchFeedbackDecisionId, "feedback-001");
+      assert.equal(storedMutation?.newStatus, "paused");
       assert.equal(envelopesForReviewDecision.length, 1);
       assert.equal(
         envelopesForReviewDecision[0]?.routeMetadataSnapshot.authorizedNextAction,
         "prepare_lifecycle_mutation_follow_up"
       );
+      assert.equal(mutationsForApproval.length, 1);
+      assert.equal(mutationsForApproval[0]?.previousStatus, "active");
       assert.equal(aggregateRows.length, 1);
       assert.equal(aggregateRows[0]?.completedEvaluations, 1);
       assert.equal(feedbackDecisionRows.length, 1);
@@ -462,6 +508,9 @@ integrationTest(
         routedActionRows[0]?.actionCommandType,
         "ApplyApprovedSetupMutationCommand"
       );
+      assert.equal(setupLifecycleMutationRows.length, 1);
+      assert.equal(setupLifecycleMutationRows[0]?.setupDefinitionId, "setup-001");
+      assert.equal(setupLifecycleMutationRows[0]?.newStatus, "paused");
     });
   }
 );
@@ -533,6 +582,73 @@ integrationTest(
           error.entityType === "routed_action_execution_envelope" &&
           error.referenceEntityType === "research_review_decision" &&
           error.referenceEntityId === "review-decision-missing"
+      );
+    });
+  }
+);
+
+integrationTest(
+  "shared implemented-product bundle maps invalid setup-lifecycle approval linkage from real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      await repositories.setupDefinitionRepository.create({
+        definition: buildSetupDefinition("setup-001"),
+        metadata
+      });
+      await repositories.setupDefinitionRepository.create({
+        definition: buildSetupDefinition("setup-002"),
+        metadata
+      });
+      await repositories.researchHypothesisRepository.create({
+        hypothesis: buildResearchHypothesis("hypothesis-001", "setup-001"),
+        metadata
+      });
+      await repositories.setupAggregateResultRepository.create({
+        aggregate: buildAggregate("aggregate-001", "setup-001", "hypothesis-001"),
+        metadata
+      });
+      await repositories.researchFeedbackDecisionRepository.create({
+        decision: buildFeedbackDecision(
+          "feedback-001",
+          "setup-001",
+          "hypothesis-001",
+          "aggregate-001"
+        ),
+        metadata
+      });
+      const approvalPersistenceResult =
+        await repositories.feedbackDecisionApprovalReviewPersistence.recordFeedbackDecisionApproval({
+          researchFeedbackDecisionId: "feedback-001",
+          nextDecisionStatus: "accepted",
+          reviewerMetadata: {
+            reviewedBy: "reviewer-001",
+            reviewedAt: "2026-05-24T10:30:00.000Z",
+            approvalOutcome: "approved"
+          },
+          approval: buildApproval("approval-001", "feedback-001", "setup-001"),
+          metadata: {
+            ...metadata,
+            sourceObservedAtUtc: "2026-05-24T10:35:00.000Z"
+          }
+        });
+
+      assert.equal(approvalPersistenceResult.status, "recorded");
+      if (approvalPersistenceResult.status !== "recorded") {
+        assert.fail("approval persistence should have recorded the approval");
+      }
+
+      await assert.rejects(
+        async () =>
+          repositories.setupLifecycleMutationRecordRepository.create({
+            mutation: buildMutation("mutation-002", "setup-002", "approval-001", "feedback-001"),
+            metadata
+          }),
+        (error: unknown) =>
+          error instanceof RepositoryError &&
+          error.code === "invalid_reference" &&
+          error.entityType === "setup_lifecycle_mutation_record" &&
+          error.referenceEntityType === "research_decision_approval" &&
+          error.referenceEntityId === "approval-001"
       );
     });
   }

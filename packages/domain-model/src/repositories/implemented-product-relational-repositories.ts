@@ -26,6 +26,13 @@ import {
   composeRoutedActionExecutionEnvelopeRelationalRepositories,
   type RoutedActionExecutionEnvelopeRelationalRepositories
 } from "./routed-action-execution-envelope-relational-repositories.js";
+import type {
+  SetupLifecycleMutationRecordRelationalRepositoryAdapter
+} from "./setup-lifecycle-mutation-record-relational-repository-adapter.js";
+import {
+  composeSetupLifecycleMutationRecordRelationalRepositories,
+  type SetupLifecycleMutationRecordRelationalRepositories
+} from "./setup-lifecycle-mutation-record-relational-repositories.js";
 import {
   composeResearchFeedbackDecisionRelationalRepositories,
   type ResearchFeedbackDecisionRelationalRepositories
@@ -56,6 +63,7 @@ export type ImplementedProductRelationalAdapters = {
   approvalAdapter: ResearchDecisionApprovalRelationalRepositoryAdapter;
   reviewDecisionAdapter: ResearchReviewDecisionRelationalRepositoryAdapter;
   routedActionAdapter: RoutedActionExecutionEnvelopeRelationalRepositoryAdapter;
+  setupLifecycleMutationRecordAdapter: SetupLifecycleMutationRecordRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalRepositories =
@@ -65,7 +73,8 @@ export type ImplementedProductRelationalRepositories =
   ResearchFeedbackDecisionRelationalRepositories &
   ResearchDecisionApprovalRelationalRepositories &
   ResearchReviewDecisionRelationalRepositories &
-  RoutedActionExecutionEnvelopeRelationalRepositories;
+  RoutedActionExecutionEnvelopeRelationalRepositories &
+  SetupLifecycleMutationRecordRelationalRepositories;
 
 export const composeImplementedProductRelationalRepositories = (
   adapters: ImplementedProductRelationalAdapters
@@ -76,5 +85,8 @@ export const composeImplementedProductRelationalRepositories = (
   ...composeResearchFeedbackDecisionRelationalRepositories(adapters.feedbackDecisionAdapter),
   ...composeResearchDecisionApprovalRelationalRepositories(adapters.approvalAdapter),
   ...composeResearchReviewDecisionRelationalRepositories(adapters.reviewDecisionAdapter),
-  ...composeRoutedActionExecutionEnvelopeRelationalRepositories(adapters.routedActionAdapter)
+  ...composeRoutedActionExecutionEnvelopeRelationalRepositories(adapters.routedActionAdapter),
+  ...composeSetupLifecycleMutationRecordRelationalRepositories(
+    adapters.setupLifecycleMutationRecordAdapter
+  )
 });

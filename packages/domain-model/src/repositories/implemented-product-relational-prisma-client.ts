@@ -23,6 +23,8 @@ import { createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter } from 
 import { type PrismaResearchFeedbackDecisionRelationalRepositoryAdapter } from "./research-feedback-decision-relational-prisma-adapter.js";
 import { createRoutedActionExecutionEnvelopeRelationalPrismaRepositoryAdapter } from "./routed-action-execution-envelope-relational-prisma-client.js";
 import { type PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter } from "./routed-action-execution-envelope-relational-prisma-adapter.js";
+import { createSetupLifecycleMutationRecordRelationalPrismaRepositoryAdapter } from "./setup-lifecycle-mutation-record-relational-prisma-client.js";
+import { type PrismaSetupLifecycleMutationRecordRelationalRepositoryAdapter } from "./setup-lifecycle-mutation-record-relational-prisma-adapter.js";
 import { createSetupAggregateRelationalPrismaRepositoryAdapter } from "./setup-aggregate-relational-prisma-client.js";
 import { type PrismaSetupAggregateRelationalRepositoryAdapter } from "./setup-aggregate-relational-prisma-adapter.js";
 import { createSignalEvaluationRelationalPrismaRepositoryAdapter } from "./signal-evaluation-relational-prisma-client.js";
@@ -36,6 +38,8 @@ export type ImplementedProductRelationalPrismaAdapters = ImplementedProductRelat
   approvalAdapter: PrismaResearchDecisionApprovalRelationalRepositoryAdapter;
   reviewDecisionAdapter: PrismaResearchReviewDecisionRelationalRepositoryAdapter;
   routedActionAdapter: PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter;
+  setupLifecycleMutationRecordAdapter:
+    PrismaSetupLifecycleMutationRecordRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalPrismaRepositories =
@@ -57,7 +61,9 @@ export const createImplementedProductRelationalPrismaAdapters = (
   reviewDecisionAdapter: createResearchReviewDecisionRelationalPrismaRepositoryAdapter(client),
   routedActionAdapter: createRoutedActionExecutionEnvelopeRelationalPrismaRepositoryAdapter(
     client
-  )
+  ),
+  setupLifecycleMutationRecordAdapter:
+    createSetupLifecycleMutationRecordRelationalPrismaRepositoryAdapter(client)
 });
 
 export const createImplementedProductRelationalPrismaRepositories = (

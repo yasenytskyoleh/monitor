@@ -1,12 +1,12 @@
 # Persistence Implementation Architecture
 
 ## Purpose
-Define the current implementation architecture for product-domain persistence across the implemented core research chain, the downstream feedback/approval/review entities, the first downstream execution-envelope shared-bundle plus integration extension, and the first mutation-audit durable repository rollout.
+Define the current implementation architecture for product-domain persistence across the implemented core research chain, the downstream feedback/approval/review entities, the first downstream execution-envelope shared-bundle plus integration extension, and the first downstream mutation-audit shared-bundle plus integration extension.
 
 This document now reflects:
 - boundary contracts
 - the current implemented in-memory persistence surface
-- current durable relational repository/adapter coverage for the implemented product chain through `setup_lifecycle_mutation_record`, with shared-bundle and real-database integration coverage still stopping at `routed_action_execution_envelope`
+- current durable relational repository/adapter coverage, shared-bundle coverage, and real-database integration coverage for the implemented product chain through `setup_lifecycle_mutation_record`
 
 ## Canonical current-state summary
 Implemented in-memory persistence and service-owned write paths exist today for:
@@ -21,7 +21,7 @@ Implemented in-memory persistence and service-owned write paths exist today for:
 - `RoutedActionExecutionEnvelope`
 - `SetupLifecycleMutationRecord`
 
-Durable relational coverage now exists through `setup_lifecycle_mutation_record`, while shared-bundle and real-database integration coverage still stop at `routed_action_execution_envelope`:
+Durable relational coverage, one shared bundle, and one end-to-end real-database integration path now exist through `setup_lifecycle_mutation_record`:
 - committed contracts, schema/migrations, adapter-backed repositories, and concrete Prisma adapters for:
   - `setup_definition`
   - `research_hypothesis`
@@ -33,14 +33,13 @@ Durable relational coverage now exists through `setup_lifecycle_mutation_record`
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_decision_approval`
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_review_decision`
 - committed contracts, schema/migrations, repository adapter contract, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `routed_action_execution_envelope`
-- one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope
-- one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope
 - committed contracts, schema/migrations, repository adapter contract, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `setup_lifecycle_mutation_record`
+- one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record
+- one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record
 
 Still pending:
-- later shared-bundle/integration extension through `setup_lifecycle_mutation_record`
-- later shared-bundle/integration extension for downstream execution and mutation entities after `setup_lifecycle_mutation_record`
-- later execution/mutation durable slices after `setup_lifecycle_mutation_record`
+- the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
+- later shared-bundle/integration extension for downstream execution and mutation entities after that slice
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI
@@ -171,7 +170,7 @@ Ownership direction:
 2. persistence metadata (`originRunId`, `traceId`) may be attached through metadata contracts
 3. runtime evidence files remain separate from product-domain storage
 4. one domain contract does not force one-table implementation in this slice
-5. implemented persistence is now narrow but end-to-end in memory for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, research decision approvals, research review decisions, routed action execution envelopes, and setup lifecycle mutation records; one shared bundle plus one real-database integration path now span the full routed-action chain, and setup-lifecycle mutation records now also have per-entity durable relational parity
+5. implemented persistence is now narrow but end-to-end in memory for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, research decision approvals, research review decisions, routed action execution envelopes, and setup lifecycle mutation records; one shared bundle plus one real-database integration path now span the full implemented product chain through setup-lifecycle mutation records
 
 ## Orchestrator handoff boundary
 - orchestrator workflows may trigger future product-domain services
@@ -204,6 +203,8 @@ Ownership direction:
 - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repositories.ts`
 - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-adapter.ts`
 - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-client.ts`
+- `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+- `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
 - `packages/domain-model/src/repositories/research-review-decision-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/research-review-decision-relational-repository-mappers.ts`
 - `packages/domain-model/src/repositories/research-review-decision-relational-repository.impl.ts`

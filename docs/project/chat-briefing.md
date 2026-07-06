@@ -69,6 +69,8 @@ Current product-domain scope includes:
   - `docs/project/setup-lifecycle-mutation-relational-persistence-model.md`
   - `docs/project/setup-lifecycle-mutation-relational-adapter-model.md`
   - `docs/project/setup-lifecycle-mutation-relational-rollout-model.md`
+  - `docs/project/implemented-product-setup-lifecycle-mutation-composition-model.md`
+  - `docs/project/implemented-product-setup-lifecycle-mutation-integration-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -109,6 +111,8 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-057-setup-lifecycle-mutation-record-prisma-schema-layout.md`
   - `docs/architecture/adr/ADR-058-setup-lifecycle-mutation-record-relational-adapter-contract.md`
   - `docs/architecture/adr/ADR-059-setup-lifecycle-mutation-record-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-060-implemented-product-setup-lifecycle-mutation-composition.md`
+  - `docs/architecture/adr/ADR-061-implemented-product-setup-lifecycle-mutation-integration-coverage.md`
 
 ## Current constraints
 - spot-only scope
@@ -159,19 +163,17 @@ Current product-domain scope includes:
 - adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for:
   - `research_decision_approval`
   - `research_review_decision`
-- adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for:
+- adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now also exist for:
   - `routed_action_execution_envelope`
-- adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for:
   - `setup_lifecycle_mutation_record`
-- one shared Prisma-backed repository bundle now spans the full implemented product chain through `routed_action_execution_envelope`
-- one end-to-end real-database integration flow now also spans the full implemented product chain through `routed_action_execution_envelope`
-- `setup_lifecycle_mutation_record` now also has a durable relational contract, committed Prisma schema/migration, a repository adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, and slice-level shared composition
-- the next downstream persistence gap is now the shared composition and real-database integration extension for `setup_lifecycle_mutation_record`
+- one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_lifecycle_mutation_record`
+- one end-to-end real-database integration flow now also spans the full implemented product chain through `setup_lifecycle_mutation_record`
+- the next downstream persistence gap is now the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- extend shared composition and opt-in real-Postgres integration through `setup_lifecycle_mutation_record`
+- define the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

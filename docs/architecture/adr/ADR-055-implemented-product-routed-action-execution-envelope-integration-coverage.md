@@ -29,7 +29,7 @@ Positive:
 - the next downstream persistence work can move to `setup_lifecycle_mutation_record` without revisiting execution-envelope-chain infrastructure
 
 Tradeoffs:
-- downstream mutation-audit shared-bundle extension and real-database integration coverage still remain pending after this step
+- downstream mutation-audit shared-bundle extension and real-database integration coverage still remain pending after this step and are completed later in ADR-060 and ADR-061
 - the routed-action integration harness is still opt-in and depends on `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL`
 
 ## Explicitly not included
@@ -40,4 +40,4 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- extend the shared implemented-product relational bundle and opt-in real-database integration coverage through `setup_lifecycle_mutation_record`
+- extend the shared implemented-product relational bundle and opt-in real-database integration coverage through `setup_lifecycle_mutation_record`, completed later in ADR-060 and ADR-061

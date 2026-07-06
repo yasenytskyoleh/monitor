@@ -48,12 +48,12 @@ Tradeoffs:
 - opt-in real-Postgres integration coverage does not yet include the mutation-audit slice
 
 ## Explicitly not included
-- extending the shared implemented-product bundle through `setup_lifecycle_mutation_record`
-- extending opt-in real-Postgres integration coverage through `setup_lifecycle_mutation_record`
+- extending the shared implemented-product bundle through `setup_lifecycle_mutation_record`, which is completed later in ADR-060
+- extending opt-in real-Postgres integration coverage through `setup_lifecycle_mutation_record`, which is completed later in ADR-061
 - later execution/mutation durable slices
 - runtime review/execution engines
 - exchange ingestion
 - UI work
 
 ## Follow-up
-- extend shared implemented-product composition and opt-in real-database integration coverage through `setup_lifecycle_mutation_record`
+- extend shared implemented-product composition and opt-in real-database integration coverage through `setup_lifecycle_mutation_record`, completed later in ADR-060 and ADR-061

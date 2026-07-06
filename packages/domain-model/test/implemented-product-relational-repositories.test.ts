@@ -8,6 +8,7 @@ import {
   InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter,
   InMemoryResearchReviewDecisionRelationalRepositoryAdapter,
   InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter,
+  InMemorySetupLifecycleMutationRecordRelationalRepositoryAdapter,
   InMemorySetupAggregateRelationalRepositoryAdapter,
   InMemorySignalEvaluationRelationalRepositoryAdapter,
   type EvaluationResult,
@@ -19,6 +20,7 @@ import {
   type RoutedActionExecutionEnvelope,
   type SetupAggregateResult,
   type SetupDefinition,
+  type SetupLifecycleMutationRecord,
   type SignalCandidate
 } from "../src/index.js";
 
@@ -219,8 +221,28 @@ const buildEnvelope = (
   updatedAt: "2026-05-24T10:55:00.000Z"
 });
 
+const buildMutation = (
+  id: string,
+  setupDefinitionId: string,
+  researchDecisionApprovalId: string,
+  researchFeedbackDecisionId: string
+): SetupLifecycleMutationRecord => ({
+  id,
+  setupDefinitionId,
+  researchDecisionApprovalId,
+  researchFeedbackDecisionId,
+  previousStatus: "active",
+  newStatus: "paused",
+  approvedAction: "pause_setup",
+  mutatedBy: "reviewer-001",
+  mutatedAt: "2026-05-24T11:00:00.000Z",
+  notes: "Paused after approved downstream review.",
+  createdAt: "2026-05-24T11:00:00.000Z",
+  updatedAt: "2026-05-24T11:00:00.000Z"
+});
+
 test(
-  "implemented product repository composition supports the current end-to-end entity chain through routed-action execution envelopes",
+  "implemented product repository composition supports the current end-to-end entity chain through setup-lifecycle mutation records",
   async () => {
     const firstDurableAdapter = new InMemoryFirstDurableRelationalRepositoryAdapter();
     const setupAggregateAdapter = new InMemorySetupAggregateRelationalRepositoryAdapter(
@@ -239,6 +261,12 @@ test(
       loadResearchHypothesisBundle:
         firstDurableAdapter.loadResearchHypothesisBundle.bind(firstDurableAdapter)
     });
+    const approvalAdapter = new InMemoryResearchDecisionApprovalRelationalRepositoryAdapter({
+      loadResearchFeedbackDecisionRecord:
+        feedbackDecisionAdapter.loadResearchFeedbackDecisionRecord.bind(feedbackDecisionAdapter),
+      loadSetupDefinitionRecord:
+        firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter)
+    });
     const repositories = composeImplementedProductRelationalRepositories({
       firstDurableAdapter,
       signalEvaluationAdapter: new InMemorySignalEvaluationRelationalRepositoryAdapter(
@@ -246,17 +274,23 @@ test(
       ),
       setupAggregateAdapter,
       feedbackDecisionAdapter,
-      approvalAdapter: new InMemoryResearchDecisionApprovalRelationalRepositoryAdapter({
-        loadResearchFeedbackDecisionRecord:
-          feedbackDecisionAdapter.loadResearchFeedbackDecisionRecord.bind(feedbackDecisionAdapter),
-        loadSetupDefinitionRecord:
-          firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter)
-      }),
+      approvalAdapter,
       reviewDecisionAdapter,
       routedActionAdapter: new InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter({
         loadResearchReviewDecisionRecord:
           reviewDecisionAdapter.loadResearchReviewDecisionRecord.bind(reviewDecisionAdapter)
-      })
+      }),
+      setupLifecycleMutationRecordAdapter:
+        new InMemorySetupLifecycleMutationRecordRelationalRepositoryAdapter({
+          loadSetupDefinitionRecord:
+            firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter),
+          loadResearchDecisionApprovalRecord:
+            approvalAdapter.loadResearchDecisionApprovalRecord.bind(approvalAdapter),
+          loadResearchFeedbackDecisionRecord:
+            feedbackDecisionAdapter.loadResearchFeedbackDecisionRecord.bind(
+              feedbackDecisionAdapter
+            )
+        })
     });
 
     await repositories.setupDefinitionRepository.create({
@@ -300,6 +334,10 @@ test(
       envelope: buildEnvelope("execution-envelope-001", "review-decision-001"),
       metadata
     });
+    await repositories.setupLifecycleMutationRecordRepository.create({
+      mutation: buildMutation("mutation-001", "setup-001", "approval-001", "feedback-001"),
+      metadata
+    });
 
     const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
     const storedEvaluation =
@@ -322,6 +360,8 @@ test(
       await repositories.routedActionExecutionEnvelopeRepository.getById(
         "execution-envelope-001"
       );
+    const storedMutation =
+      await repositories.setupLifecycleMutationRecordRepository.getById("mutation-001");
 
     assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
     assert.equal(storedEvaluation?.id, "result-001");
@@ -339,5 +379,8 @@ test(
       storedEnvelope?.actionCommandType,
       "ApplyApprovedSetupMutationCommand"
     );
+    assert.equal(storedMutation?.researchDecisionApprovalId, "approval-001");
+    assert.equal(storedMutation?.researchFeedbackDecisionId, "feedback-001");
+    assert.equal(storedMutation?.newStatus, "paused");
   }
 );

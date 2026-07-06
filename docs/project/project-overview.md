@@ -161,6 +161,8 @@ Implemented today:
   - `docs/architecture/adr/ADR-057-setup-lifecycle-mutation-record-prisma-schema-layout.md`
   - `docs/architecture/adr/ADR-058-setup-lifecycle-mutation-record-relational-adapter-contract.md`
   - `docs/architecture/adr/ADR-059-setup-lifecycle-mutation-record-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-060-implemented-product-setup-lifecycle-mutation-composition.md`
+  - `docs/architecture/adr/ADR-061-implemented-product-setup-lifecycle-mutation-integration-coverage.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -172,16 +174,15 @@ Current limitation:
   - committed Prisma schema/migrations now exist through `setup_lifecycle_mutation_record`
   - repository adapter contracts now also exist through `setup_lifecycle_mutation_record`
   - adapter-backed relational repositories, concrete Prisma adapters, and slice-level shared composition now exist for all five core-chain service-owned product entities, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, `routed_action_execution_envelope`, and `setup_lifecycle_mutation_record`
-  - opt-in real-database integration coverage now exists through the full implemented product chain to `routed_action_execution_envelope`
-  - one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now span the full implemented product chain through `routed_action_execution_envelope`
-  - `setup_lifecycle_mutation_record` now also has domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, and slice-level shared composition, while shared implemented-product bundle extension and opt-in real-database integration coverage are still pending
-  - the next downstream persistence gap is now the shared composition and real-database integration extension for `setup_lifecycle_mutation_record`
+  - opt-in real-database integration coverage now exists through the full implemented product chain to `setup_lifecycle_mutation_record`
+  - one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now span the full implemented product chain through `setup_lifecycle_mutation_record`
+  - the next downstream persistence gap is now the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- extend shared composition and opt-in real-Postgres integration through `setup_lifecycle_mutation_record`
+- define the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

@@ -55,8 +55,8 @@ Tradeoffs:
 
 ## Explicitly postponed at this contract step
 - domain/durable mappers, adapter-backed relational repository implementation, and concrete Prisma adapter wiring are completed later in ADR-059
-- shared implemented-product bundle extension through `setup_lifecycle_mutation_record`
-- opt-in real-Postgres integration coverage through `setup_lifecycle_mutation_record`
+- shared implemented-product bundle extension through `setup_lifecycle_mutation_record` is completed later in ADR-060
+- opt-in real-Postgres integration coverage through `setup_lifecycle_mutation_record` is completed later in ADR-061
 
 ## Follow-up
-- shared implemented-product bundle and opt-in real-Postgres integration extension through `setup_lifecycle_mutation_record` are the next step
+- shared implemented-product bundle and opt-in real-Postgres integration extension through `setup_lifecycle_mutation_record` are completed later in ADR-060 and ADR-061

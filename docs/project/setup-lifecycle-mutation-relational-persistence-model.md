@@ -132,7 +132,11 @@ Enum families:
 - domain/durable mappers, adapter-backed relational repository, and concrete Prisma adapter wiring for `setup_lifecycle_mutation_record` are completed in:
   - `docs/project/setup-lifecycle-mutation-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-059-setup-lifecycle-mutation-record-adapter-backed-relational-repositories.md`
-- later shared implemented-product bundle and opt-in real-Postgres integration extension through `setup_lifecycle_mutation_record`
+- later shared implemented-product bundle and opt-in real-Postgres integration extension through `setup_lifecycle_mutation_record` are completed in:
+  - `docs/project/implemented-product-setup-lifecycle-mutation-composition-model.md`
+  - `docs/project/implemented-product-setup-lifecycle-mutation-integration-model.md`
+  - `docs/architecture/adr/ADR-060-implemented-product-setup-lifecycle-mutation-composition.md`
+  - `docs/architecture/adr/ADR-061-implemented-product-setup-lifecycle-mutation-integration-coverage.md`
 - later execution/mutation durable slices after `setup_lifecycle_mutation_record`
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

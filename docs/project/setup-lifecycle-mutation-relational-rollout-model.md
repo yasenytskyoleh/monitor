@@ -45,8 +45,8 @@ This step gives the first downstream mutation-audit entity the same per-entity d
 - the remaining work is shared-bundle extension and real-database integration coverage, not another speculative per-entity contract pass
 
 ## What remains pending
-- shared implemented-product relational bundle extension through `setup_lifecycle_mutation_record`
-- opt-in real-Postgres integration coverage for the extended shared bundle through `setup_lifecycle_mutation_record`
+- shared implemented-product relational bundle extension through `setup_lifecycle_mutation_record` is completed later in `docs/project/implemented-product-setup-lifecycle-mutation-composition-model.md`
+- opt-in real-Postgres integration coverage for the extended shared bundle through `setup_lifecycle_mutation_record` is completed later in `docs/project/implemented-product-setup-lifecycle-mutation-integration-model.md`
 - later execution/mutation durable slices after `setup_lifecycle_mutation_record`
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work
