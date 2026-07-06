@@ -1,12 +1,13 @@
 # Persistence Implementation Architecture
 
 ## Purpose
-Define the current implementation architecture for product-domain persistence across the implemented core research chain, the downstream feedback/approval/review entities, and the first downstream execution-envelope shared-bundle plus integration extension.
+Define the current implementation architecture for product-domain persistence across the implemented core research chain, the downstream feedback/approval/review entities, the first downstream execution-envelope shared-bundle plus integration extension, and the first mutation-audit durable contract/schema step.
 
 This document now reflects:
 - boundary contracts
 - the current implemented in-memory persistence surface
 - current durable relational repository/adapter coverage for the implemented product chain through routed-action execution envelopes, with real-database integration now also spanning that chain
+- committed durable relational contract/schema coverage for `setup_lifecycle_mutation_record`
 
 ## Canonical current-state summary
 Implemented in-memory persistence and service-owned write paths exist today for:
@@ -35,9 +36,12 @@ Durable relational coverage now exists through `routed_action_execution_envelope
 - committed contracts, schema/migrations, repository adapter contract, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `routed_action_execution_envelope`
 - one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope
 - one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope
+- committed durable relational contract and Prisma schema/migration now also exist for `setup_lifecycle_mutation_record`
 
 Still pending:
-- the first durable relational slice planning step for `setup_lifecycle_mutation_record`
+- the repository adapter contract and deterministic error mapping for `setup_lifecycle_mutation_record`
+- the adapter-backed relational repository, domain/durable mappers, and concrete Prisma adapter wiring for `setup_lifecycle_mutation_record`
+- later shared-bundle/integration extension through `setup_lifecycle_mutation_record`
 - later shared-bundle/integration extension for downstream execution and mutation entities after `setup_lifecycle_mutation_record`
 - later execution/mutation durable slices after `setup_lifecycle_mutation_record`
 - exchange ingestion runtime
@@ -186,6 +190,8 @@ Ownership direction:
 - `packages/domain-model/src/storage/research-review-decision-relational-physical-schema.ts`
 - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-slice.ts`
 - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-physical-schema.ts`
+- `packages/domain-model/src/storage/setup-lifecycle-mutation-record-relational-slice.ts`
+- `packages/domain-model/src/storage/setup-lifecycle-mutation-record-relational-physical-schema.ts`
 - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.impl.ts`
 - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-mappers.ts`

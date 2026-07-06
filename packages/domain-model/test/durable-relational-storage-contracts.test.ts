@@ -14,12 +14,14 @@ import {
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_ENTITY_TYPES,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES,
   type RoutedActionExecutionEnvelopeDurableRecord,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_ENTITY_TYPES,
   type ResearchFeedbackDecisionDurableRecord,
   type ResearchHypothesisDurableRecord,
   type ResearchHypothesisSetupDefinitionLinkRecord,
   SIGNAL_EVALUATION_RELATIONAL_ENTITY_TYPES,
   SETUP_AGGREGATE_RELATIONAL_ENTITY_TYPES,
   type SetupAggregateResultDurableRecord,
+  type SetupLifecycleMutationRecordDurableRecord,
   type SignalCandidateDurableRecord,
   type SetupDefinitionDurableRecord
 } from "../src/index.js";
@@ -427,4 +429,41 @@ test("supports typed routed-action-execution-envelope durable records", () => {
     routedActionExecutionEnvelopeRecord.targetEntityRefs.setupDefinitionId,
     "setup-definition-001"
   );
+});
+
+test("exposes setup-lifecycle-mutation-record durable relational storage planning constants", () => {
+  assert.deepEqual(SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_ENTITY_TYPES, [
+    "setup_lifecycle_mutation_record"
+  ]);
+});
+
+test("supports typed setup-lifecycle-mutation-record durable records", () => {
+  const setupLifecycleMutationRecord: SetupLifecycleMutationRecordDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "setup_lifecycle_mutation_record",
+      entityId: "setup-mutation-001",
+      version: 1,
+      relatedEntityIds: ["setup-001", "approval-001", "feedback-001"]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-07-06T10:20:00.000Z",
+    updatedAtUtc: "2026-07-06T10:20:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    setupDefinitionId: "setup-001",
+    researchDecisionApprovalId: "approval-001",
+    researchFeedbackDecisionId: "feedback-001",
+    previousStatus: "active",
+    newStatus: "paused",
+    approvedAction: "pause_setup",
+    mutatedBy: "setup-operator-001",
+    mutatedAtUtc: "2026-07-06T10:20:00.000Z",
+    notes: "Paused after approved feedback review."
+  };
+
+  assert.equal(setupLifecycleMutationRecord.identity.version, 1);
+  assert.equal(setupLifecycleMutationRecord.approvedAction, "pause_setup");
+  assert.equal(setupLifecycleMutationRecord.newStatus, "paused");
 });

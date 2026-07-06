@@ -26,18 +26,18 @@ Positive:
   - in-memory adapters
   - fake Prisma adapter tests
   - real Postgres integration coverage
-- the next downstream persistence step can move to `setup_lifecycle_mutation_record` without revisiting execution-envelope-chain infrastructure
+- the next downstream persistence work can move to `setup_lifecycle_mutation_record` without revisiting execution-envelope-chain infrastructure
 
 Tradeoffs:
-- downstream mutation audit persistence still has only implemented in-memory coverage
+- downstream mutation audit adapter and integration coverage still remain pending after this step
 - the routed-action integration harness is still opt-in and depends on `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL`
 
 ## Explicitly not included
-- durable relational contract work for `setup_lifecycle_mutation_record`
+- durable relational contract/schema follow-up work for `setup_lifecycle_mutation_record`, which is completed later in ADR-056 and ADR-057
 - later execution/mutation durable slices
 - runtime review/execution engines
 - exchange ingestion
 - UI work
 
 ## Follow-up
-- plan the first durable relational slice for `setup_lifecycle_mutation_record`
+- define the relational adapter contract for `setup_lifecycle_mutation_record`

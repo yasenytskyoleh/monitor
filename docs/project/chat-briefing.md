@@ -66,6 +66,7 @@ Current product-domain scope includes:
   - `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
   - `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
   - `docs/project/implemented-product-routed-action-execution-envelope-integration-model.md`
+  - `docs/project/setup-lifecycle-mutation-relational-persistence-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -102,6 +103,8 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-053-routed-action-execution-envelope-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-054-implemented-product-routed-action-execution-envelope-composition.md`
   - `docs/architecture/adr/ADR-055-implemented-product-routed-action-execution-envelope-integration-coverage.md`
+  - `docs/architecture/adr/ADR-056-setup-lifecycle-mutation-record-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-057-setup-lifecycle-mutation-record-prisma-schema-layout.md`
 
 ## Current constraints
 - spot-only scope
@@ -119,6 +122,7 @@ Current product-domain scope includes:
   - `research_decision_approval`
   - `research_review_decision`
   - `routed_action_execution_envelope`
+  - `setup_lifecycle_mutation_record`
 - committed Prisma schema/migrations now exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -129,6 +133,7 @@ Current product-domain scope includes:
   - `research_decision_approval`
   - `research_review_decision`
   - `routed_action_execution_envelope`
+  - `setup_lifecycle_mutation_record`
 - repository adapter contracts now also exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -153,13 +158,13 @@ Current product-domain scope includes:
   - `routed_action_execution_envelope`
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `routed_action_execution_envelope`
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `routed_action_execution_envelope`
-- `setup_lifecycle_mutation_record` already exists as a service-owned in-memory audit artifact, but still has no durable relational contract or adapters
-- the next downstream persistence gap is now the first durable relational slice for `setup_lifecycle_mutation_record`
+- `setup_lifecycle_mutation_record` now also has a durable relational contract and committed Prisma schema/migration, while repository adapter contracts and adapter-backed relational repositories are still pending
+- the next downstream persistence gap is now the relational adapter contract for `setup_lifecycle_mutation_record`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- plan the first durable relational slice for `setup_lifecycle_mutation_record`
+- define the relational adapter contract for `setup_lifecycle_mutation_record`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

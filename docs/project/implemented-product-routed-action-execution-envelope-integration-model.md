@@ -27,10 +27,12 @@ This step does not add new product rules. It proves that the already-shared repo
   - one shared Prisma-backed repository bundle
   - one end-to-end real-Postgres integration flow through routed-action execution envelopes
 - routed-action reference validation behaves consistently against a real database, not only the in-memory harness and fake Prisma clients
-- `setup_lifecycle_mutation_record` is now the next bounded persistence target instead of more execution-envelope infrastructure work
+- the routed-action chain no longer blocks downstream mutation-audit persistence work
+- durable relational contract/schema work for `setup_lifecycle_mutation_record` has now also been completed in later follow-up work
 
 ## What remains pending
-- the first durable relational slice planning step for `setup_lifecycle_mutation_record`
+- the relational adapter contract for `setup_lifecycle_mutation_record`
+- the adapter-backed relational repository and Prisma adapter rollout for `setup_lifecycle_mutation_record`
 - later execution/mutation durable slices after `setup_lifecycle_mutation_record`
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work
