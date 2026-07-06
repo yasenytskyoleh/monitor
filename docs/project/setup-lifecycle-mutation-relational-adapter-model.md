@@ -8,7 +8,11 @@ This step formalizes:
 - deterministic persistence-error mapping
 - reference validation responsibilities
 
-for the mutation-audit slice with committed physical schema artifacts but without repository mappers or concrete Prisma adapter wiring.
+for the mutation-audit slice with committed physical schema artifacts.
+
+The executable repository rollout on top of this contract is completed later in:
+- `docs/project/setup-lifecycle-mutation-relational-rollout-model.md`
+- `docs/architecture/adr/ADR-059-setup-lifecycle-mutation-record-adapter-backed-relational-repositories.md`
 
 ## Contract sources
 - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-repository-adapter.ts`
@@ -26,7 +30,7 @@ Direction:
 
 Rules:
 1. `SetupDefinitionService` continues to own approved-mutation write semantics
-2. the future relational repository remains domain-facing
+2. the relational repository remains domain-facing
 3. the adapter operates on durable setup-lifecycle-mutation records and reference validation at the persistence boundary
 4. physical table layout stays behind the durable-record and error contracts
 
@@ -81,10 +85,10 @@ This contract intentionally does not attempt to validate:
 
 Those remain service-owned business rules rather than persistence-boundary reference checks in this step.
 
-## Explicitly postponed
-- domain/durable mappers for setup-lifecycle mutation records
-- adapter-backed relational repository implementation
-- concrete Prisma adapter wiring
+## Explicitly postponed at this contract step
+- domain/durable mappers, adapter-backed relational repository implementation, and concrete Prisma adapter wiring are completed later in:
+  - `docs/project/setup-lifecycle-mutation-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-059-setup-lifecycle-mutation-record-adapter-backed-relational-repositories.md`
 - shared implemented-product bundle extension through `setup_lifecycle_mutation_record`
 - opt-in real-Postgres integration coverage through `setup_lifecycle_mutation_record`
 - runtime review/execution engines

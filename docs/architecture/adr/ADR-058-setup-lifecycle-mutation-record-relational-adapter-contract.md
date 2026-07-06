@@ -51,14 +51,12 @@ Positive:
 
 Tradeoffs:
 - this adds another narrow contract layer before the repository implementation lands
-- the full repository/Prisma rollout is still incomplete until the next step
+- the full repository/Prisma rollout is still incomplete at this contract step and is completed later in ADR-059
 
-## Explicitly postponed
-- domain/durable mappers
-- adapter-backed relational repository implementation
-- concrete Prisma adapter wiring
+## Explicitly postponed at this contract step
+- domain/durable mappers, adapter-backed relational repository implementation, and concrete Prisma adapter wiring are completed later in ADR-059
 - shared implemented-product bundle extension through `setup_lifecycle_mutation_record`
 - opt-in real-Postgres integration coverage through `setup_lifecycle_mutation_record`
 
 ## Follow-up
-- domain/durable mappers, adapter-backed repository, and concrete Prisma adapter rollout for `setup_lifecycle_mutation_record` are the next step
+- shared implemented-product bundle and opt-in real-Postgres integration extension through `setup_lifecycle_mutation_record` are the next step

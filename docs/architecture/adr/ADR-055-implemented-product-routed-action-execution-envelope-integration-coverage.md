@@ -29,15 +29,15 @@ Positive:
 - the next downstream persistence work can move to `setup_lifecycle_mutation_record` without revisiting execution-envelope-chain infrastructure
 
 Tradeoffs:
-- downstream mutation audit adapter and integration coverage still remain pending after this step
+- downstream mutation-audit shared-bundle extension and real-database integration coverage still remain pending after this step
 - the routed-action integration harness is still opt-in and depends on `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL`
 
 ## Explicitly not included
-- durable relational contract/schema follow-up work for `setup_lifecycle_mutation_record`, which is completed later in ADR-056 and ADR-057
+- durable relational contract/schema and executable repository follow-up work for `setup_lifecycle_mutation_record`, which are completed later in ADR-056, ADR-057, and ADR-059
 - later execution/mutation durable slices
 - runtime review/execution engines
 - exchange ingestion
 - UI work
 
 ## Follow-up
-- add the domain/durable mappers, adapter-backed repository, and concrete Prisma adapter rollout for `setup_lifecycle_mutation_record`
+- extend the shared implemented-product relational bundle and opt-in real-database integration coverage through `setup_lifecycle_mutation_record`

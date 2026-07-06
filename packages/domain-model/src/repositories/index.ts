@@ -202,6 +202,12 @@ export type {
   RoutedActionExecutionEnvelopeRelationalRepositories
 } from "./routed-action-execution-envelope-relational-repositories.js";
 export {
+  composeSetupLifecycleMutationRecordRelationalRepositories
+} from "./setup-lifecycle-mutation-record-relational-repositories.js";
+export type {
+  SetupLifecycleMutationRecordRelationalRepositories
+} from "./setup-lifecycle-mutation-record-relational-repositories.js";
+export {
   dehydrateResearchHypothesisToDurableBundle,
   dehydrateSetupDefinitionToDurableRecord,
   hydrateResearchHypothesisFromDurableBundle,
@@ -233,6 +239,10 @@ export {
   dehydrateRoutedActionExecutionEnvelopeToDurableRecord,
   hydrateRoutedActionExecutionEnvelopeFromDurableRecord
 } from "./routed-action-execution-envelope-relational-repository-mappers.js";
+export {
+  dehydrateSetupLifecycleMutationRecordToDurableRecord,
+  hydrateSetupLifecycleMutationRecordFromDurableRecord
+} from "./setup-lifecycle-mutation-record-relational-repository-mappers.js";
 export { InMemoryFirstDurableRelationalRepositoryAdapter } from "./first-durable-relational-repository-adapter.impl.js";
 export type {
   SignalEvaluationRelationalReferenceReader
@@ -283,6 +293,13 @@ export {
 export type {
   RoutedActionExecutionEnvelopeRelationalPrismaRepositories
 } from "./routed-action-execution-envelope-relational-prisma-client.js";
+export {
+  createSetupLifecycleMutationRecordRelationalPrismaRepositories,
+  createSetupLifecycleMutationRecordRelationalPrismaRepositoryAdapter
+} from "./setup-lifecycle-mutation-record-relational-prisma-client.js";
+export type {
+  SetupLifecycleMutationRecordRelationalPrismaRepositories
+} from "./setup-lifecycle-mutation-record-relational-prisma-client.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,
@@ -380,6 +397,12 @@ export {
   PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter
 } from "./routed-action-execution-envelope-relational-prisma-adapter.js";
 export type {
+  SetupLifecycleMutationRecordRelationalPrismaClient
+} from "./setup-lifecycle-mutation-record-relational-prisma-adapter.js";
+export {
+  PrismaSetupLifecycleMutationRecordRelationalRepositoryAdapter
+} from "./setup-lifecycle-mutation-record-relational-prisma-adapter.js";
+export type {
   MonitoredSymbolCreateRequest,
   MonitoredSymbolRepository,
   MonitoredSymbolStatusUpdateRequest,
@@ -455,6 +478,9 @@ export { InMemoryRoutedActionExecutionEnvelopeRepository } from "./routed-action
 export {
   RelationalRoutedActionExecutionEnvelopeRepository
 } from "./routed-action-execution-envelope-relational-repository.impl.js";
+export {
+  RelationalSetupLifecycleMutationRecordRepository
+} from "./setup-lifecycle-mutation-record-relational-repository.impl.js";
 export type {
   SetupAggregateResultCreateRequest,
   SetupAggregateResultRepository,
