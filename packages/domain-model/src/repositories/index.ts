@@ -88,6 +88,14 @@ export type {
   RoutedActionExecutionEnvelopeRelationalRepositoryAdapter,
   RoutedActionExecutionEnvelopeRelationalRetryableErrorCode
 } from "./routed-action-execution-envelope-relational-repository-adapter.js";
+export type {
+  SetupLifecycleMutationRecordRecordWriteRequest,
+  SetupLifecycleMutationRecordRelationalAdapterErrorMapping,
+  SetupLifecycleMutationRecordRelationalAdapterOperation,
+  SetupLifecycleMutationRecordRelationalDeterministicErrorCode,
+  SetupLifecycleMutationRecordRelationalRepositoryAdapter,
+  SetupLifecycleMutationRecordRelationalRetryableErrorCode
+} from "./setup-lifecycle-mutation-record-relational-repository-adapter.js";
 export {
   FIRST_DURABLE_RELATIONAL_ADAPTER_ERROR_MAPPING,
   FIRST_DURABLE_RELATIONAL_ADAPTER_OPERATIONS,
@@ -137,6 +145,13 @@ export {
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_RETRYABLE_ERROR_CODES,
   isRoutedActionExecutionEnvelopeRelationalDeterministicErrorCode
 } from "./routed-action-execution-envelope-relational-repository-adapter.js";
+export {
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_ADAPTER_OPERATIONS,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isSetupLifecycleMutationRecordRelationalDeterministicErrorCode
+} from "./setup-lifecycle-mutation-record-relational-repository-adapter.js";
 export {
   composeFirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
@@ -255,6 +270,12 @@ export type {
 export {
   InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter
 } from "./routed-action-execution-envelope-relational-repository-adapter.impl.js";
+export type {
+  SetupLifecycleMutationRecordRelationalReferenceReader
+} from "./setup-lifecycle-mutation-record-relational-repository-adapter.impl.js";
+export {
+  InMemorySetupLifecycleMutationRecordRelationalRepositoryAdapter
+} from "./setup-lifecycle-mutation-record-relational-repository-adapter.impl.js";
 export {
   createRoutedActionExecutionEnvelopeRelationalPrismaRepositories,
   createRoutedActionExecutionEnvelopeRelationalPrismaRepositoryAdapter

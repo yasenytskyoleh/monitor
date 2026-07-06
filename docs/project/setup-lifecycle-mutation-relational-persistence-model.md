@@ -13,7 +13,6 @@ This keeps the first downstream mutation-audit persistence slice narrow:
 - SQL migration
 
 without yet requiring:
-- repository adapter contracts
 - domain/durable mappers
 - concrete relational repositories
 - concrete Prisma adapters
@@ -23,12 +22,15 @@ without yet requiring:
 - `packages/domain-model/src/storage/setup-lifecycle-mutation-record-relational-physical-schema.ts`
 - `packages/domain-model/prisma/schema.prisma`
 - `packages/domain-model/prisma/migrations/20260706113000_product_domain_setup_lifecycle_mutation_record_relational_v1/migration.sql`
+- `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-repository-adapter.ts`
 - `packages/domain-model/src/review/setup-lifecycle-mutation-record.ts`
 - `packages/domain-model/src/services/setup-definition-service.ts`
 - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
 - `packages/domain-model/test/prisma-physical-schema-contracts.test.ts`
+- `packages/domain-model/test/setup-lifecycle-mutation-record-relational-repository-adapter-contracts.test.ts`
 - `docs/architecture/adr/ADR-056-setup-lifecycle-mutation-record-durable-relational-contract.md`
 - `docs/architecture/adr/ADR-057-setup-lifecycle-mutation-record-prisma-schema-layout.md`
+- `docs/architecture/adr/ADR-058-setup-lifecycle-mutation-record-relational-adapter-contract.md`
 
 ## Durable record shape
 `SetupLifecycleMutationRecordDurableRecord` keeps:
@@ -112,7 +114,9 @@ Enum families:
 - reused `product_record_source`
 
 ## What remains pending
-- repository adapter contract and deterministic error mapping for `setup_lifecycle_mutation_record`
+- repository adapter contract and deterministic error mapping for `setup_lifecycle_mutation_record` are completed in:
+  - `docs/project/setup-lifecycle-mutation-relational-adapter-model.md`
+  - `docs/architecture/adr/ADR-058-setup-lifecycle-mutation-record-relational-adapter-contract.md`
 - domain/durable mappers, adapter-backed relational repository, and concrete Prisma adapter wiring for `setup_lifecycle_mutation_record`
 - later shared implemented-product bundle and opt-in real-Postgres integration extension through `setup_lifecycle_mutation_record`
 - later execution/mutation durable slices after `setup_lifecycle_mutation_record`

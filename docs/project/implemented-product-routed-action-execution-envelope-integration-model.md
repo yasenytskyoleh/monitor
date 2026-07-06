@@ -31,8 +31,7 @@ This step does not add new product rules. It proves that the already-shared repo
 - durable relational contract/schema work for `setup_lifecycle_mutation_record` has now also been completed in later follow-up work
 
 ## What remains pending
-- the relational adapter contract for `setup_lifecycle_mutation_record`
-- the adapter-backed relational repository and Prisma adapter rollout for `setup_lifecycle_mutation_record`
+- the domain/durable mappers, adapter-backed relational repository, and Prisma adapter rollout for `setup_lifecycle_mutation_record`
 - later execution/mutation durable slices after `setup_lifecycle_mutation_record`
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

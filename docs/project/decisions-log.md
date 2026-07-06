@@ -132,6 +132,7 @@
 - shared implemented-product real-Postgres integration now extends through routed-action-execution-envelope
 - setup-lifecycle-mutation-record durable relational contract now exists
 - setup-lifecycle-mutation-record Prisma physical schema and migration layout now exist
+- setup-lifecycle-mutation-record relational adapter contract now exists
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -141,4 +142,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is: **define the relational adapter contract for `setup_lifecycle_mutation_record`**
+- the currently recommended next step is: **add domain/durable mappers, the adapter-backed repository, and concrete Prisma adapter wiring for `setup_lifecycle_mutation_record`**

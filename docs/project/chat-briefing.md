@@ -67,6 +67,7 @@ Current product-domain scope includes:
   - `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
   - `docs/project/implemented-product-routed-action-execution-envelope-integration-model.md`
   - `docs/project/setup-lifecycle-mutation-relational-persistence-model.md`
+  - `docs/project/setup-lifecycle-mutation-relational-adapter-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -105,6 +106,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-055-implemented-product-routed-action-execution-envelope-integration-coverage.md`
   - `docs/architecture/adr/ADR-056-setup-lifecycle-mutation-record-durable-relational-contract.md`
   - `docs/architecture/adr/ADR-057-setup-lifecycle-mutation-record-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-058-setup-lifecycle-mutation-record-relational-adapter-contract.md`
 
 ## Current constraints
 - spot-only scope
@@ -144,6 +146,7 @@ Current product-domain scope includes:
   - `research_decision_approval`
   - `research_review_decision`
   - `routed_action_execution_envelope`
+  - `setup_lifecycle_mutation_record`
 - adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -158,13 +161,13 @@ Current product-domain scope includes:
   - `routed_action_execution_envelope`
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `routed_action_execution_envelope`
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `routed_action_execution_envelope`
-- `setup_lifecycle_mutation_record` now also has a durable relational contract and committed Prisma schema/migration, while repository adapter contracts and adapter-backed relational repositories are still pending
-- the next downstream persistence gap is now the relational adapter contract for `setup_lifecycle_mutation_record`
+- `setup_lifecycle_mutation_record` now also has a durable relational contract, committed Prisma schema/migration, and a repository adapter contract, while adapter-backed relational repositories and concrete Prisma adapters are still pending
+- the next downstream persistence gap is now the adapter-backed repository and Prisma adapter rollout for `setup_lifecycle_mutation_record`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- define the relational adapter contract for `setup_lifecycle_mutation_record`
+- add domain/durable mappers, the adapter-backed repository, and concrete Prisma adapter wiring for `setup_lifecycle_mutation_record`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

@@ -40,4 +40,4 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- define the relational adapter contract for `setup_lifecycle_mutation_record`
+- add the domain/durable mappers, adapter-backed repository, and concrete Prisma adapter rollout for `setup_lifecycle_mutation_record`

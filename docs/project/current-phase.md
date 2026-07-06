@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.30 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, routed-action integration coverage, and the first mutation-audit durable contract/schema**
+**Phase 1.30 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, routed-action integration coverage, and the first mutation-audit durable contract/schema plus adapter contract**
 
 ## What this phase is about
 This phase is focused on:
@@ -22,7 +22,7 @@ The product side now proves that the repo can:
 - enforce service-owned write paths,
 - extend durable relational persistence through setup/research and signal/evaluation entities,
 - extend per-entity durable parity through downstream feedback, approval, review, and execution-envelope entities,
-- define the first downstream mutation-audit durable contract/schema,
+- define the first downstream mutation-audit durable contract/schema and adapter boundary,
 - and run concrete Prisma-backed adapters plus one full routed-action-chain integration harness while keeping runtime engines pending.
 
 ## Implemented in this phase (current baseline)
@@ -269,6 +269,11 @@ The product side now proves that the repo can:
   - `packages/domain-model/src/storage/setup-lifecycle-mutation-record-relational-slice.ts`
   - `packages/domain-model/src/storage/setup-lifecycle-mutation-record-relational-physical-schema.ts`
   - `packages/domain-model/prisma/migrations/20260706113000_product_domain_setup_lifecycle_mutation_record_relational_v1/migration.sql`
+- setup-lifecycle-mutation-record relational adapter contract:
+  - `docs/project/setup-lifecycle-mutation-relational-adapter-model.md`
+  - `docs/architecture/adr/ADR-058-setup-lifecycle-mutation-record-relational-adapter-contract.md`
+  - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-repository-adapter.impl.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -306,7 +311,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- define the relational adapter contract for `setup_lifecycle_mutation_record`
+- add domain/durable mappers, the adapter-backed repository, and concrete Prisma adapter wiring for `setup_lifecycle_mutation_record`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -322,4 +327,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, eight committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through routed-action execution envelopes, one shared full-chain real-database integration flow through routed-action execution envelopes, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, one first execution-envelope persistence rollout, and one first mutation-audit durable contract/schema step that make the next downstream mutation-audit adapter rollout straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, eight committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through routed-action execution envelopes, one shared full-chain real-database integration flow through routed-action execution envelopes, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, one first execution-envelope persistence rollout, and one first mutation-audit durable contract/schema plus adapter-contract step that make the next downstream mutation-audit repository rollout straightforward instead of speculative**.

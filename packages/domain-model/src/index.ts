@@ -394,6 +394,13 @@ export {
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_RETRYABLE_ERROR_CODES,
   isRoutedActionExecutionEnvelopeRelationalDeterministicErrorCode
 } from "./repositories/routed-action-execution-envelope-relational-repository-adapter.js";
+export {
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_ADAPTER_OPERATIONS,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isSetupLifecycleMutationRecordRelationalDeterministicErrorCode
+} from "./repositories/setup-lifecycle-mutation-record-relational-repository-adapter.js";
 export { composeFirstDurableRelationalRepositories } from "./repositories/first-durable-relational-repositories.js";
 export type {
   FirstDurableRelationalRepositories
@@ -521,6 +528,14 @@ export type {
   RoutedActionExecutionEnvelopeRelationalRepositoryAdapter,
   RoutedActionExecutionEnvelopeRelationalRetryableErrorCode
 } from "./repositories/routed-action-execution-envelope-relational-repository-adapter.js";
+export type {
+  SetupLifecycleMutationRecordRecordWriteRequest,
+  SetupLifecycleMutationRecordRelationalAdapterErrorMapping,
+  SetupLifecycleMutationRecordRelationalAdapterOperation,
+  SetupLifecycleMutationRecordRelationalDeterministicErrorCode,
+  SetupLifecycleMutationRecordRelationalRepositoryAdapter,
+  SetupLifecycleMutationRecordRelationalRetryableErrorCode
+} from "./repositories/setup-lifecycle-mutation-record-relational-repository-adapter.js";
 export {
   dehydrateRoutedActionExecutionEnvelopeToDurableRecord,
   hydrateRoutedActionExecutionEnvelopeFromDurableRecord
@@ -586,6 +601,12 @@ export type {
 export {
   InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter
 } from "./repositories/routed-action-execution-envelope-relational-repository-adapter.impl.js";
+export type {
+  SetupLifecycleMutationRecordRelationalReferenceReader
+} from "./repositories/setup-lifecycle-mutation-record-relational-repository-adapter.impl.js";
+export {
+  InMemorySetupLifecycleMutationRecordRelationalRepositoryAdapter
+} from "./repositories/setup-lifecycle-mutation-record-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,
