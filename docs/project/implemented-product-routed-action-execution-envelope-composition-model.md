@@ -30,7 +30,7 @@ This step does not add new business rules. It extends the already-shared persist
 - the next persistence task can stay narrow and move to real-database integration coverage instead of more shared-composition work
 
 ## What remains pending
-- opt-in real-Postgres integration coverage for setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope
+- opt-in real-Postgres integration coverage for setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope is completed later in `docs/project/implemented-product-routed-action-execution-envelope-integration-model.md`
 - later durable slices for downstream execution/mutation entities
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

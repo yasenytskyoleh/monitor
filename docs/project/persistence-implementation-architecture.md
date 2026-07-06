@@ -1,12 +1,12 @@
 # Persistence Implementation Architecture
 
 ## Purpose
-Define the current implementation architecture for product-domain persistence across the implemented core research chain, the downstream feedback/approval/review entities, and the first downstream execution-envelope shared-bundle extension.
+Define the current implementation architecture for product-domain persistence across the implemented core research chain, the downstream feedback/approval/review entities, and the first downstream execution-envelope shared-bundle plus integration extension.
 
 This document now reflects:
 - boundary contracts
 - the current implemented in-memory persistence surface
-- current durable relational repository/adapter coverage for the implemented product chain through routed-action execution envelopes, with real-database integration still stopping at review decisions
+- current durable relational repository/adapter coverage for the implemented product chain through routed-action execution envelopes, with real-database integration now also spanning that chain
 
 ## Canonical current-state summary
 Implemented in-memory persistence and service-owned write paths exist today for:
@@ -19,8 +19,9 @@ Implemented in-memory persistence and service-owned write paths exist today for:
 - `ResearchDecisionApproval`
 - `ResearchReviewDecision`
 - `RoutedActionExecutionEnvelope`
+- `SetupLifecycleMutationRecord`
 
-Durable relational coverage now exists through `routed_action_execution_envelope`, with shared-bundle coverage now also existing through that execution-envelope slice:
+Durable relational coverage now exists through `routed_action_execution_envelope`, with shared-bundle and real-database integration coverage now also existing through that execution-envelope slice:
 - committed contracts, schema/migrations, adapter-backed repositories, and concrete Prisma adapters for:
   - `setup_definition`
   - `research_hypothesis`
@@ -33,12 +34,12 @@ Durable relational coverage now exists through `routed_action_execution_envelope
 - committed contracts, schema/migrations, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `research_review_decision`
 - committed contracts, schema/migrations, repository adapter contract, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `routed_action_execution_envelope`
 - one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope
-- one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision
+- one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope
 
 Still pending:
-- opt-in real-Postgres integration extension through `routed_action_execution_envelope`
-- later shared-bundle/integration extension for downstream execution and mutation entities after `routed_action_execution_envelope`
-- later review/execution durable slices after `routed_action_execution_envelope`
+- the first durable relational slice planning step for `setup_lifecycle_mutation_record`
+- later shared-bundle/integration extension for downstream execution and mutation entities after `setup_lifecycle_mutation_record`
+- later execution/mutation durable slices after `setup_lifecycle_mutation_record`
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI
@@ -57,6 +58,7 @@ Repository abstractions:
 - `ResearchDecisionApprovalRepository`
 - `ResearchReviewDecisionRepository`
 - `RoutedActionExecutionEnvelopeRepository`
+- `SetupLifecycleMutationRecordRepository`
 
 Implemented concrete repositories in the current baseline:
 - `InMemorySetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-repository.impl.ts`)
@@ -68,6 +70,7 @@ Implemented concrete repositories in the current baseline:
 - `InMemoryResearchDecisionApprovalRepository` (`packages/domain-model/src/repositories/research-decision-approval-repository.impl.ts`)
 - `InMemoryResearchReviewDecisionRepository` (`packages/domain-model/src/repositories/research-review-decision-repository.impl.ts`)
 - `InMemoryRoutedActionExecutionEnvelopeRepository` (`packages/domain-model/src/repositories/routed-action-execution-envelope-repository.impl.ts`)
+- `InMemorySetupLifecycleMutationRecordRepository` (`packages/domain-model/src/repositories/setup-lifecycle-mutation-record-repository.impl.ts`)
 - `RelationalSetupDefinitionRepository` (`packages/domain-model/src/repositories/setup-definition-relational-repository.impl.ts`)
 - `RelationalResearchHypothesisRepository` (`packages/domain-model/src/repositories/research-hypothesis-relational-repository.impl.ts`)
 - `RelationalSignalCandidateRepository` (`packages/domain-model/src/repositories/signal-candidate-relational-repository.impl.ts`)
@@ -159,13 +162,14 @@ Ownership direction:
 - `research_decision_approval` -> `research_service`
 - `research_review_decision` -> `research_service`
 - `routed_action_execution_envelope` -> `research_service`
+- `setup_lifecycle_mutation_record` -> `setup_definition_service`
 
 ## Mapping rules
 1. repositories return domain-shaped records (not runner artifact shapes)
 2. persistence metadata (`originRunId`, `traceId`) may be attached through metadata contracts
 3. runtime evidence files remain separate from product-domain storage
 4. one domain contract does not force one-table implementation in this slice
-5. implemented persistence is now narrow but end-to-end in memory for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, research decision approvals, research review decisions, and routed action execution envelopes; one shared bundle now spans all of them, while real-database integration coverage still stops at research review decisions
+5. implemented persistence is now narrow but end-to-end in memory for setup definitions, research hypotheses, signal candidates, evaluation results, setup aggregate results, research feedback decisions, research decision approvals, research review decisions, routed action execution envelopes, and setup lifecycle mutation records; one shared bundle plus one real-database integration path now span the full routed-action chain
 
 ## Orchestrator handoff boundary
 - orchestrator workflows may trigger future product-domain services

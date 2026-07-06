@@ -1,0 +1,43 @@
+# ADR-055: Implemented Product Routed Action Execution Envelope Integration Coverage
+
+## Status
+Accepted
+
+## Context
+The repo already had:
+- one shared Prisma-backed repository bundle through `routed_action_execution_envelope`
+- per-entity durable relational parity for `routed_action_execution_envelope`
+- opt-in real-Postgres integration coverage through `research_review_decision`
+
+That meant the remaining proof gap was narrow: the execution-envelope entity was composed into the shared bundle, but the end-to-end real-database integration path still stopped before execution-envelope persistence.
+
+## Decision
+Extend the shared real-Postgres integration coverage through `routed_action_execution_envelope`.
+
+This includes:
+- adding the routed-action migration into the shared integration harness
+- persisting execution-envelope records through the shared repository bundle against real Postgres
+- asserting one invalid routed-action review-decision linkage path against the same real-database harness
+
+## Consequences
+Positive:
+- the full implemented product chain now has one verified end-to-end real-database persistence flow through routed-action execution envelopes
+- routed-action reference validation is now proven across:
+  - in-memory adapters
+  - fake Prisma adapter tests
+  - real Postgres integration coverage
+- the next downstream persistence step can move to `setup_lifecycle_mutation_record` without revisiting execution-envelope-chain infrastructure
+
+Tradeoffs:
+- downstream mutation audit persistence still has only implemented in-memory coverage
+- the routed-action integration harness is still opt-in and depends on `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL`
+
+## Explicitly not included
+- durable relational contract work for `setup_lifecycle_mutation_record`
+- later execution/mutation durable slices
+- runtime review/execution engines
+- exchange ingestion
+- UI work
+
+## Follow-up
+- plan the first durable relational slice for `setup_lifecycle_mutation_record`

@@ -45,4 +45,5 @@ Tradeoffs:
 - the repository adapter contract for `routed_action_execution_envelope` is completed in ADR-052
 - the adapter-backed relational repository and concrete Prisma adapter for `routed_action_execution_envelope` are completed in ADR-053
 - shared implemented-product relational bundle extension through `routed_action_execution_envelope` is completed in ADR-054
-- opt-in real-Postgres integration coverage through `routed_action_execution_envelope` remains the next persistence step
+- opt-in real-Postgres integration coverage through `routed_action_execution_envelope` is completed in ADR-055
+- the next persistence step then moves to the first durable relational slice for `setup_lifecycle_mutation_record`

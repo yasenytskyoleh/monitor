@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.30 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and routed-action bundle extension**
+**Phase 1.30 — Codex-first workflow, bounded autonomous mode, full implemented-chain shared persistence, and routed-action integration coverage**
 
 ## What this phase is about
 This phase is focused on:
@@ -22,7 +22,7 @@ The product side now proves that the repo can:
 - enforce service-owned write paths,
 - extend durable relational persistence through setup/research and signal/evaluation entities,
 - extend per-entity durable parity through downstream feedback, approval, review, and execution-envelope entities,
-- and run concrete Prisma-backed adapters and integration harnesses while keeping runtime engines pending.
+- and run concrete Prisma-backed adapters plus one full routed-action-chain integration harness while keeping runtime engines pending.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -257,6 +257,10 @@ The product side now proves that the repo can:
   - `docs/architecture/adr/ADR-054-implemented-product-routed-action-execution-envelope-composition.md`
   - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
   - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
+- shared real-Postgres integration extended through routed-action execution envelopes:
+  - `docs/project/implemented-product-routed-action-execution-envelope-integration-model.md`
+  - `docs/architecture/adr/ADR-055-implemented-product-routed-action-execution-envelope-integration-coverage.md`
+  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -267,6 +271,7 @@ The product side now proves that the repo can:
   - `ResearchDecisionApproval`
   - `ResearchReviewDecision`
   - `RoutedActionExecutionEnvelope`
+  - `SetupLifecycleMutationRecord`
 - repository/service implementation architecture with later durable relational expansion still pending:
   - `docs/project/persistence-implementation-architecture.md`
   - `docs/project/first-persisted-slice.md`
@@ -293,7 +298,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- extend opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
+- plan the first durable relational slice for `setup_lifecycle_mutation_record`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -309,4 +314,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, seven committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through routed-action execution envelopes, one shared review-decision-chain real-database integration flow, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, one first execution-envelope repository rollout, and one first execution-envelope shared-bundle extension that make the next integration step straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, seven committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through routed-action execution envelopes, one shared full-chain real-database integration flow through routed-action execution envelopes, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, and one first execution-envelope persistence rollout that make the next downstream mutation-audit slice straightforward instead of speculative**.

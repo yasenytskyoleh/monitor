@@ -63,6 +63,7 @@ Implemented today:
   - `ResearchDecisionApproval`
   - `ResearchReviewDecision`
   - `RoutedActionExecutionEnvelope`
+  - `SetupLifecycleMutationRecord`
   - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
   - repository contracts (`*Repository`)
   - service contracts (`*Service`) with explicit write ownership
@@ -78,6 +79,7 @@ Implemented today:
   - `ResearchDecisionApproval`
   - `ResearchReviewDecision`
   - `RoutedActionExecutionEnvelope`
+  - `SetupLifecycleMutationRecord`
 - product-domain docs and ADR:
   - `docs/project/domain-model.md`
   - `docs/project/research-model.md`
@@ -116,6 +118,7 @@ Implemented today:
   - `docs/project/routed-action-execution-envelope-relational-adapter-model.md`
   - `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
   - `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
+  - `docs/project/implemented-product-routed-action-execution-envelope-integration-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -151,6 +154,7 @@ Implemented today:
   - `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
   - `docs/architecture/adr/ADR-053-routed-action-execution-envelope-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-054-implemented-product-routed-action-execution-envelope-composition.md`
+  - `docs/architecture/adr/ADR-055-implemented-product-routed-action-execution-envelope-integration-coverage.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -162,17 +166,16 @@ Current limitation:
   - committed Prisma schema/migrations now exist through `routed_action_execution_envelope`
   - repository adapter contracts now also exist through `routed_action_execution_envelope`
   - adapter-backed relational repositories, concrete Prisma adapters, and slice-level shared composition now exist for all five core-chain service-owned product entities, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, and `routed_action_execution_envelope`
-  - opt-in real-database integration coverage now exists for the five core-chain entities, `research_feedback_decision`, and the shared implemented-product chain through `research_review_decision`
-  - one shared Prisma-backed repository bundle now spans the full implemented product chain through `routed_action_execution_envelope`
-  - one end-to-end real-database integration flow now also spans the full implemented product chain through `research_review_decision`
-  - `routed_action_execution_envelope` now also composes into the shared implemented-product relational bundle, but still has no opt-in real-database integration coverage
-  - the next downstream persistence gap is now opt-in real-database integration coverage through `routed_action_execution_envelope`
+  - opt-in real-database integration coverage now exists through the full implemented product chain to `routed_action_execution_envelope`
+  - one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now span the full implemented product chain through `routed_action_execution_envelope`
+  - `setup_lifecycle_mutation_record` already exists as a service-owned in-memory audit artifact, but still has no durable relational contract or adapters
+  - the next downstream persistence gap is now the first durable relational slice for `setup_lifecycle_mutation_record`
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- extend opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
+- plan the first durable relational slice for `setup_lifecycle_mutation_record`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
