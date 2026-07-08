@@ -27,6 +27,11 @@ import {
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_PRISMA_MODELS,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_REQUIRED_COLUMNS,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_TABLES,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_INDEXES,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_MIGRATION_SLUG,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_PRISMA_MODELS,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_TABLES,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_INDEXES,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_MIGRATION_SLUG,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_PRISMA_MODELS,
@@ -96,6 +101,13 @@ const routedActionExecutionEnvelopeMigrationPath = join(
   "prisma",
   "migrations",
   "20260702103000_product_domain_routed_action_execution_envelope_relational_v1",
+  "migration.sql"
+);
+const setupLifecycleMutationRecordMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260706113000_product_domain_setup_lifecycle_mutation_record_relational_v1",
   "migration.sql"
 );
 
@@ -739,5 +751,101 @@ test("migration creates the routed-action-execution-envelope relational table, i
   assert.match(
     migration,
     /"created_at_utc" <= "prepared_at_utc" AND\s+"updated_at_utc" >= "prepared_at_utc"/
+  );
+});
+
+test("exposes setup-lifecycle-mutation-record physical schema constants", () => {
+  assert.equal(
+    SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_setup_lifecycle_mutation_record_relational_v1"
+  );
+  assert.equal(
+    SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_PRISMA_MODELS.setupLifecycleMutationRecord,
+    "SetupLifecycleMutationRecordRecord"
+  );
+  assert.equal(
+    SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_TABLES.setupLifecycleMutationRecord,
+    "setup_lifecycle_mutation_record"
+  );
+  assert.equal(
+    SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_REQUIRED_COLUMNS
+      .setup_lifecycle_mutation_record.includes("approved_action"),
+    true
+  );
+  assert.equal(
+    SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_INDEXES.includes(
+      "idx_setup_lifecycle_mutation_record_approval_id"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the setup-lifecycle-mutation-record relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum ApprovedSetupLifecycleAction \{/);
+  assert.match(schema, /model SetupLifecycleMutationRecordRecord \{/);
+  assert.match(schema, /@@map\("setup_lifecycle_mutation_record"\)/);
+
+  for (const tableName of Object.values(
+    SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_TABLES
+  )) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(
+    SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_PRISMA_MODELS
+  )) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the setup-lifecycle-mutation-record relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(setupLifecycleMutationRecordMigrationPath, "utf8");
+
+  for (const tableName of Object.values(
+    SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_TABLES
+  )) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("research_decision_approval_id"\)\s+REFERENCES "product_domain"\."research_decision_approval"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("research_feedback_decision_id"\)\s+REFERENCES "product_domain"\."research_feedback_decision"/
+  );
+  assert.match(
+    migration,
+    /"approved_action" = 'pause_setup' AND\s+"new_status" = 'paused'/
+  );
+  assert.match(
+    migration,
+    /"created_at_utc" <= "mutated_at_utc" AND\s+"updated_at_utc" >= "mutated_at_utc"/
   );
 });

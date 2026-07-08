@@ -32,8 +32,8 @@ This step does not add new product rules. It proves that the already-shared repo
 - the durable relational contract and physical Prisma schema for `routed_action_execution_envelope` are completed later in `docs/project/routed-action-execution-envelope-relational-persistence-model.md`
 - the repository adapter contract for `routed_action_execution_envelope` is completed later in `docs/project/routed-action-execution-envelope-relational-adapter-model.md`
 - the adapter-backed relational repository and concrete Prisma adapter for `routed_action_execution_envelope` are completed later in `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
-- shared implemented-product relational bundle extension through `routed_action_execution_envelope`
-- opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
+- shared implemented-product relational bundle extension through `routed_action_execution_envelope` is completed later in `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
+- opt-in real-Postgres integration coverage through `routed_action_execution_envelope` is completed later in `docs/project/implemented-product-routed-action-execution-envelope-integration-model.md`
 - later durable slices for downstream review/execution entities
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

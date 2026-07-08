@@ -63,6 +63,7 @@ Implemented today:
   - `ResearchDecisionApproval`
   - `ResearchReviewDecision`
   - `RoutedActionExecutionEnvelope`
+  - `SetupLifecycleMutationRecord`
   - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
   - repository contracts (`*Repository`)
   - service contracts (`*Service`) with explicit write ownership
@@ -78,6 +79,7 @@ Implemented today:
   - `ResearchDecisionApproval`
   - `ResearchReviewDecision`
   - `RoutedActionExecutionEnvelope`
+  - `SetupLifecycleMutationRecord`
 - product-domain docs and ADR:
   - `docs/project/domain-model.md`
   - `docs/project/research-model.md`
@@ -115,6 +117,10 @@ Implemented today:
   - `docs/project/routed-action-execution-envelope-relational-persistence-model.md`
   - `docs/project/routed-action-execution-envelope-relational-adapter-model.md`
   - `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
+  - `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
+  - `docs/project/implemented-product-routed-action-execution-envelope-integration-model.md`
+  - `docs/project/setup-lifecycle-mutation-relational-persistence-model.md`
+  - `docs/project/setup-lifecycle-mutation-relational-adapter-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -149,6 +155,14 @@ Implemented today:
   - `docs/architecture/adr/ADR-051-routed-action-execution-envelope-prisma-schema-layout.md`
   - `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
   - `docs/architecture/adr/ADR-053-routed-action-execution-envelope-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-054-implemented-product-routed-action-execution-envelope-composition.md`
+  - `docs/architecture/adr/ADR-055-implemented-product-routed-action-execution-envelope-integration-coverage.md`
+  - `docs/architecture/adr/ADR-056-setup-lifecycle-mutation-record-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-057-setup-lifecycle-mutation-record-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-058-setup-lifecycle-mutation-record-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-059-setup-lifecycle-mutation-record-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-060-implemented-product-setup-lifecycle-mutation-composition.md`
+  - `docs/architecture/adr/ADR-061-implemented-product-setup-lifecycle-mutation-integration-coverage.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -156,21 +170,19 @@ Current limitation:
   - narrow helper-file creation only
   - no broad refactors, schema/migration/architecture changes, or cross-package scope
 - durable relational persistence is partially implemented, with later expansion still pending:
-  - durable relational contracts now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, `setup_aggregate_result`, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, and `routed_action_execution_envelope`
-  - committed Prisma schema/migrations now exist through `routed_action_execution_envelope`
-  - repository adapter contracts now also exist through `routed_action_execution_envelope`
-  - adapter-backed relational repositories, concrete Prisma adapters, and slice-level shared composition now exist for all five core-chain service-owned product entities, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, and `routed_action_execution_envelope`
-  - opt-in real-database integration coverage now exists for the five core-chain entities, `research_feedback_decision`, and the shared implemented-product chain through `research_review_decision`
-  - one shared Prisma-backed repository bundle now spans the full implemented product chain through `research_review_decision`
-  - one end-to-end real-database integration flow now also spans the full implemented product chain through `research_review_decision`
-  - `routed_action_execution_envelope` now also has a durable relational contract, committed Prisma schema/migration, repository adapter contract, domain/durable mappers, adapter-backed relational repository, concrete Prisma adapter, and slice-level shared composition, but it still has no shared-bundle or real-database integration coverage
-  - the next downstream durable persistence gap is now the shared implemented-product relational bundle extension through `routed_action_execution_envelope`
+  - durable relational contracts now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, `setup_aggregate_result`, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, `routed_action_execution_envelope`, and `setup_lifecycle_mutation_record`
+  - committed Prisma schema/migrations now exist through `setup_lifecycle_mutation_record`
+  - repository adapter contracts now also exist through `setup_lifecycle_mutation_record`
+  - adapter-backed relational repositories, concrete Prisma adapters, and slice-level shared composition now exist for all five core-chain service-owned product entities, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, `routed_action_execution_envelope`, and `setup_lifecycle_mutation_record`
+  - opt-in real-database integration coverage now exists through the full implemented product chain to `setup_lifecycle_mutation_record`
+  - one shared Prisma-backed repository bundle and one end-to-end real-database integration flow now span the full implemented product chain through `setup_lifecycle_mutation_record`
+  - the next downstream persistence gap is now the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- extend the shared implemented-product relational bundle through `routed_action_execution_envelope`
+- define the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
@@ -202,7 +214,7 @@ The new product-domain contracts are intentionally thin:
 - no evaluation runtime engine yet,
 - no aggregation runtime engine yet,
 - no statistics/scoring engine yet,
-- durable relational persistence/runtime adapters pending,
+- durable relational persistence is partially implemented, but later integration/runtime adapters remain pending,
 - no exchange integration yet.
 
 ## Long-term product idea

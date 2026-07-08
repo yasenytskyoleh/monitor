@@ -90,6 +90,7 @@
   - `ResearchDecisionApproval`
   - `ResearchReviewDecision`
   - `RoutedActionExecutionEnvelope`
+  - `SetupLifecycleMutationRecord`
 - first durable relational persistence contract now exists for:
   - `setup_definition`
   - `research_hypothesis`
@@ -127,6 +128,14 @@
 - routed-action-execution-envelope Prisma physical schema and migration layout now exists
 - routed-action-execution-envelope relational adapter contract now exists
 - routed-action-execution-envelope adapter-backed relational repository and concrete Prisma adapter now exist
+- shared implemented-product composition now extends through routed-action-execution-envelope
+- shared implemented-product real-Postgres integration now extends through routed-action-execution-envelope
+- setup-lifecycle-mutation-record durable relational contract now exists
+- setup-lifecycle-mutation-record Prisma physical schema and migration layout now exist
+- setup-lifecycle-mutation-record relational adapter contract now exists
+- setup-lifecycle-mutation-record adapter-backed relational repository and concrete Prisma adapter now exist
+- shared implemented-product composition now extends through setup-lifecycle-mutation-record
+- shared implemented-product real-Postgres integration now extends through setup-lifecycle-mutation-record
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -136,4 +145,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is: **extend the shared implemented-product relational bundle through `routed_action_execution_envelope`**
+- the currently recommended next step is: **define the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`**

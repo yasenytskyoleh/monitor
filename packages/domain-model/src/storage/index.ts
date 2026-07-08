@@ -75,6 +75,13 @@ export type {
   RoutedActionExecutionEnvelopeRelationalEntityType
 } from "./routed-action-execution-envelope-relational-slice.js";
 export {
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_ENTITY_TYPES
+} from "./setup-lifecycle-mutation-record-relational-slice.js";
+export type {
+  SetupLifecycleMutationRecordDurableRecord,
+  SetupLifecycleMutationRecordRelationalEntityType
+} from "./setup-lifecycle-mutation-record-relational-slice.js";
+export {
   FIRST_DURABLE_RELATIONAL_DATABASE_SCHEMA,
   FIRST_DURABLE_RELATIONAL_INDEXES,
   FIRST_DURABLE_RELATIONAL_MIGRATION_SLUG,
@@ -165,6 +172,18 @@ export type {
   RoutedActionExecutionEnvelopeRelationalPrismaModelName,
   RoutedActionExecutionEnvelopeRelationalTableName
 } from "./routed-action-execution-envelope-relational-physical-schema.js";
+export {
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_INDEXES,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_MIGRATION_SLUG,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_PRISMA_MODELS,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_TABLES
+} from "./setup-lifecycle-mutation-record-relational-physical-schema.js";
+export type {
+  SetupLifecycleMutationRecordRelationalIndexName,
+  SetupLifecycleMutationRecordRelationalPrismaModelName,
+  SetupLifecycleMutationRecordRelationalTableName
+} from "./setup-lifecycle-mutation-record-relational-physical-schema.js";
 
 export type {
   EntityIdentity,

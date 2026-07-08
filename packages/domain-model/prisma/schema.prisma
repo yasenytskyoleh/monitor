@@ -108,6 +108,15 @@ enum ResearchFeedbackDecisionAction {
   @@schema("product_domain")
 }
 
+enum ApprovedSetupLifecycleAction {
+  keep_active
+  pause_setup
+  archive_setup
+
+  @@map("approved_setup_lifecycle_action")
+  @@schema("product_domain")
+}
+
 enum ResearchFeedbackDecisionStatus {
   proposed
   reviewed
@@ -219,6 +228,7 @@ model SetupDefinitionRecord {
   aggregateResults          SetupAggregateResultRecord[]
   feedbackDecisions         ResearchFeedbackDecisionRecord[]
   decisionApprovals         ResearchDecisionApprovalRecord[]
+  setupLifecycleMutationRecords SetupLifecycleMutationRecordRecord[]
 
   @@index([definitionStatus], map: "idx_setup_definition_definition_status")
   @@index([lifecycleStatus], map: "idx_setup_definition_lifecycle_status")
@@ -419,6 +429,7 @@ model ResearchFeedbackDecisionRecord {
   researchHypothesis         ResearchHypothesisRecord       @relation(fields: [researchHypothesisId], references: [researchHypothesisId], onDelete: Restrict, onUpdate: Cascade)
   setupAggregateResult       SetupAggregateResultRecord?    @relation(fields: [setupAggregateResultId], references: [setupAggregateResultId], onDelete: Restrict, onUpdate: Cascade)
   approvals                  ResearchDecisionApprovalRecord[]
+  setupLifecycleMutationRecords SetupLifecycleMutationRecordRecord[]
 
   @@index([setupDefinitionId], map: "idx_research_feedback_decision_setup_definition_id")
   @@index([researchHypothesisId], map: "idx_research_feedback_decision_research_hypothesis_id")
@@ -453,6 +464,7 @@ model ResearchDecisionApprovalRecord {
   archivedAtUtc              DateTime?                       @map("archived_at_utc") @db.Timestamptz(3)
   researchFeedbackDecision   ResearchFeedbackDecisionRecord  @relation(fields: [researchFeedbackDecisionId], references: [researchFeedbackDecisionId], onDelete: Restrict, onUpdate: Cascade)
   setupDefinition            SetupDefinitionRecord           @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+  setupLifecycleMutationRecords SetupLifecycleMutationRecordRecord[]
 
   @@index([setupDefinitionId], map: "idx_research_decision_approval_setup_definition_id")
   @@index([approvalOutcome], map: "idx_research_decision_approval_approval_outcome")
@@ -533,5 +545,40 @@ model RoutedActionExecutionEnvelopeRecord {
   @@index([actionTarget], map: "idx_routed_action_execution_envelope_action_target")
   @@index([actionCommandType], map: "idx_routed_action_execution_envelope_action_command_type")
   @@map("routed_action_execution_envelope")
+  @@schema("product_domain")
+}
+
+model SetupLifecycleMutationRecordRecord {
+  setupLifecycleMutationRecordId String                        @id(map: "setup_lifecycle_mutation_record_pkey") @map("setup_lifecycle_mutation_record_id") @db.Text
+  version                        Int                           @map("version")
+  lifecycleStatus                PersistedLifecycleStatus      @map("lifecycle_status")
+  setupDefinitionId              String                        @map("setup_definition_id") @db.Text
+  researchDecisionApprovalId     String                        @map("research_decision_approval_id") @db.Text
+  researchFeedbackDecisionId     String                        @map("research_feedback_decision_id") @db.Text
+  previousStatus                 SetupDefinitionStatus         @map("previous_status")
+  newStatus                      SetupDefinitionStatus         @map("new_status")
+  approvedAction                 ApprovedSetupLifecycleAction  @map("approved_action")
+  mutatedBy                      String                        @map("mutated_by") @db.Text
+  mutatedAtUtc                   DateTime                      @map("mutated_at_utc") @db.Timestamptz(3)
+  notes                          String?                       @map("notes") @db.Text
+  originRunId                    String?                       @map("origin_run_id") @db.Text
+  originTransitionId             String?                       @map("origin_transition_id") @db.Text
+  createdBySource                ProductRecordSource           @map("created_by_source")
+  lastUpdatedBySource            ProductRecordSource           @map("last_updated_by_source")
+  traceId                        String?                       @map("trace_id") @db.Text
+  sourceObservedAtUtc            DateTime?                     @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes                  String?                       @map("metadata_notes") @db.Text
+  createdAtUtc                   DateTime                      @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc                   DateTime                      @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc                  DateTime?                     @map("archived_at_utc") @db.Timestamptz(3)
+  setupDefinition                SetupDefinitionRecord         @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+  researchDecisionApproval       ResearchDecisionApprovalRecord @relation(fields: [researchDecisionApprovalId], references: [researchDecisionApprovalId], onDelete: Restrict, onUpdate: Cascade)
+  researchFeedbackDecision       ResearchFeedbackDecisionRecord @relation(fields: [researchFeedbackDecisionId], references: [researchFeedbackDecisionId], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([setupDefinitionId], map: "idx_setup_lifecycle_mutation_record_setup_definition_id")
+  @@index([researchDecisionApprovalId], map: "idx_setup_lifecycle_mutation_record_approval_id")
+  @@index([researchFeedbackDecisionId], map: "idx_setup_lifecycle_mutation_record_feedback_id")
+  @@index([approvedAction], map: "idx_setup_lifecycle_mutation_record_approved_action")
+  @@map("setup_lifecycle_mutation_record")
   @@schema("product_domain")
 }

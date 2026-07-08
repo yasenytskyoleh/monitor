@@ -125,8 +125,12 @@ Enum families:
 - domain/durable mappers, adapter-backed relational repository, and concrete Prisma adapter wiring for `routed_action_execution_envelope` are completed later in:
   - `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-053-routed-action-execution-envelope-adapter-backed-relational-repositories.md`
-- shared implemented-product relational bundle extension through `routed_action_execution_envelope`
-- opt-in real-Postgres integration coverage through `routed_action_execution_envelope`
+- shared implemented-product relational bundle extension through `routed_action_execution_envelope` is completed later in:
+  - `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
+  - `docs/architecture/adr/ADR-054-implemented-product-routed-action-execution-envelope-composition.md`
+- opt-in real-Postgres integration coverage through `routed_action_execution_envelope` is completed later in:
+  - `docs/project/implemented-product-routed-action-execution-envelope-integration-model.md`
+  - `docs/architecture/adr/ADR-055-implemented-product-routed-action-execution-envelope-integration-coverage.md`
 - later shared-bundle and integration extension for downstream execution/mutation entities
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

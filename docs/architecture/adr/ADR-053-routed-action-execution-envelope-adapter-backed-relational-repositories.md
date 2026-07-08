@@ -55,5 +55,5 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- extend the shared implemented-product relational bundle through `routed_action_execution_envelope`
-- extend opt-in real-database integration coverage through `routed_action_execution_envelope`
+- extending the shared implemented-product relational bundle through `routed_action_execution_envelope` is completed in ADR-054
+- extend opt-in real-database integration coverage through `routed_action_execution_envelope` in ADR-055
