@@ -83,6 +83,7 @@ Current product-domain scope includes:
   - `docs/project/setup-revision-activation-relational-rollout-model.md`
   - `docs/project/setup-revision-activation-relational-persistence-model.md`
   - `docs/project/implemented-product-setup-revision-activation-composition-model.md`
+  - `docs/project/implemented-product-setup-revision-activation-integration-model.md`
   - `docs/project/setup-refinement-request-relational-adapter-model.md`
   - `docs/project/setup-refinement-request-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
@@ -144,6 +145,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-076-setup-revision-activation-record-relational-adapter-contract.md`
   - `docs/architecture/adr/ADR-077-setup-revision-activation-record-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-078-implemented-product-setup-revision-activation-composition.md`
+  - `docs/architecture/adr/ADR-079-implemented-product-setup-revision-activation-integration-coverage.md`
 
 ## Current constraints
 - spot-only scope
@@ -208,16 +210,16 @@ Current product-domain scope includes:
   - `routed_action_execution_envelope`
   - `setup_lifecycle_mutation_record`
 - `setup_refinement_request` now also has opt-in real-database integration coverage
-- `setup_revision_activation_record` now already has implemented in-memory persistence, a service-owned write path, a durable relational contract, committed Prisma schema/migrations, a repository adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, slice-level shared composition, and shared implemented-product bundle coverage
+- `setup_revision_activation_record` now already has implemented in-memory persistence, a service-owned write path, a durable relational contract, committed Prisma schema/migrations, a repository adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, slice-level shared composition, shared implemented-product bundle coverage, and opt-in real-database integration coverage
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_revision_activation_record`
-- one end-to-end real-database integration flow now also spans the full implemented product chain through `setup_definition_revision`
+- one end-to-end real-database integration flow now also spans the full implemented product chain through `setup_revision_activation_record`
 - `setup_definition_revision` now also has shared-bundle and opt-in real-database integration coverage
-- the next downstream persistence gap is now opt-in real-database integration through `setup_revision_activation_record`, followed by later downstream execution/mutation durable slices
+- the next downstream persistence gap is now the next later downstream execution/mutation durable slice after `setup_revision_activation_record`
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- extend opt-in real-Postgres integration through `setup_revision_activation_record`
+- select the next later downstream execution/mutation durable slice after `setup_revision_activation_record`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

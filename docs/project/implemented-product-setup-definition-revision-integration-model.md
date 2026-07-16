@@ -34,7 +34,7 @@ This step does not add new product rules. It proves that the already-shared repo
 
 ## What remains pending
 - shared implemented-product composition through `setup_revision_activation_record` is completed later in `docs/project/implemented-product-setup-revision-activation-composition-model.md`
-- opt-in real-database integration coverage through `setup_revision_activation_record`
+- opt-in real-database integration coverage through `setup_revision_activation_record` is completed later in `docs/project/implemented-product-setup-revision-activation-integration-model.md`
 - later durable slices for downstream execution/mutation entities after `setup_revision_activation_record`
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

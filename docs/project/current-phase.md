@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.43 — Codex-first workflow, bounded autonomous mode, shared setup-revision-activation composition, and pending activation integration**
+**Phase 1.44 — Codex-first workflow, bounded autonomous mode, shared setup-revision-activation integration, and next downstream durable-slice selection**
 
 ## What this phase is about
 This phase is focused on:
@@ -33,7 +33,8 @@ The product side now proves that the repo can:
 - extend one opt-in real-database integration path through `setup_definition_revision`,
 - commit the next downstream activation-audit durable relational contract, Prisma schema, relational adapter contract, adapter-backed repository, and concrete Prisma adapter for `setup_revision_activation_record`,
 - complete shared implemented-product activation-bundle composition,
-- keep activation-record real-database integration as the next bounded persistence step,
+- extend one opt-in real-database integration path through `setup_revision_activation_record`,
+- keep the next later downstream execution/mutation durable slice as the next bounded persistence step,
 - and keep runtime engines pending.
 
 ## Implemented in this phase (current baseline)
@@ -432,7 +433,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- extend opt-in real-Postgres integration through `setup_revision_activation_record`
+- select the next later downstream execution/mutation durable slice after `setup_revision_activation_record`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -448,4 +449,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, thirteen committed durable relational contracts, committed Prisma schema/migrations through `setup_revision_activation_record`, committed repository adapter contracts through `setup_revision_activation_record`, per-entity adapter-backed repository and concrete Prisma-adapter parity through `setup_revision_activation_record`, one shared implemented-product bundle spanning the full implemented product chain through `setup_revision_activation_record`, one shared full-chain real-database integration flow through `setup_definition_revision`, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, one first execution-envelope persistence rollout, one first mutation-audit durable repository rollout, one first later downstream refinement-follow-up full-chain integration rollout, one first later downstream revision full-chain integration rollout, and one first later downstream activation-audit shared-bundle rollout that make activation real-database integration the next bounded persistence step**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, thirteen committed durable relational contracts, committed Prisma schema/migrations through `setup_revision_activation_record`, committed repository adapter contracts through `setup_revision_activation_record`, per-entity adapter-backed repository and concrete Prisma-adapter parity through `setup_revision_activation_record`, one shared implemented-product bundle spanning the full implemented product chain through `setup_revision_activation_record`, one shared full-chain real-database integration flow through `setup_revision_activation_record`, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, one first execution-envelope persistence rollout, one first mutation-audit durable repository rollout, one first later downstream refinement-follow-up full-chain integration rollout, one first later downstream revision full-chain integration rollout, and one first later downstream activation-audit full-chain integration rollout that make later downstream durable-slice selection the next bounded persistence step**.

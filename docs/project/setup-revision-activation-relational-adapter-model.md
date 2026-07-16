@@ -92,6 +92,6 @@ Those remain service-owned business rules rather than persistence-boundary check
 
 ## Explicitly postponed at this contract step
 - shared implemented-product bundle extension through `setup_revision_activation_record` is completed later in `docs/project/implemented-product-setup-revision-activation-composition-model.md`
-- opt-in real-Postgres integration coverage through `setup_revision_activation_record`
+- opt-in real-Postgres integration coverage through `setup_revision_activation_record` is completed later in `docs/project/implemented-product-setup-revision-activation-integration-model.md`
 - later downstream execution/mutation durable slices after `setup_revision_activation_record`
 - runtime review/execution engines

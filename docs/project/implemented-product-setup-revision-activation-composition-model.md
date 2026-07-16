@@ -34,7 +34,7 @@ This step does not add new business rules. It extends the already-shared persist
 - the next persistence task can stay narrow and move to real-database integration coverage instead of more shared-composition work
 
 ## What remains pending
-- opt-in real-Postgres integration coverage for setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record
+- opt-in real-Postgres integration coverage through `setup_revision_activation_record` is completed later in `docs/project/implemented-product-setup-revision-activation-integration-model.md`
 - later durable slices for downstream execution/mutation entities after `setup_revision_activation_record`
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

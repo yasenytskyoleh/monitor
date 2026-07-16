@@ -36,4 +36,4 @@ Tradeoffs:
 - UI work
 
 ## Follow-up
-- extend the end-to-end real-database integration flow through setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record in a later activation-integration ADR
+- the end-to-end real-database integration flow through `setup_revision_activation_record` is completed later in ADR-079

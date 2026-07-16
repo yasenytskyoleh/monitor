@@ -48,7 +48,7 @@ This step gives the downstream activation-audit entity the same per-entity durab
 
 ## What remains pending
 - shared implemented-product relational bundle extension through `setup_revision_activation_record` is completed later in `docs/project/implemented-product-setup-revision-activation-composition-model.md`
-- opt-in real-Postgres integration coverage for the extended shared bundle through `setup_revision_activation_record`
+- opt-in real-Postgres integration coverage for the extended shared bundle through `setup_revision_activation_record` is completed later in `docs/project/implemented-product-setup-revision-activation-integration-model.md`
 - later downstream execution/mutation durable slices after `setup_revision_activation_record`
 - runtime detection, evaluation, aggregation, review, and execution engines
 - exchange ingestion and UI work

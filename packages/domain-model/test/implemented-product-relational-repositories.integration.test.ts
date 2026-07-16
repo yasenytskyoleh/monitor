@@ -20,6 +20,7 @@ import {
   type SetupAggregateResult,
   type SetupDefinition,
   type SetupDefinitionRevision,
+  type SetupRevisionActivationRecord,
   type SetupRefinementRequest,
   type SetupLifecycleMutationRecord,
   type SignalCandidate
@@ -71,6 +72,10 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260708101500_product_domain_setup_definition_revision_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260711103000_product_domain_setup_revision_activation_record_relational_v1/migration.sql"
   )
 ];
 
@@ -349,6 +354,23 @@ const buildSetupDefinitionRevision = (
   updatedAt: "2026-05-24T11:15:00.000Z"
 });
 
+const buildSetupRevisionActivationRecord = (
+  id: string,
+  targetRevisionId: string,
+  targetSetupDefinitionId: string
+): SetupRevisionActivationRecord => ({
+  id,
+  setupFamilyId: "setup-family-002",
+  targetRevisionId,
+  targetSetupDefinitionId,
+  activatedBy: "research-reviewer-002",
+  activatedAt: "2026-05-24T11:20:00.000Z",
+  activationOutcome: "activated",
+  rationale: "Promote the accepted revision into the shared integration path.",
+  createdAt: "2026-05-24T11:20:00.000Z",
+  updatedAt: "2026-05-24T11:20:00.000Z"
+});
+
 const withPgClient = async <T>(connectionString: string, work: (client: Client) => Promise<T>): Promise<T> => {
   const client = new Client({ connectionString });
   await client.connect();
@@ -400,7 +422,7 @@ const withIntegrationRepositories = async <T>(
 const integrationTest = INTEGRATION_DATABASE_URL ? test : test.skip;
 
 integrationTest(
-  "shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision against real Postgres",
+  "shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record against real Postgres",
   async () => {
     await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
       await repositories.setupDefinitionRepository.create({
@@ -555,6 +577,17 @@ integrationTest(
           sourceObservedAtUtc: "2026-05-24T11:15:00.000Z"
         }
       });
+      await repositories.setupRevisionActivationRecordRepository.create({
+        activation: buildSetupRevisionActivationRecord(
+          "activation-001",
+          "revision-001",
+          "setup-003"
+        ),
+        metadata: {
+          ...metadata,
+          sourceObservedAtUtc: "2026-05-24T11:20:00.000Z"
+        }
+      });
 
       const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
       const storedEvaluation =
@@ -583,6 +616,8 @@ integrationTest(
         await repositories.setupRefinementRequestRepository.getById("refinement-001");
       const storedRevision =
         await repositories.setupDefinitionRevisionRepository.getById("revision-001");
+      const storedActivation =
+        await repositories.setupRevisionActivationRecordRepository.getById("activation-001");
       const envelopesForReviewDecision =
         await repositories.routedActionExecutionEnvelopeRepository.listByReviewDecisionId(
           "review-decision-001"
@@ -591,6 +626,14 @@ integrationTest(
         await repositories.setupLifecycleMutationRecordRepository.listByApprovalId("approval-001");
       const refinementRequestsForApproval =
         await repositories.setupRefinementRequestRepository.listByApprovalId("approval-002");
+      const activationsForFamily =
+        await repositories.setupRevisionActivationRecordRepository.listBySetupFamilyId(
+          "setup-family-002"
+        );
+      const activationsForTarget =
+        await repositories.setupRevisionActivationRecordRepository.listByTargetRevisionId(
+          "revision-001"
+        );
       const aggregateRows = await repositories.prismaClient.setupAggregateResultRecord.findMany({
         orderBy: { setupAggregateResultId: "asc" }
       });
@@ -626,6 +669,11 @@ integrationTest(
           where: { setupFamilyId: "setup-family-002" },
           orderBy: { setupVersionNumber: "asc" }
         });
+      const setupRevisionActivationRows =
+        await repositories.prismaClient.setupRevisionActivationRecordRecord.findMany({
+          where: { setupFamilyId: "setup-family-002" },
+          orderBy: { activatedAtUtc: "asc" }
+        });
 
       assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
       assert.equal(storedEvaluation?.id, "result-001");
@@ -657,6 +705,9 @@ integrationTest(
       assert.equal(storedRevision?.setupDefinitionId, "setup-003");
       assert.equal(storedRevision?.previousSetupDefinitionId, "setup-002");
       assert.equal(storedRevision?.sourceSetupRefinementRequestId, "refinement-001");
+      assert.equal(storedActivation?.targetRevisionId, "revision-001");
+      assert.equal(storedActivation?.targetSetupDefinitionId, "setup-003");
+      assert.equal(storedActivation?.activationOutcome, "activated");
       assert.equal(envelopesForReviewDecision.length, 1);
       assert.equal(
         envelopesForReviewDecision[0]?.routeMetadataSnapshot.authorizedNextAction,
@@ -669,6 +720,10 @@ integrationTest(
         refinementRequestsForApproval[0]?.sourceResearchFeedbackDecisionId,
         "feedback-002"
       );
+      assert.equal(activationsForFamily.length, 1);
+      assert.equal(activationsForFamily[0]?.id, "activation-001");
+      assert.equal(activationsForTarget.length, 1);
+      assert.equal(activationsForTarget[0]?.setupFamilyId, "setup-family-002");
       assert.equal(aggregateRows.length, 2);
       assert.equal(aggregateRows[0]?.completedEvaluations, 1);
       assert.equal(aggregateRows[1]?.setupDefinitionId, "setup-002");
@@ -707,6 +762,12 @@ integrationTest(
         setupDefinitionRevisionRows[0]?.sourceSetupRefinementRequestId,
         "refinement-001"
       );
+      assert.equal(setupRevisionActivationRows.length, 1);
+      assert.equal(setupRevisionActivationRows[0]?.targetRevisionId, "revision-001");
+      assert.equal(
+        setupRevisionActivationRows[0]?.targetSetupDefinitionId,
+        "setup-003"
+      );
     });
   }
 );
@@ -744,6 +805,39 @@ integrationTest(
           error.entityType === "setup_definition_revision" &&
           error.referenceEntityType === "setup_refinement_request" &&
           error.referenceEntityId === "refinement-missing"
+      );
+    });
+  }
+);
+
+integrationTest(
+  "shared implemented-product bundle maps invalid setup-revision activation target-revision linkage from real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      await repositories.setupDefinitionRepository.create({
+        definition: {
+          ...buildSetupDefinition("setup-003"),
+          status: "draft"
+        },
+        metadata
+      });
+
+      await assert.rejects(
+        async () =>
+          repositories.setupRevisionActivationRecordRepository.create({
+            activation: buildSetupRevisionActivationRecord(
+              "activation-missing-revision",
+              "revision-missing",
+              "setup-003"
+            ),
+            metadata
+          }),
+        (error: unknown) =>
+          error instanceof RepositoryError &&
+          error.code === "invalid_reference" &&
+          error.entityType === "setup_revision_activation_record" &&
+          error.referenceEntityType === "setup_definition_revision" &&
+          error.referenceEntityId === "revision-missing"
       );
     });
   }
