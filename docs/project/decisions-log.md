@@ -91,6 +91,7 @@
   - `ResearchReviewDecision`
   - `RoutedActionExecutionEnvelope`
   - `SetupLifecycleMutationRecord`
+  - `SetupRefinementRequest`
 - first durable relational persistence contract now exists for:
   - `setup_definition`
   - `research_hypothesis`
@@ -136,6 +137,24 @@
 - setup-lifecycle-mutation-record adapter-backed relational repository and concrete Prisma adapter now exist
 - shared implemented-product composition now extends through setup-lifecycle-mutation-record
 - shared implemented-product real-Postgres integration now extends through setup-lifecycle-mutation-record
+- `setup_refinement_request` is now the selected first later downstream execution/mutation durable slice
+- setup-refinement-request durable relational contract now exists
+- setup-refinement-request Prisma physical schema and migration layout now exist
+- setup-refinement-request relational adapter contract now exists
+- setup-refinement-request adapter-backed relational repository and concrete Prisma adapter now exist
+- shared implemented-product composition now extends through setup-refinement-request
+- shared implemented-product real-Postgres integration now extends through setup-refinement-request
+- `setup_definition_revision` durable relational contract now exists
+- `setup_definition_revision` Prisma physical schema and migration layout now exist
+- `setup_definition_revision` relational adapter contract now exists
+- `setup_definition_revision` adapter-backed relational repository and concrete Prisma adapter now exist
+- shared implemented-product composition now extends through setup-definition-revision
+- shared implemented-product real-Postgres integration now extends through setup-definition-revision
+- setup-revision-activation-record durable relational contract now exists
+- setup-revision-activation-record Prisma physical schema and migration layout now exist
+- setup-revision-activation-record relational adapter contract now exists
+- setup-revision-activation-record adapter-backed relational repository and concrete Prisma adapter now exist
+- shared implemented-product composition now extends through setup-revision-activation-record
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -145,4 +164,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is: **define the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`**
+- the currently recommended next step is: **extend opt-in real-Postgres integration through `setup_revision_activation_record`**

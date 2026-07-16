@@ -33,6 +33,27 @@ import {
   composeSetupLifecycleMutationRecordRelationalRepositories,
   type SetupLifecycleMutationRecordRelationalRepositories
 } from "./setup-lifecycle-mutation-record-relational-repositories.js";
+import type {
+  SetupDefinitionRevisionRelationalRepositoryAdapter
+} from "./setup-definition-revision-relational-repository-adapter.js";
+import {
+  composeSetupDefinitionRevisionRelationalRepositories,
+  type SetupDefinitionRevisionRelationalRepositories
+} from "./setup-definition-revision-relational-repositories.js";
+import type {
+  SetupRevisionActivationRecordRelationalRepositoryAdapter
+} from "./setup-revision-activation-record-relational-repository-adapter.js";
+import {
+  composeSetupRevisionActivationRecordRelationalRepositories,
+  type SetupRevisionActivationRecordRelationalRepositories
+} from "./setup-revision-activation-record-relational-repositories.js";
+import type {
+  SetupRefinementRequestRelationalRepositoryAdapter
+} from "./setup-refinement-request-relational-repository-adapter.js";
+import {
+  composeSetupRefinementRequestRelationalRepositories,
+  type SetupRefinementRequestRelationalRepositories
+} from "./setup-refinement-request-relational-repositories.js";
 import {
   composeResearchFeedbackDecisionRelationalRepositories,
   type ResearchFeedbackDecisionRelationalRepositories
@@ -64,6 +85,10 @@ export type ImplementedProductRelationalAdapters = {
   reviewDecisionAdapter: ResearchReviewDecisionRelationalRepositoryAdapter;
   routedActionAdapter: RoutedActionExecutionEnvelopeRelationalRepositoryAdapter;
   setupLifecycleMutationRecordAdapter: SetupLifecycleMutationRecordRelationalRepositoryAdapter;
+  setupDefinitionRevisionAdapter: SetupDefinitionRevisionRelationalRepositoryAdapter;
+  setupRefinementRequestAdapter: SetupRefinementRequestRelationalRepositoryAdapter;
+  setupRevisionActivationRecordAdapter:
+    SetupRevisionActivationRecordRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalRepositories =
@@ -74,7 +99,10 @@ export type ImplementedProductRelationalRepositories =
   ResearchDecisionApprovalRelationalRepositories &
   ResearchReviewDecisionRelationalRepositories &
   RoutedActionExecutionEnvelopeRelationalRepositories &
-  SetupLifecycleMutationRecordRelationalRepositories;
+  SetupLifecycleMutationRecordRelationalRepositories &
+  SetupDefinitionRevisionRelationalRepositories &
+  SetupRefinementRequestRelationalRepositories &
+  SetupRevisionActivationRecordRelationalRepositories;
 
 export const composeImplementedProductRelationalRepositories = (
   adapters: ImplementedProductRelationalAdapters
@@ -88,5 +116,14 @@ export const composeImplementedProductRelationalRepositories = (
   ...composeRoutedActionExecutionEnvelopeRelationalRepositories(adapters.routedActionAdapter),
   ...composeSetupLifecycleMutationRecordRelationalRepositories(
     adapters.setupLifecycleMutationRecordAdapter
+  ),
+  ...composeSetupDefinitionRevisionRelationalRepositories(
+    adapters.setupDefinitionRevisionAdapter
+  ),
+  ...composeSetupRefinementRequestRelationalRepositories(
+    adapters.setupRefinementRequestAdapter
+  ),
+  ...composeSetupRevisionActivationRecordRelationalRepositories(
+    adapters.setupRevisionActivationRecordAdapter
   )
 });

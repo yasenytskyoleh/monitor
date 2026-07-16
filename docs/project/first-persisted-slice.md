@@ -11,6 +11,14 @@ Since that initial slice was established, the repo now has **implemented in-memo
 - `SignalCandidate`
 - `EvaluationResult`
 - `SetupAggregateResult`
+- `ResearchFeedbackDecision`
+- `ResearchDecisionApproval`
+- `ResearchReviewDecision`
+- `RoutedActionExecutionEnvelope`
+- `SetupLifecycleMutationRecord`
+- `SetupRefinementRequest`
+- `SetupDefinitionRevision`
+- `SetupRevisionActivationRecord`
 
 ## Why this slice first
 - directly supports the product promise: structured, testable research workflows
@@ -19,7 +27,7 @@ Since that initial slice was established, the repo now has **implemented in-memo
 - keeps initial implementation scope narrow and reviewable
 
 ## What is now implemented
-- concrete in-memory repositories for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, and `SetupAggregateResult`
+- concrete in-memory repositories for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, `ResearchFeedbackDecision`, `ResearchDecisionApproval`, `ResearchReviewDecision`, `RoutedActionExecutionEnvelope`, `SetupLifecycleMutationRecord`, `SetupRefinementRequest`, `SetupDefinitionRevision`, and `SetupRevisionActivationRecord`
 - optimistic version checks through `expectedVersion` repository contracts
 - persisted status/lifecycle updates through explicit repository status methods
 - persisted records remain product-domain entities and are not stored in orchestrator runtime folders
@@ -30,13 +38,23 @@ Implementation references:
 - `packages/domain-model/src/repositories/signal-candidate-repository.impl.ts`
 - `packages/domain-model/src/repositories/evaluation-result-repository.impl.ts`
 - `packages/domain-model/src/repositories/setup-aggregate-result-repository.impl.ts`
+- `packages/domain-model/src/repositories/research-feedback-decision-repository.impl.ts`
+- `packages/domain-model/src/repositories/research-decision-approval-repository.impl.ts`
+- `packages/domain-model/src/repositories/research-review-decision-repository.impl.ts`
+- `packages/domain-model/src/repositories/routed-action-execution-envelope-repository.impl.ts`
+- `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-repository.impl.ts`
+- `packages/domain-model/src/repositories/setup-refinement-request-repository.impl.ts`
+- `packages/domain-model/src/repositories/setup-definition-revision-repository.impl.ts`
+- `packages/domain-model/src/repositories/setup-revision-activation-record-repository.impl.ts`
 
 ## Write ownership now enforced
 - `SetupDefinitionService` owns setup creation, updates, activation, archiving, and required-field validation
 - `ResearchService` owns hypothesis creation, updates, status transitions, and controlled linkage to setup definitions
+- `ResearchService` now also owns feedback-decision, approval, review-decision, routed-action-execution-envelope, and setup-refinement-request write paths
 - `SignalCandidateService` owns candidate creation and lifecycle transitions
 - `EvaluationService` owns evaluation result creation/finality rules
 - `ResearchAggregationService` owns aggregate recomputation and lifecycle transitions
+- `SetupDefinitionService` now also owns setup-definition-revision, setup-lifecycle-mutation, and setup-revision activation write paths
 - repositories persist and retrieve records, while services enforce write semantics and transitions
 
 Implementation references:
@@ -47,12 +65,13 @@ Implementation references:
 - `packages/domain-model/src/services/research-aggregation-service.ts`
 
 ## Durable relational persistence pending
-- durable relational contract now exists for `setup_definition` and `research_hypothesis`
-- relational adapter rollout design now exists for `setup_definition` and `research_hypothesis`
-- first physical Prisma schema and initial migration now exist for `setup_definition` and `research_hypothesis`
-- adapter-backed relational repositories and in-memory adapter harness now exist for `setup_definition` and `research_hypothesis`
-- Prisma client/runtime wiring
-- concrete Prisma adapter
+- durable relational contracts and committed Prisma schema/migrations now extend through `setup_revision_activation_record`
+- repository adapter contracts now also extend through `setup_revision_activation_record`
+- adapter-backed relational repositories, concrete Prisma adapters, and slice-level shared composition now extend through `setup_revision_activation_record`
+- shared implemented-product composition now also extends through `setup_revision_activation_record`
+- opt-in real-database integration now also extends through `setup_definition_revision`
+- opt-in real-database integration rollout for `setup_revision_activation_record`
+- later downstream execution/mutation durable slices after `setup_revision_activation_record`
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI

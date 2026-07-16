@@ -1,25 +1,25 @@
 # Next Steps
 
 ## Current recommended next step
-### Define the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
+### Extend opt-in real-Postgres integration through `setup_revision_activation_record`
 
 Reason:
-- one shared Prisma-backed repository bundle and one opt-in real-Postgres integration path now span the full implemented product chain through `setup_lifecycle_mutation_record`
-- the current implemented product chain now has durable relational parity, shared composition, and shared integration coverage through `setup_lifecycle_mutation_record`
-- the remaining persistence gap is now the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
+- one shared Prisma-backed repository bundle now already spans the full implemented product chain through `setup_revision_activation_record`
+- `setup_revision_activation_record` now already has implemented in-memory persistence, a committed durable relational contract, Prisma schema/migration coverage, a relational adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, slice-level shared composition, and shared implemented-product bundle coverage
+- the next missing downstream persistence layer is the opt-in real-database integration extension that proves the activation slice works in the full-chain Prisma bundle against committed migrations
 - runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
+- the next persistence gap is now opt-in real-Postgres integration through `setup_revision_activation_record`, followed by later downstream execution/mutation durable slices
 
 ## Recommended near-future sequence
-1. define the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
-2. add its durable contract/schema plus adapter-backed repository rollout
-3. only then extend shared composition and opt-in real-Postgres integration through that slice
+1. extend the opt-in real-Postgres integration path through `setup_revision_activation_record`
+2. only then continue into later downstream execution/mutation durable slices
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
 - expanding into runtime review/execution workflow logic prematurely
-- mixing later mutation/refinement/activation runtime behavior into downstream durable-slice planning and rollout work
+- mixing activation workflow semantics or later mutation/refinement runtime behavior into downstream durable-slice planning and rollout work
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

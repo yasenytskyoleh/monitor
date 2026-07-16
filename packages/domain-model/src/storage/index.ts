@@ -82,6 +82,27 @@ export type {
   SetupLifecycleMutationRecordRelationalEntityType
 } from "./setup-lifecycle-mutation-record-relational-slice.js";
 export {
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_ENTITY_TYPES
+} from "./setup-refinement-request-relational-slice.js";
+export type {
+  SetupRefinementRequestDurableRecord,
+  SetupRefinementRequestRelationalEntityType
+} from "./setup-refinement-request-relational-slice.js";
+export {
+  SETUP_DEFINITION_REVISION_RELATIONAL_ENTITY_TYPES
+} from "./setup-definition-revision-relational-slice.js";
+export type {
+  SetupDefinitionRevisionDurableRecord,
+  SetupDefinitionRevisionRelationalEntityType
+} from "./setup-definition-revision-relational-slice.js";
+export {
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ENTITY_TYPES
+} from "./setup-revision-activation-record-relational-slice.js";
+export type {
+  SetupRevisionActivationRecordDurableRecord,
+  SetupRevisionActivationRecordRelationalEntityType
+} from "./setup-revision-activation-record-relational-slice.js";
+export {
   FIRST_DURABLE_RELATIONAL_DATABASE_SCHEMA,
   FIRST_DURABLE_RELATIONAL_INDEXES,
   FIRST_DURABLE_RELATIONAL_MIGRATION_SLUG,
@@ -184,6 +205,44 @@ export type {
   SetupLifecycleMutationRecordRelationalPrismaModelName,
   SetupLifecycleMutationRecordRelationalTableName
 } from "./setup-lifecycle-mutation-record-relational-physical-schema.js";
+export {
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_INDEXES,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_MIGRATION_SLUG,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_PRISMA_MODELS,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_TABLES
+} from "./setup-refinement-request-relational-physical-schema.js";
+export type {
+  SetupRefinementRequestRelationalIndexName,
+  SetupRefinementRequestRelationalPrismaModelName,
+  SetupRefinementRequestRelationalTableName
+} from "./setup-refinement-request-relational-physical-schema.js";
+export {
+  SETUP_DEFINITION_REVISION_RELATIONAL_INDEXES,
+  SETUP_DEFINITION_REVISION_RELATIONAL_MIGRATION_SLUG,
+  SETUP_DEFINITION_REVISION_RELATIONAL_PRISMA_MODELS,
+  SETUP_DEFINITION_REVISION_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_DEFINITION_REVISION_RELATIONAL_TABLES,
+  SETUP_DEFINITION_REVISION_RELATIONAL_UNIQUE_CONSTRAINTS
+} from "./setup-definition-revision-relational-physical-schema.js";
+export type {
+  SetupDefinitionRevisionRelationalIndexName,
+  SetupDefinitionRevisionRelationalPrismaModelName,
+  SetupDefinitionRevisionRelationalTableName,
+  SetupDefinitionRevisionRelationalUniqueConstraintName
+} from "./setup-definition-revision-relational-physical-schema.js";
+export {
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_INDEXES,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_MIGRATION_SLUG,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_PRISMA_MODELS,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_TABLES
+} from "./setup-revision-activation-record-relational-physical-schema.js";
+export type {
+  SetupRevisionActivationRecordRelationalIndexName,
+  SetupRevisionActivationRecordRelationalPrismaModelName,
+  SetupRevisionActivationRecordRelationalTableName
+} from "./setup-revision-activation-record-relational-physical-schema.js";
 
 export type {
   EntityIdentity,

@@ -117,6 +117,37 @@ enum ApprovedSetupLifecycleAction {
   @@schema("product_domain")
 }
 
+enum SetupRefinementStatus {
+  proposed
+  accepted
+  in_progress
+  completed
+  rejected
+
+  @@map("setup_refinement_status")
+  @@schema("product_domain")
+}
+
+enum SetupDefinitionRevisionStatus {
+  draft
+  proposed
+  accepted
+  superseded
+  rejected
+
+  @@map("setup_definition_revision_status")
+  @@schema("product_domain")
+}
+
+enum SetupRevisionActivationRecordOutcome {
+  activated
+  superseded_previous
+  already_active
+
+  @@map("setup_revision_activation_record_outcome")
+  @@schema("product_domain")
+}
+
 enum ResearchFeedbackDecisionStatus {
   proposed
   reviewed
@@ -228,7 +259,12 @@ model SetupDefinitionRecord {
   aggregateResults          SetupAggregateResultRecord[]
   feedbackDecisions         ResearchFeedbackDecisionRecord[]
   decisionApprovals         ResearchDecisionApprovalRecord[]
+  currentSetupDefinitionRevisions SetupDefinitionRevisionRecord[]        @relation("SetupDefinitionRevisionCurrentSetup")
+  supersedingSetupDefinitionRevisions SetupDefinitionRevisionRecord[]    @relation("SetupDefinitionRevisionPreviousSetup")
+  targetSetupRevisionActivationRecords SetupRevisionActivationRecordRecord[] @relation("SetupRevisionActivationRecordTargetSetup")
+  previousSetupRevisionActivationRecords SetupRevisionActivationRecordRecord[] @relation("SetupRevisionActivationRecordPreviousSetup")
   setupLifecycleMutationRecords SetupLifecycleMutationRecordRecord[]
+  setupRefinementRequests   SetupRefinementRequestRecord[]
 
   @@index([definitionStatus], map: "idx_setup_definition_definition_status")
   @@index([lifecycleStatus], map: "idx_setup_definition_lifecycle_status")
@@ -429,7 +465,9 @@ model ResearchFeedbackDecisionRecord {
   researchHypothesis         ResearchHypothesisRecord       @relation(fields: [researchHypothesisId], references: [researchHypothesisId], onDelete: Restrict, onUpdate: Cascade)
   setupAggregateResult       SetupAggregateResultRecord?    @relation(fields: [setupAggregateResultId], references: [setupAggregateResultId], onDelete: Restrict, onUpdate: Cascade)
   approvals                  ResearchDecisionApprovalRecord[]
+  setupDefinitionRevisions   SetupDefinitionRevisionRecord[] @relation("SetupDefinitionRevisionFeedback")
   setupLifecycleMutationRecords SetupLifecycleMutationRecordRecord[]
+  setupRefinementRequests    SetupRefinementRequestRecord[] @relation("SetupRefinementRequestFeedback")
 
   @@index([setupDefinitionId], map: "idx_research_feedback_decision_setup_definition_id")
   @@index([researchHypothesisId], map: "idx_research_feedback_decision_research_hypothesis_id")
@@ -464,7 +502,9 @@ model ResearchDecisionApprovalRecord {
   archivedAtUtc              DateTime?                       @map("archived_at_utc") @db.Timestamptz(3)
   researchFeedbackDecision   ResearchFeedbackDecisionRecord  @relation(fields: [researchFeedbackDecisionId], references: [researchFeedbackDecisionId], onDelete: Restrict, onUpdate: Cascade)
   setupDefinition            SetupDefinitionRecord           @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+  setupDefinitionRevisions   SetupDefinitionRevisionRecord[] @relation("SetupDefinitionRevisionApproval")
   setupLifecycleMutationRecords SetupLifecycleMutationRecordRecord[]
+  setupRefinementRequests    SetupRefinementRequestRecord[] @relation("SetupRefinementRequestApproval")
 
   @@index([setupDefinitionId], map: "idx_research_decision_approval_setup_definition_id")
   @@index([approvalOutcome], map: "idx_research_decision_approval_approval_outcome")
@@ -580,5 +620,122 @@ model SetupLifecycleMutationRecordRecord {
   @@index([researchFeedbackDecisionId], map: "idx_setup_lifecycle_mutation_record_feedback_id")
   @@index([approvedAction], map: "idx_setup_lifecycle_mutation_record_approved_action")
   @@map("setup_lifecycle_mutation_record")
+  @@schema("product_domain")
+}
+
+model SetupRefinementRequestRecord {
+  setupRefinementRequestId         String                         @id(map: "setup_refinement_request_pkey") @map("setup_refinement_request_id") @db.Text
+  version                          Int                            @map("version")
+  lifecycleStatus                  PersistedLifecycleStatus       @map("lifecycle_status")
+  setupDefinitionId                String                         @map("setup_definition_id") @db.Text
+  sourceResearchDecisionApprovalId String                         @map("source_research_decision_approval_id") @db.Text
+  sourceResearchFeedbackDecisionId String                         @map("source_research_feedback_decision_id") @db.Text
+  refinementStatus                 SetupRefinementStatus          @map("refinement_status")
+  refinementRationaleSummary       String                         @map("refinement_rationale_summary") @db.Text
+  requestedChangesSummary          String                         @map("requested_changes_summary") @db.Text
+  evidenceReferences               String[]                       @map("evidence_references")
+  requestedBy                      String                         @map("requested_by") @db.Text
+  requestedAtUtc                   DateTime                       @map("requested_at_utc") @db.Timestamptz(3)
+  assignedReviewerId               String?                        @map("assigned_reviewer_id") @db.Text
+  assignedOwnerId                  String?                        @map("assigned_owner_id") @db.Text
+  originRunId                      String?                        @map("origin_run_id") @db.Text
+  originTransitionId               String?                        @map("origin_transition_id") @db.Text
+  createdBySource                  ProductRecordSource            @map("created_by_source")
+  lastUpdatedBySource              ProductRecordSource            @map("last_updated_by_source")
+  traceId                          String?                        @map("trace_id") @db.Text
+  sourceObservedAtUtc              DateTime?                      @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes                    String?                        @map("metadata_notes") @db.Text
+  createdAtUtc                     DateTime                       @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc                     DateTime                       @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc                    DateTime?                      @map("archived_at_utc") @db.Timestamptz(3)
+  setupDefinition                  SetupDefinitionRecord          @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+  sourceResearchDecisionApproval   ResearchDecisionApprovalRecord @relation("SetupRefinementRequestApproval", fields: [sourceResearchDecisionApprovalId], references: [researchDecisionApprovalId], onDelete: Restrict, onUpdate: Cascade)
+  sourceResearchFeedbackDecision   ResearchFeedbackDecisionRecord @relation("SetupRefinementRequestFeedback", fields: [sourceResearchFeedbackDecisionId], references: [researchFeedbackDecisionId], onDelete: Restrict, onUpdate: Cascade)
+  setupDefinitionRevisions         SetupDefinitionRevisionRecord[]
+
+  @@index([setupDefinitionId], map: "idx_setup_refinement_request_setup_definition_id")
+  @@index([sourceResearchDecisionApprovalId], map: "idx_setup_refinement_request_approval_id")
+  @@index([sourceResearchFeedbackDecisionId], map: "idx_setup_refinement_request_feedback_id")
+  @@index([refinementStatus], map: "idx_setup_refinement_request_refinement_status")
+  @@map("setup_refinement_request")
+  @@schema("product_domain")
+}
+
+model SetupDefinitionRevisionRecord {
+  setupDefinitionRevisionId         String                          @id(map: "setup_definition_revision_pkey") @map("setup_definition_revision_id") @db.Text
+  version                           Int                             @map("version")
+  lifecycleStatus                   PersistedLifecycleStatus        @map("lifecycle_status")
+  setupDefinitionId                 String                          @map("setup_definition_id") @db.Text
+  previousSetupDefinitionId         String?                         @map("previous_setup_definition_id") @db.Text
+  setupFamilyId                     String                          @map("setup_family_id") @db.Text
+  setupVersionNumber                Int                             @map("setup_version_number")
+  previousRevisionId                String?                         @map("previous_revision_id") @db.Text
+  revisionReason                    String                          @map("revision_reason") @db.Text
+  revisionStatus                    SetupDefinitionRevisionStatus   @map("revision_status")
+  changedFieldsSummary              String                          @map("changed_fields_summary") @db.Text
+  createdBy                         String                          @map("created_by") @db.Text
+  notes                             String?                         @map("notes") @db.Text
+  sourceSetupRefinementRequestId    String                          @map("source_setup_refinement_request_id") @db.Text
+  sourceResearchDecisionApprovalId  String?                         @map("source_research_decision_approval_id") @db.Text
+  sourceResearchFeedbackDecisionId  String?                         @map("source_research_feedback_decision_id") @db.Text
+  originRunId                       String?                         @map("origin_run_id") @db.Text
+  originTransitionId                String?                         @map("origin_transition_id") @db.Text
+  createdBySource                   ProductRecordSource             @map("created_by_source")
+  lastUpdatedBySource               ProductRecordSource             @map("last_updated_by_source")
+  traceId                           String?                         @map("trace_id") @db.Text
+  sourceObservedAtUtc               DateTime?                       @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes                     String?                         @map("metadata_notes") @db.Text
+  createdAtUtc                      DateTime                        @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc                      DateTime                        @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc                     DateTime?                       @map("archived_at_utc") @db.Timestamptz(3)
+  setupDefinition                   SetupDefinitionRecord           @relation("SetupDefinitionRevisionCurrentSetup", fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+  previousSetupDefinition           SetupDefinitionRecord?          @relation("SetupDefinitionRevisionPreviousSetup", fields: [previousSetupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+  sourceSetupRefinementRequest      SetupRefinementRequestRecord    @relation(fields: [sourceSetupRefinementRequestId], references: [setupRefinementRequestId], onDelete: Restrict, onUpdate: Cascade)
+  sourceResearchDecisionApproval    ResearchDecisionApprovalRecord? @relation("SetupDefinitionRevisionApproval", fields: [sourceResearchDecisionApprovalId], references: [researchDecisionApprovalId], onDelete: Restrict, onUpdate: Cascade)
+  sourceResearchFeedbackDecision    ResearchFeedbackDecisionRecord? @relation("SetupDefinitionRevisionFeedback", fields: [sourceResearchFeedbackDecisionId], references: [researchFeedbackDecisionId], onDelete: Restrict, onUpdate: Cascade)
+  targetSetupRevisionActivationRecords   SetupRevisionActivationRecordRecord[] @relation("SetupRevisionActivationRecordTargetRevision")
+  previousSetupRevisionActivationRecords SetupRevisionActivationRecordRecord[] @relation("SetupRevisionActivationRecordPreviousRevision")
+
+  @@unique([setupDefinitionId], map: "uq_setup_definition_revision_setup_definition_id")
+  @@unique([setupFamilyId, setupVersionNumber], map: "uq_setup_definition_revision_family_version")
+  @@index([previousSetupDefinitionId], map: "idx_setup_definition_revision_previous_setup_definition_id")
+  @@index([sourceSetupRefinementRequestId], map: "idx_setup_definition_revision_source_refinement_request_id")
+  @@index([revisionStatus], map: "idx_setup_definition_revision_revision_status")
+  @@map("setup_definition_revision")
+  @@schema("product_domain")
+}
+
+model SetupRevisionActivationRecordRecord {
+  setupRevisionActivationRecordId String                              @id(map: "setup_revision_activation_record_pkey") @map("setup_revision_activation_record_id") @db.Text
+  version                         Int                                 @map("version")
+  lifecycleStatus                 PersistedLifecycleStatus            @map("lifecycle_status")
+  setupFamilyId                   String                              @map("setup_family_id") @db.Text
+  targetRevisionId                String                              @map("target_revision_id") @db.Text
+  targetSetupDefinitionId         String                              @map("target_setup_definition_id") @db.Text
+  previousRevisionId              String?                             @map("previous_revision_id") @db.Text
+  previousSetupDefinitionId       String?                             @map("previous_setup_definition_id") @db.Text
+  activatedBy                     String                              @map("activated_by") @db.Text
+  activatedAtUtc                  DateTime                            @map("activated_at_utc") @db.Timestamptz(3)
+  activationOutcome               SetupRevisionActivationRecordOutcome @map("activation_outcome")
+  rationale                       String?                             @map("rationale") @db.Text
+  originRunId                     String?                             @map("origin_run_id") @db.Text
+  originTransitionId              String?                             @map("origin_transition_id") @db.Text
+  createdBySource                 ProductRecordSource                 @map("created_by_source")
+  lastUpdatedBySource             ProductRecordSource                 @map("last_updated_by_source")
+  traceId                         String?                             @map("trace_id") @db.Text
+  sourceObservedAtUtc             DateTime?                           @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes                   String?                             @map("metadata_notes") @db.Text
+  createdAtUtc                    DateTime                            @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc                    DateTime                            @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc                   DateTime?                           @map("archived_at_utc") @db.Timestamptz(3)
+  targetRevision                  SetupDefinitionRevisionRecord       @relation("SetupRevisionActivationRecordTargetRevision", fields: [targetRevisionId], references: [setupDefinitionRevisionId], onDelete: Restrict, onUpdate: Cascade)
+  targetSetupDefinition           SetupDefinitionRecord               @relation("SetupRevisionActivationRecordTargetSetup", fields: [targetSetupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+  previousRevision                SetupDefinitionRevisionRecord?      @relation("SetupRevisionActivationRecordPreviousRevision", fields: [previousRevisionId], references: [setupDefinitionRevisionId], onDelete: Restrict, onUpdate: Cascade)
+  previousSetupDefinition         SetupDefinitionRecord?              @relation("SetupRevisionActivationRecordPreviousSetup", fields: [previousSetupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([setupFamilyId, activatedAtUtc], map: "idx_setup_revision_activation_record_family_activated_at_utc")
+  @@index([targetRevisionId], map: "idx_setup_revision_activation_record_target_revision_id")
+  @@index([activationOutcome], map: "idx_setup_revision_activation_record_activation_outcome")
+  @@map("setup_revision_activation_record")
   @@schema("product_domain")
 }

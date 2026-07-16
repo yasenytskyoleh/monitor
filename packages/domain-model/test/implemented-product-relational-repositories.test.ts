@@ -8,9 +8,12 @@ import {
   InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter,
   InMemoryResearchReviewDecisionRelationalRepositoryAdapter,
   InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter,
-  InMemorySetupLifecycleMutationRecordRelationalRepositoryAdapter,
+  InMemorySetupDefinitionRevisionRelationalRepositoryAdapter,
   InMemorySetupAggregateRelationalRepositoryAdapter,
+  InMemorySetupLifecycleMutationRecordRelationalRepositoryAdapter,
   InMemorySignalEvaluationRelationalRepositoryAdapter,
+  InMemorySetupRefinementRequestRelationalRepositoryAdapter,
+  InMemorySetupRevisionActivationRecordRelationalRepositoryAdapter,
   type EvaluationResult,
   type ProductRecordMetadata,
   type ResearchDecisionApproval,
@@ -20,6 +23,9 @@ import {
   type RoutedActionExecutionEnvelope,
   type SetupAggregateResult,
   type SetupDefinition,
+  type SetupDefinitionRevision,
+  type SetupRevisionActivationRecord,
+  type SetupRefinementRequest,
   type SetupLifecycleMutationRecord,
   type SignalCandidate
 } from "../src/index.js";
@@ -129,15 +135,16 @@ const buildFeedbackDecision = (
   id: string,
   setupDefinitionId: string,
   researchHypothesisId: string,
-  setupAggregateResultId: string
+  setupAggregateResultId: string,
+  recommendedAction: ResearchFeedbackDecision["recommendedAction"] = "keep_active"
 ): ResearchFeedbackDecision => ({
   id,
   setupDefinitionId,
   researchHypothesisId,
   setupAggregateResultId,
   evidenceStatus: "supports",
-  recommendedAction: "keep_active",
-  rationaleSummary: "aggregate evidence supports keeping the setup active",
+  recommendedAction,
+  rationaleSummary: "aggregate evidence supports the selected follow-up action",
   decisionStatus: "proposed",
   requiresManualReview: true,
   evidenceSummary: "shared bundle feedback decision",
@@ -148,7 +155,8 @@ const buildFeedbackDecision = (
 const buildApproval = (
   id: string,
   researchFeedbackDecisionId: string,
-  setupDefinitionId: string
+  setupDefinitionId: string,
+  authorizedNextAction: ResearchDecisionApproval["authorizedNextAction"] = "keep_active"
 ): ResearchDecisionApproval => ({
   id,
   researchFeedbackDecisionId,
@@ -158,7 +166,7 @@ const buildApproval = (
   approvalOutcome: "approved",
   reviewerNotes: "Approved in composed bundle test.",
   approvalStatus: "recorded",
-  authorizedNextAction: "keep_active",
+  authorizedNextAction,
   createdAt: "2026-05-24T10:30:00.000Z",
   updatedAt: "2026-05-24T10:30:00.000Z"
 });
@@ -241,8 +249,81 @@ const buildMutation = (
   updatedAt: "2026-05-24T11:00:00.000Z"
 });
 
+const buildSetupRefinementRequest = (
+  id: string,
+  setupDefinitionId: string,
+  sourceResearchDecisionApprovalId: string,
+  sourceResearchFeedbackDecisionId: string
+): SetupRefinementRequest => ({
+  id,
+  setupDefinitionId,
+  sourceResearchDecisionApprovalId,
+  sourceResearchFeedbackDecisionId,
+  refinementRationaleSummary:
+    "The setup remains valid but needs tighter refinement follow-up.",
+  requestedChangesSummary:
+    "Tighten invalidation logic and add reclaim-volume confirmation.",
+  evidenceReferences: [sourceResearchFeedbackDecisionId, "aggregate-002"],
+  status: "proposed",
+  requestedBy: "research-service",
+  requestedAt: "2026-05-24T11:10:00.000Z",
+  assignedReviewerId: "reviewer-002",
+  assignedOwnerId: "owner-002",
+  createdAt: "2026-05-24T11:10:00.000Z",
+  updatedAt: "2026-05-24T11:10:00.000Z"
+});
+
+const buildSetupDefinitionRevision = (
+  id: string,
+  setupDefinitionId: string,
+  previousSetupDefinitionId: string,
+  sourceSetupRefinementRequestId: string,
+  sourceResearchDecisionApprovalId?: string,
+  sourceResearchFeedbackDecisionId?: string
+): SetupDefinitionRevision => ({
+  id,
+  setupDefinitionId,
+  previousSetupDefinitionId,
+  versionInfo: {
+    setupFamilyId: "setup-family-002",
+    revisionId: id,
+    version: 2
+  },
+  revisionReason: "Tighten invalidation after approved refinement follow-up.",
+  revisionStatus: "draft",
+  changedFieldsSummary: "Updated measurable conditions and invalidation assumptions.",
+  createdBy: "research-reviewer-002",
+  createdAt: "2026-05-24T11:15:00.000Z",
+  notes: "Prepared in shared bundle test.",
+  sourceSetupRefinementRequestId,
+  ...(sourceResearchDecisionApprovalId
+    ? { sourceResearchDecisionApprovalId }
+    : {}),
+  ...(sourceResearchFeedbackDecisionId
+    ? { sourceResearchFeedbackDecisionId }
+    : {}),
+  updatedAt: "2026-05-24T11:15:00.000Z"
+});
+
+const buildSetupRevisionActivationRecord = (
+  id: string,
+  targetRevisionId: string,
+  targetSetupDefinitionId: string
+): SetupRevisionActivationRecord => ({
+  id,
+  setupFamilyId: "setup-family-002",
+  targetRevisionId,
+  targetSetupDefinitionId,
+  activatedBy: "research-reviewer-002",
+  activatedAt: "2026-05-24T11:20:00.000Z",
+  activationOutcome: "activated",
+  rationale: "Promote the accepted revision into the shared bundle test path.",
+  createdAt: "2026-05-24T11:20:00.000Z",
+  updatedAt: "2026-05-24T11:20:00.000Z"
+});
+
 test(
-  "implemented product repository composition supports the current end-to-end entity chain through setup-lifecycle mutation records",
+  "implemented product repository composition supports the current end-to-end entity chain including setup-revision activation records",
   async () => {
     const firstDurableAdapter = new InMemoryFirstDurableRelationalRepositoryAdapter();
     const setupAggregateAdapter = new InMemorySetupAggregateRelationalRepositoryAdapter(
@@ -267,6 +348,41 @@ test(
       loadSetupDefinitionRecord:
         firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter)
     });
+    const setupRefinementRequestAdapter =
+      new InMemorySetupRefinementRequestRelationalRepositoryAdapter({
+        loadSetupDefinitionRecord:
+          firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter),
+        loadResearchDecisionApprovalRecord:
+          approvalAdapter.loadResearchDecisionApprovalRecord.bind(approvalAdapter),
+        loadResearchFeedbackDecisionRecord:
+          feedbackDecisionAdapter.loadResearchFeedbackDecisionRecord.bind(
+            feedbackDecisionAdapter
+          )
+      });
+    const setupDefinitionRevisionAdapter =
+      new InMemorySetupDefinitionRevisionRelationalRepositoryAdapter({
+        loadSetupDefinitionRecord:
+          firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter),
+        loadSetupRefinementRequestRecord:
+          setupRefinementRequestAdapter.loadSetupRefinementRequest.bind(
+            setupRefinementRequestAdapter
+          ),
+        loadResearchDecisionApprovalRecord:
+          approvalAdapter.loadResearchDecisionApprovalRecord.bind(approvalAdapter),
+        loadResearchFeedbackDecisionRecord:
+          feedbackDecisionAdapter.loadResearchFeedbackDecisionRecord.bind(
+            feedbackDecisionAdapter
+          )
+      });
+    const setupRevisionActivationRecordAdapter =
+      new InMemorySetupRevisionActivationRecordRelationalRepositoryAdapter({
+        loadSetupDefinitionRecord:
+          firstDurableAdapter.loadSetupDefinitionRecord.bind(firstDurableAdapter),
+        loadSetupDefinitionRevisionRecord:
+          setupDefinitionRevisionAdapter.loadSetupDefinitionRevisionRecord.bind(
+            setupDefinitionRevisionAdapter
+          )
+      });
     const repositories = composeImplementedProductRelationalRepositories({
       firstDurableAdapter,
       signalEvaluationAdapter: new InMemorySignalEvaluationRelationalRepositoryAdapter(
@@ -290,7 +406,10 @@ test(
             feedbackDecisionAdapter.loadResearchFeedbackDecisionRecord.bind(
               feedbackDecisionAdapter
             )
-        })
+        }),
+      setupDefinitionRevisionAdapter,
+      setupRefinementRequestAdapter,
+      setupRevisionActivationRecordAdapter
     });
 
     await repositories.setupDefinitionRepository.create({
@@ -338,6 +457,72 @@ test(
       mutation: buildMutation("mutation-001", "setup-001", "approval-001", "feedback-001"),
       metadata
     });
+    await repositories.setupDefinitionRepository.create({
+      definition: buildSetupDefinition("setup-002"),
+      metadata
+    });
+    await repositories.researchHypothesisRepository.create({
+      hypothesis: buildResearchHypothesis("hypothesis-002", "setup-002"),
+      metadata
+    });
+    await repositories.setupAggregateResultRepository.create({
+      aggregate: buildAggregate("aggregate-002", "setup-002", "hypothesis-002"),
+      metadata
+    });
+    await repositories.researchFeedbackDecisionRepository.create({
+      decision: buildFeedbackDecision(
+        "feedback-002",
+        "setup-002",
+        "hypothesis-002",
+        "aggregate-002",
+        "refine_definition"
+      ),
+      metadata
+    });
+    await repositories.researchDecisionApprovalRepository.create({
+      approval: buildApproval(
+        "approval-002",
+        "feedback-002",
+        "setup-002",
+        "refine_definition"
+      ),
+      metadata
+    });
+    await repositories.setupRefinementRequestRepository.create({
+      request: buildSetupRefinementRequest(
+        "refinement-001",
+        "setup-002",
+        "approval-002",
+        "feedback-002"
+      ),
+      metadata
+    });
+    await repositories.setupDefinitionRepository.create({
+      definition: {
+        ...buildSetupDefinition("setup-003"),
+        status: "draft"
+      },
+      metadata
+    });
+    await repositories.setupDefinitionRevisionRepository.create({
+      revision: buildSetupDefinitionRevision(
+        "revision-001",
+        "setup-003",
+        "setup-002",
+        "refinement-001",
+        "approval-002",
+        "feedback-002"
+      ),
+      metadata
+    });
+    await repositories.setupRevisionActivationRecordRepository.create({
+      activation: buildSetupRevisionActivationRecord(
+        "activation-001",
+        "revision-001",
+        "setup-003"
+      ),
+      metadata
+    });
 
     const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
     const storedEvaluation =
@@ -362,6 +547,22 @@ test(
       );
     const storedMutation =
       await repositories.setupLifecycleMutationRecordRepository.getById("mutation-001");
+    const storedRefinementRequest =
+      await repositories.setupRefinementRequestRepository.getById("refinement-001");
+    const storedRevision =
+      await repositories.setupDefinitionRevisionRepository.getById("revision-001");
+    const storedActivation =
+      await repositories.setupRevisionActivationRecordRepository.getById("activation-001");
+    const refinementRequestsForApproval =
+      await repositories.setupRefinementRequestRepository.listByApprovalId("approval-002");
+    const latestRevision =
+      await repositories.setupDefinitionRevisionRepository.getLatestBySetupFamilyId(
+        "setup-family-002"
+      );
+    const activationsForFamily =
+      await repositories.setupRevisionActivationRecordRepository.listBySetupFamilyId(
+        "setup-family-002"
+      );
 
     assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
     assert.equal(storedEvaluation?.id, "result-001");
@@ -382,5 +583,24 @@ test(
     assert.equal(storedMutation?.researchDecisionApprovalId, "approval-001");
     assert.equal(storedMutation?.researchFeedbackDecisionId, "feedback-001");
     assert.equal(storedMutation?.newStatus, "paused");
+    assert.equal(storedRefinementRequest?.setupDefinitionId, "setup-002");
+    assert.equal(
+      storedRefinementRequest?.sourceResearchDecisionApprovalId,
+      "approval-002"
+    );
+    assert.equal(storedRefinementRequest?.assignedOwnerId, "owner-002");
+    assert.equal(refinementRequestsForApproval.length, 1);
+    assert.equal(
+      refinementRequestsForApproval[0]?.sourceResearchFeedbackDecisionId,
+      "feedback-002"
+    );
+    assert.equal(storedRevision?.setupDefinitionId, "setup-003");
+    assert.equal(storedRevision?.previousSetupDefinitionId, "setup-002");
+    assert.equal(storedRevision?.sourceSetupRefinementRequestId, "refinement-001");
+    assert.equal(latestRevision?.id, "revision-001");
+    assert.equal(storedActivation?.targetRevisionId, "revision-001");
+    assert.equal(storedActivation?.targetSetupDefinitionId, "setup-003");
+    assert.equal(activationsForFamily.length, 1);
+    assert.equal(activationsForFamily[0]?.id, "activation-001");
   }
 );

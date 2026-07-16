@@ -14,6 +14,9 @@ import {
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_ENTITY_TYPES,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES,
   type RoutedActionExecutionEnvelopeDurableRecord,
+  SETUP_DEFINITION_REVISION_RELATIONAL_ENTITY_TYPES,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ENTITY_TYPES,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_ENTITY_TYPES,
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_ENTITY_TYPES,
   type ResearchFeedbackDecisionDurableRecord,
   type ResearchHypothesisDurableRecord,
@@ -21,7 +24,10 @@ import {
   SIGNAL_EVALUATION_RELATIONAL_ENTITY_TYPES,
   SETUP_AGGREGATE_RELATIONAL_ENTITY_TYPES,
   type SetupAggregateResultDurableRecord,
+  type SetupDefinitionRevisionDurableRecord,
   type SetupLifecycleMutationRecordDurableRecord,
+  type SetupRevisionActivationRecordDurableRecord,
+  type SetupRefinementRequestDurableRecord,
   type SignalCandidateDurableRecord,
   type SetupDefinitionDurableRecord
 } from "../src/index.js";
@@ -466,4 +472,134 @@ test("supports typed setup-lifecycle-mutation-record durable records", () => {
   assert.equal(setupLifecycleMutationRecord.identity.version, 1);
   assert.equal(setupLifecycleMutationRecord.approvedAction, "pause_setup");
   assert.equal(setupLifecycleMutationRecord.newStatus, "paused");
+});
+
+test("exposes setup-refinement-request durable relational storage planning constants", () => {
+  assert.deepEqual(SETUP_REFINEMENT_REQUEST_RELATIONAL_ENTITY_TYPES, [
+    "setup_refinement_request"
+  ]);
+});
+
+test("supports typed setup-refinement-request durable records", () => {
+  const setupRefinementRequestRecord: SetupRefinementRequestDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "setup_refinement_request",
+      entityId: "setup-refinement-001",
+      version: 1,
+      relatedEntityIds: ["setup-001", "approval-001", "feedback-001"]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-07-06T12:45:00.000Z",
+    updatedAtUtc: "2026-07-06T12:45:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    setupDefinitionId: "setup-001",
+    sourceResearchDecisionApprovalId: "approval-001",
+    sourceResearchFeedbackDecisionId: "feedback-001",
+    refinementStatus: "proposed",
+    refinementRationaleSummary: "Evidence weakened but still justifies a narrower setup rewrite.",
+    requestedChangesSummary: "Tighten invalidation and add volume confirmation.",
+    evidenceReferences: ["aggregate-001", "feedback-001"],
+    requestedBy: "research-operator-001",
+    requestedAtUtc: "2026-07-06T12:45:00.000Z",
+    assignedReviewerId: "reviewer-001",
+    assignedOwnerId: null
+  };
+
+  assert.equal(setupRefinementRequestRecord.identity.version, 1);
+  assert.equal(setupRefinementRequestRecord.refinementStatus, "proposed");
+  assert.equal(setupRefinementRequestRecord.evidenceReferences.length, 2);
+});
+
+test("exposes setup-definition-revision durable relational storage planning constants", () => {
+  assert.deepEqual(SETUP_DEFINITION_REVISION_RELATIONAL_ENTITY_TYPES, [
+    "setup_definition_revision"
+  ]);
+});
+
+test("supports typed setup-definition-revision durable records", () => {
+  const setupDefinitionRevisionRecord: SetupDefinitionRevisionDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "setup_definition_revision",
+      entityId: "setup-revision-001",
+      version: 2,
+      relatedEntityIds: [
+        "setup-breakout-family-v2",
+        "setup-breakout-family-v1",
+        "refinement-001",
+        "approval-001",
+        "feedback-001",
+        "setup-revision-000"
+      ]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-07-08T10:15:00.000Z",
+    updatedAtUtc: "2026-07-08T10:30:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    setupDefinitionId: "setup-breakout-family-v2",
+    previousSetupDefinitionId: "setup-breakout-family-v1",
+    setupFamilyId: "setup-breakout-family",
+    setupVersionNumber: 2,
+    previousRevisionId: "setup-revision-000",
+    revisionReason: "Tighten invalidation and entry timing after refinement review.",
+    revisionStatus: "draft",
+    changedFieldsSummary: "Updated measurable conditions and invalidation assumptions.",
+    createdBy: "research_reviewer_1",
+    notes: "Carry forward the same setup family while awaiting activation review.",
+    sourceSetupRefinementRequestId: "refinement-001",
+    sourceResearchDecisionApprovalId: "approval-001",
+    sourceResearchFeedbackDecisionId: "feedback-001"
+  };
+
+  assert.equal(setupDefinitionRevisionRecord.identity.version, 2);
+  assert.equal(setupDefinitionRevisionRecord.setupVersionNumber, 2);
+  assert.equal(setupDefinitionRevisionRecord.revisionStatus, "draft");
+});
+
+test("exposes setup-revision-activation-record durable relational storage planning constants", () => {
+  assert.deepEqual(SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ENTITY_TYPES, [
+    "setup_revision_activation_record"
+  ]);
+});
+
+test("supports typed setup-revision-activation-record durable records", () => {
+  const setupRevisionActivationRecord: SetupRevisionActivationRecordDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "setup_revision_activation_record",
+      entityId: "setup-activation-setup-breakout-family-revision-002-1751738700000",
+      version: 1,
+      relatedEntityIds: [
+        "setup-breakout-family",
+        "revision-002",
+        "setup-breakout-family-v2",
+        "revision-001",
+        "setup-breakout-family-v1"
+      ]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-07-11T10:45:00.000Z",
+    updatedAtUtc: "2026-07-11T10:45:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    setupFamilyId: "setup-breakout-family",
+    targetRevisionId: "revision-002",
+    targetSetupDefinitionId: "setup-breakout-family-v2",
+    previousRevisionId: "revision-001",
+    previousSetupDefinitionId: "setup-breakout-family-v1",
+    activatedBy: "research_reviewer_1",
+    activatedAtUtc: "2026-07-11T10:45:00.000Z",
+    activationOutcome: "superseded_previous",
+    rationale: "Promote the accepted revision after final operational review."
+  };
+
+  assert.equal(setupRevisionActivationRecord.identity.version, 1);
+  assert.equal(setupRevisionActivationRecord.targetRevisionId, "revision-002");
+  assert.equal(setupRevisionActivationRecord.activationOutcome, "superseded_previous");
 });

@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.31 — Codex-first workflow, bounded autonomous mode, and full implemented-chain shared persistence plus real-database integration through setup-lifecycle mutation records**
+**Phase 1.43 — Codex-first workflow, bounded autonomous mode, shared setup-revision-activation composition, and pending activation integration**
 
 ## What this phase is about
 This phase is focused on:
@@ -24,6 +24,16 @@ The product side now proves that the repo can:
 - extend per-entity durable parity through downstream feedback, approval, review, and execution-envelope entities,
 - complete the first downstream mutation-audit durable repository rollout,
 - extend the shared implemented-product bundle and one opt-in real-database integration path through that mutation-audit slice,
+- define the first later downstream refinement-follow-up durable contract/schema slice as `setup_refinement_request`,
+- complete the adapter-backed repository and concrete Prisma adapter for that slice,
+- extend the shared implemented-product bundle through that slice,
+- extend one opt-in real-database integration path through that slice,
+- commit the next downstream revision-slice durable relational contract, Prisma schema, relational adapter contract, adapter-backed repository, and concrete Prisma adapter for `setup_definition_revision`,
+- extend the shared implemented-product bundle through `setup_definition_revision`,
+- extend one opt-in real-database integration path through `setup_definition_revision`,
+- commit the next downstream activation-audit durable relational contract, Prisma schema, relational adapter contract, adapter-backed repository, and concrete Prisma adapter for `setup_revision_activation_record`,
+- complete shared implemented-product activation-bundle composition,
+- keep activation-record real-database integration as the next bounded persistence step,
 - and keep runtime engines pending.
 
 ## Implemented in this phase (current baseline)
@@ -292,6 +302,96 @@ The product side now proves that the repo can:
   - `docs/project/implemented-product-setup-lifecycle-mutation-integration-model.md`
   - `docs/architecture/adr/ADR-061-implemented-product-setup-lifecycle-mutation-integration-coverage.md`
   - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
+- setup-refinement-request durable relational contract and physical schema:
+  - `docs/project/setup-refinement-request-relational-persistence-model.md`
+  - `docs/architecture/adr/ADR-062-setup-refinement-request-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-063-setup-refinement-request-prisma-schema-layout.md`
+  - `packages/domain-model/src/storage/setup-refinement-request-relational-slice.ts`
+  - `packages/domain-model/src/storage/setup-refinement-request-relational-physical-schema.ts`
+  - `packages/domain-model/prisma/migrations/20260706143000_product_domain_setup_refinement_request_relational_v1/migration.sql`
+- setup-definition-revision durable relational contract and physical schema:
+  - `docs/project/setup-definition-revision-relational-persistence-model.md`
+  - `docs/architecture/adr/ADR-068-setup-definition-revision-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-069-setup-definition-revision-prisma-schema-layout.md`
+  - `packages/domain-model/src/storage/setup-definition-revision-relational-slice.ts`
+  - `packages/domain-model/src/storage/setup-definition-revision-relational-physical-schema.ts`
+  - `packages/domain-model/prisma/migrations/20260708101500_product_domain_setup_definition_revision_relational_v1/migration.sql`
+- setup-definition-revision relational adapter contract:
+  - `docs/project/setup-definition-revision-relational-adapter-model.md`
+  - `docs/architecture/adr/ADR-070-setup-definition-revision-relational-adapter-contract.md`
+  - `packages/domain-model/src/repositories/setup-definition-revision-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/setup-definition-revision-relational-repository-adapter.impl.ts`
+  - `packages/domain-model/test/setup-definition-revision-relational-repository-adapter-contracts.test.ts`
+- setup-definition-revision adapter-backed relational repository and Prisma adapter:
+  - `docs/project/setup-definition-revision-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-071-setup-definition-revision-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/repositories/setup-definition-revision-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/setup-definition-revision-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/setup-definition-revision-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/setup-definition-revision-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/setup-definition-revision-relational-prisma-client.ts`
+  - `packages/domain-model/test/setup-definition-revision-relational-repository-mappers.test.ts`
+  - `packages/domain-model/test/setup-definition-revision-relational-repositories.test.ts`
+  - `packages/domain-model/test/setup-definition-revision-relational-prisma-adapter.test.ts`
+- setup-refinement-request relational adapter contract:
+  - `docs/project/setup-refinement-request-relational-adapter-model.md`
+  - `docs/architecture/adr/ADR-064-setup-refinement-request-relational-adapter-contract.md`
+  - `packages/domain-model/src/repositories/setup-refinement-request-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/setup-refinement-request-relational-repository-adapter.impl.ts`
+  - `packages/domain-model/test/setup-refinement-request-relational-repository-adapter-contracts.test.ts`
+- setup-refinement-request adapter-backed relational repository and Prisma adapter:
+  - `docs/project/setup-refinement-request-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-065-setup-refinement-request-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/repositories/setup-refinement-request-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/setup-refinement-request-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/setup-refinement-request-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/setup-refinement-request-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/setup-refinement-request-relational-prisma-client.ts`
+  - `packages/domain-model/test/setup-refinement-request-relational-repository-mappers.test.ts`
+  - `packages/domain-model/test/setup-refinement-request-relational-repositories.test.ts`
+  - `packages/domain-model/test/setup-refinement-request-relational-prisma-adapter.test.ts`
+- shared Prisma-backed composition extended through setup-refinement requests:
+  - `docs/project/implemented-product-setup-refinement-request-composition-model.md`
+  - `docs/architecture/adr/ADR-066-implemented-product-setup-refinement-request-composition.md`
+  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
+  - `packages/domain-model/test/implemented-product-relational-repositories.test.ts`
+- shared real-Postgres integration extended through setup-refinement requests:
+  - `docs/project/implemented-product-setup-refinement-request-integration-model.md`
+  - `docs/architecture/adr/ADR-067-implemented-product-setup-refinement-request-integration-coverage.md`
+  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
+- shared Prisma-backed composition extended through setup-definition revisions:
+  - `docs/project/implemented-product-setup-definition-revision-composition-model.md`
+  - `docs/architecture/adr/ADR-072-implemented-product-setup-definition-revision-composition.md`
+  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
+  - `packages/domain-model/test/implemented-product-relational-repositories.test.ts`
+- shared real-Postgres integration extended through setup-definition revisions:
+  - `docs/project/implemented-product-setup-definition-revision-integration-model.md`
+  - `docs/architecture/adr/ADR-073-implemented-product-setup-definition-revision-integration-coverage.md`
+  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
+- setup-revision-activation durable relational contract, physical schema, relational adapter contract, and executable repository rollout:
+  - `docs/project/setup-revision-activation-relational-persistence-model.md`
+  - `docs/project/setup-revision-activation-relational-adapter-model.md`
+  - `docs/project/setup-revision-activation-relational-rollout-model.md`
+  - `docs/architecture/adr/ADR-074-setup-revision-activation-record-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-075-setup-revision-activation-record-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-076-setup-revision-activation-record-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-077-setup-revision-activation-record-adapter-backed-relational-repositories.md`
+  - `packages/domain-model/src/storage/setup-revision-activation-record-relational-slice.ts`
+  - `packages/domain-model/src/storage/setup-revision-activation-record-relational-physical-schema.ts`
+  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-repository-adapter.ts`
+  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-repository-adapter.impl.ts`
+  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-prisma-client.ts`
+  - `packages/domain-model/prisma/migrations/20260711103000_product_domain_setup_revision_activation_record_relational_v1/migration.sql`
+  - `packages/domain-model/test/setup-revision-activation-record-relational-repository-adapter-contracts.test.ts`
+  - `packages/domain-model/test/setup-revision-activation-record-relational-repository-mappers.test.ts`
+  - `packages/domain-model/test/setup-revision-activation-record-relational-repositories.test.ts`
+  - `packages/domain-model/test/setup-revision-activation-record-relational-prisma-adapter.test.ts`
 - implemented in-memory persistence and service-owned write paths for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -303,6 +403,9 @@ The product side now proves that the repo can:
   - `ResearchReviewDecision`
   - `RoutedActionExecutionEnvelope`
   - `SetupLifecycleMutationRecord`
+  - `SetupRefinementRequest`
+  - `SetupDefinitionRevision`
+  - `SetupRevisionActivationRecord`
 - repository/service implementation architecture with later durable relational expansion still pending:
   - `docs/project/persistence-implementation-architecture.md`
   - `docs/project/first-persisted-slice.md`
@@ -329,7 +432,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- define the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
+- extend opt-in real-Postgres integration through `setup_revision_activation_record`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -345,4 +448,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, ten committed durable relational slices, one shared implemented-product bundle spanning the full implemented product chain through setup-lifecycle mutation records, one shared full-chain real-database integration flow through setup-lifecycle mutation records, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, one first execution-envelope persistence rollout, one first mutation-audit durable repository rollout, and one first mutation-audit shared-bundle plus integration extension that make the next downstream execution/mutation durable slice selection straightforward instead of speculative**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, thirteen committed durable relational contracts, committed Prisma schema/migrations through `setup_revision_activation_record`, committed repository adapter contracts through `setup_revision_activation_record`, per-entity adapter-backed repository and concrete Prisma-adapter parity through `setup_revision_activation_record`, one shared implemented-product bundle spanning the full implemented product chain through `setup_revision_activation_record`, one shared full-chain real-database integration flow through `setup_definition_revision`, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, one first execution-envelope persistence rollout, one first mutation-audit durable repository rollout, one first later downstream refinement-follow-up full-chain integration rollout, one first later downstream revision full-chain integration rollout, and one first later downstream activation-audit shared-bundle rollout that make activation real-database integration the next bounded persistence step**.
