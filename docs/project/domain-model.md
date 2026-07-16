@@ -25,7 +25,7 @@ The package remains intentionally narrow, and now includes **implemented in-memo
 - `SetupDefinitionRevision`
 - `SetupRevisionActivationRecord`
 
-It still does not implement runtime ingestion, execution, or statistics engines. Shared implemented-product composition and opt-in real-database integration now both extend through `setup_definition_revision`.
+It still does not implement runtime ingestion, execution, or statistics engines. Shared implemented-product composition and opt-in real-database integration now both extend through `setup_revision_activation_record`.
 
 ## Current implementation status
 Implemented in-memory persistence exists today for:
@@ -71,13 +71,12 @@ Slice-level shared composition now also exists for:
 - `SetupRevisionActivationRecord`
 
 One shared Prisma-backed composition now exists through:
-- `SetupDefinitionRevision`
+- `SetupRevisionActivationRecord`
 
 One shared opt-in real-database integration coverage path now exists through:
-- `SetupDefinitionRevision`
+- `SetupRevisionActivationRecord`
 
 Durable relational persistence still pending:
-- shared implemented-product bundle and opt-in real-database integration rollout for `SetupRevisionActivationRecord`
 - later downstream execution/mutation durable slices after `SetupRevisionActivationRecord`
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines

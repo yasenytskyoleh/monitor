@@ -1,7 +1,7 @@
 # Persistence Implementation Architecture
 
 ## Purpose
-Define the current implementation architecture for product-domain persistence across the implemented core research chain, the downstream feedback/approval/review entities, the first downstream execution-envelope shared-bundle plus integration extension, the first downstream mutation-audit shared-bundle plus integration extension, the first downstream revision shared-bundle plus integration extension, and the first downstream activation-audit shared-bundle extension.
+Define the current implementation architecture for product-domain persistence across the implemented core research chain, the downstream feedback/approval/review entities, the first downstream execution-envelope shared-bundle plus integration extension, the first downstream mutation-audit shared-bundle plus integration extension, the first downstream revision shared-bundle plus integration extension, and the first downstream activation-audit shared-bundle plus integration extension.
 
 This document now reflects:
 - boundary contracts
@@ -9,7 +9,7 @@ This document now reflects:
 - current durable relational repository coverage through `setup_revision_activation_record`
 - current durable relational adapter coverage through `setup_revision_activation_record`
 - shared-bundle coverage through `setup_revision_activation_record`
-- real-database integration coverage through `setup_definition_revision`
+- real-database integration coverage through `setup_revision_activation_record`
 
 ## Canonical current-state summary
 Implemented in-memory persistence and service-owned write paths exist today for:
@@ -27,7 +27,7 @@ Implemented in-memory persistence and service-owned write paths exist today for:
 - `SetupDefinitionRevision`
 - `SetupRevisionActivationRecord`
 
-Durable relational contracts and committed schema/migrations now exist through `setup_revision_activation_record`, repository adapter coverage now also exists through `setup_revision_activation_record`, executable relational repositories now also exist through `setup_revision_activation_record`, shared-bundle coverage now also extends through `setup_revision_activation_record`, while one end-to-end real-database integration path still stops at `setup_definition_revision`:
+Durable relational contracts and committed schema/migrations now exist through `setup_revision_activation_record`, repository adapter coverage now also exists through `setup_revision_activation_record`, executable relational repositories now also exist through `setup_revision_activation_record`, shared-bundle coverage now also extends through `setup_revision_activation_record`, and one end-to-end real-database integration path now also extends through `setup_revision_activation_record`:
 - committed contracts, schema/migrations, adapter-backed repositories, and concrete Prisma adapters for:
   - `setup_definition`
   - `research_hypothesis`
@@ -44,10 +44,9 @@ Durable relational contracts and committed schema/migrations now exist through `
 - committed contracts, schema/migrations, repository adapter contract, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `setup_definition_revision`
 - committed contracts, schema/migrations, repository adapter contract, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `setup_revision_activation_record`
 - one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record
-- one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision
+- one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record
 
 Still pending:
-- later opt-in real-database integration rollout for `setup_revision_activation_record`
 - later shared-bundle/integration extension for downstream execution and mutation entities after `setup_revision_activation_record`
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines

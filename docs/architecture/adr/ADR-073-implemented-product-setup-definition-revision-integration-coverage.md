@@ -44,4 +44,5 @@ Tradeoffs:
 - the relational adapter contract for `setup_revision_activation_record` is completed later in ADR-076
 - the adapter-backed relational repository rollout for `setup_revision_activation_record` is completed later in ADR-077
 - the shared implemented-product composition through `setup_revision_activation_record` is completed later in ADR-078
-- the next recommended step is opt-in real-database integration through `setup_revision_activation_record`
+- the opt-in real-database integration through `setup_revision_activation_record` is completed later in ADR-079
+- the next recommended step is selecting the next later downstream execution/mutation durable slice after `setup_revision_activation_record`

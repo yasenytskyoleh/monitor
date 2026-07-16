@@ -69,8 +69,7 @@ Implementation references:
 - repository adapter contracts now also extend through `setup_revision_activation_record`
 - adapter-backed relational repositories, concrete Prisma adapters, and slice-level shared composition now extend through `setup_revision_activation_record`
 - shared implemented-product composition now also extends through `setup_revision_activation_record`
-- opt-in real-database integration now also extends through `setup_definition_revision`
-- opt-in real-database integration rollout for `setup_revision_activation_record`
+- opt-in real-database integration now also extends through `setup_revision_activation_record`
 - later downstream execution/mutation durable slices after `setup_revision_activation_record`
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines

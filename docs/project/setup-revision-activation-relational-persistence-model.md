@@ -96,6 +96,6 @@ Still service-owned rather than encoded as compound relational constraints in th
 
 ## What remains pending
 - shared implemented-product bundle extension through `setup_revision_activation_record` is completed later in `docs/project/implemented-product-setup-revision-activation-composition-model.md`
-- later opt-in real-Postgres integration extension through `setup_revision_activation_record`
+- later opt-in real-Postgres integration extension through `setup_revision_activation_record` is completed later in `docs/project/implemented-product-setup-revision-activation-integration-model.md`
 - later execution/mutation durable slices after `setup_revision_activation_record`
 - exchange ingestion, runtime engines, and UI

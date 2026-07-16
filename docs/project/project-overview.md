@@ -139,6 +139,7 @@ Implemented today:
   - `docs/project/setup-revision-activation-relational-rollout-model.md`
   - `docs/project/setup-revision-activation-relational-persistence-model.md`
   - `docs/project/implemented-product-setup-revision-activation-composition-model.md`
+  - `docs/project/implemented-product-setup-revision-activation-integration-model.md`
   - `docs/project/setup-refinement-request-relational-adapter-model.md`
   - `docs/project/setup-refinement-request-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
@@ -200,6 +201,7 @@ Implemented today:
   - `docs/architecture/adr/ADR-076-setup-revision-activation-record-relational-adapter-contract.md`
   - `docs/architecture/adr/ADR-077-setup-revision-activation-record-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-078-implemented-product-setup-revision-activation-composition.md`
+  - `docs/architecture/adr/ADR-079-implemented-product-setup-revision-activation-integration-coverage.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -211,17 +213,17 @@ Current limitation:
   - committed Prisma schema/migrations now exist through `setup_revision_activation_record`
   - repository adapter contracts now extend through `setup_revision_activation_record`
   - adapter-backed relational repositories, concrete Prisma adapters, and slice-level shared composition now exist for all five core-chain service-owned product entities, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, `routed_action_execution_envelope`, `setup_lifecycle_mutation_record`, `setup_refinement_request`, `setup_definition_revision`, and `setup_revision_activation_record`
-  - opt-in real-database integration coverage now exists through the full implemented product chain to `setup_definition_revision`
+  - opt-in real-database integration coverage now exists through the full implemented product chain to `setup_revision_activation_record`
   - one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_revision_activation_record`
-  - one end-to-end real-database integration flow now spans the full implemented product chain through `setup_definition_revision`
-  - `setup_revision_activation_record` now has implemented in-memory persistence, a service-owned write path, a durable relational contract, committed Prisma schema/migration coverage, a relational adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, slice-level shared composition, and shared implemented-product bundle coverage
-  - the next downstream persistence gap is now opt-in real-database integration through `setup_revision_activation_record`, followed by later downstream execution/mutation durable slices
+  - one end-to-end real-database integration flow now spans the full implemented product chain through `setup_revision_activation_record`
+  - `setup_revision_activation_record` now has implemented in-memory persistence, a service-owned write path, a durable relational contract, committed Prisma schema/migration coverage, a relational adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, slice-level shared composition, shared implemented-product bundle coverage, and opt-in real-database integration coverage
+  - the next downstream persistence gap is now the next later downstream execution/mutation durable slice after `setup_revision_activation_record`
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- extend opt-in real-Postgres integration through `setup_revision_activation_record`
+- select the next later downstream execution/mutation durable slice after `setup_revision_activation_record`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
