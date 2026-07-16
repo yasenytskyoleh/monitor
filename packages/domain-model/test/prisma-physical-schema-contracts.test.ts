@@ -27,6 +27,22 @@ import {
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_PRISMA_MODELS,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_REQUIRED_COLUMNS,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_TABLES,
+  SETUP_DEFINITION_REVISION_RELATIONAL_INDEXES,
+  SETUP_DEFINITION_REVISION_RELATIONAL_MIGRATION_SLUG,
+  SETUP_DEFINITION_REVISION_RELATIONAL_PRISMA_MODELS,
+  SETUP_DEFINITION_REVISION_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_DEFINITION_REVISION_RELATIONAL_TABLES,
+  SETUP_DEFINITION_REVISION_RELATIONAL_UNIQUE_CONSTRAINTS,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_INDEXES,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_MIGRATION_SLUG,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_PRISMA_MODELS,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_TABLES,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_INDEXES,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_MIGRATION_SLUG,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_PRISMA_MODELS,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_TABLES,
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_INDEXES,
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_MIGRATION_SLUG,
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_PRISMA_MODELS,
@@ -108,6 +124,27 @@ const setupLifecycleMutationRecordMigrationPath = join(
   "prisma",
   "migrations",
   "20260706113000_product_domain_setup_lifecycle_mutation_record_relational_v1",
+  "migration.sql"
+);
+const setupRefinementRequestMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260706143000_product_domain_setup_refinement_request_relational_v1",
+  "migration.sql"
+);
+const setupDefinitionRevisionMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260708101500_product_domain_setup_definition_revision_relational_v1",
+  "migration.sql"
+);
+const setupRevisionActivationRecordMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260711103000_product_domain_setup_revision_activation_record_relational_v1",
   "migration.sql"
 );
 
@@ -847,5 +884,296 @@ test("migration creates the setup-lifecycle-mutation-record relational table, in
   assert.match(
     migration,
     /"created_at_utc" <= "mutated_at_utc" AND\s+"updated_at_utc" >= "mutated_at_utc"/
+  );
+});
+
+test("exposes setup-refinement-request physical schema constants", () => {
+  assert.equal(
+    SETUP_REFINEMENT_REQUEST_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_setup_refinement_request_relational_v1"
+  );
+  assert.equal(
+    SETUP_REFINEMENT_REQUEST_RELATIONAL_PRISMA_MODELS.setupRefinementRequest,
+    "SetupRefinementRequestRecord"
+  );
+  assert.equal(
+    SETUP_REFINEMENT_REQUEST_RELATIONAL_TABLES.setupRefinementRequest,
+    "setup_refinement_request"
+  );
+  assert.equal(
+    SETUP_REFINEMENT_REQUEST_RELATIONAL_REQUIRED_COLUMNS
+      .setup_refinement_request.includes("requested_changes_summary"),
+    true
+  );
+  assert.equal(
+    SETUP_REFINEMENT_REQUEST_RELATIONAL_INDEXES.includes(
+      "idx_setup_refinement_request_approval_id"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the setup-refinement-request relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum SetupRefinementStatus \{/);
+  assert.match(schema, /model SetupRefinementRequestRecord \{/);
+  assert.match(schema, /@@map\("setup_refinement_request"\)/);
+
+  for (const tableName of Object.values(SETUP_REFINEMENT_REQUEST_RELATIONAL_TABLES)) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(SETUP_REFINEMENT_REQUEST_RELATIONAL_PRISMA_MODELS)) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the setup-refinement-request relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(setupRefinementRequestMigrationPath, "utf8");
+
+  for (const tableName of Object.values(SETUP_REFINEMENT_REQUEST_RELATIONAL_TABLES)) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of SETUP_REFINEMENT_REQUEST_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    SETUP_REFINEMENT_REQUEST_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("source_research_decision_approval_id"\)\s+REFERENCES "product_domain"\."research_decision_approval"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("source_research_feedback_decision_id"\)\s+REFERENCES "product_domain"\."research_feedback_decision"/
+  );
+  assert.match(migration, /length\(trim\("requested_changes_summary"\)\) > 0/);
+  assert.match(
+    migration,
+    /"created_at_utc" <= "requested_at_utc" AND\s+"updated_at_utc" >= "requested_at_utc"/
+  );
+});
+
+test("exposes setup-definition-revision physical schema constants", () => {
+  assert.equal(
+    SETUP_DEFINITION_REVISION_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_setup_definition_revision_relational_v1"
+  );
+  assert.equal(
+    SETUP_DEFINITION_REVISION_RELATIONAL_PRISMA_MODELS.setupDefinitionRevision,
+    "SetupDefinitionRevisionRecord"
+  );
+  assert.equal(
+    SETUP_DEFINITION_REVISION_RELATIONAL_TABLES.setupDefinitionRevision,
+    "setup_definition_revision"
+  );
+  assert.equal(
+    SETUP_DEFINITION_REVISION_RELATIONAL_REQUIRED_COLUMNS
+      .setup_definition_revision.includes("setup_version_number"),
+    true
+  );
+  assert.equal(
+    SETUP_DEFINITION_REVISION_RELATIONAL_UNIQUE_CONSTRAINTS.includes(
+      "uq_setup_definition_revision_family_version"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the setup-definition-revision relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum SetupDefinitionRevisionStatus \{/);
+  assert.match(schema, /model SetupDefinitionRevisionRecord \{/);
+  assert.match(schema, /@@map\("setup_definition_revision"\)/);
+
+  for (const tableName of Object.values(SETUP_DEFINITION_REVISION_RELATIONAL_TABLES)) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(SETUP_DEFINITION_REVISION_RELATIONAL_PRISMA_MODELS)) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the setup-definition-revision relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(setupDefinitionRevisionMigrationPath, "utf8");
+
+  for (const tableName of Object.values(SETUP_DEFINITION_REVISION_RELATIONAL_TABLES)) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of SETUP_DEFINITION_REVISION_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const uniqueConstraint of SETUP_DEFINITION_REVISION_RELATIONAL_UNIQUE_CONSTRAINTS) {
+    assert.equal(migration.includes(`CONSTRAINT "${uniqueConstraint}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    SETUP_DEFINITION_REVISION_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("previous_setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("source_setup_refinement_request_id"\)\s+REFERENCES "product_domain"\."setup_refinement_request"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("source_research_decision_approval_id"\)\s+REFERENCES "product_domain"\."research_decision_approval"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("source_research_feedback_decision_id"\)\s+REFERENCES "product_domain"\."research_feedback_decision"/
+  );
+  assert.match(
+    migration,
+    /"previous_setup_definition_id" IS NULL OR\s+"previous_setup_definition_id" <> "setup_definition_id"/
+  );
+  assert.match(migration, /length\(trim\("changed_fields_summary"\)\) > 0/);
+  assert.match(migration, /"setup_version_number" > 0/);
+});
+
+test("exposes setup-revision-activation-record physical schema constants", () => {
+  assert.equal(
+    SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_setup_revision_activation_record_relational_v1"
+  );
+  assert.equal(
+    SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_PRISMA_MODELS.setupRevisionActivationRecord,
+    "SetupRevisionActivationRecordRecord"
+  );
+  assert.equal(
+    SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_TABLES.setupRevisionActivationRecord,
+    "setup_revision_activation_record"
+  );
+  assert.equal(
+    SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_REQUIRED_COLUMNS
+      .setup_revision_activation_record.includes("activation_outcome"),
+    true
+  );
+  assert.equal(
+    SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_INDEXES.includes(
+      "idx_setup_revision_activation_record_target_revision_id"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the setup-revision-activation-record relational model and enums in product_domain", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum SetupRevisionActivationRecordOutcome \{/);
+  assert.match(schema, /model SetupRevisionActivationRecordRecord \{/);
+  assert.match(schema, /@@map\("setup_revision_activation_record"\)/);
+
+  for (const tableName of Object.values(
+    SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_TABLES
+  )) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(
+    SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_PRISMA_MODELS
+  )) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the setup-revision-activation-record relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(setupRevisionActivationRecordMigrationPath, "utf8");
+
+  for (const tableName of Object.values(
+    SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_TABLES
+  )) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("target_revision_id"\)\s+REFERENCES "product_domain"\."setup_definition_revision"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("target_setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("previous_revision_id"\)\s+REFERENCES "product_domain"\."setup_definition_revision"/
+  );
+  assert.match(
+    migration,
+    /FOREIGN KEY \("previous_setup_definition_id"\)\s+REFERENCES "product_domain"\."setup_definition"/
+  );
+  assert.match(
+    migration,
+    /"previous_setup_definition_id" IS NULL OR\s+"previous_setup_definition_id" <> "target_setup_definition_id"/
+  );
+  assert.match(
+    migration,
+    /"previous_revision_id" IS NULL OR "previous_revision_id" <> "target_revision_id"/
+  );
+  assert.match(
+    migration,
+    /"created_at_utc" <= "activated_at_utc" AND\s+"updated_at_utc" >= "activated_at_utc"/
   );
 });

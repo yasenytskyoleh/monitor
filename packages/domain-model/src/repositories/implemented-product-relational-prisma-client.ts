@@ -25,6 +25,12 @@ import { createRoutedActionExecutionEnvelopeRelationalPrismaRepositoryAdapter } 
 import { type PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter } from "./routed-action-execution-envelope-relational-prisma-adapter.js";
 import { createSetupLifecycleMutationRecordRelationalPrismaRepositoryAdapter } from "./setup-lifecycle-mutation-record-relational-prisma-client.js";
 import { type PrismaSetupLifecycleMutationRecordRelationalRepositoryAdapter } from "./setup-lifecycle-mutation-record-relational-prisma-adapter.js";
+import { createSetupDefinitionRevisionRelationalPrismaRepositoryAdapter } from "./setup-definition-revision-relational-prisma-client.js";
+import { type PrismaSetupDefinitionRevisionRelationalRepositoryAdapter } from "./setup-definition-revision-relational-prisma-adapter.js";
+import { createSetupRefinementRequestRelationalPrismaRepositoryAdapter } from "./setup-refinement-request-relational-prisma-client.js";
+import { type PrismaSetupRefinementRequestRelationalRepositoryAdapter } from "./setup-refinement-request-relational-prisma-adapter.js";
+import { createSetupRevisionActivationRecordRelationalPrismaRepositoryAdapter } from "./setup-revision-activation-record-relational-prisma-client.js";
+import { type PrismaSetupRevisionActivationRecordRelationalRepositoryAdapter } from "./setup-revision-activation-record-relational-prisma-adapter.js";
 import { createSetupAggregateRelationalPrismaRepositoryAdapter } from "./setup-aggregate-relational-prisma-client.js";
 import { type PrismaSetupAggregateRelationalRepositoryAdapter } from "./setup-aggregate-relational-prisma-adapter.js";
 import { createSignalEvaluationRelationalPrismaRepositoryAdapter } from "./signal-evaluation-relational-prisma-client.js";
@@ -40,6 +46,12 @@ export type ImplementedProductRelationalPrismaAdapters = ImplementedProductRelat
   routedActionAdapter: PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter;
   setupLifecycleMutationRecordAdapter:
     PrismaSetupLifecycleMutationRecordRelationalRepositoryAdapter;
+  setupDefinitionRevisionAdapter:
+    PrismaSetupDefinitionRevisionRelationalRepositoryAdapter;
+  setupRefinementRequestAdapter:
+    PrismaSetupRefinementRequestRelationalRepositoryAdapter;
+  setupRevisionActivationRecordAdapter:
+    PrismaSetupRevisionActivationRecordRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalPrismaRepositories =
@@ -63,7 +75,13 @@ export const createImplementedProductRelationalPrismaAdapters = (
     client
   ),
   setupLifecycleMutationRecordAdapter:
-    createSetupLifecycleMutationRecordRelationalPrismaRepositoryAdapter(client)
+    createSetupLifecycleMutationRecordRelationalPrismaRepositoryAdapter(client),
+  setupDefinitionRevisionAdapter:
+    createSetupDefinitionRevisionRelationalPrismaRepositoryAdapter(client),
+  setupRefinementRequestAdapter:
+    createSetupRefinementRequestRelationalPrismaRepositoryAdapter(client),
+  setupRevisionActivationRecordAdapter:
+    createSetupRevisionActivationRecordRelationalPrismaRepositoryAdapter(client)
 });
 
 export const createImplementedProductRelationalPrismaRepositories = (

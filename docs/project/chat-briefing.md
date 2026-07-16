@@ -22,11 +22,11 @@ Current product-domain scope includes:
   - evaluation contracts (`EvaluationInput`, `EvaluationWindow`, `EvaluationResult`, `EvaluationMetrics`, `EvaluationStatus`)
   - research evidence contracts (`AggregationScope`, `SetupAggregateResult`, `SetupComparison`, `ResearchHypothesisEvidenceLink`)
   - research feedback contracts (`ResearchFeedbackDecision`)
-  - research review/execution contracts (`ResearchDecisionApproval`, `ResearchReviewDecision`, `RoutedActionExecutionEnvelope`, `SetupLifecycleMutationRecord`)
+  - research review/execution contracts (`ResearchDecisionApproval`, `ResearchReviewDecision`, `RoutedActionExecutionEnvelope`, `SetupLifecycleMutationRecord`, `SetupRefinementRequest`, `SetupDefinitionRevision`, `SetupRevisionActivationRecord`)
   - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
   - repository contracts (`*Repository` interfaces)
   - service contracts (`*Service` interfaces + write-path ownership)
-  - implemented in-memory persistence for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, `ResearchFeedbackDecision`, `ResearchDecisionApproval`, `ResearchReviewDecision`, `RoutedActionExecutionEnvelope`, and `SetupLifecycleMutationRecord`
+  - implemented in-memory persistence for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, `ResearchFeedbackDecision`, `ResearchDecisionApproval`, `ResearchReviewDecision`, `RoutedActionExecutionEnvelope`, `SetupLifecycleMutationRecord`, `SetupRefinementRequest`, `SetupDefinitionRevision`, and `SetupRevisionActivationRecord`
   - hypothesis/run contracts (`ResearchHypothesis`, `ResearchRun`)
 - docs and ADRs:
   - `docs/project/domain-model.md`
@@ -71,6 +71,20 @@ Current product-domain scope includes:
   - `docs/project/setup-lifecycle-mutation-relational-rollout-model.md`
   - `docs/project/implemented-product-setup-lifecycle-mutation-composition-model.md`
   - `docs/project/implemented-product-setup-lifecycle-mutation-integration-model.md`
+  - `docs/project/implemented-product-setup-refinement-request-composition-model.md`
+  - `docs/project/implemented-product-setup-refinement-request-integration-model.md`
+  - `docs/project/setup-refinement-request-relational-persistence-model.md`
+  - `docs/project/setup-definition-revision-relational-persistence-model.md`
+  - `docs/project/setup-definition-revision-relational-adapter-model.md`
+  - `docs/project/setup-definition-revision-relational-rollout-model.md`
+  - `docs/project/implemented-product-setup-definition-revision-composition-model.md`
+  - `docs/project/implemented-product-setup-definition-revision-integration-model.md`
+  - `docs/project/setup-revision-activation-relational-adapter-model.md`
+  - `docs/project/setup-revision-activation-relational-rollout-model.md`
+  - `docs/project/setup-revision-activation-relational-persistence-model.md`
+  - `docs/project/implemented-product-setup-revision-activation-composition-model.md`
+  - `docs/project/setup-refinement-request-relational-adapter-model.md`
+  - `docs/project/setup-refinement-request-relational-rollout-model.md`
   - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
   - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
   - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
@@ -113,6 +127,23 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-059-setup-lifecycle-mutation-record-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-060-implemented-product-setup-lifecycle-mutation-composition.md`
   - `docs/architecture/adr/ADR-061-implemented-product-setup-lifecycle-mutation-integration-coverage.md`
+  - `docs/architecture/adr/ADR-062-setup-refinement-request-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-063-setup-refinement-request-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-064-setup-refinement-request-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-065-setup-refinement-request-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-066-implemented-product-setup-refinement-request-composition.md`
+  - `docs/architecture/adr/ADR-067-implemented-product-setup-refinement-request-integration-coverage.md`
+  - `docs/architecture/adr/ADR-068-setup-definition-revision-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-069-setup-definition-revision-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-070-setup-definition-revision-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-071-setup-definition-revision-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-072-implemented-product-setup-definition-revision-composition.md`
+  - `docs/architecture/adr/ADR-073-implemented-product-setup-definition-revision-integration-coverage.md`
+  - `docs/architecture/adr/ADR-074-setup-revision-activation-record-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-075-setup-revision-activation-record-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-076-setup-revision-activation-record-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-077-setup-revision-activation-record-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-078-implemented-product-setup-revision-activation-composition.md`
 
 ## Current constraints
 - spot-only scope
@@ -131,6 +162,9 @@ Current product-domain scope includes:
   - `research_review_decision`
   - `routed_action_execution_envelope`
   - `setup_lifecycle_mutation_record`
+  - `setup_refinement_request`
+  - `setup_definition_revision`
+  - `setup_revision_activation_record`
 - committed Prisma schema/migrations now exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -142,7 +176,10 @@ Current product-domain scope includes:
   - `research_review_decision`
   - `routed_action_execution_envelope`
   - `setup_lifecycle_mutation_record`
-- repository adapter contracts now also exist for:
+  - `setup_refinement_request`
+  - `setup_definition_revision`
+  - `setup_revision_activation_record`
+- repository adapter contracts now also exist through:
   - `setup_definition`
   - `research_hypothesis`
   - `signal_candidate`
@@ -153,6 +190,9 @@ Current product-domain scope includes:
   - `research_review_decision`
   - `routed_action_execution_envelope`
   - `setup_lifecycle_mutation_record`
+  - `setup_refinement_request`
+  - `setup_definition_revision`
+  - `setup_revision_activation_record`
 - adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now exist for:
   - `setup_definition`
   - `research_hypothesis`
@@ -163,17 +203,21 @@ Current product-domain scope includes:
 - adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for:
   - `research_decision_approval`
   - `research_review_decision`
+- `setup_refinement_request` now also has adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition
 - adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now also exist for:
   - `routed_action_execution_envelope`
   - `setup_lifecycle_mutation_record`
-- one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_lifecycle_mutation_record`
-- one end-to-end real-database integration flow now also spans the full implemented product chain through `setup_lifecycle_mutation_record`
-- the next downstream persistence gap is now the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
+- `setup_refinement_request` now also has opt-in real-database integration coverage
+- `setup_revision_activation_record` now already has implemented in-memory persistence, a service-owned write path, a durable relational contract, committed Prisma schema/migrations, a repository adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, slice-level shared composition, and shared implemented-product bundle coverage
+- one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_revision_activation_record`
+- one end-to-end real-database integration flow now also spans the full implemented product chain through `setup_definition_revision`
+- `setup_definition_revision` now also has shared-bundle and opt-in real-database integration coverage
+- the next downstream persistence gap is now opt-in real-database integration through `setup_revision_activation_record`, followed by later downstream execution/mutation durable slices
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- define the first later downstream execution/mutation durable slice after `setup_lifecycle_mutation_record`
+- extend opt-in real-Postgres integration through `setup_revision_activation_record`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

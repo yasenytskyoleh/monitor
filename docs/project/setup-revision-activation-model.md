@@ -6,6 +6,10 @@ Define the first explicit path for promoting an accepted setup-definition revisi
 This slice introduces activation contracts and audit records only.
 It does not auto-activate revisions when they are created.
 
+The durable relational contract, committed Prisma schema, and relational adapter contract for the activation audit artifact are now documented separately in:
+- `docs/project/setup-revision-activation-relational-persistence-model.md`
+- `docs/project/setup-revision-activation-relational-adapter-model.md`
+
 ## Activation command contract
 Contract:
 - `ActivateSetupDefinitionRevisionCommand`

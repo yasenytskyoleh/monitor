@@ -19,6 +19,8 @@ import {
   type RoutedActionExecutionEnvelope,
   type SetupAggregateResult,
   type SetupDefinition,
+  type SetupDefinitionRevision,
+  type SetupRefinementRequest,
   type SetupLifecycleMutationRecord,
   type SignalCandidate
 } from "../src/index.js";
@@ -61,6 +63,14 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260706113000_product_domain_setup_lifecycle_mutation_record_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260706143000_product_domain_setup_refinement_request_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260708101500_product_domain_setup_definition_revision_relational_v1/migration.sql"
   )
 ];
 
@@ -169,15 +179,16 @@ const buildFeedbackDecision = (
   id: string,
   setupDefinitionId: string,
   researchHypothesisId: string,
-  setupAggregateResultId: string
+  setupAggregateResultId: string,
+  recommendedAction: ResearchFeedbackDecision["recommendedAction"] = "keep_active"
 ): ResearchFeedbackDecision => ({
   id,
   setupDefinitionId,
   researchHypothesisId,
   setupAggregateResultId,
   evidenceStatus: "supports",
-  recommendedAction: "keep_active",
-  rationaleSummary: "aggregate evidence supports keeping the setup active",
+  recommendedAction,
+  rationaleSummary: "aggregate evidence supports the selected follow-up action",
   decisionStatus: "proposed",
   requiresManualReview: true,
   evidenceSummary: "shared bundle integration feedback decision",
@@ -188,7 +199,8 @@ const buildFeedbackDecision = (
 const buildApproval = (
   id: string,
   researchFeedbackDecisionId: string,
-  setupDefinitionId: string
+  setupDefinitionId: string,
+  authorizedNextAction: ResearchDecisionApproval["authorizedNextAction"] = "keep_active"
 ): ResearchDecisionApproval => ({
   id,
   researchFeedbackDecisionId,
@@ -198,7 +210,7 @@ const buildApproval = (
   approvalOutcome: "approved",
   reviewerNotes: "Approved in shared integration test.",
   approvalStatus: "recorded",
-  authorizedNextAction: "keep_active",
+  authorizedNextAction,
   createdAt: "2026-05-24T10:35:00.000Z",
   updatedAt: "2026-05-24T10:35:00.000Z"
 });
@@ -281,6 +293,62 @@ const buildMutation = (
   updatedAt: "2026-05-24T11:00:00.000Z"
 });
 
+const buildSetupRefinementRequest = (
+  id: string,
+  setupDefinitionId: string,
+  sourceResearchDecisionApprovalId: string,
+  sourceResearchFeedbackDecisionId: string
+): SetupRefinementRequest => ({
+  id,
+  setupDefinitionId,
+  sourceResearchDecisionApprovalId,
+  sourceResearchFeedbackDecisionId,
+  refinementRationaleSummary:
+    "The setup remains valid but needs tighter refinement follow-up.",
+  requestedChangesSummary:
+    "Tighten invalidation logic and add reclaim-volume confirmation.",
+  evidenceReferences: [sourceResearchFeedbackDecisionId, "aggregate-002"],
+  status: "proposed",
+  requestedBy: "research-service",
+  requestedAt: "2026-05-24T11:10:00.000Z",
+  assignedReviewerId: "reviewer-002",
+  assignedOwnerId: "owner-002",
+  createdAt: "2026-05-24T11:10:00.000Z",
+  updatedAt: "2026-05-24T11:10:00.000Z"
+});
+
+const buildSetupDefinitionRevision = (
+  id: string,
+  setupDefinitionId: string,
+  previousSetupDefinitionId: string,
+  sourceSetupRefinementRequestId: string,
+  sourceResearchDecisionApprovalId?: string,
+  sourceResearchFeedbackDecisionId?: string
+): SetupDefinitionRevision => ({
+  id,
+  setupDefinitionId,
+  previousSetupDefinitionId,
+  versionInfo: {
+    setupFamilyId: "setup-family-002",
+    revisionId: id,
+    version: 2
+  },
+  revisionReason: "Tighten invalidation after approved refinement follow-up.",
+  revisionStatus: "draft",
+  changedFieldsSummary: "Updated measurable conditions and invalidation assumptions.",
+  createdBy: "research-reviewer-002",
+  createdAt: "2026-05-24T11:15:00.000Z",
+  notes: "Prepared in shared integration test.",
+  sourceSetupRefinementRequestId,
+  ...(sourceResearchDecisionApprovalId
+    ? { sourceResearchDecisionApprovalId }
+    : {}),
+  ...(sourceResearchFeedbackDecisionId
+    ? { sourceResearchFeedbackDecisionId }
+    : {}),
+  updatedAt: "2026-05-24T11:15:00.000Z"
+});
+
 const withPgClient = async <T>(connectionString: string, work: (client: Client) => Promise<T>): Promise<T> => {
   const client = new Client({ connectionString });
   await client.connect();
@@ -332,7 +400,7 @@ const withIntegrationRepositories = async <T>(
 const integrationTest = INTEGRATION_DATABASE_URL ? test : test.skip;
 
 integrationTest(
-  "shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record against real Postgres",
+  "shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision against real Postgres",
   async () => {
     await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
       await repositories.setupDefinitionRepository.create({
@@ -406,6 +474,87 @@ integrationTest(
           sourceObservedAtUtc: "2026-05-24T11:00:00.000Z"
         }
       });
+      await repositories.setupDefinitionRepository.create({
+        definition: buildSetupDefinition("setup-002"),
+        metadata
+      });
+      await repositories.researchHypothesisRepository.create({
+        hypothesis: buildResearchHypothesis("hypothesis-002", "setup-002"),
+        metadata
+      });
+      await repositories.setupAggregateResultRepository.create({
+        aggregate: buildAggregate("aggregate-002", "setup-002", "hypothesis-002"),
+        metadata
+      });
+      await repositories.researchFeedbackDecisionRepository.create({
+        decision: buildFeedbackDecision(
+          "feedback-002",
+          "setup-002",
+          "hypothesis-002",
+          "aggregate-002",
+          "refine_definition"
+        ),
+        metadata
+      });
+      const refinementApprovalPersistenceResult =
+        await repositories.feedbackDecisionApprovalReviewPersistence.recordFeedbackDecisionApproval({
+          researchFeedbackDecisionId: "feedback-002",
+          nextDecisionStatus: "accepted",
+          reviewerMetadata: {
+            reviewedBy: "reviewer-002",
+            reviewedAt: "2026-05-24T11:05:00.000Z",
+            approvalOutcome: "approved"
+          },
+          approval: buildApproval(
+            "approval-002",
+            "feedback-002",
+            "setup-002",
+            "refine_definition"
+          ),
+          metadata: {
+            ...metadata,
+            sourceObservedAtUtc: "2026-05-24T11:05:00.000Z"
+          }
+        });
+
+      assert.equal(refinementApprovalPersistenceResult.status, "recorded");
+      if (refinementApprovalPersistenceResult.status !== "recorded") {
+        assert.fail("refinement approval persistence should have recorded the approval");
+      }
+
+      await repositories.setupRefinementRequestRepository.create({
+        request: buildSetupRefinementRequest(
+          "refinement-001",
+          "setup-002",
+          "approval-002",
+          "feedback-002"
+        ),
+        metadata: {
+          ...metadata,
+          sourceObservedAtUtc: "2026-05-24T11:10:00.000Z"
+        }
+      });
+      await repositories.setupDefinitionRepository.create({
+        definition: {
+          ...buildSetupDefinition("setup-003"),
+          status: "draft"
+        },
+        metadata
+      });
+      await repositories.setupDefinitionRevisionRepository.create({
+        revision: buildSetupDefinitionRevision(
+          "revision-001",
+          "setup-003",
+          "setup-002",
+          "refinement-001",
+          "approval-002",
+          "feedback-002"
+        ),
+        metadata: {
+          ...metadata,
+          sourceObservedAtUtc: "2026-05-24T11:15:00.000Z"
+        }
+      });
 
       const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
       const storedEvaluation =
@@ -430,12 +579,18 @@ integrationTest(
         );
       const storedMutation =
         await repositories.setupLifecycleMutationRecordRepository.getById("mutation-001");
+      const storedRefinementRequest =
+        await repositories.setupRefinementRequestRepository.getById("refinement-001");
+      const storedRevision =
+        await repositories.setupDefinitionRevisionRepository.getById("revision-001");
       const envelopesForReviewDecision =
         await repositories.routedActionExecutionEnvelopeRepository.listByReviewDecisionId(
           "review-decision-001"
         );
       const mutationsForApproval =
         await repositories.setupLifecycleMutationRecordRepository.listByApprovalId("approval-001");
+      const refinementRequestsForApproval =
+        await repositories.setupRefinementRequestRepository.listByApprovalId("approval-002");
       const aggregateRows = await repositories.prismaClient.setupAggregateResultRecord.findMany({
         orderBy: { setupAggregateResultId: "asc" }
       });
@@ -461,6 +616,16 @@ integrationTest(
           where: { researchDecisionApprovalId: "approval-001" },
           orderBy: { setupLifecycleMutationRecordId: "asc" }
         });
+      const setupRefinementRequestRows =
+        await repositories.prismaClient.setupRefinementRequestRecord.findMany({
+          where: { sourceResearchDecisionApprovalId: "approval-002" },
+          orderBy: { setupRefinementRequestId: "asc" }
+        });
+      const setupDefinitionRevisionRows =
+        await repositories.prismaClient.setupDefinitionRevisionRecord.findMany({
+          where: { setupFamilyId: "setup-family-002" },
+          orderBy: { setupVersionNumber: "asc" }
+        });
 
       assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
       assert.equal(storedEvaluation?.id, "result-001");
@@ -482,6 +647,16 @@ integrationTest(
       assert.equal(storedMutation?.researchDecisionApprovalId, "approval-001");
       assert.equal(storedMutation?.researchFeedbackDecisionId, "feedback-001");
       assert.equal(storedMutation?.newStatus, "paused");
+      assert.equal(refinementApprovalPersistenceResult.approval.authorizedNextAction, "refine_definition");
+      assert.equal(storedRefinementRequest?.setupDefinitionId, "setup-002");
+      assert.equal(
+        storedRefinementRequest?.sourceResearchDecisionApprovalId,
+        "approval-002"
+      );
+      assert.equal(storedRefinementRequest?.assignedOwnerId, "owner-002");
+      assert.equal(storedRevision?.setupDefinitionId, "setup-003");
+      assert.equal(storedRevision?.previousSetupDefinitionId, "setup-002");
+      assert.equal(storedRevision?.sourceSetupRefinementRequestId, "refinement-001");
       assert.equal(envelopesForReviewDecision.length, 1);
       assert.equal(
         envelopesForReviewDecision[0]?.routeMetadataSnapshot.authorizedNextAction,
@@ -489,13 +664,22 @@ integrationTest(
       );
       assert.equal(mutationsForApproval.length, 1);
       assert.equal(mutationsForApproval[0]?.previousStatus, "active");
-      assert.equal(aggregateRows.length, 1);
+      assert.equal(refinementRequestsForApproval.length, 1);
+      assert.equal(
+        refinementRequestsForApproval[0]?.sourceResearchFeedbackDecisionId,
+        "feedback-002"
+      );
+      assert.equal(aggregateRows.length, 2);
       assert.equal(aggregateRows[0]?.completedEvaluations, 1);
-      assert.equal(feedbackDecisionRows.length, 1);
+      assert.equal(aggregateRows[1]?.setupDefinitionId, "setup-002");
+      assert.equal(feedbackDecisionRows.length, 2);
       assert.equal(feedbackDecisionRows[0]?.decisionStatus, "accepted");
-      assert.equal(approvalRows.length, 1);
+      assert.equal(feedbackDecisionRows[1]?.recommendedAction, "refine_definition");
+      assert.equal(approvalRows.length, 2);
       assert.equal(approvalRows[0]?.researchFeedbackDecisionId, "feedback-001");
       assert.equal(approvalRows[0]?.authorizedNextAction, "keep_active");
+      assert.equal(approvalRows[1]?.researchFeedbackDecisionId, "feedback-002");
+      assert.equal(approvalRows[1]?.authorizedNextAction, "refine_definition");
       assert.equal(reviewDecisionRows.length, 1);
       assert.equal(reviewDecisionRows[0]?.researchHypothesisId, "hypothesis-001");
       assert.equal(
@@ -511,6 +695,56 @@ integrationTest(
       assert.equal(setupLifecycleMutationRows.length, 1);
       assert.equal(setupLifecycleMutationRows[0]?.setupDefinitionId, "setup-001");
       assert.equal(setupLifecycleMutationRows[0]?.newStatus, "paused");
+      assert.equal(setupRefinementRequestRows.length, 1);
+      assert.equal(setupRefinementRequestRows[0]?.setupDefinitionId, "setup-002");
+      assert.deepEqual(setupRefinementRequestRows[0]?.evidenceReferences, [
+        "feedback-002",
+        "aggregate-002"
+      ]);
+      assert.equal(setupDefinitionRevisionRows.length, 1);
+      assert.equal(setupDefinitionRevisionRows[0]?.setupDefinitionId, "setup-003");
+      assert.equal(
+        setupDefinitionRevisionRows[0]?.sourceSetupRefinementRequestId,
+        "refinement-001"
+      );
+    });
+  }
+);
+
+integrationTest(
+  "shared implemented-product bundle maps invalid setup-definition-revision refinement linkage from real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      await repositories.setupDefinitionRepository.create({
+        definition: buildSetupDefinition("setup-002"),
+        metadata
+      });
+      await repositories.setupDefinitionRepository.create({
+        definition: {
+          ...buildSetupDefinition("setup-003"),
+          status: "draft"
+        },
+        metadata
+      });
+
+      await assert.rejects(
+        async () =>
+          repositories.setupDefinitionRevisionRepository.create({
+            revision: buildSetupDefinitionRevision(
+              "revision-missing-request",
+              "setup-003",
+              "setup-002",
+              "refinement-missing"
+            ),
+            metadata
+          }),
+        (error: unknown) =>
+          error instanceof RepositoryError &&
+          error.code === "invalid_reference" &&
+          error.entityType === "setup_definition_revision" &&
+          error.referenceEntityType === "setup_refinement_request" &&
+          error.referenceEntityId === "refinement-missing"
+      );
     });
   }
 );
@@ -647,6 +881,84 @@ integrationTest(
           error instanceof RepositoryError &&
           error.code === "invalid_reference" &&
           error.entityType === "setup_lifecycle_mutation_record" &&
+          error.referenceEntityType === "research_decision_approval" &&
+          error.referenceEntityId === "approval-001"
+      );
+    });
+  }
+);
+
+integrationTest(
+  "shared implemented-product bundle maps invalid setup-refinement approval linkage from real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      await repositories.setupDefinitionRepository.create({
+        definition: buildSetupDefinition("setup-001"),
+        metadata
+      });
+      await repositories.setupDefinitionRepository.create({
+        definition: buildSetupDefinition("setup-002"),
+        metadata
+      });
+      await repositories.researchHypothesisRepository.create({
+        hypothesis: buildResearchHypothesis("hypothesis-001", "setup-001"),
+        metadata
+      });
+      await repositories.setupAggregateResultRepository.create({
+        aggregate: buildAggregate("aggregate-001", "setup-001", "hypothesis-001"),
+        metadata
+      });
+      await repositories.researchFeedbackDecisionRepository.create({
+        decision: buildFeedbackDecision(
+          "feedback-001",
+          "setup-001",
+          "hypothesis-001",
+          "aggregate-001",
+          "refine_definition"
+        ),
+        metadata
+      });
+      const approvalPersistenceResult =
+        await repositories.feedbackDecisionApprovalReviewPersistence.recordFeedbackDecisionApproval({
+          researchFeedbackDecisionId: "feedback-001",
+          nextDecisionStatus: "accepted",
+          reviewerMetadata: {
+            reviewedBy: "reviewer-001",
+            reviewedAt: "2026-05-24T10:30:00.000Z",
+            approvalOutcome: "approved"
+          },
+          approval: buildApproval(
+            "approval-001",
+            "feedback-001",
+            "setup-001",
+            "refine_definition"
+          ),
+          metadata: {
+            ...metadata,
+            sourceObservedAtUtc: "2026-05-24T10:35:00.000Z"
+          }
+        });
+
+      assert.equal(approvalPersistenceResult.status, "recorded");
+      if (approvalPersistenceResult.status !== "recorded") {
+        assert.fail("approval persistence should have recorded the refinement approval");
+      }
+
+      await assert.rejects(
+        async () =>
+          repositories.setupRefinementRequestRepository.create({
+            request: buildSetupRefinementRequest(
+              "refinement-002",
+              "setup-002",
+              "approval-001",
+              "feedback-001"
+            ),
+            metadata
+          }),
+        (error: unknown) =>
+          error instanceof RepositoryError &&
+          error.code === "invalid_reference" &&
+          error.entityType === "setup_refinement_request" &&
           error.referenceEntityType === "research_decision_approval" &&
           error.referenceEntityId === "approval-001"
       );

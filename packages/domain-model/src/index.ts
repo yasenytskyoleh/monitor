@@ -265,6 +265,25 @@ export {
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_REQUIRED_COLUMNS,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_TABLES,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES,
+  SETUP_DEFINITION_REVISION_RELATIONAL_INDEXES,
+  SETUP_DEFINITION_REVISION_RELATIONAL_MIGRATION_SLUG,
+  SETUP_DEFINITION_REVISION_RELATIONAL_PRISMA_MODELS,
+  SETUP_DEFINITION_REVISION_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_DEFINITION_REVISION_RELATIONAL_TABLES,
+  SETUP_DEFINITION_REVISION_RELATIONAL_UNIQUE_CONSTRAINTS,
+  SETUP_DEFINITION_REVISION_RELATIONAL_ENTITY_TYPES,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_INDEXES,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_MIGRATION_SLUG,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_PRISMA_MODELS,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_TABLES,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ENTITY_TYPES,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_INDEXES,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_MIGRATION_SLUG,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_PRISMA_MODELS,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_REQUIRED_COLUMNS,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_TABLES,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_ENTITY_TYPES,
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_INDEXES,
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_MIGRATION_SLUG,
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_PRISMA_MODELS,
@@ -308,6 +327,22 @@ export type {
   RoutedActionExecutionEnvelopeRelationalPrismaModelName,
   RoutedActionExecutionEnvelopeRelationalEntityType,
   RoutedActionExecutionEnvelopeRelationalTableName,
+  SetupDefinitionRevisionDurableRecord,
+  SetupDefinitionRevisionRelationalIndexName,
+  SetupDefinitionRevisionRelationalPrismaModelName,
+  SetupDefinitionRevisionRelationalEntityType,
+  SetupDefinitionRevisionRelationalTableName,
+  SetupDefinitionRevisionRelationalUniqueConstraintName,
+  SetupRevisionActivationRecordDurableRecord,
+  SetupRevisionActivationRecordRelationalIndexName,
+  SetupRevisionActivationRecordRelationalPrismaModelName,
+  SetupRevisionActivationRecordRelationalEntityType,
+  SetupRevisionActivationRecordRelationalTableName,
+  SetupRefinementRequestDurableRecord,
+  SetupRefinementRequestRelationalIndexName,
+  SetupRefinementRequestRelationalPrismaModelName,
+  SetupRefinementRequestRelationalEntityType,
+  SetupRefinementRequestRelationalTableName,
   SetupLifecycleMutationRecordDurableRecord,
   SetupLifecycleMutationRecordRelationalIndexName,
   SetupLifecycleMutationRecordRelationalPrismaModelName,
@@ -401,6 +436,27 @@ export {
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_RETRYABLE_ERROR_CODES,
   isSetupLifecycleMutationRecordRelationalDeterministicErrorCode
 } from "./repositories/setup-lifecycle-mutation-record-relational-repository-adapter.js";
+export {
+  SETUP_DEFINITION_REVISION_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  SETUP_DEFINITION_REVISION_RELATIONAL_ADAPTER_OPERATIONS,
+  SETUP_DEFINITION_REVISION_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  SETUP_DEFINITION_REVISION_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isSetupDefinitionRevisionRelationalDeterministicErrorCode
+} from "./repositories/setup-definition-revision-relational-repository-adapter.js";
+export {
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ADAPTER_OPERATIONS,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isSetupRevisionActivationRecordRelationalDeterministicErrorCode
+} from "./repositories/setup-revision-activation-record-relational-repository-adapter.js";
+export {
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_ADAPTER_OPERATIONS,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  SETUP_REFINEMENT_REQUEST_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isSetupRefinementRequestRelationalDeterministicErrorCode
+} from "./repositories/setup-refinement-request-relational-repository-adapter.js";
 export { composeFirstDurableRelationalRepositories } from "./repositories/first-durable-relational-repositories.js";
 export type {
   FirstDurableRelationalRepositories
@@ -454,6 +510,24 @@ export {
 export type {
   SetupLifecycleMutationRecordRelationalRepositories
 } from "./repositories/setup-lifecycle-mutation-record-relational-repositories.js";
+export {
+  composeSetupDefinitionRevisionRelationalRepositories
+} from "./repositories/setup-definition-revision-relational-repositories.js";
+export type {
+  SetupDefinitionRevisionRelationalRepositories
+} from "./repositories/setup-definition-revision-relational-repositories.js";
+export {
+  composeSetupRevisionActivationRecordRelationalRepositories
+} from "./repositories/setup-revision-activation-record-relational-repositories.js";
+export type {
+  SetupRevisionActivationRecordRelationalRepositories
+} from "./repositories/setup-revision-activation-record-relational-repositories.js";
+export {
+  composeSetupRefinementRequestRelationalRepositories
+} from "./repositories/setup-refinement-request-relational-repositories.js";
+export type {
+  SetupRefinementRequestRelationalRepositories
+} from "./repositories/setup-refinement-request-relational-repositories.js";
 export type {
   FirstDurableRelationalAdapterErrorMapping,
   FirstDurableRelationalAdapterOperation,
@@ -542,6 +616,30 @@ export type {
   SetupLifecycleMutationRecordRelationalRepositoryAdapter,
   SetupLifecycleMutationRecordRelationalRetryableErrorCode
 } from "./repositories/setup-lifecycle-mutation-record-relational-repository-adapter.js";
+export type {
+  SetupDefinitionRevisionRecordWriteRequest,
+  SetupDefinitionRevisionRelationalAdapterErrorMapping,
+  SetupDefinitionRevisionRelationalAdapterOperation,
+  SetupDefinitionRevisionRelationalDeterministicErrorCode,
+  SetupDefinitionRevisionRelationalRepositoryAdapter,
+  SetupDefinitionRevisionRelationalRetryableErrorCode
+} from "./repositories/setup-definition-revision-relational-repository-adapter.js";
+export type {
+  SetupRevisionActivationRecordRecordWriteRequest,
+  SetupRevisionActivationRecordRelationalAdapterErrorMapping,
+  SetupRevisionActivationRecordRelationalAdapterOperation,
+  SetupRevisionActivationRecordRelationalDeterministicErrorCode,
+  SetupRevisionActivationRecordRelationalRepositoryAdapter,
+  SetupRevisionActivationRecordRelationalRetryableErrorCode
+} from "./repositories/setup-revision-activation-record-relational-repository-adapter.js";
+export type {
+  SetupRefinementRequestRecordWriteRequest,
+  SetupRefinementRequestRelationalAdapterErrorMapping,
+  SetupRefinementRequestRelationalAdapterOperation,
+  SetupRefinementRequestRelationalDeterministicErrorCode,
+  SetupRefinementRequestRelationalRepositoryAdapter,
+  SetupRefinementRequestRelationalRetryableErrorCode
+} from "./repositories/setup-refinement-request-relational-repository-adapter.js";
 export {
   dehydrateRoutedActionExecutionEnvelopeToDurableRecord,
   hydrateRoutedActionExecutionEnvelopeFromDurableRecord
@@ -550,6 +648,18 @@ export {
   dehydrateSetupLifecycleMutationRecordToDurableRecord,
   hydrateSetupLifecycleMutationRecordFromDurableRecord
 } from "./repositories/setup-lifecycle-mutation-record-relational-repository-mappers.js";
+export {
+  dehydrateSetupDefinitionRevisionToDurableRecord,
+  hydrateSetupDefinitionRevisionFromDurableRecord
+} from "./repositories/setup-definition-revision-relational-repository-mappers.js";
+export {
+  dehydrateSetupRevisionActivationRecordToDurableRecord,
+  hydrateSetupRevisionActivationRecordFromDurableRecord
+} from "./repositories/setup-revision-activation-record-relational-repository-mappers.js";
+export {
+  dehydrateSetupRefinementRequestToDurableRecord,
+  hydrateSetupRefinementRequestFromDurableRecord
+} from "./repositories/setup-refinement-request-relational-repository-mappers.js";
 export {
   dehydrateEvaluationResultToDurableRecord,
   dehydrateSignalCandidateToDurableRecord,
@@ -617,6 +727,24 @@ export type {
 export {
   InMemorySetupLifecycleMutationRecordRelationalRepositoryAdapter
 } from "./repositories/setup-lifecycle-mutation-record-relational-repository-adapter.impl.js";
+export type {
+  SetupDefinitionRevisionRelationalReferenceReader
+} from "./repositories/setup-definition-revision-relational-repository-adapter.impl.js";
+export {
+  InMemorySetupDefinitionRevisionRelationalRepositoryAdapter
+} from "./repositories/setup-definition-revision-relational-repository-adapter.impl.js";
+export type {
+  SetupRevisionActivationRecordRelationalReferenceReader
+} from "./repositories/setup-revision-activation-record-relational-repository-adapter.impl.js";
+export {
+  InMemorySetupRevisionActivationRecordRelationalRepositoryAdapter
+} from "./repositories/setup-revision-activation-record-relational-repository-adapter.impl.js";
+export type {
+  SetupRefinementRequestRelationalReferenceReader
+} from "./repositories/setup-refinement-request-relational-repository-adapter.impl.js";
+export {
+  InMemorySetupRefinementRequestRelationalRepositoryAdapter
+} from "./repositories/setup-refinement-request-relational-repository-adapter.impl.js";
 export {
   createFirstDurableRelationalPrismaClient,
   createFirstDurableRelationalPrismaRepositories,
@@ -697,6 +825,27 @@ export {
 export type {
   SetupLifecycleMutationRecordRelationalPrismaRepositories
 } from "./repositories/setup-lifecycle-mutation-record-relational-prisma-client.js";
+export {
+  createSetupDefinitionRevisionRelationalPrismaRepositories,
+  createSetupDefinitionRevisionRelationalPrismaRepositoryAdapter
+} from "./repositories/setup-definition-revision-relational-prisma-client.js";
+export type {
+  SetupDefinitionRevisionRelationalPrismaRepositories
+} from "./repositories/setup-definition-revision-relational-prisma-client.js";
+export {
+  createSetupRevisionActivationRecordRelationalPrismaRepositories,
+  createSetupRevisionActivationRecordRelationalPrismaRepositoryAdapter
+} from "./repositories/setup-revision-activation-record-relational-prisma-client.js";
+export type {
+  SetupRevisionActivationRecordRelationalPrismaRepositories
+} from "./repositories/setup-revision-activation-record-relational-prisma-client.js";
+export {
+  createSetupRefinementRequestRelationalPrismaRepositories,
+  createSetupRefinementRequestRelationalPrismaRepositoryAdapter
+} from "./repositories/setup-refinement-request-relational-prisma-client.js";
+export type {
+  SetupRefinementRequestRelationalPrismaRepositories
+} from "./repositories/setup-refinement-request-relational-prisma-client.js";
 export type {
   SetupAggregateRelationalPrismaClient
 } from "./repositories/setup-aggregate-relational-prisma-adapter.js";
@@ -733,6 +882,24 @@ export type {
 export {
   PrismaSetupLifecycleMutationRecordRelationalRepositoryAdapter
 } from "./repositories/setup-lifecycle-mutation-record-relational-prisma-adapter.js";
+export type {
+  SetupDefinitionRevisionRelationalPrismaClient
+} from "./repositories/setup-definition-revision-relational-prisma-adapter.js";
+export {
+  PrismaSetupDefinitionRevisionRelationalRepositoryAdapter
+} from "./repositories/setup-definition-revision-relational-prisma-adapter.js";
+export type {
+  SetupRevisionActivationRecordRelationalPrismaClient
+} from "./repositories/setup-revision-activation-record-relational-prisma-adapter.js";
+export {
+  PrismaSetupRevisionActivationRecordRelationalRepositoryAdapter
+} from "./repositories/setup-revision-activation-record-relational-prisma-adapter.js";
+export type {
+  SetupRefinementRequestRelationalPrismaClient
+} from "./repositories/setup-refinement-request-relational-prisma-adapter.js";
+export {
+  PrismaSetupRefinementRequestRelationalRepositoryAdapter
+} from "./repositories/setup-refinement-request-relational-prisma-adapter.js";
 export {
   REPOSITORY_ERROR_CODES,
   REPOSITORY_OPERATIONS,
@@ -826,6 +993,9 @@ export {
 export {
   RelationalSetupLifecycleMutationRecordRepository
 } from "./repositories/setup-lifecycle-mutation-record-relational-repository.impl.js";
+export {
+  RelationalSetupRefinementRequestRepository
+} from "./repositories/setup-refinement-request-relational-repository.impl.js";
 export type {
   SetupDefinitionRevisionCreateRequest,
   SetupDefinitionRevisionRepository,
@@ -834,6 +1004,9 @@ export type {
 export {
   InMemorySetupDefinitionRevisionRepository
 } from "./repositories/setup-definition-revision-repository.impl.js";
+export {
+  RelationalSetupDefinitionRevisionRepository
+} from "./repositories/setup-definition-revision-relational-repository.impl.js";
 export type {
   SetupRevisionActivationRecordCreateRequest,
   SetupRevisionActivationRecordRepository
@@ -841,6 +1014,9 @@ export type {
 export {
   InMemorySetupRevisionActivationRecordRepository
 } from "./repositories/setup-revision-activation-record-repository.impl.js";
+export {
+  RelationalSetupRevisionActivationRecordRepository
+} from "./repositories/setup-revision-activation-record-relational-repository.impl.js";
 export type {
   SetupLifecycleMutationRecordCreateRequest,
   SetupLifecycleMutationRecordRepository
