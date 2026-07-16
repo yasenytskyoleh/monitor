@@ -68,6 +68,13 @@ export type {
   ResearchReviewDecisionRelationalEntityType
 } from "./research-review-decision-relational-slice.js";
 export {
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_ENTITY_TYPES
+} from "./review-decision-routing-result-relational-slice.js";
+export type {
+  ReviewDecisionRoutingResultDurableRecord,
+  ReviewDecisionRoutingResultRelationalEntityType
+} from "./review-decision-routing-result-relational-slice.js";
+export {
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES
 } from "./routed-action-execution-envelope-relational-slice.js";
 export type {

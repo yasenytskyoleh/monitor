@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.44 — Codex-first workflow, bounded autonomous mode, shared setup-revision-activation integration, and next downstream durable-slice selection**
+**Phase 1.44 — Codex-first workflow, bounded autonomous mode, shared setup-revision-activation integration, and review-decision-routing-result durable contract**
 
 ## What this phase is about
 This phase is focused on:
@@ -34,7 +34,7 @@ The product side now proves that the repo can:
 - commit the next downstream activation-audit durable relational contract, Prisma schema, relational adapter contract, adapter-backed repository, and concrete Prisma adapter for `setup_revision_activation_record`,
 - complete shared implemented-product activation-bundle composition,
 - extend one opt-in real-database integration path through `setup_revision_activation_record`,
-- keep the next later downstream execution/mutation durable slice as the next bounded persistence step,
+- select `review_decision_routing_result` as the next downstream execution-handoff durable slice and commit its durable relational contract,
 - and keep runtime engines pending.
 
 ## Implemented in this phase (current baseline)
@@ -393,7 +393,12 @@ The product side now proves that the repo can:
   - `packages/domain-model/test/setup-revision-activation-record-relational-repository-mappers.test.ts`
   - `packages/domain-model/test/setup-revision-activation-record-relational-repositories.test.ts`
   - `packages/domain-model/test/setup-revision-activation-record-relational-prisma-adapter.test.ts`
-- implemented in-memory persistence and service-owned write paths for:
+- review-decision-routing-result durable relational contract:
+  - `docs/project/review-decision-routing-result-relational-persistence-model.md`
+  - `docs/architecture/adr/ADR-080-review-decision-routing-result-durable-relational-contract.md`
+  - `packages/domain-model/src/storage/review-decision-routing-result-relational-slice.ts`
+  - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
+- implemented in-memory persistence for:
   - `SetupDefinition`
   - `ResearchHypothesis`
   - `SignalCandidate`
@@ -402,6 +407,7 @@ The product side now proves that the repo can:
   - `ResearchFeedbackDecision`
   - `ResearchDecisionApproval`
   - `ResearchReviewDecision`
+  - `ReviewDecisionRoutingResult`
   - `RoutedActionExecutionEnvelope`
   - `SetupLifecycleMutationRecord`
   - `SetupRefinementRequest`
@@ -433,7 +439,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- select the next later downstream execution/mutation durable slice after `setup_revision_activation_record`
+- define the Prisma physical schema and migration for `review_decision_routing_result`
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -449,4 +455,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, thirteen committed durable relational contracts, committed Prisma schema/migrations through `setup_revision_activation_record`, committed repository adapter contracts through `setup_revision_activation_record`, per-entity adapter-backed repository and concrete Prisma-adapter parity through `setup_revision_activation_record`, one shared implemented-product bundle spanning the full implemented product chain through `setup_revision_activation_record`, one shared full-chain real-database integration flow through `setup_revision_activation_record`, one hardened atomic approval persistence path, one downstream feedback-decision repository rollout, one approval-slice repository rollout, one downstream review-decision rollout, one first execution-envelope persistence rollout, one first mutation-audit durable repository rollout, one first later downstream refinement-follow-up full-chain integration rollout, one first later downstream revision full-chain integration rollout, and one first later downstream activation-audit full-chain integration rollout that make later downstream durable-slice selection the next bounded persistence step**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, fourteen committed durable relational contracts, committed Prisma schema/migrations through `setup_revision_activation_record`, committed repository adapter contracts through `setup_revision_activation_record`, per-entity adapter-backed repository and concrete Prisma-adapter parity through `setup_revision_activation_record`, one shared implemented-product bundle spanning the full implemented product chain through `setup_revision_activation_record`, one shared full-chain real-database integration flow through `setup_revision_activation_record`, and one selected downstream review-decision-routing-result contract that makes its physical schema and migration the next bounded persistence step**.

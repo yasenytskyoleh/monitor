@@ -24,6 +24,7 @@ export const PRODUCT_PERSISTED_ENTITY_TYPES = [
   "research_feedback_decision",
   "research_decision_approval",
   "research_review_decision",
+  "review_decision_routing_result",
   "routed_action_execution_envelope",
   "setup_lifecycle_mutation_record",
   "setup_refinement_request",

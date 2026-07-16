@@ -156,6 +156,8 @@
 - setup-revision-activation-record adapter-backed relational repository and concrete Prisma adapter now exist
 - shared implemented-product composition now extends through setup-revision-activation-record
 - shared implemented-product real-Postgres integration now extends through setup-revision-activation-record
+- `review_decision_routing_result` is selected as the next downstream execution-handoff persistence slice
+- review-decision-routing-result durable relational contract now exists
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -165,4 +167,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is: **select the next later downstream execution/mutation durable slice after `setup_revision_activation_record`**
+- the currently recommended next step is: **define the Prisma physical schema and migration for `review_decision_routing_result`**
