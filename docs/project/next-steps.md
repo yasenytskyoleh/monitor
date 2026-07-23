@@ -1,21 +1,20 @@
 # Next Steps
 
 ## Current recommended next step
-### Implement the adapter-backed repository and Prisma adapter for `review_decision_routing_result`
+### Extend shared composition and real-Postgres integration through `review_decision_routing_result`
 
 Reason:
 - `review_decision_routing_result` is now selected as the next downstream execution-handoff persistence slice
 - it has a domain contract, in-memory repository, first-class persisted-entity registration, and a durable relational record contract for routable outcomes
 - it now has a committed Prisma model, SQL migration, source-review-decision foreign key, and query indexes
-- it now has a durable-record adapter contract with deterministic duplicate/reference errors
-- the next missing layer is mappers, a domain-facing relational repository, and concrete Prisma persistence
+- it now has durable mappers, a domain-facing relational repository, and concrete Prisma persistence
+- the next missing layer is shared implemented-product composition and opt-in real-Postgres coverage
 - runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
 - the shared implemented-product bundle and real-Postgres integration flow remain complete through `setup_revision_activation_record`
 
 ## Recommended near-future sequence
-1. implement the adapter-backed repository and concrete Prisma adapter for `review_decision_routing_result`
-2. extend shared composition for that slice
-3. extend opt-in real-Postgres integration coverage for that slice
+1. extend shared composition for `review_decision_routing_result`
+2. extend opt-in real-Postgres integration coverage for that slice
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

@@ -222,13 +222,13 @@ Current limitation:
   - one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_revision_activation_record`
   - one end-to-end real-database integration flow now spans the full implemented product chain through `setup_revision_activation_record`
   - `setup_revision_activation_record` now has implemented in-memory persistence, a service-owned write path, a durable relational contract, committed Prisma schema/migration coverage, a relational adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, slice-level shared composition, shared implemented-product bundle coverage, and opt-in real-database integration coverage
-  - `review_decision_routing_result` has its durable contract, committed Prisma schema/migration, and relational adapter contract; its mapper/repository/Prisma rollout remains pending
+  - `review_decision_routing_result` has its durable contract, committed Prisma schema/migration, relational adapter contract, mappers, adapter-backed repository, and Prisma adapter; shared composition and real-Postgres integration remain pending
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- implement the adapter-backed repository and Prisma adapter for `review_decision_routing_result`
+- extend shared composition and real-Postgres integration through `review_decision_routing_result`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

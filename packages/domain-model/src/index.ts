@@ -517,6 +517,12 @@ export type {
   ResearchReviewDecisionRelationalRepositories
 } from "./repositories/research-review-decision-relational-repositories.js";
 export {
+  composeReviewDecisionRoutingResultRelationalRepositories
+} from "./repositories/review-decision-routing-result-relational-repositories.js";
+export type {
+  ReviewDecisionRoutingResultRelationalRepositories
+} from "./repositories/review-decision-routing-result-relational-repositories.js";
+export {
   composeRoutedActionExecutionEnvelopeRelationalRepositories
 } from "./repositories/routed-action-execution-envelope-relational-repositories.js";
 export type {
@@ -709,6 +715,10 @@ export {
   hydrateResearchReviewDecisionFromDurableRecord
 } from "./repositories/research-review-decision-relational-repository-mappers.js";
 export {
+  dehydrateReviewDecisionRoutingResultToDurableRecord,
+  hydrateReviewDecisionRoutingResultFromDurableRecord
+} from "./repositories/review-decision-routing-result-relational-repository-mappers.js";
+export {
   InMemoryFirstDurableRelationalRepositoryAdapter
 } from "./repositories/first-durable-relational-repository-adapter.impl.js";
 export type {
@@ -747,6 +757,19 @@ export type {
 export {
   InMemoryReviewDecisionRoutingResultRelationalRepositoryAdapter
 } from "./repositories/review-decision-routing-result-relational-repository-adapter.impl.js";
+export type {
+  ReviewDecisionRoutingResultRelationalPrismaClient
+} from "./repositories/review-decision-routing-result-relational-prisma-adapter.js";
+export {
+  PrismaReviewDecisionRoutingResultRelationalRepositoryAdapter
+} from "./repositories/review-decision-routing-result-relational-prisma-adapter.js";
+export {
+  createReviewDecisionRoutingResultRelationalPrismaRepositoryAdapter,
+  createReviewDecisionRoutingResultRelationalPrismaRepositories
+} from "./repositories/review-decision-routing-result-relational-prisma-client.js";
+export type {
+  ReviewDecisionRoutingResultRelationalPrismaRepositories
+} from "./repositories/review-decision-routing-result-relational-prisma-client.js";
 export type {
   RoutedActionExecutionEnvelopeRelationalReferenceReader
 } from "./repositories/routed-action-execution-envelope-relational-repository-adapter.impl.js";
@@ -1005,6 +1028,9 @@ export {
 export {
   RelationalResearchReviewDecisionRepository
 } from "./repositories/research-review-decision-relational-repository.impl.js";
+export {
+  RelationalReviewDecisionRoutingResultRepository
+} from "./repositories/review-decision-routing-result-relational-repository.impl.js";
 export type {
   ReviewDecisionRoutingResultCreateRequest,
   ReviewDecisionRoutingResultRepository
