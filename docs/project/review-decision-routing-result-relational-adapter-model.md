@@ -37,5 +37,6 @@ The adapter must validate the required `research_review_decision` reference on i
 
 ## Explicitly postponed
 - domain/durable mappers, adapter-backed repository, and concrete Prisma adapter
-- shared implemented-product composition and real-Postgres integration extension
+- shared implemented-product composition is completed later in `docs/project/implemented-product-review-decision-routing-result-composition-model.md`
+- real-Postgres integration extension
 - routing-service write-path changes

@@ -19,6 +19,8 @@ import { createResearchDecisionApprovalRelationalPrismaRepositoryAdapter } from 
 import { type PrismaResearchDecisionApprovalRelationalRepositoryAdapter } from "./research-decision-approval-relational-prisma-adapter.js";
 import { createResearchReviewDecisionRelationalPrismaRepositoryAdapter } from "./research-review-decision-relational-prisma-client.js";
 import { type PrismaResearchReviewDecisionRelationalRepositoryAdapter } from "./research-review-decision-relational-prisma-adapter.js";
+import { createReviewDecisionRoutingResultRelationalPrismaRepositoryAdapter } from "./review-decision-routing-result-relational-prisma-client.js";
+import { type PrismaReviewDecisionRoutingResultRelationalRepositoryAdapter } from "./review-decision-routing-result-relational-prisma-adapter.js";
 import { createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter } from "./research-feedback-decision-relational-prisma-client.js";
 import { type PrismaResearchFeedbackDecisionRelationalRepositoryAdapter } from "./research-feedback-decision-relational-prisma-adapter.js";
 import { createRoutedActionExecutionEnvelopeRelationalPrismaRepositoryAdapter } from "./routed-action-execution-envelope-relational-prisma-client.js";
@@ -43,6 +45,8 @@ export type ImplementedProductRelationalPrismaAdapters = ImplementedProductRelat
   feedbackDecisionAdapter: PrismaResearchFeedbackDecisionRelationalRepositoryAdapter;
   approvalAdapter: PrismaResearchDecisionApprovalRelationalRepositoryAdapter;
   reviewDecisionAdapter: PrismaResearchReviewDecisionRelationalRepositoryAdapter;
+  reviewDecisionRoutingResultAdapter:
+    PrismaReviewDecisionRoutingResultRelationalRepositoryAdapter;
   routedActionAdapter: PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter;
   setupLifecycleMutationRecordAdapter:
     PrismaSetupLifecycleMutationRecordRelationalRepositoryAdapter;
@@ -71,6 +75,8 @@ export const createImplementedProductRelationalPrismaAdapters = (
   feedbackDecisionAdapter: createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter(client),
   approvalAdapter: createResearchDecisionApprovalRelationalPrismaRepositoryAdapter(client),
   reviewDecisionAdapter: createResearchReviewDecisionRelationalPrismaRepositoryAdapter(client),
+  reviewDecisionRoutingResultAdapter:
+    createReviewDecisionRoutingResultRelationalPrismaRepositoryAdapter(client),
   routedActionAdapter: createRoutedActionExecutionEnvelopeRelationalPrismaRepositoryAdapter(
     client
   ),

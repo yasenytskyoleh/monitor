@@ -7,6 +7,7 @@ import {
   InMemoryResearchDecisionApprovalRelationalRepositoryAdapter,
   InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter,
   InMemoryResearchReviewDecisionRelationalRepositoryAdapter,
+  InMemoryReviewDecisionRoutingResultRelationalRepositoryAdapter,
   InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter,
   InMemorySetupDefinitionRevisionRelationalRepositoryAdapter,
   InMemorySetupAggregateRelationalRepositoryAdapter,
@@ -20,6 +21,7 @@ import {
   type ResearchFeedbackDecision,
   type ResearchHypothesis,
   type ResearchReviewDecision,
+  type ReviewDecisionRoutingResult,
   type RoutedActionExecutionEnvelope,
   type SetupAggregateResult,
   type SetupDefinition,
@@ -190,6 +192,23 @@ const buildReviewDecision = (
   updatedAt: "2026-05-24T10:45:00.000Z"
 });
 
+const buildRoutingResult = (
+  routingId: string,
+  researchReviewDecisionId: string
+): ReviewDecisionRoutingResult => ({
+  status: "routed",
+  routingId,
+  researchReviewDecisionId,
+  setupFamilyId: "setup-family-001",
+  setupRevisionId: "setup-family-001-v2",
+  decisionOutcome: "accepted",
+  authorizedNextAction: "prepare_lifecycle_mutation_follow_up",
+  target: "apply_setup_lifecycle_mutation",
+  downstreamCommandType: "ApplyApprovedSetupMutationCommand",
+  routedAt: "2026-05-24T10:50:00.000Z",
+  warnings: []
+});
+
 const buildEnvelope = (
   id: string,
   sourceReviewDecisionId: string
@@ -342,6 +361,11 @@ test(
       loadResearchHypothesisBundle:
         firstDurableAdapter.loadResearchHypothesisBundle.bind(firstDurableAdapter)
     });
+    const reviewDecisionRoutingResultAdapter =
+      new InMemoryReviewDecisionRoutingResultRelationalRepositoryAdapter({
+        loadResearchReviewDecisionRecord:
+          reviewDecisionAdapter.loadResearchReviewDecisionRecord.bind(reviewDecisionAdapter)
+      });
     const approvalAdapter = new InMemoryResearchDecisionApprovalRelationalRepositoryAdapter({
       loadResearchFeedbackDecisionRecord:
         feedbackDecisionAdapter.loadResearchFeedbackDecisionRecord.bind(feedbackDecisionAdapter),
@@ -392,6 +416,7 @@ test(
       feedbackDecisionAdapter,
       approvalAdapter,
       reviewDecisionAdapter,
+      reviewDecisionRoutingResultAdapter,
       routedActionAdapter: new InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter({
         loadResearchReviewDecisionRecord:
           reviewDecisionAdapter.loadResearchReviewDecisionRecord.bind(reviewDecisionAdapter)
@@ -447,6 +472,10 @@ test(
     });
     await repositories.researchReviewDecisionRepository.create({
       decision: buildReviewDecision("review-decision-001", "hypothesis-001"),
+      metadata
+    });
+    await repositories.reviewDecisionRoutingResultRepository.create({
+      result: buildRoutingResult("routing-result-001", "review-decision-001"),
       metadata
     });
     await repositories.routedActionExecutionEnvelopeRepository.create({
@@ -541,6 +570,9 @@ test(
       await repositories.researchDecisionApprovalRepository.getById("approval-001");
     const storedReviewDecision =
       await repositories.researchReviewDecisionRepository.getById("review-decision-001");
+    const storedRoutingResult = await repositories.reviewDecisionRoutingResultRepository.getById(
+      "routing-result-001"
+    );
     const storedEnvelope =
       await repositories.routedActionExecutionEnvelopeRepository.getById(
         "execution-envelope-001"
@@ -574,6 +606,11 @@ test(
     assert.equal(
       storedReviewDecision?.authorizedNextAction,
       "prepare_lifecycle_mutation_follow_up"
+    );
+    assert.equal(storedRoutingResult?.researchReviewDecisionId, "review-decision-001");
+    assert.equal(
+      storedRoutingResult?.downstreamCommandType,
+      "ApplyApprovedSetupMutationCommand"
     );
     assert.equal(storedEnvelope?.sourceReviewDecisionId, "review-decision-001");
     assert.equal(
