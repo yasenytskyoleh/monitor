@@ -22,6 +22,11 @@ import {
   RESEARCH_REVIEW_DECISION_RELATIONAL_PRISMA_MODELS,
   RESEARCH_REVIEW_DECISION_RELATIONAL_REQUIRED_COLUMNS,
   RESEARCH_REVIEW_DECISION_RELATIONAL_TABLES,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_INDEXES,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_MIGRATION_SLUG,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_PRISMA_MODELS,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_REQUIRED_COLUMNS,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_TABLES,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_INDEXES,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_MIGRATION_SLUG,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_PRISMA_MODELS,
@@ -145,6 +150,13 @@ const setupRevisionActivationRecordMigrationPath = join(
   "prisma",
   "migrations",
   "20260711103000_product_domain_setup_revision_activation_record_relational_v1",
+  "migration.sql"
+);
+const reviewDecisionRoutingResultMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260723103000_product_domain_review_decision_routing_result_relational_v1",
   "migration.sql"
 );
 
@@ -693,6 +705,91 @@ test("migration creates the research-review-decision relational table, indexes, 
   assert.match(
     migration,
     /"created_at_utc" <= "reviewed_at_utc" AND\s+"updated_at_utc" >= "reviewed_at_utc"/
+  );
+});
+
+test("exposes review-decision-routing-result physical schema constants", () => {
+  assert.equal(
+    REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_review_decision_routing_result_relational_v1"
+  );
+  assert.equal(
+    REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_PRISMA_MODELS.reviewDecisionRoutingResult,
+    "ReviewDecisionRoutingResultRecord"
+  );
+  assert.equal(
+    REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_TABLES.reviewDecisionRoutingResult,
+    "review_decision_routing_result"
+  );
+  assert.equal(
+    REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_REQUIRED_COLUMNS
+      .review_decision_routing_result.includes("downstream_command_type"),
+    true
+  );
+  assert.equal(
+    REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_INDEXES.includes(
+      "idx_review_decision_routing_result_family_routed_at_utc"
+    ),
+    true
+  );
+});
+
+test("prisma schema defines the review-decision-routing-result relational model and enum", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum ReviewDecisionRoutingStatus \{/);
+  assert.match(schema, /model ReviewDecisionRoutingResultRecord \{/);
+  assert.match(schema, /@@map\("review_decision_routing_result"\)/);
+
+  for (const tableName of Object.values(
+    REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_TABLES
+  )) {
+    assert.equal(schema.includes(`@@map("${tableName}")`), true);
+  }
+
+  for (const modelName of Object.values(
+    REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_PRISMA_MODELS
+  )) {
+    assert.equal(schema.includes(`model ${modelName} {`), true);
+  }
+});
+
+test("migration creates the review-decision-routing-result relational table, indexes, and key constraints", async () => {
+  const migration = await readFile(reviewDecisionRoutingResultMigrationPath, "utf8");
+
+  for (const tableName of Object.values(
+    REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_TABLES
+  )) {
+    assert.equal(
+      migration.includes(`CREATE TABLE "product_domain"."${tableName}"`),
+      true
+    );
+  }
+
+  for (const indexName of REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+
+  for (const [tableName, columns] of Object.entries(
+    REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_REQUIRED_COLUMNS
+  )) {
+    for (const columnName of columns) {
+      assert.equal(
+        migration.includes(`"${columnName}"`),
+        true,
+        `${tableName} is missing ${columnName}`
+      );
+    }
+  }
+
+  assert.match(
+    migration,
+    /FOREIGN KEY \("research_review_decision_id"\)\s+REFERENCES "product_domain"\."research_review_decision"/
+  );
+  assert.match(migration, /CHECK \(\s*jsonb_typeof\("warnings"\) = 'array'/);
+  assert.match(
+    migration,
+    /"created_at_utc" <= "routed_at_utc" AND\s+"updated_at_utc" >= "routed_at_utc"/
   );
 });
 

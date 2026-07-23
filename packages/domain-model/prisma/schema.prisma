@@ -221,6 +221,14 @@ enum ReviewDecisionDownstreamCommandType {
   @@schema("product_domain")
 }
 
+enum ReviewDecisionRoutingStatus {
+  routed
+  no_action
+
+  @@map("review_decision_routing_status")
+  @@schema("product_domain")
+}
+
 enum RoutedActionExecutionStatus {
   prepared
   ready
@@ -539,6 +547,7 @@ model ResearchReviewDecisionRecord {
   updatedAtUtc             DateTime                          @map("updated_at_utc") @db.Timestamptz(3)
   archivedAtUtc            DateTime?                         @map("archived_at_utc") @db.Timestamptz(3)
   researchHypothesis       ResearchHypothesisRecord?         @relation(fields: [researchHypothesisId], references: [researchHypothesisId], onDelete: Restrict, onUpdate: Cascade)
+  reviewDecisionRoutingResults ReviewDecisionRoutingResultRecord[]
   routedActionExecutionEnvelopes RoutedActionExecutionEnvelopeRecord[]
 
   @@index([researchReviewPacketId], map: "idx_research_review_decision_review_packet_id")
@@ -548,6 +557,40 @@ model ResearchReviewDecisionRecord {
   @@index([decisionOutcome], map: "idx_research_review_decision_decision_outcome")
   @@index([authorizedNextAction], map: "idx_research_review_decision_authorized_next_action")
   @@map("research_review_decision")
+  @@schema("product_domain")
+}
+
+model ReviewDecisionRoutingResultRecord {
+  reviewDecisionRoutingResultId String                              @id(map: "review_decision_routing_result_pkey") @map("review_decision_routing_result_id") @db.Text
+  version                       Int                                 @map("version")
+  lifecycleStatus               PersistedLifecycleStatus            @map("lifecycle_status")
+  routingStatus                 ReviewDecisionRoutingStatus         @map("routing_status")
+  researchReviewDecisionId      String                              @map("research_review_decision_id") @db.Text
+  setupFamilyId                 String                              @map("setup_family_id") @db.Text
+  setupRevisionId               String?                             @map("setup_revision_id") @db.Text
+  decisionOutcome               ResearchReviewDecisionOutcome       @map("decision_outcome")
+  authorizedNextAction          ResearchReviewAuthorizedNextAction? @map("authorized_next_action")
+  downstreamTarget              DownstreamActionTarget?             @map("downstream_target")
+  downstreamCommandType         ReviewDecisionDownstreamCommandType @map("downstream_command_type")
+  routedAtUtc                   DateTime                            @map("routed_at_utc") @db.Timestamptz(3)
+  reason                        String?                             @map("reason") @db.Text
+  warnings                      Json                                @map("warnings")
+  originRunId                   String?                             @map("origin_run_id") @db.Text
+  originTransitionId            String?                             @map("origin_transition_id") @db.Text
+  createdBySource               ProductRecordSource                 @map("created_by_source")
+  lastUpdatedBySource           ProductRecordSource                 @map("last_updated_by_source")
+  traceId                       String?                             @map("trace_id") @db.Text
+  sourceObservedAtUtc           DateTime?                           @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes                 String?                             @map("metadata_notes") @db.Text
+  createdAtUtc                  DateTime                            @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc                  DateTime                            @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc                 DateTime?                           @map("archived_at_utc") @db.Timestamptz(3)
+  researchReviewDecision        ResearchReviewDecisionRecord        @relation(fields: [researchReviewDecisionId], references: [researchReviewDecisionId], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([researchReviewDecisionId], map: "idx_review_decision_routing_result_review_decision_id")
+  @@index([setupFamilyId, routedAtUtc], map: "idx_review_decision_routing_result_family_routed_at_utc")
+  @@index([routingStatus], map: "idx_review_decision_routing_result_routing_status")
+  @@map("review_decision_routing_result")
   @@schema("product_domain")
 }
 
