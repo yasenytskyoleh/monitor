@@ -129,6 +129,17 @@ export const FIRST_CLASS_PERSISTED_ENTITY_PROFILES: PersistedEntityProfile[] = [
     }
   },
   {
+    entityType: "review_decision_routing_result",
+    firstClassPersisted: true,
+    timing: {
+      createdWhen: "created when a resolved research review decision is routed to a downstream action or no-op",
+      updatedWhen: "updated only for controlled routing audit metadata corrections",
+      immutableFields: ["identity.entityId"],
+      mutableFields: ["metadata", "updatedAtUtc"],
+      canBeArchived: true
+    }
+  },
+  {
     entityType: "routed_action_execution_envelope",
     firstClassPersisted: true,
     timing: {

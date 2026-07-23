@@ -1,19 +1,19 @@
 # Next Steps
 
 ## Current recommended next step
-### Select the next later downstream execution/mutation durable slice after `setup_revision_activation_record`
+### Define the Prisma physical schema and migration for `review_decision_routing_result`
 
 Reason:
-- one shared Prisma-backed repository bundle and one opt-in real-Postgres integration path now already span the full implemented product chain through `setup_revision_activation_record`
-- `setup_revision_activation_record` now already has implemented in-memory persistence, a committed durable relational contract, Prisma schema/migration coverage, a relational adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, slice-level shared composition, shared implemented-product bundle coverage, and opt-in real-database integration coverage
-- the next missing downstream persistence layer is choosing the next later execution/mutation durable slice and committing its contract/schema boundary before another adapter or repository rollout
+- `review_decision_routing_result` is now selected as the next downstream execution-handoff persistence slice
+- it has a domain contract, in-memory repository, first-class persisted-entity registration, and a durable relational record contract for routable outcomes
+- it remains outside committed Prisma schema/migration coverage, so physical schema planning is the next narrow rollout stage
 - runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
-- the next persistence gap is now the next later downstream execution/mutation durable slice after `setup_revision_activation_record`
+- the shared implemented-product bundle and real-Postgres integration flow remain complete through `setup_revision_activation_record`
 
 ## Recommended near-future sequence
-1. select the next later downstream execution/mutation entity after `setup_revision_activation_record`
-2. commit its durable relational contract and physical schema plan
-3. then continue adapter/repository/integration rollout for that slice
+1. commit the Prisma physical schema and SQL migration for `review_decision_routing_result`
+2. define its relational adapter contract
+3. continue adapter/repository/integration rollout for that slice
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

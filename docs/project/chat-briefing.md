@@ -22,11 +22,11 @@ Current product-domain scope includes:
   - evaluation contracts (`EvaluationInput`, `EvaluationWindow`, `EvaluationResult`, `EvaluationMetrics`, `EvaluationStatus`)
   - research evidence contracts (`AggregationScope`, `SetupAggregateResult`, `SetupComparison`, `ResearchHypothesisEvidenceLink`)
   - research feedback contracts (`ResearchFeedbackDecision`)
-  - research review/execution contracts (`ResearchDecisionApproval`, `ResearchReviewDecision`, `RoutedActionExecutionEnvelope`, `SetupLifecycleMutationRecord`, `SetupRefinementRequest`, `SetupDefinitionRevision`, `SetupRevisionActivationRecord`)
+  - research review/execution contracts (`ResearchDecisionApproval`, `ResearchReviewDecision`, `ReviewDecisionRoutingResult`, `RoutedActionExecutionEnvelope`, `SetupLifecycleMutationRecord`, `SetupRefinementRequest`, `SetupDefinitionRevision`, `SetupRevisionActivationRecord`)
   - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
   - repository contracts (`*Repository` interfaces)
   - service contracts (`*Service` interfaces + write-path ownership)
-  - implemented in-memory persistence for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, `ResearchFeedbackDecision`, `ResearchDecisionApproval`, `ResearchReviewDecision`, `RoutedActionExecutionEnvelope`, `SetupLifecycleMutationRecord`, `SetupRefinementRequest`, `SetupDefinitionRevision`, and `SetupRevisionActivationRecord`
+  - implemented in-memory persistence for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, `ResearchFeedbackDecision`, `ResearchDecisionApproval`, `ResearchReviewDecision`, `ReviewDecisionRoutingResult`, `RoutedActionExecutionEnvelope`, `SetupLifecycleMutationRecord`, `SetupRefinementRequest`, `SetupDefinitionRevision`, and `SetupRevisionActivationRecord`
   - hypothesis/run contracts (`ResearchHypothesis`, `ResearchRun`)
 - docs and ADRs:
   - `docs/project/domain-model.md`
@@ -146,6 +146,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-077-setup-revision-activation-record-adapter-backed-relational-repositories.md`
   - `docs/architecture/adr/ADR-078-implemented-product-setup-revision-activation-composition.md`
   - `docs/architecture/adr/ADR-079-implemented-product-setup-revision-activation-integration-coverage.md`
+  - `docs/architecture/adr/ADR-080-review-decision-routing-result-durable-relational-contract.md`
 
 ## Current constraints
 - spot-only scope
@@ -214,12 +215,12 @@ Current product-domain scope includes:
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_revision_activation_record`
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `setup_revision_activation_record`
 - `setup_definition_revision` now also has shared-bundle and opt-in real-database integration coverage
-- the next downstream persistence gap is now the next later downstream execution/mutation durable slice after `setup_revision_activation_record`
+- `review_decision_routing_result` is selected as the next downstream execution-handoff persistence slice and now has a durable relational contract; its physical schema and migration remain pending
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- select the next later downstream execution/mutation durable slice after `setup_revision_activation_record`
+- define the Prisma physical schema and migration for `review_decision_routing_result`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

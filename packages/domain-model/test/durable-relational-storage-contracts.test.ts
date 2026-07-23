@@ -11,6 +11,8 @@ import {
   type ResearchDecisionApprovalDurableRecord,
   RESEARCH_REVIEW_DECISION_RELATIONAL_ENTITY_TYPES,
   type ResearchReviewDecisionDurableRecord,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_ENTITY_TYPES,
+  type ReviewDecisionRoutingResultDurableRecord,
   RESEARCH_FEEDBACK_DECISION_RELATIONAL_ENTITY_TYPES,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES,
   type RoutedActionExecutionEnvelopeDurableRecord,
@@ -362,6 +364,48 @@ test("supports typed research-review-decision durable records", () => {
   assert.equal(reviewDecisionRecord.identity.version, 1);
   assert.equal(reviewDecisionRecord.decisionOutcome, "accepted");
   assert.equal(reviewDecisionRecord.authorizedNextAction, "confirm_no_change");
+});
+
+test("exposes review-decision-routing-result durable relational storage planning constants", () => {
+  assert.deepEqual(REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_ENTITY_TYPES, [
+    "review_decision_routing_result"
+  ]);
+});
+
+test("supports typed review-decision-routing-result durable records", () => {
+  const routingResultRecord: ReviewDecisionRoutingResultDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "review_decision_routing_result",
+      entityId: "review-route:review-decision-001:2026-07-16T10:00:00.000Z",
+      version: 1,
+      relatedEntityIds: ["review-decision-001", "setup-family-001", "setup-revision-002"]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-07-16T10:00:00.000Z",
+    updatedAtUtc: "2026-07-16T10:00:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    routingStatus: "routed",
+    researchReviewDecisionId: "review-decision-001",
+    setupFamilyId: "setup-family-001",
+    setupRevisionId: "setup-revision-002",
+    decisionOutcome: "accepted",
+    authorizedNextAction: "prepare_activation_follow_up",
+    target: "activate_setup_revision",
+    downstreamCommandType: "ActivateSetupDefinitionRevisionCommand",
+    routedAtUtc: "2026-07-16T10:00:00.000Z",
+    reason: null,
+    warnings: []
+  };
+
+  assert.equal(routingResultRecord.identity.version, 1);
+  assert.equal(routingResultRecord.routingStatus, "routed");
+  assert.equal(
+    routingResultRecord.downstreamCommandType,
+    "ActivateSetupDefinitionRevisionCommand"
+  );
 });
 
 test("exposes routed-action-execution-envelope durable relational storage planning constants", () => {
