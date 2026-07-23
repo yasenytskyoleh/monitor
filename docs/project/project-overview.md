@@ -206,6 +206,7 @@ Implemented today:
   - `docs/architecture/adr/ADR-079-implemented-product-setup-revision-activation-integration-coverage.md`
   - `docs/architecture/adr/ADR-080-review-decision-routing-result-durable-relational-contract.md`
   - `docs/architecture/adr/ADR-081-review-decision-routing-result-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-082-review-decision-routing-result-relational-adapter-contract.md`
 
 Current limitation:
 - Backend live remains constrained to strict allowlisted patch mode:
@@ -215,19 +216,19 @@ Current limitation:
 - durable relational persistence is partially implemented, with later expansion still pending:
   - durable relational contracts now exist for `setup_definition`, `research_hypothesis`, `signal_candidate`, `evaluation_result`, `setup_aggregate_result`, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, `review_decision_routing_result`, `routed_action_execution_envelope`, `setup_lifecycle_mutation_record`, `setup_refinement_request`, `setup_definition_revision`, and `setup_revision_activation_record`
   - committed Prisma schema/migrations now exist through `review_decision_routing_result`
-  - repository adapter contracts now extend through `setup_revision_activation_record`
+  - repository adapter contracts now extend through `review_decision_routing_result`
   - adapter-backed relational repositories, concrete Prisma adapters, and slice-level shared composition now exist for all five core-chain service-owned product entities, `research_feedback_decision`, `research_decision_approval`, `research_review_decision`, `routed_action_execution_envelope`, `setup_lifecycle_mutation_record`, `setup_refinement_request`, `setup_definition_revision`, and `setup_revision_activation_record`
   - opt-in real-database integration coverage now exists through the full implemented product chain to `setup_revision_activation_record`
   - one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_revision_activation_record`
   - one end-to-end real-database integration flow now spans the full implemented product chain through `setup_revision_activation_record`
   - `setup_revision_activation_record` now has implemented in-memory persistence, a service-owned write path, a durable relational contract, committed Prisma schema/migration coverage, a relational adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, slice-level shared composition, shared implemented-product bundle coverage, and opt-in real-database integration coverage
-  - `review_decision_routing_result` is selected as the next downstream execution-handoff persistence slice and has its durable relational contract, committed Prisma schema, and migration; its relational adapter contract remains pending
+  - `review_decision_routing_result` has its durable contract, committed Prisma schema/migration, and relational adapter contract; its mapper/repository/Prisma rollout remains pending
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- define the relational adapter contract for `review_decision_routing_result`
+- implement the adapter-backed repository and Prisma adapter for `review_decision_routing_result`
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

@@ -3,7 +3,7 @@
 ## Purpose
 Define the durable relational contract for `ReviewDecisionRoutingResult`, selected as the next downstream execution-handoff persistence slice after `setup_revision_activation_record`.
 
-This step includes the logical durable record contract, persisted-entity registration, committed Prisma schema, and SQL migration. Adapters, repositories, composition, and integration remain later rollout stages.
+This step includes the logical durable record contract, persisted-entity registration, committed Prisma schema, SQL migration, and relational adapter contract. Mappers, repositories, composition, and integration remain later rollout stages.
 
 ## Implemented artifact locations
 - `packages/domain-model/src/review/review-decision-routing-result.ts`
@@ -11,6 +11,8 @@ This step includes the logical durable record contract, persisted-entity registr
 - `packages/domain-model/src/repositories/review-decision-routing-result-repository.impl.ts`
 - `packages/domain-model/src/storage/review-decision-routing-result-relational-slice.ts`
 - `packages/domain-model/src/storage/review-decision-routing-result-relational-physical-schema.ts`
+- `packages/domain-model/src/repositories/review-decision-routing-result-relational-repository-adapter.ts`
+- `packages/domain-model/src/repositories/review-decision-routing-result-relational-repository-adapter.impl.ts`
 - `packages/domain-model/src/storage/storage-boundary.ts`
 - `packages/domain-model/src/storage/persisted-entity.ts`
 - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
@@ -19,6 +21,7 @@ This step includes the logical durable record contract, persisted-entity registr
 - `packages/domain-model/prisma/migrations/20260723103000_product_domain_review_decision_routing_result_relational_v1/migration.sql`
 - `docs/architecture/adr/ADR-080-review-decision-routing-result-durable-relational-contract.md`
 - `docs/architecture/adr/ADR-081-review-decision-routing-result-prisma-schema-layout.md`
+- `docs/architecture/adr/ADR-082-review-decision-routing-result-relational-adapter-contract.md`
 
 ## Durable record shape
 `ReviewDecisionRoutingResultDurableRecord` keeps:
@@ -52,7 +55,7 @@ Routing-policy rules remain service-owned, including review-decision outcome/act
 - the current in-memory repository exposes create-only behavior, so this contract defines immutable result creation; only controlled audit metadata corrections are a future update concern
 
 ## What remains pending
-- relational adapter, mapper, repository, and Prisma adapter rollout
+- domain/durable mapper, adapter-backed repository, and Prisma adapter rollout
 - service-owned routing-result write path
 - shared implemented-product bundle and opt-in real-Postgres integration extension
 - runtime detection, evaluation, aggregation, review, and execution engines

@@ -159,6 +159,7 @@
 - `review_decision_routing_result` is selected as the next downstream execution-handoff persistence slice
 - review-decision-routing-result durable relational contract now exists
 - review-decision-routing-result Prisma schema and migration now exist
+- review-decision-routing-result relational adapter contract now exists
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -168,4 +169,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is: **define the relational adapter contract for `review_decision_routing_result`**
+- the currently recommended next step is: **implement the adapter-backed repository and Prisma adapter for `review_decision_routing_result`**

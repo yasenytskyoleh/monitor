@@ -148,6 +148,7 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-079-implemented-product-setup-revision-activation-integration-coverage.md`
   - `docs/architecture/adr/ADR-080-review-decision-routing-result-durable-relational-contract.md`
   - `docs/architecture/adr/ADR-081-review-decision-routing-result-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-082-review-decision-routing-result-relational-adapter-contract.md`
 
 ## Current constraints
 - spot-only scope
@@ -185,6 +186,7 @@ Current product-domain scope includes:
   - `setup_refinement_request`
   - `setup_definition_revision`
   - `setup_revision_activation_record`
+  - `review_decision_routing_result`
 - repository adapter contracts now also exist through:
   - `setup_definition`
   - `research_hypothesis`
@@ -218,12 +220,12 @@ Current product-domain scope includes:
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_revision_activation_record`
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `setup_revision_activation_record`
 - `setup_definition_revision` now also has shared-bundle and opt-in real-database integration coverage
-- `review_decision_routing_result` is selected as the next downstream execution-handoff persistence slice and now has a durable relational contract, committed Prisma schema, and migration; its relational adapter contract remains pending
+- `review_decision_routing_result` has its durable contract, committed Prisma schema/migration, and relational adapter contract; its mapper/repository/Prisma rollout remains pending
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- define the relational adapter contract for `review_decision_routing_result`
+- implement the adapter-backed repository and Prisma adapter for `review_decision_routing_result`
 
 ## Behavioral instructions for future assistants
 When continuing this project:

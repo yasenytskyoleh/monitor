@@ -81,6 +81,14 @@ export type {
   ResearchReviewDecisionRelationalRetryableErrorCode
 } from "./research-review-decision-relational-repository-adapter.js";
 export type {
+  ReviewDecisionRoutingResultRecordWriteRequest,
+  ReviewDecisionRoutingResultRelationalAdapterErrorMapping,
+  ReviewDecisionRoutingResultRelationalAdapterOperation,
+  ReviewDecisionRoutingResultRelationalDeterministicErrorCode,
+  ReviewDecisionRoutingResultRelationalRepositoryAdapter,
+  ReviewDecisionRoutingResultRelationalRetryableErrorCode
+} from "./review-decision-routing-result-relational-repository-adapter.js";
+export type {
   RoutedActionExecutionEnvelopeRecordWriteRequest,
   RoutedActionExecutionEnvelopeRelationalAdapterErrorMapping,
   RoutedActionExecutionEnvelopeRelationalAdapterOperation,
@@ -162,6 +170,13 @@ export {
   RESEARCH_REVIEW_DECISION_RELATIONAL_RETRYABLE_ERROR_CODES,
   isResearchReviewDecisionRelationalDeterministicErrorCode
 } from "./research-review-decision-relational-repository-adapter.js";
+export {
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_ADAPTER_OPERATIONS,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isReviewDecisionRoutingResultRelationalDeterministicErrorCode
+} from "./review-decision-routing-result-relational-repository-adapter.js";
 export {
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ADAPTER_ERROR_MAPPING,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ADAPTER_OPERATIONS,
@@ -349,6 +364,12 @@ export type {
 export {
   InMemoryResearchReviewDecisionRelationalRepositoryAdapter
 } from "./research-review-decision-relational-repository-adapter.impl.js";
+export type {
+  ReviewDecisionRoutingResultRelationalReferenceReader
+} from "./review-decision-routing-result-relational-repository-adapter.impl.js";
+export {
+  InMemoryReviewDecisionRoutingResultRelationalRepositoryAdapter
+} from "./review-decision-routing-result-relational-repository-adapter.impl.js";
 export type {
   RoutedActionExecutionEnvelopeRelationalReferenceReader
 } from "./routed-action-execution-envelope-relational-repository-adapter.impl.js";
