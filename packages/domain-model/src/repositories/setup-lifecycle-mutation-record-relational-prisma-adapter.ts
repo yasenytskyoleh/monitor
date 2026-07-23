@@ -410,7 +410,16 @@ export class PrismaSetupLifecycleMutationRecordRelationalRepositoryAdapter
       researchFeedbackDecisionId: request.record.researchFeedbackDecisionId
     };
 
-    const validationError = await findReferenceValidationError(this.prisma, referenceContext);
+    let validationError: RepositoryError | null;
+    try {
+      validationError = await findReferenceValidationError(this.prisma, referenceContext);
+    } catch (error) {
+      throw mapPrismaErrorToRepositoryError(error, {
+        operation: "create",
+        entityType: "setup_lifecycle_mutation_record",
+        entityId: request.record.identity.entityId
+      });
+    }
     if (validationError) {
       throw validationError;
     }

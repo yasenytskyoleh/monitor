@@ -297,3 +297,22 @@ test("prisma review-decision adapter maps retryable read failures to transient_f
       error.entityType === "research_review_decision"
   );
 });
+
+test("prisma review-decision adapter maps retryable reference-read failures", async () => {
+  const client = createFakePrismaClient();
+  client.researchHypothesisRecord.findUnique = async () => {
+    throw { code: "P1001" };
+  };
+  const adapter = new PrismaResearchReviewDecisionRelationalRepositoryAdapter(client);
+
+  await assert.rejects(
+    async () =>
+      adapter.insertResearchReviewDecisionRecord({
+        record: buildReviewDecisionRecord("review-decision-007")
+      }),
+    (error: unknown) =>
+      error instanceof RepositoryError &&
+      error.code === "transient_failure" &&
+      error.operation === "create"
+  );
+});

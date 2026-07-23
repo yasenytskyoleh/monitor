@@ -414,7 +414,16 @@ export class PrismaSetupRefinementRequestRelationalRepositoryAdapter
       researchFeedbackDecisionId: request.record.sourceResearchFeedbackDecisionId
     };
 
-    const validationError = await findReferenceValidationError(this.prisma, referenceContext);
+    let validationError: RepositoryError | null;
+    try {
+      validationError = await findReferenceValidationError(this.prisma, referenceContext);
+    } catch (error) {
+      throw mapPrismaErrorToRepositoryError(error, {
+        operation: "create",
+        entityType: "setup_refinement_request",
+        entityId: request.record.identity.entityId
+      });
+    }
     if (validationError) {
       throw validationError;
     }

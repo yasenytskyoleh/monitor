@@ -344,3 +344,22 @@ test("prisma setup-refinement-request adapter maps retryable read failures to tr
       error.entityType === "setup_refinement_request"
   );
 });
+
+test("prisma setup-refinement-request adapter maps retryable reference-read failures", async () => {
+  const client = createFakePrismaClient();
+  client.setupDefinitionRecord.findUnique = async () => {
+    throw { code: "P1001" };
+  };
+  const adapter = new PrismaSetupRefinementRequestRelationalRepositoryAdapter(client);
+
+  await assert.rejects(
+    async () =>
+      adapter.insertSetupRefinementRequest({
+        record: buildSetupRefinementRequestRecord("refinement-006")
+      }),
+    (error: unknown) =>
+      error instanceof RepositoryError &&
+      error.code === "transient_failure" &&
+      error.operation === "create"
+  );
+});
