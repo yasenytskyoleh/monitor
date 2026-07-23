@@ -201,3 +201,22 @@ test("prisma routing-result adapter maps duplicate and missing-reference failure
       error.referenceEntityId === "review-decision-missing"
   );
 });
+
+test("prisma routing-result adapter maps retryable reference-read failures", async () => {
+  const client = createFakePrismaClient();
+  client.researchReviewDecisionRecord.findUnique = async () => {
+    throw { code: "P1001" };
+  };
+  const adapter = new PrismaReviewDecisionRoutingResultRelationalRepositoryAdapter(client);
+
+  await assert.rejects(
+    async () =>
+      adapter.insertReviewDecisionRoutingResultRecord({
+        record: buildRecord("routing-result-004")
+      }),
+    (error: unknown) =>
+      error instanceof RepositoryError &&
+      error.code === "transient_failure" &&
+      error.operation === "create"
+  );
+});

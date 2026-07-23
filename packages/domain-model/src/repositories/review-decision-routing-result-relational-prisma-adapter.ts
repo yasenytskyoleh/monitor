@@ -271,7 +271,16 @@ export class PrismaReviewDecisionRoutingResultRelationalRepositoryAdapter
       operation: "create",
       researchReviewDecisionId: request.record.researchReviewDecisionId
     };
-    const validationError = await findReferenceValidationError(this.prisma, referenceContext);
+    let validationError: RepositoryError | null;
+    try {
+      validationError = await findReferenceValidationError(this.prisma, referenceContext);
+    } catch (error) {
+      throw mapPrismaErrorToRepositoryError(error, {
+        operation: "create",
+        entityType: "review_decision_routing_result",
+        entityId: request.record.identity.entityId
+      });
+    }
     if (validationError) {
       throw validationError;
     }
