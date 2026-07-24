@@ -1,20 +1,19 @@
 # Next Steps
 
 ## Current recommended next step
-### Select the next later downstream durable slice
+### Select a new product-domain durable entity
 
 Reason:
-- `review_decision_routing_result` is now selected as the next downstream execution-handoff persistence slice
+- `review_decision_routing_result` has completed its full contract, schema, adapter, shared-composition, and integration rollout
 - it has a domain contract, in-memory repository, first-class persisted-entity registration, and a durable relational record contract for routable outcomes
 - it now has a committed Prisma model, SQL migration, source-review-decision foreign key, and query indexes
 - it now has durable mappers, a domain-facing relational repository, and concrete Prisma persistence
 - the shared implemented-product bundle and opt-in real-Postgres integration flow now reach `review_decision_routing_result`
-- the next bounded persistence step is choosing the next later downstream durable slice
-- runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
-- the shared implemented-product bundle and real-Postgres integration flow both reach `review_decision_routing_result`
+- `routed_action_execution_result` is explicitly product-ephemeral: it is a preparation-service response that can contain incomplete rejected-attempt context, while successful preparation is already retained by `routed_action_execution_envelope`
+- runtime engines are still intentionally out of scope, so a retained execution-attempt audit would need a separately declared entity and owner rather than persisting the current response shape
 
 ## Recommended near-future sequence
-1. select the next later downstream durable slice
+1. select a new product-domain durable entity, or explicitly authorize a retained execution-attempt audit entity
 2. commit its durable relational contract and physical schema plan
 3. continue its adapter, repository, shared-composition, and integration rollout
 
