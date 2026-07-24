@@ -987,6 +987,7 @@ export type {
   MonitoredSymbolStatusUpdateRequest,
   MonitoredSymbolUpdateRequest
 } from "./repositories/monitored-symbol-repository.js";
+export { InMemoryMonitoredSymbolRepository } from "./repositories/monitored-symbol-repository.impl.js";
 export type {
   ResearchHypothesisCreateRequest,
   ResearchHypothesisRepository,
@@ -1134,6 +1135,10 @@ export type {
   MonitoringCatalogServiceDependencies,
   RegisterMonitoredSymbolRequest,
   UpdateMonitoredSymbolStatusRequest
+} from "./services/monitoring-catalog-service.js";
+export {
+  MonitoringCatalogValidationError,
+  createMonitoringCatalogService
 } from "./services/monitoring-catalog-service.js";
 export type {
   ActiveSetupRevisionResolution,
