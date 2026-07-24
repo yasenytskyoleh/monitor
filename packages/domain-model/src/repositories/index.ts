@@ -584,6 +584,7 @@ export type {
   MonitoredSymbolStatusUpdateRequest,
   MonitoredSymbolUpdateRequest
 } from "./monitored-symbol-repository.js";
+export { InMemoryMonitoredSymbolRepository } from "./monitored-symbol-repository.impl.js";
 export type {
   SetupDefinitionCreateRequest,
   SetupDefinitionRepository,

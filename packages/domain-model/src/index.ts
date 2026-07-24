@@ -222,6 +222,12 @@ export {
   FIRST_DURABLE_RELATIONAL_PRISMA_MODELS,
   FIRST_DURABLE_RELATIONAL_REQUIRED_COLUMNS,
   FIRST_DURABLE_RELATIONAL_TABLES,
+  MONITORED_SYMBOL_RELATIONAL_ENTITY_TYPES,
+  MONITORED_SYMBOL_RELATIONAL_INDEXES,
+  MONITORED_SYMBOL_RELATIONAL_MIGRATION_SLUG,
+  MONITORED_SYMBOL_RELATIONAL_PRISMA_MODELS,
+  MONITORED_SYMBOL_RELATIONAL_REQUIRED_COLUMNS,
+  MONITORED_SYMBOL_RELATIONAL_TABLES,
   SIGNAL_EVALUATION_RELATIONAL_ENTITY_TYPES,
   SIGNAL_EVALUATION_RELATIONAL_INDEXES,
   SIGNAL_EVALUATION_RELATIONAL_MIGRATION_SLUG,
@@ -313,6 +319,11 @@ export type {
   FirstDurableRelationalPrismaModelName,
   FirstDurableRelationalRecord,
   FirstDurableRelationalTableName,
+  MonitoredSymbolDurableRecord,
+  MonitoredSymbolRelationalIndexName,
+  MonitoredSymbolRelationalEntityType,
+  MonitoredSymbolRelationalPrismaModelName,
+  MonitoredSymbolRelationalTableName,
   PersistedEntity,
   PersistedEntityLifecycleStatus,
   PersistedEntityProfile,
@@ -987,6 +998,7 @@ export type {
   MonitoredSymbolStatusUpdateRequest,
   MonitoredSymbolUpdateRequest
 } from "./repositories/monitored-symbol-repository.js";
+export { InMemoryMonitoredSymbolRepository } from "./repositories/monitored-symbol-repository.impl.js";
 export type {
   ResearchHypothesisCreateRequest,
   ResearchHypothesisRepository,
@@ -1134,6 +1146,10 @@ export type {
   MonitoringCatalogServiceDependencies,
   RegisterMonitoredSymbolRequest,
   UpdateMonitoredSymbolStatusRequest
+} from "./services/monitoring-catalog-service.js";
+export {
+  MonitoringCatalogValidationError,
+  createMonitoringCatalogService
 } from "./services/monitoring-catalog-service.js";
 export type {
   ActiveSetupRevisionResolution,

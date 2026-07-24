@@ -326,7 +326,8 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
   assert.deepEqual(PRODUCT_EPHEMERAL_ENTITY_TYPES, [
     "detection_input_transient",
     "setup_comparison_view",
-    "orchestration_task_envelope"
+    "orchestration_task_envelope",
+    "routed_action_execution_result"
   ]);
   assert.deepEqual(PRODUCT_RECORD_SOURCES, [
     "monitoring_pipeline",

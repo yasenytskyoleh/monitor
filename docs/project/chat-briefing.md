@@ -149,6 +149,10 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-080-review-decision-routing-result-durable-relational-contract.md`
   - `docs/architecture/adr/ADR-081-review-decision-routing-result-prisma-schema-layout.md`
   - `docs/architecture/adr/ADR-082-review-decision-routing-result-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-083-review-decision-routing-result-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-084-implemented-product-review-decision-routing-result-composition.md`
+  - `docs/architecture/adr/ADR-085-implemented-product-review-decision-routing-result-integration-coverage.md`
+  - `docs/architecture/adr/ADR-086-routed-action-execution-result-storage-boundary.md`
 
 ## Current constraints
 - spot-only scope
@@ -196,6 +200,7 @@ Current product-domain scope includes:
   - `research_feedback_decision`
   - `research_decision_approval`
   - `research_review_decision`
+  - `review_decision_routing_result`
   - `routed_action_execution_envelope`
   - `setup_lifecycle_mutation_record`
   - `setup_refinement_request`
@@ -220,12 +225,13 @@ Current product-domain scope includes:
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_revision_activation_record`
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `setup_revision_activation_record`
 - `setup_definition_revision` now also has shared-bundle and opt-in real-database integration coverage
-- `review_decision_routing_result` has its durable contract, committed Prisma schema/migration, relational adapter contract, mappers, adapter-backed repository, and Prisma adapter; shared composition and real-Postgres integration remain pending
+- `review_decision_routing_result` now also has its durable contract, committed Prisma schema/migration, relational adapter contract, mappers, adapter-backed repository, concrete Prisma adapter, shared-bundle composition, and opt-in real-Postgres integration coverage
+- `routed_action_execution_result` is product-ephemeral; a retained execution-attempt audit requires a dedicated future entity and owner
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- extend shared composition and real-Postgres integration through `review_decision_routing_result`
+- select a new product-domain durable entity, or explicitly design a retained execution-attempt audit entity
 
 ## Behavioral instructions for future assistants
 When continuing this project:

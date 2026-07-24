@@ -15,6 +15,10 @@ export type {
   RegisterMonitoredSymbolRequest,
   UpdateMonitoredSymbolStatusRequest
 } from "./monitoring-catalog-service.js";
+export {
+  MonitoringCatalogValidationError,
+  createMonitoringCatalogService
+} from "./monitoring-catalog-service.js";
 
 export type {
   ActiveSetupRevisionResolution,

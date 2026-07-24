@@ -1,22 +1,20 @@
 # Next Steps
 
 ## Current recommended next step
-### Select the next later downstream durable slice
+### Define the monitored-symbol relational adapter contract
 
 Reason:
-- `review_decision_routing_result` is now selected as the next downstream execution-handoff persistence slice
-- it has a domain contract, in-memory repository, first-class persisted-entity registration, and a durable relational record contract for routable outcomes
-- it now has a committed Prisma model, SQL migration, source-review-decision foreign key, and query indexes
-- it now has durable mappers, a domain-facing relational repository, and concrete Prisma persistence
-- the shared implemented-product bundle and opt-in real-Postgres integration flow now reach `review_decision_routing_result`
-- the next bounded persistence step is choosing the next later downstream durable slice
-- runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
-- the shared implemented-product bundle and real-Postgres integration flow both reach `review_decision_routing_result`
+- `monitored_symbol` is the remaining first-class product-persisted entity without durable relational parity
+- it now has implemented in-memory persistence and a concrete monitoring-catalog service write path
+- it now has a durable relational contract for catalog identity, status, tags, and source bindings
+- it now has a committed Prisma model, SQL migration, catalog-status indexes, and lifecycle constraints
+- it is referenced by durable signal candidates, so schema work must preserve its catalog identity without changing signal-candidate semantics
+- `routed_action_execution_result` remains explicitly product-ephemeral and is not a substitute persistence slice
 
 ## Recommended near-future sequence
-1. select the next later downstream durable slice
-2. commit its durable relational contract and physical schema plan
-3. continue its adapter, repository, shared-composition, and integration rollout
+1. define the `monitored_symbol` relational adapter contract
+2. implement its mapper, repository, and Prisma adapter
+3. continue shared-composition and integration rollout
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

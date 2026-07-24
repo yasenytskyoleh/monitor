@@ -11,6 +11,11 @@ import {
   FIRST_DURABLE_RELATIONAL_PRISMA_MODELS,
   FIRST_DURABLE_RELATIONAL_REQUIRED_COLUMNS,
   FIRST_DURABLE_RELATIONAL_TABLES,
+  MONITORED_SYMBOL_RELATIONAL_INDEXES,
+  MONITORED_SYMBOL_RELATIONAL_MIGRATION_SLUG,
+  MONITORED_SYMBOL_RELATIONAL_PRISMA_MODELS,
+  MONITORED_SYMBOL_RELATIONAL_REQUIRED_COLUMNS,
+  MONITORED_SYMBOL_RELATIONAL_TABLES,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_INDEXES,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_MIGRATION_SLUG,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_PRISMA_MODELS,
@@ -159,6 +164,13 @@ const reviewDecisionRoutingResultMigrationPath = join(
   "20260723103000_product_domain_review_decision_routing_result_relational_v1",
   "migration.sql"
 );
+const monitoredSymbolMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260724103000_product_domain_monitored_symbol_relational_v1",
+  "migration.sql"
+);
 
 test("exposes first durable relational physical schema constants", () => {
   assert.equal(FIRST_DURABLE_RELATIONAL_DATABASE_SCHEMA, "product_domain");
@@ -175,6 +187,50 @@ test("exposes first durable relational physical schema constants", () => {
     FIRST_DURABLE_RELATIONAL_INDEXES.includes("idx_research_hypothesis_hypothesis_status"),
     true
   );
+});
+
+test("exposes monitored-symbol physical schema constants", () => {
+  assert.equal(
+    MONITORED_SYMBOL_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_monitored_symbol_relational_v1"
+  );
+  assert.equal(
+    MONITORED_SYMBOL_RELATIONAL_PRISMA_MODELS.monitoredSymbolRecord,
+    "MonitoredSymbolRecord"
+  );
+  assert.equal(MONITORED_SYMBOL_RELATIONAL_TABLES.monitoredSymbol, "monitored_symbol");
+  assert.equal(
+    MONITORED_SYMBOL_RELATIONAL_REQUIRED_COLUMNS.monitored_symbol.includes("source_bindings"),
+    true
+  );
+  assert.equal(MONITORED_SYMBOL_RELATIONAL_INDEXES.includes("idx_monitored_symbol_status"), true);
+});
+
+test("prisma schema defines the monitored-symbol relational model and enums", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /enum MonitoredSymbolStatus \{/);
+  assert.match(schema, /enum MarketScope \{/);
+  assert.match(schema, /enum MonitorProviderHint \{/);
+  assert.match(schema, /model MonitoredSymbolRecord \{/);
+  assert.match(schema, /@@map\("monitored_symbol"\)/);
+});
+
+test("migration creates the monitored-symbol relational table and constraints", async () => {
+  const migration = await readFile(monitoredSymbolMigrationPath, "utf8");
+
+  assert.equal(
+    migration.includes('CREATE TABLE "product_domain"."monitored_symbol"'),
+    true
+  );
+  for (const indexName of MONITORED_SYMBOL_RELATIONAL_INDEXES) {
+    assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+  for (const columnName of MONITORED_SYMBOL_RELATIONAL_REQUIRED_COLUMNS.monitored_symbol) {
+    assert.equal(migration.includes(`"${columnName}"`), true, `missing ${columnName}`);
+  }
+  assert.match(migration, /jsonb_typeof\("source_bindings"\) = 'array'/);
+  assert.match(migration, /"symbol_status" = 'archived' AND "lifecycle_status" = 'archived'/);
 });
 
 test("prisma schema defines the first durable relational models in product_domain", async () => {

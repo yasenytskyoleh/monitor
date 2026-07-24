@@ -13,6 +13,25 @@ export type {
   StorageTechnologyDirection
 } from "./storage-boundary.js";
 export {
+  MONITORED_SYMBOL_RELATIONAL_ENTITY_TYPES
+} from "./monitored-symbol-relational-slice.js";
+export type {
+  MonitoredSymbolDurableRecord,
+  MonitoredSymbolRelationalEntityType
+} from "./monitored-symbol-relational-slice.js";
+export {
+  MONITORED_SYMBOL_RELATIONAL_INDEXES,
+  MONITORED_SYMBOL_RELATIONAL_MIGRATION_SLUG,
+  MONITORED_SYMBOL_RELATIONAL_PRISMA_MODELS,
+  MONITORED_SYMBOL_RELATIONAL_REQUIRED_COLUMNS,
+  MONITORED_SYMBOL_RELATIONAL_TABLES
+} from "./monitored-symbol-relational-physical-schema.js";
+export type {
+  MonitoredSymbolRelationalIndexName,
+  MonitoredSymbolRelationalPrismaModelName,
+  MonitoredSymbolRelationalTableName
+} from "./monitored-symbol-relational-physical-schema.js";
+export {
   DURABLE_RELATIONAL_STORAGE_SCHEMA_VERSIONS,
   FIRST_DURABLE_RELATIONAL_ENTITY_TYPES
 } from "./first-durable-relational-slice.js";

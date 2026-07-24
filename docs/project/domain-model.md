@@ -19,6 +19,7 @@ The package remains intentionally narrow, and now includes **implemented in-memo
 - `ResearchFeedbackDecision`
 - `ResearchDecisionApproval`
 - `ResearchReviewDecision`
+- `ReviewDecisionRoutingResult`
 - `RoutedActionExecutionEnvelope`
 - `SetupLifecycleMutationRecord`
 - `SetupRefinementRequest`
@@ -37,6 +38,7 @@ Implemented in-memory persistence exists today for:
 - `ResearchFeedbackDecision`
 - `ResearchDecisionApproval`
 - `ResearchReviewDecision`
+- `ReviewDecisionRoutingResult`
 - `RoutedActionExecutionEnvelope`
 - `SetupLifecycleMutationRecord`
 - `SetupRefinementRequest`
@@ -52,32 +54,21 @@ Durable relational contracts exist today for:
 - `ResearchFeedbackDecision`
 - `ResearchDecisionApproval`
 - `ResearchReviewDecision`
+- `ReviewDecisionRoutingResult`
 - `RoutedActionExecutionEnvelope`
 - `SetupLifecycleMutationRecord`
 - `SetupRefinementRequest`
 - `SetupDefinitionRevision`
 - `SetupRevisionActivationRecord`
 
-Committed Prisma schema/migrations now exist through:
+Committed Prisma schema/migrations, repository adapter contracts, adapter-backed relational repositories, concrete Prisma adapters, shared composition, and opt-in real-database integration coverage now exist for:
+- `ReviewDecisionRoutingResult`
 - `SetupRevisionActivationRecord`
 
-Repository adapter contracts now exist through:
-- `SetupRevisionActivationRecord`
-
-Adapter-backed relational repositories and concrete Prisma adapters now exist through:
-- `SetupRevisionActivationRecord`
-
-Slice-level shared composition now also exists for:
-- `SetupRevisionActivationRecord`
-
-One shared Prisma-backed composition now exists through:
-- `SetupRevisionActivationRecord`
-
-One shared opt-in real-database integration coverage path now exists through:
-- `SetupRevisionActivationRecord`
+The one shared Prisma-backed composition and opt-in real-database integration path span the full implemented product chain through `SetupRevisionActivationRecord`, including `ReviewDecisionRoutingResult`.
 
 Durable relational persistence still pending:
-- later downstream execution/mutation durable slices after `SetupRevisionActivationRecord`
+- a new product-domain durable entity; `RoutedActionExecutionResult` is explicitly ephemeral
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI
@@ -99,6 +90,7 @@ Durable relational persistence still pending:
 - `ResearchFeedbackDecision`
 - `ResearchDecisionApproval`
 - `ResearchReviewDecision`
+- `ReviewDecisionRoutingResult`
 - `RoutedActionExecutionEnvelope`
 - `SetupLifecycleMutationRecord`
 - `SetupRefinementRequest`
@@ -133,6 +125,9 @@ Related product docs:
 - `docs/project/setup-revision-activation-relational-rollout-model.md`
 - `docs/project/setup-revision-activation-model.md`
 - `docs/project/setup-revision-activation-relational-persistence-model.md`
+- `docs/project/review-decision-routing-result-relational-persistence-model.md`
+- `docs/project/review-decision-routing-result-relational-adapter-model.md`
+- `docs/project/routed-action-execution-result-storage-model.md`
 - `docs/project/setup-refinement-request-relational-persistence-model.md`
 - `docs/project/setup-refinement-request-relational-adapter-model.md`
 - `docs/project/setup-refinement-request-relational-rollout-model.md`
@@ -199,7 +194,7 @@ Rule: orchestration executes workflows; product domain defines market/research m
 ## Storage direction (initial)
 Storage boundaries are now explicitly defined:
 - `runtime_evidence` (orchestrator file-based evidence)
-- `product_domain` (implemented in-memory persistence today; durable relational contracts, committed Prisma schema/migrations, repository adapter contracts, executable adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now extend through `setup_revision_activation_record`; one shared implemented-product bundle now also spans `setup_revision_activation_record`, while one opt-in real-database integration path still stops at `setup_definition_revision`)
+- `product_domain` (implemented in-memory persistence today; durable relational contracts, committed Prisma schema/migrations, repository adapter contracts, executable adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now exist for every current durable product entity; one shared implemented-product bundle spans the full chain through `setup_revision_activation_record`)
 - `derived_analytics` (deferred)
 
 Current package provides contract-level storage types in `packages/domain-model/src/storage/*`.
@@ -207,7 +202,7 @@ Current package provides contract-level storage types in `packages/domain-model/
 Deferred to later slices:
 - full detection runtime engine and event processing
 - aggregation runtime/job orchestration and advanced evidence analytics
-- later downstream review/execution/mutation durable slices beginning after `setup_revision_activation_record`
+- selection of a new product-domain durable entity; `routed_action_execution_result` remains ephemeral
 - data retention policies
 
 ## Acceptance criteria for this slice

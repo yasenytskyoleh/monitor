@@ -161,6 +161,9 @@
 - review-decision-routing-result Prisma schema and migration now exist
 - review-decision-routing-result relational adapter contract now exists
 - review-decision-routing-result adapter-backed repository and Prisma adapter now exist
+- shared implemented-product composition now extends through review-decision-routing-result
+- shared implemented-product real-Postgres integration now extends through review-decision-routing-result
+- routed-action-execution-result is explicitly classified as product-ephemeral
 - persisted run artifacts exist
 - per-agent mode selection exists
 - approval registry and transition-bound approval validation exist
@@ -170,4 +173,4 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is: **extend shared composition and real-Postgres integration through `review_decision_routing_result`**
+- the currently recommended next step is: **select a new product-domain durable entity, or explicitly design a retained execution-attempt audit entity**

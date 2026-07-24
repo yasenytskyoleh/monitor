@@ -36,7 +36,8 @@ export type ProductPersistedEntityType = (typeof PRODUCT_PERSISTED_ENTITY_TYPES)
 export const PRODUCT_EPHEMERAL_ENTITY_TYPES = [
   "detection_input_transient",
   "setup_comparison_view",
-  "orchestration_task_envelope"
+  "orchestration_task_envelope",
+  "routed_action_execution_result"
 ] as const;
 export type ProductEphemeralEntityType = (typeof PRODUCT_EPHEMERAL_ENTITY_TYPES)[number];
 
