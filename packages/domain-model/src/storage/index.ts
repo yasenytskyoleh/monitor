@@ -13,6 +13,13 @@ export type {
   StorageTechnologyDirection
 } from "./storage-boundary.js";
 export {
+  MONITORED_SYMBOL_RELATIONAL_ENTITY_TYPES
+} from "./monitored-symbol-relational-slice.js";
+export type {
+  MonitoredSymbolDurableRecord,
+  MonitoredSymbolRelationalEntityType
+} from "./monitored-symbol-relational-slice.js";
+export {
   DURABLE_RELATIONAL_STORAGE_SCHEMA_VERSIONS,
   FIRST_DURABLE_RELATIONAL_ENTITY_TYPES
 } from "./first-durable-relational-slice.js";

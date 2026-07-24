@@ -1,21 +1,19 @@
 # Next Steps
 
 ## Current recommended next step
-### Select a new product-domain durable entity
+### Implement the monitored-symbol Prisma physical schema and migration
 
 Reason:
-- `review_decision_routing_result` has completed its full contract, schema, adapter, shared-composition, and integration rollout
-- it has a domain contract, in-memory repository, first-class persisted-entity registration, and a durable relational record contract for routable outcomes
-- it now has a committed Prisma model, SQL migration, source-review-decision foreign key, and query indexes
-- it now has durable mappers, a domain-facing relational repository, and concrete Prisma persistence
-- the shared implemented-product bundle and opt-in real-Postgres integration flow now reach `review_decision_routing_result`
-- `routed_action_execution_result` is explicitly product-ephemeral: it is a preparation-service response that can contain incomplete rejected-attempt context, while successful preparation is already retained by `routed_action_execution_envelope`
-- runtime engines are still intentionally out of scope, so a retained execution-attempt audit would need a separately declared entity and owner rather than persisting the current response shape
+- `monitored_symbol` is the remaining first-class product-persisted entity without durable relational parity
+- it now has implemented in-memory persistence and a concrete monitoring-catalog service write path
+- it now has a durable relational contract for catalog identity, status, tags, and source bindings
+- it is referenced by durable signal candidates, so schema work must preserve its catalog identity without changing signal-candidate semantics
+- `routed_action_execution_result` remains explicitly product-ephemeral and is not a substitute persistence slice
 
 ## Recommended near-future sequence
-1. select a new product-domain durable entity, or explicitly authorize a retained execution-attempt audit entity
-2. commit its durable relational contract and physical schema plan
-3. continue its adapter, repository, shared-composition, and integration rollout
+1. commit the `monitored_symbol` Prisma physical schema and migration
+2. define its relational adapter contract
+3. continue its mapper, repository, shared-composition, and integration rollout
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

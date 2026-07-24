@@ -6,6 +6,8 @@ import {
   DURABLE_RELATIONAL_STORAGE_SCHEMA_VERSIONS,
   type EvaluationResultDurableRecord,
   FIRST_DURABLE_RELATIONAL_ENTITY_TYPES,
+  MONITORED_SYMBOL_RELATIONAL_ENTITY_TYPES,
+  type MonitoredSymbolDurableRecord,
   type ProductRecordMetadata,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_ENTITY_TYPES,
   type ResearchDecisionApprovalDurableRecord,
@@ -114,6 +116,47 @@ test("supports typed setup-definition and research-hypothesis durable records", 
   assert.equal(setupRecord.identity.version, 2);
   assert.equal(hypothesisRecord.identity.version, 3);
   assert.equal(linkRecord.setupDefinitionId, "setup-001");
+});
+
+test("exposes monitored-symbol durable relational storage planning constants", () => {
+  assert.deepEqual(MONITORED_SYMBOL_RELATIONAL_ENTITY_TYPES, ["monitored_symbol"]);
+});
+
+test("supports typed monitored-symbol durable records", () => {
+  const monitoredSymbolRecord: MonitoredSymbolDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "monitored_symbol",
+      entityId: "BTC-USDT",
+      version: 1,
+      relatedEntityIds: []
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-07-24T08:00:00.000Z",
+    updatedAtUtc: "2026-07-24T08:00:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    symbolId: "BTC-USDT",
+    baseAsset: "BTC",
+    quoteAsset: "USDT",
+    displayName: "BTC/USDT",
+    marketScope: "spot",
+    symbolStatus: "active",
+    providerHint: "unknown",
+    tags: ["primary"],
+    sourceBindings: [
+      {
+        sourceId: "exchange-a",
+        providerSymbol: "BTCUSDT",
+        canonicalSymbol: "BTC-USDT",
+        isPrimary: true
+      }
+    ]
+  };
+
+  assert.equal(monitoredSymbolRecord.identity.entityId, monitoredSymbolRecord.symbolId);
+  assert.equal(monitoredSymbolRecord.sourceBindings[0]?.isPrimary, true);
 });
 
 test("exposes signal/evaluation durable relational storage planning constants", () => {
