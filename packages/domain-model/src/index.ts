@@ -999,6 +999,21 @@ export type {
   MonitoredSymbolUpdateRequest
 } from "./repositories/monitored-symbol-repository.js";
 export { InMemoryMonitoredSymbolRepository } from "./repositories/monitored-symbol-repository.impl.js";
+export {
+  MONITORED_SYMBOL_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  MONITORED_SYMBOL_RELATIONAL_ADAPTER_OPERATIONS,
+  MONITORED_SYMBOL_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  MONITORED_SYMBOL_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isMonitoredSymbolRelationalDeterministicErrorCode
+} from "./repositories/monitored-symbol-relational-repository-adapter.js";
+export type {
+  MonitoredSymbolRecordWriteRequest,
+  MonitoredSymbolRelationalAdapterErrorMapping,
+  MonitoredSymbolRelationalAdapterOperation,
+  MonitoredSymbolRelationalDeterministicErrorCode,
+  MonitoredSymbolRelationalRepositoryAdapter,
+  MonitoredSymbolRelationalRetryableErrorCode
+} from "./repositories/monitored-symbol-relational-repository-adapter.js";
 export type {
   ResearchHypothesisCreateRequest,
   ResearchHypothesisRepository,
