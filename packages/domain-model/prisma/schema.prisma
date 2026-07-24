@@ -239,6 +239,59 @@ enum RoutedActionExecutionStatus {
   @@schema("product_domain")
 }
 
+enum MonitoredSymbolStatus {
+  active
+  paused
+  archived
+
+  @@map("monitored_symbol_status")
+  @@schema("product_domain")
+}
+
+enum MarketScope {
+  spot
+
+  @@map("market_scope")
+  @@schema("product_domain")
+}
+
+enum MonitorProviderHint {
+  unknown
+  exchange_adapter_pending
+
+  @@map("monitor_provider_hint")
+  @@schema("product_domain")
+}
+
+model MonitoredSymbolRecord {
+  monitoredSymbolId     String                   @id(map: "monitored_symbol_pkey") @map("monitored_symbol_id") @db.Text
+  version               Int                      @map("version")
+  lifecycleStatus       PersistedLifecycleStatus @map("lifecycle_status")
+  symbolStatus          MonitoredSymbolStatus    @map("symbol_status")
+  baseAsset             String                   @map("base_asset") @db.Text
+  quoteAsset            String                   @map("quote_asset") @db.Text
+  displayName           String                   @map("display_name") @db.Text
+  marketScope           MarketScope              @map("market_scope")
+  providerHint          MonitorProviderHint      @map("provider_hint")
+  tags                  String[]                 @map("tags")
+  sourceBindings        Json                     @map("source_bindings")
+  originRunId           String?                  @map("origin_run_id") @db.Text
+  originTransitionId    String?                  @map("origin_transition_id") @db.Text
+  createdBySource       ProductRecordSource      @map("created_by_source")
+  lastUpdatedBySource   ProductRecordSource      @map("last_updated_by_source")
+  traceId               String?                  @map("trace_id") @db.Text
+  sourceObservedAtUtc   DateTime?                @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes         String?                  @map("metadata_notes") @db.Text
+  createdAtUtc          DateTime                 @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc          DateTime                 @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc         DateTime?                @map("archived_at_utc") @db.Timestamptz(3)
+
+  @@index([symbolStatus], map: "idx_monitored_symbol_status")
+  @@index([marketScope, symbolStatus], map: "idx_monitored_symbol_market_scope_status")
+  @@map("monitored_symbol")
+  @@schema("product_domain")
+}
+
 model SetupDefinitionRecord {
   setupDefinitionId         String                                       @id(map: "setup_definition_pkey") @map("setup_definition_id") @db.Text
   version                   Int                                          @map("version")

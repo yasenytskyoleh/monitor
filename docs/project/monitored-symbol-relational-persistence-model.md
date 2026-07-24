@@ -9,6 +9,9 @@ Define the durable relational contract for `MonitoredSymbol`, the catalog entity
 - `packages/domain-model/src/repositories/monitored-symbol-repository.impl.ts`
 - `packages/domain-model/src/services/monitoring-catalog-service.ts`
 - `packages/domain-model/src/storage/monitored-symbol-relational-slice.ts`
+- `packages/domain-model/src/storage/monitored-symbol-relational-physical-schema.ts`
+- `packages/domain-model/prisma/schema.prisma`
+- `packages/domain-model/prisma/migrations/20260724103000_product_domain_monitored_symbol_relational_v1/migration.sql`
 - `packages/domain-model/test/monitoring-catalog-persistence.test.ts`
 - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
 - `docs/architecture/adr/ADR-087-monitored-symbol-durable-relational-contract.md`
@@ -31,6 +34,13 @@ Define the durable relational contract for `MonitoredSymbol`, the catalog entity
 - catalog updates and status changes use the existing optimistic-version boundary
 - archive remains represented through standard lifecycle fields and the catalog status
 
+## Physical schema rules
+- `monitored_symbol_id` is the primary key and the persisted catalog identity
+- `symbol_status`, `market_scope`, and `provider_hint` use dedicated enums
+- tags use a required Postgres text array and source bindings use a required JSON array
+- indexes support catalog status and market-scope/status reads
+- checks enforce non-empty identity/catalog text, source-binding array shape, positive versions, timestamp order, and lifecycle/status archive consistency
+- signal candidates remain unchanged in this step; their existing `monitored_symbol_id` is not converted into a foreign key here
+
 ## What remains pending
-- Prisma physical schema and migration
 - relational adapter, mapper, repository, shared-composition, and integration rollout
