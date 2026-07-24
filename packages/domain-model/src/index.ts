@@ -713,6 +713,10 @@ export {
   dehydrateMonitoredSymbolToDurableRecord,
   hydrateMonitoredSymbolFromDurableRecord
 } from "./repositories/monitored-symbol-relational-repository-mappers.js";
+export { InMemoryMonitoredSymbolRelationalRepositoryAdapter } from "./repositories/monitored-symbol-relational-repository-adapter.impl.js";
+export { RelationalMonitoredSymbolRepository } from "./repositories/monitored-symbol-relational-repository.impl.js";
+export { composeMonitoredSymbolRelationalRepositories } from "./repositories/monitored-symbol-relational-repositories.js";
+export type { MonitoredSymbolRelationalRepositories } from "./repositories/monitored-symbol-relational-repositories.js";
 export {
   dehydrateSetupAggregateResultToDurableRecord,
   hydrateSetupAggregateResultFromDurableRecord

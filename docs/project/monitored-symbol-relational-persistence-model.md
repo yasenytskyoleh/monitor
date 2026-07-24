@@ -9,6 +9,8 @@ Define the durable relational contract for `MonitoredSymbol`, the catalog entity
 - `packages/domain-model/src/repositories/monitored-symbol-repository.impl.ts`
 - `packages/domain-model/src/repositories/monitored-symbol-relational-repository-adapter.ts`
 - `packages/domain-model/src/repositories/monitored-symbol-relational-repository-mappers.ts`
+- `packages/domain-model/src/repositories/monitored-symbol-relational-repository.impl.ts`
+- `packages/domain-model/src/repositories/monitored-symbol-relational-repository-adapter.impl.ts`
 - `packages/domain-model/src/services/monitoring-catalog-service.ts`
 - `packages/domain-model/src/storage/monitored-symbol-relational-slice.ts`
 - `packages/domain-model/src/storage/monitored-symbol-relational-physical-schema.ts`
@@ -18,6 +20,7 @@ Define the durable relational contract for `MonitoredSymbol`, the catalog entity
 - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
 - `packages/domain-model/test/monitored-symbol-relational-repository-adapter-contracts.test.ts`
 - `packages/domain-model/test/monitored-symbol-relational-repository-mappers.test.ts`
+- `packages/domain-model/test/monitored-symbol-relational-repositories.test.ts`
 - `docs/architecture/adr/ADR-087-monitored-symbol-durable-relational-contract.md`
 - `docs/architecture/adr/ADR-089-monitored-symbol-relational-adapter-contract.md`
 
@@ -48,4 +51,4 @@ Define the durable relational contract for `MonitoredSymbol`, the catalog entity
 - signal candidates remain unchanged in this step; their existing `monitored_symbol_id` is not converted into a foreign key here
 
 ## What remains pending
-- relational repository, Prisma adapter, shared-composition, and integration rollout
+- Prisma adapter and integration rollout
