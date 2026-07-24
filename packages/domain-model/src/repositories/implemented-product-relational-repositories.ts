@@ -20,6 +20,13 @@ import {
   type ResearchReviewDecisionRelationalRepositories
 } from "./research-review-decision-relational-repositories.js";
 import type {
+  ReviewDecisionRoutingResultRelationalRepositoryAdapter
+} from "./review-decision-routing-result-relational-repository-adapter.js";
+import {
+  composeReviewDecisionRoutingResultRelationalRepositories,
+  type ReviewDecisionRoutingResultRelationalRepositories
+} from "./review-decision-routing-result-relational-repositories.js";
+import type {
   RoutedActionExecutionEnvelopeRelationalRepositoryAdapter
 } from "./routed-action-execution-envelope-relational-repository-adapter.js";
 import {
@@ -83,6 +90,7 @@ export type ImplementedProductRelationalAdapters = {
   feedbackDecisionAdapter: ResearchFeedbackDecisionRelationalRepositoryAdapter;
   approvalAdapter: ResearchDecisionApprovalRelationalRepositoryAdapter;
   reviewDecisionAdapter: ResearchReviewDecisionRelationalRepositoryAdapter;
+  reviewDecisionRoutingResultAdapter: ReviewDecisionRoutingResultRelationalRepositoryAdapter;
   routedActionAdapter: RoutedActionExecutionEnvelopeRelationalRepositoryAdapter;
   setupLifecycleMutationRecordAdapter: SetupLifecycleMutationRecordRelationalRepositoryAdapter;
   setupDefinitionRevisionAdapter: SetupDefinitionRevisionRelationalRepositoryAdapter;
@@ -98,6 +106,7 @@ export type ImplementedProductRelationalRepositories =
   ResearchFeedbackDecisionRelationalRepositories &
   ResearchDecisionApprovalRelationalRepositories &
   ResearchReviewDecisionRelationalRepositories &
+  ReviewDecisionRoutingResultRelationalRepositories &
   RoutedActionExecutionEnvelopeRelationalRepositories &
   SetupLifecycleMutationRecordRelationalRepositories &
   SetupDefinitionRevisionRelationalRepositories &
@@ -113,6 +122,9 @@ export const composeImplementedProductRelationalRepositories = (
   ...composeResearchFeedbackDecisionRelationalRepositories(adapters.feedbackDecisionAdapter),
   ...composeResearchDecisionApprovalRelationalRepositories(adapters.approvalAdapter),
   ...composeResearchReviewDecisionRelationalRepositories(adapters.reviewDecisionAdapter),
+  ...composeReviewDecisionRoutingResultRelationalRepositories(
+    adapters.reviewDecisionRoutingResultAdapter
+  ),
   ...composeRoutedActionExecutionEnvelopeRelationalRepositories(adapters.routedActionAdapter),
   ...composeSetupLifecycleMutationRecordRelationalRepositories(
     adapters.setupLifecycleMutationRecordAdapter

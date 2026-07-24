@@ -308,3 +308,22 @@ test("prisma routed-action adapter maps retryable read failures to transient_fai
       error.entityType === "routed_action_execution_envelope"
   );
 });
+
+test("prisma routed-action adapter maps retryable reference-read failures", async () => {
+  const client = createFakePrismaClient();
+  client.researchReviewDecisionRecord.findUnique = async () => {
+    throw { code: "P1001" };
+  };
+  const adapter = new PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter(client);
+
+  await assert.rejects(
+    async () =>
+      adapter.insertRoutedActionExecutionEnvelopeRecord({
+        record: buildEnvelopeRecord("execution-envelope-006")
+      }),
+    (error: unknown) =>
+      error instanceof RepositoryError &&
+      error.code === "transient_failure" &&
+      error.operation === "create"
+  );
+});

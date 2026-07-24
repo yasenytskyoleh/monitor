@@ -75,6 +75,18 @@ export type {
   ReviewDecisionRoutingResultRelationalEntityType
 } from "./review-decision-routing-result-relational-slice.js";
 export {
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_INDEXES,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_MIGRATION_SLUG,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_PRISMA_MODELS,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_REQUIRED_COLUMNS,
+  REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_TABLES
+} from "./review-decision-routing-result-relational-physical-schema.js";
+export type {
+  ReviewDecisionRoutingResultRelationalIndexName,
+  ReviewDecisionRoutingResultRelationalPrismaModelName,
+  ReviewDecisionRoutingResultRelationalTableName
+} from "./review-decision-routing-result-relational-physical-schema.js";
+export {
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES
 } from "./routed-action-execution-envelope-relational-slice.js";
 export type {

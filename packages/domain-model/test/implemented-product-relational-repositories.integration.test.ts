@@ -16,6 +16,7 @@ import {
   type ResearchFeedbackDecision,
   type ResearchHypothesis,
   type ResearchReviewDecision,
+  type ReviewDecisionRoutingResult,
   type RoutedActionExecutionEnvelope,
   type SetupAggregateResult,
   type SetupDefinition,
@@ -56,6 +57,10 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260630113000_product_domain_research_review_decision_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260723103000_product_domain_review_decision_routing_result_relational_v1/migration.sql"
   ),
   resolve(
     migrationsDirectory,
@@ -237,6 +242,23 @@ const buildReviewDecision = (
   decisionStatus: "recorded",
   createdAt: "2026-05-24T10:45:00.000Z",
   updatedAt: "2026-05-24T10:45:00.000Z"
+});
+
+const buildRoutingResult = (
+  routingId: string,
+  researchReviewDecisionId: string
+): ReviewDecisionRoutingResult => ({
+  status: "routed",
+  routingId,
+  researchReviewDecisionId,
+  setupFamilyId: "setup-family-001",
+  setupRevisionId: "setup-family-001-v2",
+  decisionOutcome: "accepted",
+  authorizedNextAction: "prepare_lifecycle_mutation_follow_up",
+  target: "apply_setup_lifecycle_mutation",
+  downstreamCommandType: "ApplyApprovedSetupMutationCommand",
+  routedAt: "2026-05-24T10:50:00.000Z",
+  warnings: []
 });
 
 const buildEnvelope = (
@@ -422,7 +444,7 @@ const withIntegrationRepositories = async <T>(
 const integrationTest = INTEGRATION_DATABASE_URL ? test : test.skip;
 
 integrationTest(
-  "shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record against real Postgres",
+  "shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routing result -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record against real Postgres",
   async () => {
     await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
       await repositories.setupDefinitionRepository.create({
@@ -480,6 +502,13 @@ integrationTest(
         metadata: {
           ...metadata,
           sourceObservedAtUtc: "2026-05-24T10:45:00.000Z"
+        }
+      });
+      await repositories.reviewDecisionRoutingResultRepository.create({
+        result: buildRoutingResult("routing-result-001", "review-decision-001"),
+        metadata: {
+          ...metadata,
+          sourceObservedAtUtc: "2026-05-24T10:50:00.000Z"
         }
       });
       await repositories.routedActionExecutionEnvelopeRepository.create({
@@ -606,6 +635,8 @@ integrationTest(
         await repositories.researchDecisionApprovalRepository.getById("approval-001");
       const storedReviewDecision =
         await repositories.researchReviewDecisionRepository.getById("review-decision-001");
+      const storedRoutingResult =
+        await repositories.reviewDecisionRoutingResultRepository.getById("routing-result-001");
       const storedEnvelope =
         await repositories.routedActionExecutionEnvelopeRepository.getById(
           "execution-envelope-001"
@@ -649,6 +680,11 @@ integrationTest(
           where: { researchReviewPacketId: "review-packet-001" },
           orderBy: { researchReviewDecisionId: "asc" }
         });
+      const routingResultRows =
+        await repositories.prismaClient.reviewDecisionRoutingResultRecord.findMany({
+          where: { researchReviewDecisionId: "review-decision-001" },
+          orderBy: { reviewDecisionRoutingResultId: "asc" }
+        });
       const routedActionRows =
         await repositories.prismaClient.routedActionExecutionEnvelopeRecord.findMany({
           where: { sourceReviewDecisionId: "review-decision-001" },
@@ -686,6 +722,11 @@ integrationTest(
       assert.equal(
         storedReviewDecision?.authorizedNextAction,
         "prepare_lifecycle_mutation_follow_up"
+      );
+      assert.equal(storedRoutingResult?.researchReviewDecisionId, "review-decision-001");
+      assert.equal(
+        storedRoutingResult?.downstreamCommandType,
+        "ApplyApprovedSetupMutationCommand"
       );
       assert.equal(storedEnvelope?.sourceReviewDecisionId, "review-decision-001");
       assert.equal(
@@ -740,6 +781,11 @@ integrationTest(
       assert.equal(
         reviewDecisionRows[0]?.authorizedNextAction,
         "prepare_lifecycle_mutation_follow_up"
+      );
+      assert.equal(routingResultRows.length, 1);
+      assert.equal(
+        routingResultRows[0]?.downstreamCommandType,
+        "ApplyApprovedSetupMutationCommand"
       );
       assert.equal(routedActionRows.length, 1);
       assert.equal(routedActionRows[0]?.sourceReviewDecisionId, "review-decision-001");
@@ -889,6 +935,27 @@ integrationTest(
           error.entityType === "research_review_decision" &&
           error.referenceEntityType === "research_hypothesis" &&
           error.referenceEntityId === "hypothesis-missing"
+      );
+    });
+  }
+);
+
+integrationTest(
+  "shared implemented-product bundle maps invalid routing-result review-decision linkage from real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      await assert.rejects(
+        async () =>
+          repositories.reviewDecisionRoutingResultRepository.create({
+            result: buildRoutingResult("routing-result-missing-review", "review-decision-missing"),
+            metadata
+          }),
+        (error: unknown) =>
+          error instanceof RepositoryError &&
+          error.code === "invalid_reference" &&
+          error.entityType === "review_decision_routing_result" &&
+          error.referenceEntityType === "research_review_decision" &&
+          error.referenceEntityId === "review-decision-missing"
       );
     });
   }

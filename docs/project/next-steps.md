@@ -1,19 +1,22 @@
 # Next Steps
 
 ## Current recommended next step
-### Define the Prisma physical schema and migration for `review_decision_routing_result`
+### Select the next later downstream durable slice
 
 Reason:
 - `review_decision_routing_result` is now selected as the next downstream execution-handoff persistence slice
 - it has a domain contract, in-memory repository, first-class persisted-entity registration, and a durable relational record contract for routable outcomes
-- it remains outside committed Prisma schema/migration coverage, so physical schema planning is the next narrow rollout stage
+- it now has a committed Prisma model, SQL migration, source-review-decision foreign key, and query indexes
+- it now has durable mappers, a domain-facing relational repository, and concrete Prisma persistence
+- the shared implemented-product bundle and opt-in real-Postgres integration flow now reach `review_decision_routing_result`
+- the next bounded persistence step is choosing the next later downstream durable slice
 - runtime engines are still intentionally out of scope, so the next bounded step should stay narrow and persistence-focused
-- the shared implemented-product bundle and real-Postgres integration flow remain complete through `setup_revision_activation_record`
+- the shared implemented-product bundle and real-Postgres integration flow both reach `review_decision_routing_result`
 
 ## Recommended near-future sequence
-1. commit the Prisma physical schema and SQL migration for `review_decision_routing_result`
-2. define its relational adapter contract
-3. continue adapter/repository/integration rollout for that slice
+1. select the next later downstream durable slice
+2. commit its durable relational contract and physical schema plan
+3. continue its adapter, repository, shared-composition, and integration rollout
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

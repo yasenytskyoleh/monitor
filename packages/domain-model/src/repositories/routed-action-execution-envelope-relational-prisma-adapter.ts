@@ -328,7 +328,16 @@ export class PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter
       sourceReviewDecisionId: request.record.sourceReviewDecisionId
     };
 
-    const validationError = await findReferenceValidationError(this.prisma, referenceContext);
+    let validationError: RepositoryError | null;
+    try {
+      validationError = await findReferenceValidationError(this.prisma, referenceContext);
+    } catch (error) {
+      throw mapPrismaErrorToRepositoryError(error, {
+        operation: "create",
+        entityType: "routed_action_execution_envelope",
+        entityId: request.record.identity.entityId
+      });
+    }
     if (validationError) {
       throw validationError;
     }

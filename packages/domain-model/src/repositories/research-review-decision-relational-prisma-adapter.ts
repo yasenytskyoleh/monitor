@@ -336,7 +336,16 @@ export class PrismaResearchReviewDecisionRelationalRepositoryAdapter
       researchHypothesisId: request.record.researchHypothesisId
     };
 
-    const validationError = await findReferenceValidationError(this.prisma, referenceContext);
+    let validationError: RepositoryError | null;
+    try {
+      validationError = await findReferenceValidationError(this.prisma, referenceContext);
+    } catch (error) {
+      throw mapPrismaErrorToRepositoryError(error, {
+        operation: "create",
+        entityType: "research_review_decision",
+        entityId: request.record.identity.entityId
+      });
+    }
     if (validationError) {
       throw validationError;
     }

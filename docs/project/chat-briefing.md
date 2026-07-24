@@ -147,6 +147,8 @@ Current product-domain scope includes:
   - `docs/architecture/adr/ADR-078-implemented-product-setup-revision-activation-composition.md`
   - `docs/architecture/adr/ADR-079-implemented-product-setup-revision-activation-integration-coverage.md`
   - `docs/architecture/adr/ADR-080-review-decision-routing-result-durable-relational-contract.md`
+  - `docs/architecture/adr/ADR-081-review-decision-routing-result-prisma-schema-layout.md`
+  - `docs/architecture/adr/ADR-082-review-decision-routing-result-relational-adapter-contract.md`
 
 ## Current constraints
 - spot-only scope
@@ -163,6 +165,7 @@ Current product-domain scope includes:
   - `research_feedback_decision`
   - `research_decision_approval`
   - `research_review_decision`
+  - `review_decision_routing_result`
   - `routed_action_execution_envelope`
   - `setup_lifecycle_mutation_record`
   - `setup_refinement_request`
@@ -177,11 +180,13 @@ Current product-domain scope includes:
   - `research_feedback_decision`
   - `research_decision_approval`
   - `research_review_decision`
+  - `review_decision_routing_result`
   - `routed_action_execution_envelope`
   - `setup_lifecycle_mutation_record`
   - `setup_refinement_request`
   - `setup_definition_revision`
   - `setup_revision_activation_record`
+  - `review_decision_routing_result`
 - repository adapter contracts now also exist through:
   - `setup_definition`
   - `research_hypothesis`
@@ -215,12 +220,12 @@ Current product-domain scope includes:
 - one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_revision_activation_record`
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `setup_revision_activation_record`
 - `setup_definition_revision` now also has shared-bundle and opt-in real-database integration coverage
-- `review_decision_routing_result` is selected as the next downstream execution-handoff persistence slice and now has a durable relational contract; its physical schema and migration remain pending
+- `review_decision_routing_result` has its durable contract, committed Prisma schema/migration, relational adapter contract, mappers, adapter-backed repository, and Prisma adapter; shared composition and real-Postgres integration remain pending
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- define the Prisma physical schema and migration for `review_decision_routing_result`
+- extend shared composition and real-Postgres integration through `review_decision_routing_result`
 
 ## Behavioral instructions for future assistants
 When continuing this project:
