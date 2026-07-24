@@ -16,6 +16,7 @@ export type UpdateMonitoredSymbolStatusRequest = {
   symbolId: string;
   status: MonitoredSymbol["status"];
   metadata: ProductRecordMetadata;
+  expectedVersion: number;
 };
 
 export type MonitoringCatalogServiceDependencies = {
@@ -76,10 +77,7 @@ export const createMonitoringCatalogService = (
         );
       }
 
-      return monitoredSymbolRepository.updateStatus({
-        ...request,
-        expectedVersion: null
-      });
+      return monitoredSymbolRepository.updateStatus(request);
     }
   };
 };

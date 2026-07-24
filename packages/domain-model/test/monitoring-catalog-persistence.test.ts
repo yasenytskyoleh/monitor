@@ -77,11 +77,43 @@ test("updates monitored-symbol status with catalog metadata timing", async () =>
     metadata: {
       ...metadata,
       sourceObservedAtUtc: "2026-07-24T10:00:00.000Z"
-    }
+    },
+    expectedVersion: 1
   });
 
   assert.equal(updated?.status, "paused");
   assert.equal(updated?.updatedAtUtc, "2026-07-24T10:00:00.000Z");
+});
+
+test("rejects stale monitored-symbol status updates", async () => {
+  const repository = new InMemoryMonitoredSymbolRepository();
+  const service = createMonitoringCatalogService({ monitoredSymbolRepository: repository });
+
+  await service.registerMonitoredSymbol({
+    symbol: buildMonitoredSymbol("BTC-USDT"),
+    metadata
+  });
+
+  await service.updateMonitoredSymbolStatus({
+    symbolId: "BTC-USDT",
+    status: "paused",
+    metadata,
+    expectedVersion: 1
+  });
+
+  await assert.rejects(
+    () =>
+      service.updateMonitoredSymbolStatus({
+        symbolId: "BTC-USDT",
+        status: "archived",
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) =>
+      error instanceof RepositoryError &&
+      error.code === "version_mismatch" &&
+      error.operation === "update_status"
+  );
 });
 
 test("enforces repository expected versions for monitored-symbol updates", async () => {
