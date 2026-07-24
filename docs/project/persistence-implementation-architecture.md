@@ -6,8 +6,8 @@ Define the current implementation architecture for product-domain persistence ac
 This document now reflects:
 - boundary contracts
 - the current implemented in-memory persistence surface
-- current durable relational repository coverage through `setup_revision_activation_record`
-- current durable relational adapter coverage through `setup_revision_activation_record`
+- current durable relational repository coverage for every current product durable entity
+- current durable relational adapter coverage for every current product durable entity
 - shared-bundle coverage through `setup_revision_activation_record`
 - real-database integration coverage through `setup_revision_activation_record`
 
@@ -27,7 +27,7 @@ Implemented in-memory persistence and service-owned write paths exist today for:
 - `SetupDefinitionRevision`
 - `SetupRevisionActivationRecord`
 
-Durable relational contracts and committed schema/migrations now exist through `setup_revision_activation_record`, repository adapter coverage now also exists through `setup_revision_activation_record`, executable relational repositories now also exist through `setup_revision_activation_record`, shared-bundle coverage now also extends through `setup_revision_activation_record`, and one end-to-end real-database integration path now also extends through `setup_revision_activation_record`:
+Durable relational contracts, committed schema/migrations, repository adapter coverage, executable relational repositories, shared-bundle coverage, and one end-to-end real-database integration path now exist for every current durable product entity:
 - committed contracts, schema/migrations, adapter-backed repositories, and concrete Prisma adapters for:
   - `setup_definition`
   - `research_hypothesis`
@@ -43,11 +43,12 @@ Durable relational contracts and committed schema/migrations now exist through `
 - committed contracts, schema/migrations, repository adapter contract, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `setup_refinement_request`
 - committed contracts, schema/migrations, repository adapter contract, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `setup_definition_revision`
 - committed contracts, schema/migrations, repository adapter contract, adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for `setup_revision_activation_record`
-- one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record
-- one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record
+- committed contracts, schema/migrations, repository adapter contract, adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-Postgres integration coverage now also exist for `review_decision_routing_result`
+- one shared Prisma-backed repository bundle now spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routing result -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record
+- one end-to-end real-Postgres integration path now also spans setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routing result -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record
 
 Still pending:
-- later shared-bundle/integration extension for downstream execution and mutation entities after `setup_revision_activation_record`
+- a new product-domain durable entity; `routed_action_execution_result` remains product-ephemeral
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI

@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.44 — Codex-first workflow, bounded autonomous mode, shared setup-revision-activation integration, and review-decision-routing-result adapter contract**
+**Phase 1.45 — Codex-first workflow, bounded autonomous mode, and completed review-decision-routing-result persistence rollout**
 
 ## What this phase is about
 This phase is focused on:
@@ -34,7 +34,8 @@ The product side now proves that the repo can:
 - commit the next downstream activation-audit durable relational contract, Prisma schema, relational adapter contract, adapter-backed repository, and concrete Prisma adapter for `setup_revision_activation_record`,
 - complete shared implemented-product activation-bundle composition,
 - extend one opt-in real-database integration path through `setup_revision_activation_record`,
-- select `review_decision_routing_result` as the next downstream execution-handoff durable slice and commit its durable relational contract, physical schema, and adapter contract,
+- complete the review-decision-routing-result durable relational contract, Prisma schema, adapter, shared-composition, and integration rollout,
+- classify `routed_action_execution_result` as product-ephemeral rather than inferring a durable record from a service response,
 - and keep runtime engines pending.
 
 ## Implemented in this phase (current baseline)
@@ -393,19 +394,34 @@ The product side now proves that the repo can:
   - `packages/domain-model/test/setup-revision-activation-record-relational-repository-mappers.test.ts`
   - `packages/domain-model/test/setup-revision-activation-record-relational-repositories.test.ts`
   - `packages/domain-model/test/setup-revision-activation-record-relational-prisma-adapter.test.ts`
-- review-decision-routing-result durable relational contract, physical schema, and adapter contract:
+- review-decision-routing-result full durable relational rollout:
   - `docs/project/review-decision-routing-result-relational-persistence-model.md`
   - `docs/architecture/adr/ADR-080-review-decision-routing-result-durable-relational-contract.md`
   - `docs/architecture/adr/ADR-081-review-decision-routing-result-prisma-schema-layout.md`
   - `docs/architecture/adr/ADR-082-review-decision-routing-result-relational-adapter-contract.md`
+  - `docs/architecture/adr/ADR-083-review-decision-routing-result-adapter-backed-relational-repositories.md`
+  - `docs/architecture/adr/ADR-084-implemented-product-review-decision-routing-result-composition.md`
+  - `docs/architecture/adr/ADR-085-implemented-product-review-decision-routing-result-integration-coverage.md`
   - `packages/domain-model/src/storage/review-decision-routing-result-relational-slice.ts`
   - `packages/domain-model/src/storage/review-decision-routing-result-relational-physical-schema.ts`
   - `packages/domain-model/src/repositories/review-decision-routing-result-relational-repository-adapter.ts`
   - `packages/domain-model/src/repositories/review-decision-routing-result-relational-repository-adapter.impl.ts`
+  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-repository-mappers.ts`
+  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-repository.impl.ts`
+  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-repositories.ts`
+  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-prisma-adapter.ts`
+  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-prisma-client.ts`
   - `packages/domain-model/prisma/migrations/20260723103000_product_domain_review_decision_routing_result_relational_v1/migration.sql`
   - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
   - `packages/domain-model/test/prisma-physical-schema-contracts.test.ts`
   - `packages/domain-model/test/review-decision-routing-result-relational-repository-adapter-contracts.test.ts`
+  - `packages/domain-model/test/review-decision-routing-result-relational-repositories.test.ts`
+  - `packages/domain-model/test/review-decision-routing-result-relational-prisma-adapter.test.ts`
+  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
+- routed-action-execution-result storage classification:
+  - `docs/architecture/adr/ADR-086-routed-action-execution-result-storage-boundary.md`
+  - `docs/project/routed-action-execution-result-storage-model.md`
+  - `packages/domain-model/src/storage/storage-boundary.ts`
 - implemented in-memory persistence for:
   - `SetupDefinition`
   - `ResearchHypothesis`
@@ -447,7 +463,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- implement the adapter-backed repository and Prisma adapter for `review_decision_routing_result`
+- select a new product-domain durable entity, or explicitly design a retained execution-attempt audit entity
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -463,4 +479,4 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, fourteen committed durable relational contracts, committed Prisma schema/migrations, repository adapter contracts, and adapter-backed repository/Prisma parity through `review_decision_routing_result`, one shared implemented-product bundle spanning the full implemented product chain through `setup_revision_activation_record`, and one shared full-chain real-database integration flow through `setup_revision_activation_record`**.
+It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, fifteen committed durable relational contracts, committed Prisma schema/migrations, repository adapter contracts, and adapter-backed repository/Prisma parity for every current durable product entity, one shared implemented-product bundle spanning the full implemented product chain through `setup_revision_activation_record`, and one shared full-chain real-database integration flow through `setup_revision_activation_record`**.
