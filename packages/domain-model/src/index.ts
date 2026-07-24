@@ -710,6 +710,10 @@ export {
   hydrateSignalCandidateFromDurableRecord
 } from "./repositories/signal-evaluation-relational-repository-mappers.js";
 export {
+  dehydrateMonitoredSymbolToDurableRecord,
+  hydrateMonitoredSymbolFromDurableRecord
+} from "./repositories/monitored-symbol-relational-repository-mappers.js";
+export {
   dehydrateSetupAggregateResultToDurableRecord,
   hydrateSetupAggregateResultFromDurableRecord
 } from "./repositories/setup-aggregate-relational-repository-mappers.js";
