@@ -1,4 +1,5 @@
 import type { EvaluationResultRepository } from "../repositories/evaluation-result-repository.js";
+import type { EvaluationStatus } from "../evaluation/evaluation-status.js";
 import type { ResearchHypothesisRepository } from "../repositories/research-hypothesis-repository.js";
 import type { ResearchRunRepository } from "../repositories/research-run-repository.js";
 import type { SetupDefinitionRepository } from "../repositories/setup-definition-repository.js";
@@ -90,6 +91,20 @@ const assertUniqueIdentifiers = (values: string[], fieldName: string): void => {
   values.forEach((value) => assertNonEmptyString(value, `${fieldName} entry`));
   if (new Set(values).size !== values.length) {
     throw new ResearchRunServiceValidationError(`${fieldName} must not contain duplicates`);
+  }
+};
+
+const isTerminalEvaluationStatus = (status: EvaluationStatus): boolean =>
+  status === "completed" || status === "expired" || status === "invalidated";
+
+const assertTerminalEvaluationResult = (
+  evaluationResultId: string,
+  status: EvaluationStatus
+): void => {
+  if (!isTerminalEvaluationStatus(status)) {
+    throw new ResearchRunServiceValidationError(
+      `evaluation_result ${evaluationResultId} must be terminal before inclusion in research_run`
+    );
   }
 };
 
@@ -195,6 +210,8 @@ const validateResearchRunEvidence = async (
         `evaluation_result ${evaluationResultId} is outside research_run evaluation windows`
       );
     }
+
+    assertTerminalEvaluationResult(evaluationResultId, result.status);
   }
 };
 
@@ -220,6 +237,8 @@ const buildRecordedEvaluationContext = async (
         `evaluation_result not found: ${evaluationResultId}`
       );
     }
+
+    assertTerminalEvaluationResult(evaluationResultId, result.status);
 
     const candidate = await dependencies.signalCandidateRepository.getById(
       result.signalCandidateId

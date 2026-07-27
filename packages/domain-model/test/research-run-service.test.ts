@@ -219,6 +219,67 @@ test("records finalized evaluation context for an active research run", async ()
   assert.deepEqual(updated?.evaluationResultIds, ["result-002"]);
 });
 
+test("rejects non-terminal evaluation results from research-run evidence", async () => {
+  const fixture = createFixture();
+  await seedRunContext(fixture);
+  await fixture.signalCandidateRepository.create({
+    candidate: buildCandidate("candidate-003", "setup-001"),
+    metadata
+  });
+  await fixture.evaluationResultRepository.create({
+    result: {
+      ...buildResult("result-003", "candidate-003"),
+      status: "in_progress",
+      referencePrice: null,
+      finalPrice: null,
+      highInWindow: null,
+      lowInWindow: null,
+      absoluteMove: null,
+      percentageMove: null,
+      maxFavorableExcursion: null,
+      maxAdverseExcursion: null,
+      evaluatedAt: null
+    },
+    metadata
+  });
+  await fixture.service.createPlannedResearchRun({
+    run: buildRun("research-run-003c", "hypothesis-001", "setup-001"),
+    metadata
+  });
+  await fixture.service.startResearchRun({
+    runId: "research-run-003c",
+    metadata,
+    expectedVersion: null
+  });
+
+  await assert.rejects(
+    async () =>
+      fixture.service.recordResearchRunEvaluationResults({
+        runId: "research-run-003c",
+        evaluationResultIds: ["result-003"],
+        metadata,
+        expectedVersion: null
+      }),
+    (error: unknown) =>
+      error instanceof ResearchRunServiceValidationError && error.message.includes("must be terminal")
+  );
+
+  await assert.rejects(
+    async () =>
+      fixture.service.createPlannedResearchRun({
+        run: {
+          ...buildRun("research-run-003d", "hypothesis-001", "setup-001"),
+          candidateIds: ["candidate-003"],
+          evaluationWindowIds: ["window-24h"],
+          evaluationResultIds: ["result-003"]
+        },
+        metadata
+      }),
+    (error: unknown) =>
+      error instanceof ResearchRunServiceValidationError && error.message.includes("must be terminal")
+  );
+});
+
 test("starts and completes a research run through valid lifecycle transitions", async () => {
   const fixture = createFixture();
   await seedRunContext(fixture);

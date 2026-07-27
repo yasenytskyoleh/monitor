@@ -23,6 +23,9 @@ allowed only from `running`. Failure and cancellation are allowed only from non-
 Completion retains its explicit timestamp while all changes use the repository's
 optimistic-version contract.
 
+Evaluation evidence must be terminal (`completed`, `expired`, or `invalidated`) before it can be
+included in a ResearchRun, either at creation or through evidence recording.
+
 ## Application flow
 
 `SetupToAggregateFlow` accepts an optional run input. When present, it creates and starts the
