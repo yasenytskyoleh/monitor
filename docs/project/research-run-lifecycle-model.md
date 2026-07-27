@@ -39,6 +39,10 @@ The evaluation phase accepts a completed, expired, or invalidated terminal outco
 recorded as terminal run evidence before aggregation; a run containing no usable completed
 evaluation produces an `invalid` aggregate rather than a failed workflow.
 
+Flow results include the terminal evaluation, ResearchRun, and aggregate statuses when those
+operations complete, allowing callers to distinguish a completed workflow from a completed
+research outcome.
+
 The flow can also register the candidate's monitored symbol when supplied in its optional input;
 otherwise it retains the existing requirement that the candidate's symbol is already catalogued.
 

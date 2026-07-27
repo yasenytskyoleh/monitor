@@ -93,6 +93,7 @@ export const createSetupToAggregateFlow = (
   return {
     async run(input: SetupToAggregateFlowInput): Promise<SetupToAggregateFlowResult> {
       const ids: SetupToAggregateFlowResult["ids"] = {};
+      const outcomes: NonNullable<SetupToAggregateFlowResult["outcomes"]> = {};
       const completedSteps: FlowStepName[] = [];
       const warnings: string[] = [];
       let evaluationResultId: string | null = null;
@@ -263,6 +264,7 @@ export const createSetupToAggregateFlow = (
           if (!finalizedEvaluationResult) {
             throw new Error(`evaluation_result finalize returned null for ${evaluationResultId}`);
           }
+          outcomes.evaluationResultStatus = finalizedEvaluationResult.status;
           completedSteps.push("evaluation_result_finalize");
         } catch (error: unknown) {
           return failResult("evaluation_result_finalize", error, { ids, completedSteps, warnings });
@@ -277,6 +279,7 @@ export const createSetupToAggregateFlow = (
           if (!expiredEvaluationResult) {
             throw new Error(`evaluation_result expire returned null for ${evaluationResultId}`);
           }
+          outcomes.evaluationResultStatus = expiredEvaluationResult.status;
           completedSteps.push("evaluation_result_expire");
         } catch (error: unknown) {
           return failResult("evaluation_result_expire", error, { ids, completedSteps, warnings });
@@ -292,6 +295,7 @@ export const createSetupToAggregateFlow = (
           if (!invalidatedEvaluationResult) {
             throw new Error(`evaluation_result invalidate returned null for ${evaluationResultId}`);
           }
+          outcomes.evaluationResultStatus = invalidatedEvaluationResult.status;
           completedSteps.push("evaluation_result_invalidate");
         } catch (error: unknown) {
           return failResult("evaluation_result_invalidate", error, { ids, completedSteps, warnings });
@@ -337,6 +341,7 @@ export const createSetupToAggregateFlow = (
           if (!completedRun) {
             throw new Error(`research_run complete returned null for ${researchRunId}`);
           }
+          outcomes.researchRunStatus = completedRun.status;
           completedSteps.push("research_run_complete");
         } catch (error: unknown) {
           return failResult("research_run_complete", error, {
@@ -364,6 +369,7 @@ export const createSetupToAggregateFlow = (
         if (!recomputedAggregate) {
           throw new Error(`setup_aggregate_result recompute returned null for ${pendingAggregate.id}`);
         }
+        outcomes.setupAggregateResultStatus = recomputedAggregate.status;
         completedSteps.push("setup_aggregate_result_recompute");
       } catch (error: unknown) {
         warnings.push(
@@ -372,6 +378,7 @@ export const createSetupToAggregateFlow = (
         return {
           status: "partial",
           ids,
+          outcomes,
           completedSteps,
           warnings
         };
@@ -380,6 +387,7 @@ export const createSetupToAggregateFlow = (
       return {
         status: "completed",
         ids,
+        outcomes,
         completedSteps,
         warnings
       };

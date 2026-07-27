@@ -1,3 +1,7 @@
+import type { EvaluationStatus } from "../evaluation/evaluation-status.js";
+import type { SetupAggregateResult } from "../research/setup-aggregate-result.js";
+import type { ResearchRunStatus } from "../research-run.js";
+
 export const FLOW_STEP_NAMES = [
   "setup_definition_create",
   "research_hypothesis_create",
@@ -31,6 +35,11 @@ export type SetupToAggregateFlowResult = {
     researchRunId?: string;
     evaluationResultId?: string;
     setupAggregateResultId?: string;
+  };
+  outcomes?: {
+    evaluationResultStatus?: EvaluationStatus;
+    researchRunStatus?: ResearchRunStatus;
+    setupAggregateResultStatus?: SetupAggregateResult["status"];
   };
   completedSteps: FlowStepName[];
   failedStep?: FlowStepName;

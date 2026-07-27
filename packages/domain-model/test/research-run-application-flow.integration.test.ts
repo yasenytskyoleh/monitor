@@ -190,6 +190,11 @@ test("application flow persists a completed research run before run-scoped aggre
 
   assert.equal(result.status, "completed");
   assert.equal(result.ids.monitoredSymbolId, "BTC-USDT");
+  assert.deepEqual(result.outcomes, {
+    evaluationResultStatus: "completed",
+    researchRunStatus: "completed",
+    setupAggregateResultStatus: "completed"
+  });
   assert.equal(run?.status, "completed");
   assert.deepEqual(run?.evaluationResultIds, ["result-flow-integration-001"]);
   assert.equal(aggregate?.status, "completed");
@@ -232,6 +237,11 @@ test("application flow records an invalidated evaluation as terminal research-ru
   const aggregate = await setupAggregateResultRepository.getById("aggregate-flow-integration-001");
 
   assert.equal(result.status, "completed");
+  assert.deepEqual(result.outcomes, {
+    evaluationResultStatus: "invalidated",
+    researchRunStatus: "completed",
+    setupAggregateResultStatus: "invalid"
+  });
   assert.ok(result.completedSteps.includes("evaluation_result_invalidate"));
   assert.equal(evaluationResult?.status, "invalidated");
   assert.deepEqual(researchRun?.evaluationResultIds, ["result-flow-integration-001"]);
@@ -255,6 +265,11 @@ test("application flow records an expired evaluation as terminal research-run ev
   const aggregate = await setupAggregateResultRepository.getById("aggregate-flow-integration-001");
 
   assert.equal(result.status, "completed");
+  assert.deepEqual(result.outcomes, {
+    evaluationResultStatus: "expired",
+    researchRunStatus: "completed",
+    setupAggregateResultStatus: "invalid"
+  });
   assert.ok(result.completedSteps.includes("evaluation_result_expire"));
   assert.equal(evaluationResult?.status, "expired");
   assert.deepEqual(researchRun?.evaluationResultIds, ["result-flow-integration-001"]);
