@@ -32,6 +32,9 @@ original setup-to-aggregate sequence. `createSetupToAggregateFlowFromRepositorie
 flow's services from the existing repository contracts so an implemented-product relational
 repository bundle can enable the lifecycle without manually wiring its dependencies.
 
+The environment-gated real-Postgres integration suite runs this repository-composed flow and
+verifies the completed ResearchRun row and its run-scoped aggregate after persistence.
+
 ## Boundaries
 
 The service does not allocate work, run evaluations, or invoke aggregation. Those remain
