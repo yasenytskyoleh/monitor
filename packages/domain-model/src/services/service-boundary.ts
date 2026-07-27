@@ -7,7 +7,8 @@ export const PRODUCT_SERVICE_NAMES = [
   "evaluation_service",
   "research_service",
   "research_run_service",
-  "research_aggregation_service"
+  "research_aggregation_service",
+  "execution_attempt_audit_service"
 ] as const;
 export type ProductServiceName = (typeof PRODUCT_SERVICE_NAMES)[number];
 
@@ -84,6 +85,12 @@ export const PRODUCT_WRITE_PATH_OWNERSHIP: ProductWritePathOwnership[] = [
     ownerService: "research_service",
     createPath: "review-decision downstream action execution envelope preparation flow",
     updatePath: "execution-envelope audit metadata corrections in controlled review-execution path"
+  },
+  {
+    entityType: "execution_attempt_audit",
+    ownerService: "execution_attempt_audit_service",
+    createPath: "execution runtime attempt-received recording path",
+    updatePath: "execution runtime terminal outcome recording path"
   },
   {
     entityType: "setup_lifecycle_mutation_record",

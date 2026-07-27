@@ -1142,6 +1142,14 @@ export {
 export {
   RelationalRoutedActionExecutionEnvelopeRepository
 } from "./repositories/routed-action-execution-envelope-relational-repository.impl.js";
+export type {
+  ExecutionAttemptAuditCreateRequest,
+  ExecutionAttemptAuditRepository,
+  ExecutionAttemptAuditUpdateRequest
+} from "./repositories/execution-attempt-audit-repository.js";
+export {
+  InMemoryExecutionAttemptAuditRepository
+} from "./repositories/execution-attempt-audit-repository.impl.js";
 export {
   RelationalSetupLifecycleMutationRecordRepository
 } from "./repositories/setup-lifecycle-mutation-record-relational-repository.impl.js";
@@ -1322,6 +1330,16 @@ export {
   SetupAggregateResultValidationError,
   createResearchAggregationService
 } from "./services/research-aggregation-service.js";
+export type {
+  ExecutionAttemptAuditService,
+  ExecutionAttemptAuditServiceDependencies,
+  RecordReceivedExecutionAttemptAuditRequest,
+  RecordTerminalExecutionAttemptAuditRequest
+} from "./services/execution-attempt-audit-service.js";
+export {
+  ExecutionAttemptAuditValidationError,
+  createExecutionAttemptAuditService
+} from "./services/execution-attempt-audit-service.js";
 export {
   FLOW_STATUSES,
   FLOW_STEP_NAMES,

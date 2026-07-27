@@ -726,6 +726,12 @@ export { InMemoryRoutedActionExecutionEnvelopeRepository } from "./routed-action
 export {
   RelationalRoutedActionExecutionEnvelopeRepository
 } from "./routed-action-execution-envelope-relational-repository.impl.js";
+export type {
+  ExecutionAttemptAuditCreateRequest,
+  ExecutionAttemptAuditRepository,
+  ExecutionAttemptAuditUpdateRequest
+} from "./execution-attempt-audit-repository.js";
+export { InMemoryExecutionAttemptAuditRepository } from "./execution-attempt-audit-repository.impl.js";
 export {
   RelationalSetupLifecycleMutationRecordRepository
 } from "./setup-lifecycle-mutation-record-relational-repository.impl.js";
