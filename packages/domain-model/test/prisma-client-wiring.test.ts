@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createFirstDurableRelationalPrismaClient } from "../src/index.js";
+import {
+  createFirstDurableRelationalPrismaClient,
+  createMonitoredSymbolRelationalPrismaRepositories
+} from "../src/index.js";
 
 test("prisma client wiring exposes generated delegates for the first durable slice", async () => {
   const prisma = createFirstDurableRelationalPrismaClient({
@@ -15,5 +18,18 @@ test("prisma client wiring exposes generated delegates for the first durable sli
     assert.equal(typeof prisma.researchDecisionApprovalRecord.findUnique, "function");
   } finally {
     await prisma.$disconnect();
+  }
+});
+
+test("prisma repository composition wires the monitored-symbol catalog", async () => {
+  const repositories = createMonitoredSymbolRelationalPrismaRepositories({
+    connectionString: "postgresql://postgres:postgres@localhost:5432/monitor"
+  });
+
+  try {
+    assert.equal(typeof repositories.adapter.loadMonitoredSymbolRecord, "function");
+    assert.equal(typeof repositories.monitoredSymbolRepository.create, "function");
+  } finally {
+    await repositories.disconnect();
   }
 });

@@ -720,6 +720,13 @@ export type { MonitoredSymbolRelationalRepositories } from "./repositories/monit
 export { PrismaMonitoredSymbolRelationalRepositoryAdapter } from "./repositories/monitored-symbol-relational-prisma-adapter.js";
 export type { MonitoredSymbolRelationalPrismaClient } from "./repositories/monitored-symbol-relational-prisma-adapter.js";
 export {
+  createMonitoredSymbolRelationalPrismaRepositories,
+  createMonitoredSymbolRelationalPrismaRepositoryAdapter
+} from "./repositories/monitored-symbol-relational-prisma-client.js";
+export type {
+  MonitoredSymbolRelationalPrismaRepositories
+} from "./repositories/monitored-symbol-relational-prisma-client.js";
+export {
   dehydrateSetupAggregateResultToDurableRecord,
   hydrateSetupAggregateResultFromDurableRecord
 } from "./repositories/setup-aggregate-relational-repository-mappers.js";

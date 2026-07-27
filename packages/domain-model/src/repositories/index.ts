@@ -314,6 +314,13 @@ export type { MonitoredSymbolRelationalRepositories } from "./monitored-symbol-r
 export { PrismaMonitoredSymbolRelationalRepositoryAdapter } from "./monitored-symbol-relational-prisma-adapter.js";
 export type { MonitoredSymbolRelationalPrismaClient } from "./monitored-symbol-relational-prisma-adapter.js";
 export {
+  createMonitoredSymbolRelationalPrismaRepositories,
+  createMonitoredSymbolRelationalPrismaRepositoryAdapter
+} from "./monitored-symbol-relational-prisma-client.js";
+export type {
+  MonitoredSymbolRelationalPrismaRepositories
+} from "./monitored-symbol-relational-prisma-client.js";
+export {
   dehydrateSetupAggregateResultToDurableRecord,
   hydrateSetupAggregateResultFromDurableRecord
 } from "./setup-aggregate-relational-repository-mappers.js";
