@@ -19,6 +19,40 @@ export type SetupToAggregateFlowDependencies = {
 const asErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "unknown flow error";
 
+const validateResearchRunContext = (input: SetupToAggregateFlowInput): void => {
+  const researchRun = input.researchRun;
+  if (!researchRun) {
+    return;
+  }
+
+  const { run } = researchRun;
+  const aggregate = input.aggregation.pendingAggregate;
+  if (run.setupId !== input.setupDefinition.id) {
+    throw new Error("research_run setupId must match setupDefinition id");
+  }
+  if (run.hypothesisId !== input.researchHypothesis.id) {
+    throw new Error("research_run hypothesisId must match researchHypothesis id");
+  }
+  if (aggregate.aggregationScope.researchRunId !== run.runId) {
+    throw new Error("aggregationScope.researchRunId must match research_run runId");
+  }
+  if (aggregate.setupDefinitionId !== run.setupId) {
+    throw new Error("aggregate setupDefinitionId must match research_run setupId");
+  }
+  if (aggregate.researchHypothesisId !== run.hypothesisId) {
+    throw new Error("aggregate researchHypothesisId must match research_run hypothesisId");
+  }
+  if (
+    aggregate.aggregationScope.hypothesisId !== undefined &&
+    aggregate.aggregationScope.hypothesisId !== run.hypothesisId
+  ) {
+    throw new Error("aggregationScope.hypothesisId must match research_run hypothesisId");
+  }
+  if (!input.aggregation.recomputeEvaluationResultIds.includes(input.evaluation.pendingResult.id)) {
+    throw new Error("aggregation recompute results must include the flow evaluation result");
+  }
+};
+
 const failResult = (
   step: FlowStepName,
   error: unknown,
@@ -50,6 +84,12 @@ export const createSetupToAggregateFlow = (
       const completedSteps: FlowStepName[] = [];
       const warnings: string[] = [];
       let evaluationResultId: string | null = null;
+
+      try {
+        validateResearchRunContext(input);
+      } catch (error: unknown) {
+        return failResult("research_run_create", error, { ids, completedSteps, warnings });
+      }
 
       try {
         const setupDefinition = await setupDefinitionService.createSetupDefinition({

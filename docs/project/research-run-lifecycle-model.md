@@ -28,7 +28,9 @@ optimistic-version contract.
 `SetupToAggregateFlow` accepts an optional run input. When present, it creates and starts the
 run after candidate creation, records the finalized evaluation result, completes the run, and
 then performs run-scoped aggregation. Existing callers can omit the run input and retain the
-original setup-to-aggregate sequence.
+original setup-to-aggregate sequence. `createSetupToAggregateFlowFromRepositories` composes the
+flow's services from the existing repository contracts so an implemented-product relational
+repository bundle can enable the lifecycle without manually wiring its dependencies.
 
 ## Boundaries
 

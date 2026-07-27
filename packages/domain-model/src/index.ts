@@ -1322,13 +1322,15 @@ export {
 export {
   FLOW_STATUSES,
   FLOW_STEP_NAMES,
-  createSetupToAggregateFlow
+  createSetupToAggregateFlow,
+  createSetupToAggregateFlowFromRepositories
 } from "./application/index.js";
 export type {
   FlowStatus,
   FlowStepName,
   SetupToAggregateFlowDependencies,
   SetupToAggregateFlowInput,
+  SetupToAggregateFlowRepositories,
   SetupToAggregateFlowResult
 } from "./application/index.js";
 export {

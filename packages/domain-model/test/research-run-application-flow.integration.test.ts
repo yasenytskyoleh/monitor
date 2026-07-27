@@ -9,14 +9,8 @@ import {
   InMemorySetupAggregateResultRepository,
   InMemorySetupDefinitionRepository,
   InMemorySignalCandidateRepository,
-  createEvaluationService,
   createMonitoringCatalogService,
-  createResearchAggregationService,
-  createResearchRunService,
-  createResearchService,
-  createSetupDefinitionService,
-  createSetupToAggregateFlow,
-  createSignalCandidateService,
+  createSetupToAggregateFlowFromRepositories,
   type ProductRecordMetadata,
   type SetupToAggregateFlowInput
 } from "../src/index.js";
@@ -145,7 +139,7 @@ const input: SetupToAggregateFlowInput = {
   metadata
 };
 
-test("application flow persists a completed research run before run-scoped aggregation", async () => {
+const createFlowFixture = async () => {
   const setupDefinitionRepository = new InMemorySetupDefinitionRepository();
   const researchHypothesisRepository = new InMemoryResearchHypothesisRepository();
   const researchRunRepository = new InMemoryResearchRunRepository();
@@ -171,37 +165,24 @@ test("application flow persists a completed research run before run-scoped aggre
     metadata
   });
 
-  const flow = createSetupToAggregateFlow({
-    setupDefinitionService: createSetupDefinitionService({ setupDefinitionRepository }),
-    researchService: createResearchService({
+  return {
+    flow: createSetupToAggregateFlowFromRepositories({
+      setupDefinitionRepository,
       researchHypothesisRepository,
-      setupDefinitionRepository
-    }),
-    signalCandidateService: createSignalCandidateService({
+      monitoredSymbolRepository,
       signalCandidateRepository,
-      setupDefinitionRepository,
-      monitoredSymbolRepository
-    }),
-    evaluationService: createEvaluationService({
       evaluationResultRepository,
-      signalCandidateRepository
-    }),
-    researchRunService: createResearchRunService({
       researchRunRepository,
-      researchHypothesisRepository,
-      setupDefinitionRepository,
-      signalCandidateRepository,
-      evaluationResultRepository
+      setupAggregateResultRepository
     }),
-    researchAggregationService: createResearchAggregationService({
-      setupAggregateResultRepository,
-      setupDefinitionRepository,
-      researchHypothesisRepository,
-      researchRunRepository,
-      evaluationResultRepository,
-      signalCandidateRepository
-    })
-  });
+    researchRunRepository,
+    setupAggregateResultRepository,
+    setupDefinitionRepository
+  };
+};
+
+test("application flow persists a completed research run before run-scoped aggregation", async () => {
+  const { flow, researchRunRepository, setupAggregateResultRepository } = await createFlowFixture();
 
   const result = await flow.run(structuredClone(input));
   const run = await researchRunRepository.getById("research-run-flow-integration-001");
@@ -211,4 +192,20 @@ test("application flow persists a completed research run before run-scoped aggre
   assert.equal(run?.status, "completed");
   assert.deepEqual(run?.evaluationResultIds, ["result-flow-integration-001"]);
   assert.equal(aggregate?.status, "completed");
+});
+
+test("application flow rejects a research run with a mismatched aggregate scope before writes", async () => {
+  const { flow, setupDefinitionRepository } = await createFlowFixture();
+  const invalidInput = structuredClone(input);
+  invalidInput.aggregation.pendingAggregate.aggregationScope.researchRunId = "research-run-other";
+
+  const result = await flow.run(invalidInput);
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.failedStep, "research_run_create");
+  assert.match(result.error ?? "", /researchRunId must match/);
+  assert.equal(
+    await setupDefinitionRepository.getById("setup-flow-integration-001"),
+    null
+  );
 });

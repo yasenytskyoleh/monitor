@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   composeImplementedProductRelationalRepositories,
+  createSetupToAggregateFlowFromRepositories,
   InMemoryFirstDurableRelationalRepositoryAdapter,
   InMemoryMonitoredSymbolRelationalRepositoryAdapter,
   InMemoryResearchDecisionApprovalRelationalRepositoryAdapter,
@@ -470,6 +471,9 @@ test(
       setupRefinementRequestAdapter,
       setupRevisionActivationRecordAdapter
     });
+    const flow = createSetupToAggregateFlowFromRepositories(repositories);
+
+    assert.equal(typeof flow.run, "function");
 
     await repositories.setupDefinitionRepository.create({
       definition: buildSetupDefinition("setup-001"),
