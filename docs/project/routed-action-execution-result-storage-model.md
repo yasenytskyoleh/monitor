@@ -14,9 +14,13 @@ It is a service response, not a durable product-domain record:
 ## Durable boundary
 `routed_action_execution_envelope` remains the durable product-domain handoff record. It preserves the routed action, source routing result, source review decision, target references, payload snapshot, preparation metadata, and execution status.
 
-If rejected or failed execution attempts must later be retained, introduce a dedicated audit entity with explicit identity, ownership, retention, and runtime-evidence rules. Do not persist the current response type by inference.
+Rejected and failed execution attempts now have a selected future audit boundary:
+`ExecutionAttemptAudit`. It has explicit identity, ownership, retention, and runtime-evidence
+rules in `docs/project/execution-attempt-audit-model.md`. Do not persist the current response
+type by inference.
 
 ## Artifact locations
 - `packages/domain-model/src/execution/routed-action-execution-result.ts`
 - `packages/domain-model/src/storage/storage-boundary.ts`
 - `docs/architecture/adr/ADR-086-routed-action-execution-result-storage-boundary.md`
+- `docs/architecture/adr/ADR-102-retained-execution-attempt-audit-entity.md`
