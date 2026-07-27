@@ -1049,6 +1049,24 @@ export type {
 } from "./repositories/research-run-repository.js";
 export { InMemoryResearchRunRepository } from "./repositories/research-run-repository.impl.js";
 export type {
+  ResearchRunRecordWriteRequest,
+  ResearchRunRelationalRepositoryAdapter
+} from "./repositories/research-run-relational-repository-adapter.js";
+export {
+  RESEARCH_RUN_RELATIONAL_ADAPTER_OPERATIONS,
+  RESEARCH_RUN_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  RESEARCH_RUN_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isResearchRunRelationalDeterministicErrorCode
+} from "./repositories/research-run-relational-repository-adapter.js";
+export { InMemoryResearchRunRelationalRepositoryAdapter } from "./repositories/research-run-relational-repository-adapter.impl.js";
+export {
+  dehydrateResearchRunToDurableRecord,
+  hydrateResearchRunFromDurableRecord
+} from "./repositories/research-run-relational-repository-mappers.js";
+export { RelationalResearchRunRepository } from "./repositories/research-run-relational-repository.impl.js";
+export { composeResearchRunRelationalRepositories } from "./repositories/research-run-relational-repositories.js";
+export type { ResearchRunRelationalRepositories } from "./repositories/research-run-relational-repositories.js";
+export type {
   ResearchHypothesisCreateRequest,
   ResearchHypothesisRepository,
   ResearchHypothesisStatusUpdateRequest,
