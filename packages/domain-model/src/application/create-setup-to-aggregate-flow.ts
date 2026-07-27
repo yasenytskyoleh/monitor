@@ -1,6 +1,7 @@
 import type { SetupToAggregateFlowInput } from "./application-flow-input.js";
 import type { FlowStepName, SetupToAggregateFlowResult } from "./application-flow-result.js";
 import type { EvaluationService } from "../services/evaluation-service.js";
+import type { MonitoringCatalogService } from "../services/monitoring-catalog-service.js";
 import type { ResearchAggregationService } from "../services/research-aggregation-service.js";
 import type { ResearchService } from "../services/research-service.js";
 import type { ResearchRunService } from "../services/research-run-service.js";
@@ -10,6 +11,7 @@ import type { SignalCandidateService } from "../services/signal-candidate-servic
 export type SetupToAggregateFlowDependencies = {
   setupDefinitionService: SetupDefinitionService;
   researchService: ResearchService;
+  monitoringCatalogService?: MonitoringCatalogService;
   signalCandidateService: SignalCandidateService;
   evaluationService: EvaluationService;
   researchRunService?: ResearchRunService;
@@ -18,6 +20,15 @@ export type SetupToAggregateFlowDependencies = {
 
 const asErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "unknown flow error";
+
+const validateMonitoredSymbolContext = (input: SetupToAggregateFlowInput): void => {
+  if (
+    input.monitoredSymbol &&
+    input.monitoredSymbol.symbolId !== input.signalCandidate.monitoredSymbolId
+  ) {
+    throw new Error("monitoredSymbol symbolId must match signalCandidate monitoredSymbolId");
+  }
+};
 
 const validateResearchRunContext = (input: SetupToAggregateFlowInput): void => {
   const researchRun = input.researchRun;
@@ -72,6 +83,7 @@ export const createSetupToAggregateFlow = (
   const {
     setupDefinitionService,
     researchService,
+    monitoringCatalogService,
     signalCandidateService,
     evaluationService,
     researchRunService,
@@ -84,6 +96,12 @@ export const createSetupToAggregateFlow = (
       const completedSteps: FlowStepName[] = [];
       const warnings: string[] = [];
       let evaluationResultId: string | null = null;
+
+      try {
+        validateMonitoredSymbolContext(input);
+      } catch (error: unknown) {
+        return failResult("monitored_symbol_register", error, { ids, completedSteps, warnings });
+      }
 
       try {
         validateResearchRunContext(input);
@@ -128,6 +146,27 @@ export const createSetupToAggregateFlow = (
         completedSteps.push("research_hypothesis_link");
       } catch (error: unknown) {
         return failResult("research_hypothesis_link", error, { ids, completedSteps, warnings });
+      }
+
+      if (input.monitoredSymbol) {
+        if (!monitoringCatalogService) {
+          return failResult(
+            "monitored_symbol_register",
+            new Error("monitoring_catalog_service is required when monitoredSymbol input is provided"),
+            { ids, completedSteps, warnings }
+          );
+        }
+
+        try {
+          const monitoredSymbol = await monitoringCatalogService.registerMonitoredSymbol({
+            symbol: input.monitoredSymbol,
+            metadata: input.metadata
+          });
+          ids.monitoredSymbolId = monitoredSymbol.symbolId;
+          completedSteps.push("monitored_symbol_register");
+        } catch (error: unknown) {
+          return failResult("monitored_symbol_register", error, { ids, completedSteps, warnings });
+        }
       }
 
       try {

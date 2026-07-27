@@ -8,6 +8,7 @@ import type {
   SignalCandidateRepository
 } from "../repositories/index.js";
 import { createEvaluationService } from "../services/evaluation-service.js";
+import { createMonitoringCatalogService } from "../services/monitoring-catalog-service.js";
 import { createResearchAggregationService } from "../services/research-aggregation-service.js";
 import { createResearchRunService } from "../services/research-run-service.js";
 import { createResearchService } from "../services/research-service.js";
@@ -38,6 +39,9 @@ export const createSetupToAggregateFlowFromRepositories = (
     researchService: createResearchService({
       researchHypothesisRepository: repositories.researchHypothesisRepository,
       setupDefinitionRepository: repositories.setupDefinitionRepository
+    }),
+    monitoringCatalogService: createMonitoringCatalogService({
+      monitoredSymbolRepository: repositories.monitoredSymbolRepository
     }),
     signalCandidateService: createSignalCandidateService({
       signalCandidateRepository: repositories.signalCandidateRepository,

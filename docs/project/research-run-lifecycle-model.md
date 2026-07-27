@@ -32,6 +32,9 @@ original setup-to-aggregate sequence. `createSetupToAggregateFlowFromRepositorie
 flow's services from the existing repository contracts so an implemented-product relational
 repository bundle can enable the lifecycle without manually wiring its dependencies.
 
+The flow can also register the candidate's monitored symbol when supplied in its optional input;
+otherwise it retains the existing requirement that the candidate's symbol is already catalogued.
+
 The environment-gated real-Postgres integration suite runs this repository-composed flow and
 verifies the completed ResearchRun row and its run-scoped aggregate after persistence.
 

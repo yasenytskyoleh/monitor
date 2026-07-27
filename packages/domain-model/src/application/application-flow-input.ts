@@ -1,4 +1,5 @@
 import type { EvaluationResult } from "../evaluation/evaluation-result.js";
+import type { MonitoredSymbol } from "../monitoring/monitored-symbol.js";
 import type { FinalizeEvaluationResultRequest } from "../services/evaluation-service.js";
 import type { ResearchHypothesis } from "../research-hypothesis.js";
 import type { SetupAggregateResult } from "../research/setup-aggregate-result.js";
@@ -11,6 +12,7 @@ import type { CompleteResearchRunRequest } from "../services/research-run-servic
 export type SetupToAggregateFlowInput = {
   setupDefinition: SetupDefinition;
   researchHypothesis: ResearchHypothesis;
+  monitoredSymbol?: MonitoredSymbol;
   signalCandidate: SignalCandidate;
   evaluation: {
     pendingResult: EvaluationResult;

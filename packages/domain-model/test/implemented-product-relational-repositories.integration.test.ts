@@ -251,6 +251,7 @@ const buildApplicationFlowInput = (): SetupToAggregateFlowInput => {
   return {
     setupDefinition,
     researchHypothesis,
+    monitoredSymbol: buildMonitoredSymbol(),
     signalCandidate,
     evaluation: {
       pendingResult,
@@ -986,11 +987,6 @@ integrationTest(
   "repository-composed application flow persists a completed research run before aggregation against real Postgres",
   async () => {
     await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
-      await repositories.monitoredSymbolRepository.create({
-        symbol: buildMonitoredSymbol(),
-        metadata
-      });
-
       const flow = createSetupToAggregateFlowFromRepositories(repositories);
       const result = await flow.run(buildApplicationFlowInput());
       const storedRun = await repositories.researchRunRepository.getById(

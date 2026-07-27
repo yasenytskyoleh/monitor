@@ -2,6 +2,7 @@ export const FLOW_STEP_NAMES = [
   "setup_definition_create",
   "research_hypothesis_create",
   "research_hypothesis_link",
+  "monitored_symbol_register",
   "signal_candidate_create",
   "research_run_create",
   "research_run_start",
@@ -23,6 +24,7 @@ export type SetupToAggregateFlowResult = {
   ids: {
     setupDefinitionId?: string;
     researchHypothesisId?: string;
+    monitoredSymbolId?: string;
     signalCandidateId?: string;
     researchRunId?: string;
     evaluationResultId?: string;

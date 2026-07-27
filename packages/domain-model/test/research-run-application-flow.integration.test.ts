@@ -9,7 +9,6 @@ import {
   InMemorySetupAggregateResultRepository,
   InMemorySetupDefinitionRepository,
   InMemorySignalCandidateRepository,
-  createMonitoringCatalogService,
   createSetupToAggregateFlowFromRepositories,
   type ProductRecordMetadata,
   type SetupToAggregateFlowInput
@@ -22,6 +21,20 @@ const metadata: ProductRecordMetadata = {
   lastUpdatedBySource: "research_aggregation_pipeline",
   traceId: "trace-flow-integration-001",
   sourceObservedAtUtc: "2026-07-27T10:00:00.000Z"
+};
+
+const monitoredSymbol = {
+  symbolId: "BTC-USDT",
+  baseAsset: "BTC",
+  quoteAsset: "USDT",
+  displayName: "BTC/USDT",
+  marketScope: "spot" as const,
+  status: "active" as const,
+  providerHint: "unknown" as const,
+  tags: [],
+  sourceBindings: [],
+  createdAtUtc: "2026-07-27T09:00:00.000Z",
+  updatedAtUtc: "2026-07-27T09:00:00.000Z"
 };
 
 const input: SetupToAggregateFlowInput = {
@@ -47,6 +60,7 @@ const input: SetupToAggregateFlowInput = {
     createdAt: "2026-07-27T09:00:00.000Z",
     updatedAt: "2026-07-27T09:00:00.000Z"
   },
+  monitoredSymbol,
   signalCandidate: {
     id: "candidate-flow-integration-001",
     setupDefinitionId: "setup-flow-integration-001",
@@ -148,23 +162,6 @@ const createFlowFixture = async () => {
   const setupAggregateResultRepository = new InMemorySetupAggregateResultRepository();
   const monitoredSymbolRepository = new InMemoryMonitoredSymbolRepository();
 
-  await createMonitoringCatalogService({ monitoredSymbolRepository }).registerMonitoredSymbol({
-    symbol: {
-      symbolId: "BTC-USDT",
-      baseAsset: "BTC",
-      quoteAsset: "USDT",
-      displayName: "BTC/USDT",
-      marketScope: "spot",
-      status: "active",
-      providerHint: "unknown",
-      tags: [],
-      sourceBindings: [],
-      createdAtUtc: "2026-07-27T09:00:00.000Z",
-      updatedAtUtc: "2026-07-27T09:00:00.000Z"
-    },
-    metadata
-  });
-
   return {
     flow: createSetupToAggregateFlowFromRepositories({
       setupDefinitionRepository,
@@ -177,21 +174,41 @@ const createFlowFixture = async () => {
     }),
     researchRunRepository,
     setupAggregateResultRepository,
-    setupDefinitionRepository
+    setupDefinitionRepository,
+    monitoredSymbolRepository
   };
 };
 
 test("application flow persists a completed research run before run-scoped aggregation", async () => {
-  const { flow, researchRunRepository, setupAggregateResultRepository } = await createFlowFixture();
+  const { flow, researchRunRepository, setupAggregateResultRepository, monitoredSymbolRepository } =
+    await createFlowFixture();
 
   const result = await flow.run(structuredClone(input));
   const run = await researchRunRepository.getById("research-run-flow-integration-001");
   const aggregate = await setupAggregateResultRepository.getById("aggregate-flow-integration-001");
 
   assert.equal(result.status, "completed");
+  assert.equal(result.ids.monitoredSymbolId, "BTC-USDT");
   assert.equal(run?.status, "completed");
   assert.deepEqual(run?.evaluationResultIds, ["result-flow-integration-001"]);
   assert.equal(aggregate?.status, "completed");
+  assert.equal((await monitoredSymbolRepository.getById("BTC-USDT"))?.status, "active");
+});
+
+test("application flow rejects a monitored symbol that does not match the candidate before writes", async () => {
+  const { flow, setupDefinitionRepository } = await createFlowFixture();
+  const invalidInput = structuredClone(input);
+  invalidInput.monitoredSymbol!.symbolId = "ETH-USDT";
+
+  const result = await flow.run(invalidInput);
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.failedStep, "monitored_symbol_register");
+  assert.match(result.error ?? "", /monitoredSymbol symbolId must match/);
+  assert.equal(
+    await setupDefinitionRepository.getById("setup-flow-integration-001"),
+    null
+  );
 });
 
 test("application flow rejects a research run with a mismatched aggregate scope before writes", async () => {

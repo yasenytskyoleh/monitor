@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   type EvaluationService,
+  type MonitoringCatalogService,
   type ProductRecordMetadata,
   type ResearchAggregationService,
   type ResearchService,
@@ -124,6 +125,19 @@ const buildInput = (): SetupToAggregateFlowInput => ({
 test("happy path service sequence", async () => {
   const calls: string[] = [];
   const input = buildInput();
+  input.monitoredSymbol = {
+    symbolId: "BTC-USDT",
+    baseAsset: "BTC",
+    quoteAsset: "USDT",
+    displayName: "BTC/USDT",
+    marketScope: "spot",
+    status: "active",
+    providerHint: "unknown",
+    tags: [],
+    sourceBindings: [],
+    createdAtUtc: "2026-04-18T10:00:00.000Z",
+    updatedAtUtc: "2026-04-18T10:00:00.000Z"
+  };
   input.researchRun = {
     run: {
       runId: "research-run-flow-001",
@@ -181,6 +195,14 @@ test("happy path service sequence", async () => {
       return request.candidate;
     },
     updateSignalCandidateStatus: async () => null
+  };
+
+  const monitoringCatalogService: MonitoringCatalogService = {
+    registerMonitoredSymbol: async (request) => {
+      calls.push("monitored_symbol_register");
+      return request.symbol;
+    },
+    updateMonitoredSymbolStatus: async () => null
   };
 
   const evaluationService: EvaluationService = {
@@ -250,6 +272,7 @@ test("happy path service sequence", async () => {
   const flow = createSetupToAggregateFlow({
     setupDefinitionService,
     researchService,
+    monitoringCatalogService,
     signalCandidateService,
     evaluationService,
     researchRunService,
@@ -262,6 +285,7 @@ test("happy path service sequence", async () => {
     "setup_definition_create",
     "research_hypothesis_create",
     "research_hypothesis_link",
+    "monitored_symbol_register",
     "signal_candidate_create",
     "research_run_create",
     "research_run_start",
