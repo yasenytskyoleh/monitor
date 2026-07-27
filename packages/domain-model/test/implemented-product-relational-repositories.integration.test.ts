@@ -9,6 +9,7 @@ import { Client } from "pg";
 import {
   createImplementedProductRelationalPrismaRepositories,
   createSetupToAggregateFlowFromRepositories,
+  type EvaluationTerminalization,
   type EvaluationResult,
   type ImplementedProductRelationalPrismaRepositories,
   type MonitoredSymbol,
@@ -224,7 +225,9 @@ const buildAggregate = (
   updatedAt: "2026-05-24T10:00:00.000Z"
 });
 
-const buildApplicationFlowInput = (): SetupToAggregateFlowInput => {
+const buildApplicationFlowInput = (
+  terminalization?: EvaluationTerminalization
+): SetupToAggregateFlowInput => {
   const setupDefinition = buildSetupDefinition("setup-flow-001");
   const researchHypothesis = {
     ...buildResearchHypothesis("hypothesis-flow-001", setupDefinition.id),
@@ -248,23 +251,30 @@ const buildApplicationFlowInput = (): SetupToAggregateFlowInput => {
     evaluatedAt: null
   };
 
+  const evaluation: SetupToAggregateFlowInput["evaluation"] = terminalization
+    ? {
+        pendingResult,
+        terminalization
+      }
+    : {
+        pendingResult,
+        finalization: {
+          referencePrice: 100,
+          finalPrice: 103,
+          highInWindow: 104,
+          lowInWindow: 99,
+          maxFavorableExcursion: 4,
+          maxAdverseExcursion: -1,
+          evaluatedAt: "2026-05-24T10:00:00.000Z"
+        }
+      };
+
   return {
     setupDefinition,
     researchHypothesis,
     monitoredSymbol: buildMonitoredSymbol(),
     signalCandidate,
-    evaluation: {
-      pendingResult,
-      finalization: {
-        referencePrice: 100,
-        finalPrice: 103,
-        highInWindow: 104,
-        lowInWindow: 99,
-        maxFavorableExcursion: 4,
-        maxAdverseExcursion: -1,
-        evaluatedAt: "2026-05-24T10:00:00.000Z"
-      }
-    },
+    evaluation,
     researchRun: {
       run: {
         runId: "research-run-flow-001",
@@ -579,6 +589,41 @@ const withIntegrationRepositories = async <T>(
 };
 
 const integrationTest = INTEGRATION_DATABASE_URL ? test : test.skip;
+
+const assertTerminalApplicationFlowPersistence = async (
+  terminalization: EvaluationTerminalization,
+  expectedEvaluationStatus: "expired" | "invalidated"
+): Promise<void> => {
+  await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+    const flow = createSetupToAggregateFlowFromRepositories(repositories);
+    const result = await flow.run(buildApplicationFlowInput(terminalization));
+    const storedEvaluation =
+      await repositories.evaluationResultRepository.getBySignalCandidateAndWindow(
+        "candidate-flow-001",
+        "window-24h"
+      );
+    const storedRun = await repositories.researchRunRepository.getById(
+      "research-run-flow-001"
+    );
+    const storedAggregate = await repositories.setupAggregateResultRepository.getById(
+      "aggregate-flow-001"
+    );
+    const researchRunRow = await repositories.prismaClient.researchRunRecord.findUnique({
+      where: { researchRunId: "research-run-flow-001" }
+    });
+
+    assert.equal(result.status, "completed");
+    assert.equal(result.outcomes?.evaluationResultStatus, expectedEvaluationStatus);
+    assert.equal(result.outcomes?.researchRunStatus, "completed");
+    assert.equal(result.outcomes?.setupAggregateResultStatus, "invalid");
+    assert.equal(storedEvaluation?.status, expectedEvaluationStatus);
+    assert.equal(storedRun?.status, "completed");
+    assert.deepEqual(storedRun?.evaluationResultIds, ["result-flow-001"]);
+    assert.equal(storedAggregate?.status, "invalid");
+    assert.equal(researchRunRow?.researchRunStatus, "completed");
+    assert.deepEqual(researchRunRow?.evaluationResultIds, ["result-flow-001"]);
+  });
+};
 
 integrationTest(
   "shared implemented-product bundle persists the monitored catalog and product flow against real Postgres",
@@ -1006,6 +1051,26 @@ integrationTest(
       assert.equal(researchRunRow?.researchRunStatus, "completed");
       assert.deepEqual(researchRunRow?.evaluationResultIds, ["result-flow-001"]);
     });
+  }
+);
+
+integrationTest(
+  "repository-composed application flow persists invalidated research-run evidence against real Postgres",
+  async () => {
+    await assertTerminalApplicationFlowPersistence(
+      {
+        kind: "invalidate",
+        notes: "Invalidated through real-Postgres application flow coverage."
+      },
+      "invalidated"
+    );
+  }
+);
+
+integrationTest(
+  "repository-composed application flow persists expired research-run evidence against real Postgres",
+  async () => {
+    await assertTerminalApplicationFlowPersistence({ kind: "expire" }, "expired");
   }
 );
 

@@ -46,8 +46,9 @@ research outcome.
 The flow can also register the candidate's monitored symbol when supplied in its optional input;
 otherwise it retains the existing requirement that the candidate's symbol is already catalogued.
 
-The environment-gated real-Postgres integration suite runs this repository-composed flow and
-verifies the completed ResearchRun row and its run-scoped aggregate after persistence.
+The environment-gated real-Postgres integration suite runs this repository-composed flow for all
+terminal evaluation outcomes and verifies the completed ResearchRun row and its run-scoped
+aggregate after persistence.
 
 ## Boundaries
 
