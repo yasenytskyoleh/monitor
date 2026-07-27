@@ -6,6 +6,10 @@
   "packageManager": "pnpm@10.18.0",
   "scripts": {
     "build": "turbo run build",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs --follow postgres",
+    "infra:reset": "docker compose down --volumes",
+    "infra:up": "docker compose up --detach --wait postgres",
     "test": "turbo run test",
     "test:integration": "pnpm --filter @monitor/domain-model run test:integration",
     "typecheck": "turbo run typecheck",
