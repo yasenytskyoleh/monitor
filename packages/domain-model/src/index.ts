@@ -1047,6 +1047,11 @@ export type {
   ResearchRunRepository,
   ResearchRunUpdateRequest
 } from "./repositories/research-run-repository.js";
+export {
+  assertResearchRunContextIsUnchanged,
+  assertValidResearchRunCompletionState,
+  ResearchRunValidationError
+} from "./repositories/research-run-repository.js";
 export { InMemoryResearchRunRepository } from "./repositories/research-run-repository.impl.js";
 export type {
   ResearchRunRecordWriteRequest,

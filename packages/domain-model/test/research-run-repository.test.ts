@@ -2,10 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  InMemoryResearchRunRelationalRepositoryAdapter,
   InMemoryResearchRunRepository,
+  RelationalResearchRunRepository,
   RepositoryError,
   type ProductRecordMetadata,
-  type ResearchRun
+  type ResearchRun,
+  type ResearchRunRepository,
+  ResearchRunValidationError
 } from "../src/index.js";
 
 const metadata: ProductRecordMetadata = {
@@ -63,4 +67,63 @@ test("research-run repository enforces duplicate and optimistic updates", async 
 
   const updated = await repository.update({ run: completedRun, metadata, expectedVersion: 1 });
   assert.equal(updated.status, "completed");
+});
+
+const createRepositories = (): ResearchRunRepository[] => [
+  new InMemoryResearchRunRepository(),
+  new RelationalResearchRunRepository(new InMemoryResearchRunRelationalRepositoryAdapter())
+];
+
+test("research-run repositories reject invalid completion state", async () => {
+  for (const repository of createRepositories()) {
+    await assert.rejects(
+      () =>
+        repository.create({
+          run: { ...buildRun("completed") },
+          metadata
+        }),
+      (error: unknown) => error instanceof ResearchRunValidationError
+    );
+
+    await assert.rejects(
+      () =>
+        repository.create({
+          run: {
+            ...buildRun("running"),
+            completedAtUtc: "2026-07-27T11:00:00.000Z"
+          },
+          metadata
+        }),
+      (error: unknown) => error instanceof ResearchRunValidationError
+    );
+
+    await assert.rejects(
+      () =>
+        repository.create({
+          run: {
+            ...buildRun("completed"),
+            completedAtUtc: "2026-07-27T09:00:00.000Z"
+          },
+          metadata
+        }),
+      (error: unknown) => error instanceof ResearchRunValidationError
+    );
+  }
+});
+
+test("research-run repositories preserve immutable research context", async () => {
+  for (const repository of createRepositories()) {
+    const run = buildRun();
+    await repository.create({ run, metadata });
+
+    await assert.rejects(
+      () =>
+        repository.update({
+          run: { ...run, hypothesisId: "hypothesis-002" },
+          metadata,
+          expectedVersion: 1
+        }),
+      (error: unknown) => error instanceof ResearchRunValidationError
+    );
+  }
 });

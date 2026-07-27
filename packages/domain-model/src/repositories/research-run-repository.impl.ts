@@ -5,10 +5,12 @@ import {
   createNotFoundRepositoryError,
   createVersionMismatchRepositoryError
 } from "./repository-error.js";
-import type {
-  ResearchRunCreateRequest,
-  ResearchRunRepository,
-  ResearchRunUpdateRequest
+import {
+  assertResearchRunContextIsUnchanged,
+  assertValidResearchRunCompletionState,
+  type ResearchRunCreateRequest,
+  type ResearchRunRepository,
+  type ResearchRunUpdateRequest
 } from "./research-run-repository.js";
 
 type PersistedResearchRunRecord = {
@@ -53,6 +55,8 @@ export class InMemoryResearchRunRepository implements ResearchRunRepository {
       });
     }
 
+    assertValidResearchRunCompletionState(request.run);
+
     const run = cloneRun(request.run);
     this.recordsByRunId.set(runId, { run, version: 1, metadata: cloneMetadata(request.metadata) });
     return cloneRun(run);
@@ -68,6 +72,9 @@ export class InMemoryResearchRunRepository implements ResearchRunRepository {
         operation: "update"
       });
     }
+
+    assertValidResearchRunCompletionState(request.run);
+    assertResearchRunContextIsUnchanged(record.run, request.run);
 
     if (request.expectedVersion !== null && request.expectedVersion !== record.version) {
       throw createVersionMismatchRepositoryError({

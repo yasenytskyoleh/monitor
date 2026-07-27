@@ -1,8 +1,10 @@
 import type { ResearchRun } from "../research-run.js";
-import type {
-  ResearchRunCreateRequest,
-  ResearchRunRepository,
-  ResearchRunUpdateRequest
+import {
+  assertResearchRunContextIsUnchanged,
+  assertValidResearchRunCompletionState,
+  type ResearchRunCreateRequest,
+  type ResearchRunRepository,
+  type ResearchRunUpdateRequest
 } from "./research-run-repository.js";
 import type { ResearchRunRelationalRepositoryAdapter } from "./research-run-relational-repository-adapter.js";
 import {
@@ -30,6 +32,8 @@ export class RelationalResearchRunRepository implements ResearchRunRepository {
   }
 
   async create(request: ResearchRunCreateRequest): Promise<ResearchRun> {
+    assertValidResearchRunCompletionState(request.run);
+
     const record = await this.adapter.insertResearchRunRecord({
       record: dehydrateResearchRunToDurableRecord(request.run, request.metadata, 1),
       expectedVersion: null
@@ -42,6 +46,10 @@ export class RelationalResearchRunRepository implements ResearchRunRepository {
     if (!current) {
       throw createNotFoundRepositoryError({ entityType: "research_run", entityId: request.run.runId, operation: "update" });
     }
+    const currentRun = hydrateResearchRunFromDurableRecord(current);
+    assertValidResearchRunCompletionState(request.run);
+    assertResearchRunContextIsUnchanged(currentRun, request.run);
+
     const record = await this.adapter.updateResearchRunRecord({
       record: dehydrateResearchRunToDurableRecord(
         request.run,
