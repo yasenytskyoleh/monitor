@@ -1278,6 +1278,7 @@ export type {
   CompleteResearchRunRequest,
   CreatePlannedResearchRunRequest,
   FailResearchRunRequest,
+  RecordResearchRunEvaluationResultsRequest,
   ResearchRunService,
   ResearchRunServiceDependencies,
   StartResearchRunRequest

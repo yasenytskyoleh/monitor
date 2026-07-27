@@ -6,6 +6,7 @@ import {
   type ProductRecordMetadata,
   type ResearchAggregationService,
   type ResearchService,
+  type ResearchRunService,
   type SetupDefinitionService,
   type SetupToAggregateFlowInput,
   type SignalCandidateService,
@@ -122,6 +123,26 @@ const buildInput = (): SetupToAggregateFlowInput => ({
 
 test("happy path service sequence", async () => {
   const calls: string[] = [];
+  const input = buildInput();
+  input.researchRun = {
+    run: {
+      runId: "research-run-flow-001",
+      hypothesisId: input.researchHypothesis.id,
+      setupId: input.setupDefinition.id,
+      candidateIds: [input.signalCandidate.id],
+      evaluationWindowIds: [input.evaluation.pendingResult.evaluationWindowId],
+      evaluationResultIds: [],
+      status: "planned",
+      startedAtUtc: "2026-04-18T10:30:00.000Z",
+      createdAtUtc: "2026-04-18T10:30:00.000Z",
+      updatedAtUtc: "2026-04-18T10:30:00.000Z"
+    },
+    completion: {
+      completedAtUtc: "2026-04-18T13:00:00.000Z",
+      summary: "Application flow evaluation completed."
+    }
+  };
+  input.aggregation.pendingAggregate.aggregationScope.researchRunId = "research-run-flow-001";
 
   const setupDefinitionService: SetupDefinitionService = {
     createSetupDefinition: async (request) => {
@@ -182,6 +203,35 @@ test("happy path service sequence", async () => {
     invalidateEvaluationResult: async () => null
   };
 
+  const researchRunService: ResearchRunService = {
+    createPlannedResearchRun: async (request) => {
+      calls.push("research_run_create");
+      return request.run;
+    },
+    startResearchRun: async () => {
+      calls.push("research_run_start");
+      return { ...input.researchRun!.run, status: "running" };
+    },
+    recordResearchRunEvaluationResults: async () => {
+      calls.push("research_run_record_evidence");
+      return {
+        ...input.researchRun!.run,
+        status: "running",
+        evaluationResultIds: [input.evaluation.pendingResult.id]
+      };
+    },
+    completeResearchRun: async () => {
+      calls.push("research_run_complete");
+      return {
+        ...input.researchRun!.run,
+        status: "completed",
+        completedAtUtc: input.researchRun!.completion.completedAtUtc
+      };
+    },
+    failResearchRun: async () => null,
+    cancelResearchRun: async () => null
+  };
+
   const researchAggregationService: ResearchAggregationService = {
     createPendingSetupAggregateResult: async (request) => {
       calls.push("setup_aggregate_result_create");
@@ -202,19 +252,24 @@ test("happy path service sequence", async () => {
     researchService,
     signalCandidateService,
     evaluationService,
+    researchRunService,
     researchAggregationService
   });
 
-  const result = await flow.run(buildInput());
+  const result = await flow.run(input);
   assert.equal(result.status, "completed");
   assert.deepEqual(calls, [
     "setup_definition_create",
     "research_hypothesis_create",
     "research_hypothesis_link",
     "signal_candidate_create",
+    "research_run_create",
+    "research_run_start",
     "evaluation_result_create",
     "evaluation_result_start",
     "evaluation_result_finalize",
+    "research_run_record_evidence",
+    "research_run_complete",
     "setup_aggregate_result_create",
     "setup_aggregate_result_recompute"
   ]);

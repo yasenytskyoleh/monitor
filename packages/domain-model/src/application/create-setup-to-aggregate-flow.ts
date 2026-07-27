@@ -3,6 +3,7 @@ import type { FlowStepName, SetupToAggregateFlowResult } from "./application-flo
 import type { EvaluationService } from "../services/evaluation-service.js";
 import type { ResearchAggregationService } from "../services/research-aggregation-service.js";
 import type { ResearchService } from "../services/research-service.js";
+import type { ResearchRunService } from "../services/research-run-service.js";
 import type { SetupDefinitionService } from "../services/setup-definition-service.js";
 import type { SignalCandidateService } from "../services/signal-candidate-service.js";
 
@@ -11,6 +12,7 @@ export type SetupToAggregateFlowDependencies = {
   researchService: ResearchService;
   signalCandidateService: SignalCandidateService;
   evaluationService: EvaluationService;
+  researchRunService?: ResearchRunService;
   researchAggregationService: ResearchAggregationService;
 };
 
@@ -38,6 +40,7 @@ export const createSetupToAggregateFlow = (
     researchService,
     signalCandidateService,
     evaluationService,
+    researchRunService,
     researchAggregationService
   } = dependencies;
 
@@ -98,6 +101,45 @@ export const createSetupToAggregateFlow = (
         return failResult("signal_candidate_create", error, { ids, completedSteps, warnings });
       }
 
+      if (input.researchRun) {
+        if (!researchRunService) {
+          return failResult(
+            "research_run_create",
+            new Error("research_run_service is required when researchRun input is provided"),
+            { ids, completedSteps, warnings }
+          );
+        }
+
+        try {
+          const plannedRun = await researchRunService.createPlannedResearchRun({
+            run: input.researchRun.run,
+            metadata: input.metadata
+          });
+          ids.researchRunId = plannedRun.runId;
+          completedSteps.push("research_run_create");
+        } catch (error: unknown) {
+          return failResult("research_run_create", error, { ids, completedSteps, warnings });
+        }
+
+        try {
+          const researchRunId = ids.researchRunId;
+          if (!researchRunId) {
+            throw new Error("research_run id missing after create");
+          }
+          const startedRun = await researchRunService.startResearchRun({
+            runId: researchRunId,
+            metadata: input.metadata,
+            expectedVersion: null
+          });
+          if (!startedRun) {
+            throw new Error(`research_run start returned null for ${researchRunId}`);
+          }
+          completedSteps.push("research_run_start");
+        } catch (error: unknown) {
+          return failResult("research_run_start", error, { ids, completedSteps, warnings });
+        }
+      }
+
       try {
         const pendingEvaluationResult = await evaluationService.createPendingEvaluationResult({
           result: input.evaluation.pendingResult,
@@ -144,6 +186,55 @@ export const createSetupToAggregateFlow = (
         completedSteps.push("evaluation_result_finalize");
       } catch (error: unknown) {
         return failResult("evaluation_result_finalize", error, { ids, completedSteps, warnings });
+      }
+
+      if (input.researchRun && researchRunService) {
+        const researchRunId = ids.researchRunId;
+        if (!researchRunId) {
+          return failResult(
+            "research_run_record_evidence",
+            new Error("research_run id missing after create"),
+            { ids, completedSteps, warnings }
+          );
+        }
+
+        try {
+          const recordedRun = await researchRunService.recordResearchRunEvaluationResults({
+            runId: researchRunId,
+            evaluationResultIds: [evaluationResultId],
+            metadata: input.metadata,
+            expectedVersion: null
+          });
+          if (!recordedRun) {
+            throw new Error(`research_run evidence recording returned null for ${researchRunId}`);
+          }
+          completedSteps.push("research_run_record_evidence");
+        } catch (error: unknown) {
+          return failResult("research_run_record_evidence", error, {
+            ids,
+            completedSteps,
+            warnings
+          });
+        }
+
+        try {
+          const completedRun = await researchRunService.completeResearchRun({
+            runId: researchRunId,
+            ...input.researchRun.completion,
+            metadata: input.metadata,
+            expectedVersion: null
+          });
+          if (!completedRun) {
+            throw new Error(`research_run complete returned null for ${researchRunId}`);
+          }
+          completedSteps.push("research_run_complete");
+        } catch (error: unknown) {
+          return failResult("research_run_complete", error, {
+            ids,
+            completedSteps,
+            warnings
+          });
+        }
       }
 
       try {

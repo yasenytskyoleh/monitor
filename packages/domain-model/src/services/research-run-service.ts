@@ -26,6 +26,13 @@ export type CompleteResearchRunRequest = {
   expectedVersion: number | null;
 };
 
+export type RecordResearchRunEvaluationResultsRequest = {
+  runId: string;
+  evaluationResultIds: string[];
+  metadata: ProductRecordMetadata;
+  expectedVersion: number | null;
+};
+
 export type FailResearchRunRequest = {
   runId: string;
   summary?: string;
@@ -51,6 +58,9 @@ export type ResearchRunServiceDependencies = {
 export type ResearchRunService = {
   createPlannedResearchRun(request: CreatePlannedResearchRunRequest): Promise<ResearchRun>;
   startResearchRun(request: StartResearchRunRequest): Promise<ResearchRun | null>;
+  recordResearchRunEvaluationResults(
+    request: RecordResearchRunEvaluationResultsRequest
+  ): Promise<ResearchRun | null>;
   completeResearchRun(request: CompleteResearchRunRequest): Promise<ResearchRun | null>;
   failResearchRun(request: FailResearchRunRequest): Promise<ResearchRun | null>;
   cancelResearchRun(request: CancelResearchRunRequest): Promise<ResearchRun | null>;
@@ -188,6 +198,49 @@ const validateResearchRunEvidence = async (
   }
 };
 
+const appendUnique = (current: string[], additions: string[]): string[] =>
+  [...new Set([...current, ...additions])];
+
+const buildRecordedEvaluationContext = async (
+  run: ResearchRun,
+  evaluationResultIds: string[],
+  dependencies: Pick<
+    ResearchRunServiceDependencies,
+    "evaluationResultRepository" | "signalCandidateRepository"
+  >
+): Promise<Pick<ResearchRun, "candidateIds" | "evaluationResultIds" | "evaluationWindowIds">> => {
+  assertUniqueIdentifiers(evaluationResultIds, "evaluationResultIds");
+
+  const candidateIds: string[] = [];
+  const evaluationWindowIds: string[] = [];
+  for (const evaluationResultId of evaluationResultIds) {
+    const result = await dependencies.evaluationResultRepository.getById(evaluationResultId);
+    if (!result) {
+      throw new ResearchRunServiceValidationError(
+        `evaluation_result not found: ${evaluationResultId}`
+      );
+    }
+
+    const candidate = await dependencies.signalCandidateRepository.getById(
+      result.signalCandidateId
+    );
+    if (!candidate || candidate.setupDefinitionId !== run.setupId) {
+      throw new ResearchRunServiceValidationError(
+        `evaluation_result ${evaluationResultId} does not belong to setup_definition ${run.setupId}`
+      );
+    }
+
+    candidateIds.push(candidate.id);
+    evaluationWindowIds.push(result.evaluationWindowId);
+  }
+
+  return {
+    candidateIds: appendUnique(run.candidateIds, candidateIds),
+    evaluationWindowIds: appendUnique(run.evaluationWindowIds, evaluationWindowIds),
+    evaluationResultIds: appendUnique(run.evaluationResultIds, evaluationResultIds)
+  };
+};
+
 const updateResearchRunStatus = async (
   repository: ResearchRunRepository,
   runId: string,
@@ -234,6 +287,33 @@ export const createResearchRunService = (
         request.expectedVersion,
         { startedAtUtc: buildUpdateTimestamp(request.metadata) }
       );
+    },
+    async recordResearchRunEvaluationResults(request) {
+      const current = await researchRunRepository.getById(request.runId);
+      if (!current) {
+        return null;
+      }
+
+      if (current.status !== "planned" && current.status !== "running") {
+        throw new ResearchRunServiceValidationError(
+          `cannot record evaluation results for ${current.status} research_run`
+        );
+      }
+
+      const recordedContext = await buildRecordedEvaluationContext(
+        current,
+        request.evaluationResultIds,
+        referenceDependencies
+      );
+      return researchRunRepository.update({
+        run: {
+          ...current,
+          ...recordedContext,
+          updatedAtUtc: buildUpdateTimestamp(request.metadata)
+        },
+        metadata: request.metadata,
+        expectedVersion: request.expectedVersion
+      });
     },
     async completeResearchRun(request) {
       assertTimestamp(request.completedAtUtc, "completedAtUtc");

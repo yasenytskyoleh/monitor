@@ -186,6 +186,39 @@ test("validates research-run candidate and evaluation context", async () => {
   assert.deepEqual(created.evaluationResultIds, ["result-001"]);
 });
 
+test("records finalized evaluation context for an active research run", async () => {
+  const fixture = createFixture();
+  await seedRunContext(fixture);
+  await fixture.signalCandidateRepository.create({
+    candidate: buildCandidate("candidate-002", "setup-001"),
+    metadata
+  });
+  await fixture.evaluationResultRepository.create({
+    result: buildResult("result-002", "candidate-002"),
+    metadata
+  });
+  await fixture.service.createPlannedResearchRun({
+    run: buildRun("research-run-003b", "hypothesis-001", "setup-001"),
+    metadata
+  });
+  await fixture.service.startResearchRun({
+    runId: "research-run-003b",
+    metadata,
+    expectedVersion: null
+  });
+
+  const updated = await fixture.service.recordResearchRunEvaluationResults({
+    runId: "research-run-003b",
+    evaluationResultIds: ["result-002"],
+    metadata,
+    expectedVersion: null
+  });
+
+  assert.deepEqual(updated?.candidateIds, ["candidate-002"]);
+  assert.deepEqual(updated?.evaluationWindowIds, ["window-24h"]);
+  assert.deepEqual(updated?.evaluationResultIds, ["result-002"]);
+});
+
 test("starts and completes a research run through valid lifecycle transitions", async () => {
   const fixture = createFixture();
   await seedRunContext(fixture);

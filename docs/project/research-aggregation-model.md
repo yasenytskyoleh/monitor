@@ -102,6 +102,8 @@ Implemented service behavior:
   aggregate setup/hypothesis context
 - constrain recomputed evaluation results, candidates, and evaluation windows to the
   declared research-run context
+- the optional setup-to-aggregate application flow can complete a ResearchRun before creating
+  and recomputing an aggregate scoped to that run
 
 ## Explicitly postponed
 - aggregation execution runtime
