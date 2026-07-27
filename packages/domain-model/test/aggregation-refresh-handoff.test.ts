@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   InMemoryEvaluationResultRepository,
   InMemoryResearchHypothesisRepository,
+  InMemoryResearchRunRepository,
   InMemorySetupAggregateResultRepository,
   InMemorySetupDefinitionRepository,
   InMemorySignalCandidateRepository,
@@ -37,6 +38,7 @@ const buildSetupDefinition = (id: string): SetupDefinition => ({
 const createFixture = () => {
   const setupDefinitionRepository = new InMemorySetupDefinitionRepository();
   const researchHypothesisRepository = new InMemoryResearchHypothesisRepository();
+  const researchRunRepository = new InMemoryResearchRunRepository();
   const evaluationResultRepository = new InMemoryEvaluationResultRepository();
   const signalCandidateRepository = new InMemorySignalCandidateRepository();
   const setupAggregateResultRepository = new InMemorySetupAggregateResultRepository();
@@ -45,6 +47,7 @@ const createFixture = () => {
     setupAggregateResultRepository,
     setupDefinitionRepository,
     researchHypothesisRepository,
+    researchRunRepository,
     evaluationResultRepository,
     signalCandidateRepository
   });

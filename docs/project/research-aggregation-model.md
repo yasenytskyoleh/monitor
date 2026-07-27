@@ -98,6 +98,10 @@ Implemented service behavior:
 - enforce aggregate lifecycle transitions (`pending`, `completed`, `partial`, `invalid`)
 - reject duplicate aggregate creation for the same `(setupDefinitionId, aggregationScope)`
 - validate optional hypothesis linkage
+- when `aggregationScope.researchRunId` is set, require the run to exist and match the
+  aggregate setup/hypothesis context
+- constrain recomputed evaluation results, candidates, and evaluation windows to the
+  declared research-run context
 
 ## Explicitly postponed
 - aggregation execution runtime
