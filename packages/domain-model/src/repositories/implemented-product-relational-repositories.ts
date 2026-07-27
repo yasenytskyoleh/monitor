@@ -6,6 +6,13 @@ import {
   type FirstDurableRelationalRepositories
 } from "./first-durable-relational-repositories.js";
 import type {
+  MonitoredSymbolRelationalRepositoryAdapter
+} from "./monitored-symbol-relational-repository-adapter.js";
+import {
+  composeMonitoredSymbolRelationalRepositories,
+  type MonitoredSymbolRelationalRepositories
+} from "./monitored-symbol-relational-repositories.js";
+import type {
   ResearchDecisionApprovalRelationalRepositoryAdapter
 } from "./research-decision-approval-relational-repository-adapter.js";
 import {
@@ -85,6 +92,7 @@ import {
 
 export type ImplementedProductRelationalAdapters = {
   firstDurableAdapter: FirstDurableRelationalRepositoryAdapter;
+  monitoredSymbolAdapter: MonitoredSymbolRelationalRepositoryAdapter;
   signalEvaluationAdapter: SignalEvaluationRelationalRepositoryAdapter;
   setupAggregateAdapter: SetupAggregateRelationalRepositoryAdapter;
   feedbackDecisionAdapter: ResearchFeedbackDecisionRelationalRepositoryAdapter;
@@ -101,6 +109,7 @@ export type ImplementedProductRelationalAdapters = {
 
 export type ImplementedProductRelationalRepositories =
   FirstDurableRelationalRepositories &
+  MonitoredSymbolRelationalRepositories &
   SignalEvaluationRelationalRepositories &
   SetupAggregateRelationalRepositories &
   ResearchFeedbackDecisionRelationalRepositories &
@@ -117,6 +126,7 @@ export const composeImplementedProductRelationalRepositories = (
   adapters: ImplementedProductRelationalAdapters
 ): ImplementedProductRelationalRepositories => ({
   ...composeFirstDurableRelationalRepositories(adapters.firstDurableAdapter),
+  ...composeMonitoredSymbolRelationalRepositories(adapters.monitoredSymbolAdapter),
   ...composeSignalEvaluationRelationalRepositories(adapters.signalEvaluationAdapter),
   ...composeSetupAggregateRelationalRepositories(adapters.setupAggregateAdapter),
   ...composeResearchFeedbackDecisionRelationalRepositories(adapters.feedbackDecisionAdapter),

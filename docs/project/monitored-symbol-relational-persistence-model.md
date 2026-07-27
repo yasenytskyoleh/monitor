@@ -7,6 +7,14 @@ Define the durable relational contract for `MonitoredSymbol`, the catalog entity
 - `packages/domain-model/src/monitoring/monitored-symbol.ts`
 - `packages/domain-model/src/repositories/monitored-symbol-repository.ts`
 - `packages/domain-model/src/repositories/monitored-symbol-repository.impl.ts`
+- `packages/domain-model/src/repositories/monitored-symbol-relational-repository-adapter.ts`
+- `packages/domain-model/src/repositories/monitored-symbol-relational-repository-mappers.ts`
+- `packages/domain-model/src/repositories/monitored-symbol-relational-repository.impl.ts`
+- `packages/domain-model/src/repositories/monitored-symbol-relational-repository-adapter.impl.ts`
+- `packages/domain-model/src/repositories/monitored-symbol-relational-prisma-adapter.ts`
+- `packages/domain-model/src/repositories/monitored-symbol-relational-prisma-client.ts`
+- `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
+- `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
 - `packages/domain-model/src/services/monitoring-catalog-service.ts`
 - `packages/domain-model/src/storage/monitored-symbol-relational-slice.ts`
 - `packages/domain-model/src/storage/monitored-symbol-relational-physical-schema.ts`
@@ -14,7 +22,14 @@ Define the durable relational contract for `MonitoredSymbol`, the catalog entity
 - `packages/domain-model/prisma/migrations/20260724103000_product_domain_monitored_symbol_relational_v1/migration.sql`
 - `packages/domain-model/test/monitoring-catalog-persistence.test.ts`
 - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
+- `packages/domain-model/test/monitored-symbol-relational-repository-adapter-contracts.test.ts`
+- `packages/domain-model/test/monitored-symbol-relational-repository-mappers.test.ts`
+- `packages/domain-model/test/monitored-symbol-relational-repositories.test.ts`
+- `packages/domain-model/test/monitored-symbol-relational-prisma-adapter.test.ts`
+- `packages/domain-model/test/prisma-client-wiring.test.ts`
+- `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
 - `docs/architecture/adr/ADR-087-monitored-symbol-durable-relational-contract.md`
+- `docs/architecture/adr/ADR-089-monitored-symbol-relational-adapter-contract.md`
 
 ## Durable record shape
 `MonitoredSymbolDurableRecord` keeps:
@@ -42,5 +57,12 @@ Define the durable relational contract for `MonitoredSymbol`, the catalog entity
 - checks enforce non-empty identity/catalog text, source-binding array shape, positive versions, timestamp order, and lifecycle/status archive consistency
 - signal candidates remain unchanged in this step; their existing `monitored_symbol_id` is not converted into a foreign key here
 
-## What remains pending
-- relational adapter, mapper, repository, shared-composition, and integration rollout
+## Implementation status
+- the Prisma adapter maps durable records to `MonitoredSymbolRecord`, supports status reads and optimistic updates, and maps duplicate, missing, stale, and retryable persistence failures to repository errors
+- standalone Prisma composition exposes the catalog repository with client lifecycle ownership
+- the shared implemented-product Prisma composition includes the catalog repository for signal-candidate workflows
+- the shared real-Postgres integration scenario seeds and verifies the catalog, including the monitored-symbol migration in its schema reset
+
+## Operational follow-up
+- run the environment-gated real-Postgres integration suite before deployment
+- apply the monitored-symbol migration through the production migration workflow before enabling durable catalog writes

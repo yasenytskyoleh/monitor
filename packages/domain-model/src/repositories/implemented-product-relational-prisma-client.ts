@@ -10,6 +10,8 @@ import {
   createPrismaFeedbackDecisionApprovalReviewPersistence
 } from "./feedback-decision-approval-review-persistence.prisma.js";
 import { PrismaFirstDurableRelationalRepositoryAdapter } from "./first-durable-relational-prisma-adapter.js";
+import { createMonitoredSymbolRelationalPrismaRepositoryAdapter } from "./monitored-symbol-relational-prisma-client.js";
+import { type PrismaMonitoredSymbolRelationalRepositoryAdapter } from "./monitored-symbol-relational-prisma-adapter.js";
 import {
   composeImplementedProductRelationalRepositories,
   type ImplementedProductRelationalAdapters,
@@ -40,6 +42,7 @@ import { type PrismaSignalEvaluationRelationalRepositoryAdapter } from "./signal
 
 export type ImplementedProductRelationalPrismaAdapters = ImplementedProductRelationalAdapters & {
   firstDurableAdapter: PrismaFirstDurableRelationalRepositoryAdapter;
+  monitoredSymbolAdapter: PrismaMonitoredSymbolRelationalRepositoryAdapter;
   signalEvaluationAdapter: PrismaSignalEvaluationRelationalRepositoryAdapter;
   setupAggregateAdapter: PrismaSetupAggregateRelationalRepositoryAdapter;
   feedbackDecisionAdapter: PrismaResearchFeedbackDecisionRelationalRepositoryAdapter;
@@ -70,6 +73,7 @@ export const createImplementedProductRelationalPrismaAdapters = (
   client: FirstDurableRelationalRuntimePrismaClient
 ): ImplementedProductRelationalPrismaAdapters => ({
   firstDurableAdapter: new PrismaFirstDurableRelationalRepositoryAdapter(client),
+  monitoredSymbolAdapter: createMonitoredSymbolRelationalPrismaRepositoryAdapter(client),
   signalEvaluationAdapter: createSignalEvaluationRelationalPrismaRepositoryAdapter(client),
   setupAggregateAdapter: createSetupAggregateRelationalPrismaRepositoryAdapter(client),
   feedbackDecisionAdapter: createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter(client),

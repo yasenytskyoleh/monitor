@@ -1,20 +1,18 @@
 # Next Steps
 
 ## Current recommended next step
-### Define the monitored-symbol relational adapter contract
+### Run the monitored-symbol real-Postgres integration rollout
 
 Reason:
-- `monitored_symbol` is the remaining first-class product-persisted entity without durable relational parity
-- it now has implemented in-memory persistence and a concrete monitoring-catalog service write path
-- it now has a durable relational contract for catalog identity, status, tags, and source bindings
-- it now has a committed Prisma model, SQL migration, catalog-status indexes, and lifecycle constraints
-- it is referenced by durable signal candidates, so schema work must preserve its catalog identity without changing signal-candidate semantics
-- `routed_action_execution_result` remains explicitly product-ephemeral and is not a substitute persistence slice
+- `monitored_symbol` now has relational mappers, a repository adapter, a Prisma adapter, and shared Prisma composition coverage
+- the shared integration test seeds the catalog and verifies its durable row alongside the product workflow
+- the real-Postgres test remains environment-gated and should run against the deployment target before durable catalog writes are enabled
+- the monitored-symbol migration must be applied through the production migration workflow
 
 ## Recommended near-future sequence
-1. define the `monitored_symbol` relational adapter contract
-2. implement its mapper, repository, and Prisma adapter
-3. continue shared-composition and integration rollout
+1. run `pnpm --filter @monitor/domain-model test:integration` with `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL` configured
+2. apply `20260724103000_product_domain_monitored_symbol_relational_v1` through the deployment migration workflow
+3. enable durable monitoring-catalog writes in the target runtime composition
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

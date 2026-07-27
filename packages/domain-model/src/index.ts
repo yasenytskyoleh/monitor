@@ -710,6 +710,23 @@ export {
   hydrateSignalCandidateFromDurableRecord
 } from "./repositories/signal-evaluation-relational-repository-mappers.js";
 export {
+  dehydrateMonitoredSymbolToDurableRecord,
+  hydrateMonitoredSymbolFromDurableRecord
+} from "./repositories/monitored-symbol-relational-repository-mappers.js";
+export { InMemoryMonitoredSymbolRelationalRepositoryAdapter } from "./repositories/monitored-symbol-relational-repository-adapter.impl.js";
+export { RelationalMonitoredSymbolRepository } from "./repositories/monitored-symbol-relational-repository.impl.js";
+export { composeMonitoredSymbolRelationalRepositories } from "./repositories/monitored-symbol-relational-repositories.js";
+export type { MonitoredSymbolRelationalRepositories } from "./repositories/monitored-symbol-relational-repositories.js";
+export { PrismaMonitoredSymbolRelationalRepositoryAdapter } from "./repositories/monitored-symbol-relational-prisma-adapter.js";
+export type { MonitoredSymbolRelationalPrismaClient } from "./repositories/monitored-symbol-relational-prisma-adapter.js";
+export {
+  createMonitoredSymbolRelationalPrismaRepositories,
+  createMonitoredSymbolRelationalPrismaRepositoryAdapter
+} from "./repositories/monitored-symbol-relational-prisma-client.js";
+export type {
+  MonitoredSymbolRelationalPrismaRepositories
+} from "./repositories/monitored-symbol-relational-prisma-client.js";
+export {
   dehydrateSetupAggregateResultToDurableRecord,
   hydrateSetupAggregateResultFromDurableRecord
 } from "./repositories/setup-aggregate-relational-repository-mappers.js";
@@ -999,6 +1016,21 @@ export type {
   MonitoredSymbolUpdateRequest
 } from "./repositories/monitored-symbol-repository.js";
 export { InMemoryMonitoredSymbolRepository } from "./repositories/monitored-symbol-repository.impl.js";
+export {
+  MONITORED_SYMBOL_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  MONITORED_SYMBOL_RELATIONAL_ADAPTER_OPERATIONS,
+  MONITORED_SYMBOL_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  MONITORED_SYMBOL_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isMonitoredSymbolRelationalDeterministicErrorCode
+} from "./repositories/monitored-symbol-relational-repository-adapter.js";
+export type {
+  MonitoredSymbolRecordWriteRequest,
+  MonitoredSymbolRelationalAdapterErrorMapping,
+  MonitoredSymbolRelationalAdapterOperation,
+  MonitoredSymbolRelationalDeterministicErrorCode,
+  MonitoredSymbolRelationalRepositoryAdapter,
+  MonitoredSymbolRelationalRetryableErrorCode
+} from "./repositories/monitored-symbol-relational-repository-adapter.js";
 export type {
   ResearchHypothesisCreateRequest,
   ResearchHypothesisRepository,

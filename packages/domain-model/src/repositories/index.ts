@@ -304,6 +304,23 @@ export {
   hydrateSignalCandidateFromDurableRecord
 } from "./signal-evaluation-relational-repository-mappers.js";
 export {
+  dehydrateMonitoredSymbolToDurableRecord,
+  hydrateMonitoredSymbolFromDurableRecord
+} from "./monitored-symbol-relational-repository-mappers.js";
+export { InMemoryMonitoredSymbolRelationalRepositoryAdapter } from "./monitored-symbol-relational-repository-adapter.impl.js";
+export { RelationalMonitoredSymbolRepository } from "./monitored-symbol-relational-repository.impl.js";
+export { composeMonitoredSymbolRelationalRepositories } from "./monitored-symbol-relational-repositories.js";
+export type { MonitoredSymbolRelationalRepositories } from "./monitored-symbol-relational-repositories.js";
+export { PrismaMonitoredSymbolRelationalRepositoryAdapter } from "./monitored-symbol-relational-prisma-adapter.js";
+export type { MonitoredSymbolRelationalPrismaClient } from "./monitored-symbol-relational-prisma-adapter.js";
+export {
+  createMonitoredSymbolRelationalPrismaRepositories,
+  createMonitoredSymbolRelationalPrismaRepositoryAdapter
+} from "./monitored-symbol-relational-prisma-client.js";
+export type {
+  MonitoredSymbolRelationalPrismaRepositories
+} from "./monitored-symbol-relational-prisma-client.js";
+export {
   dehydrateSetupAggregateResultToDurableRecord,
   hydrateSetupAggregateResultFromDurableRecord
 } from "./setup-aggregate-relational-repository-mappers.js";
@@ -585,6 +602,21 @@ export type {
   MonitoredSymbolUpdateRequest
 } from "./monitored-symbol-repository.js";
 export { InMemoryMonitoredSymbolRepository } from "./monitored-symbol-repository.impl.js";
+export {
+  MONITORED_SYMBOL_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  MONITORED_SYMBOL_RELATIONAL_ADAPTER_OPERATIONS,
+  MONITORED_SYMBOL_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  MONITORED_SYMBOL_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isMonitoredSymbolRelationalDeterministicErrorCode
+} from "./monitored-symbol-relational-repository-adapter.js";
+export type {
+  MonitoredSymbolRecordWriteRequest,
+  MonitoredSymbolRelationalAdapterErrorMapping,
+  MonitoredSymbolRelationalAdapterOperation,
+  MonitoredSymbolRelationalDeterministicErrorCode,
+  MonitoredSymbolRelationalRepositoryAdapter,
+  MonitoredSymbolRelationalRetryableErrorCode
+} from "./monitored-symbol-relational-repository-adapter.js";
 export type {
   SetupDefinitionCreateRequest,
   SetupDefinitionRepository,
