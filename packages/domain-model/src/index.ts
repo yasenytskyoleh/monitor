@@ -1274,6 +1274,19 @@ export {
   createEvaluationService
 } from "./services/evaluation-service.js";
 export type {
+  CancelResearchRunRequest,
+  CompleteResearchRunRequest,
+  CreatePlannedResearchRunRequest,
+  FailResearchRunRequest,
+  ResearchRunService,
+  ResearchRunServiceDependencies,
+  StartResearchRunRequest
+} from "./services/research-run-service.js";
+export {
+  ResearchRunServiceValidationError,
+  createResearchRunService
+} from "./services/research-run-service.js";
+export type {
   ApproveFeedbackDecisionRequest,
   AttachHypothesisToSetupDefinitionsRequest,
   CreateRefinementRequest,

@@ -98,3 +98,7 @@ Reference implementation contracts for this document:
 - `packages/domain-model/src/research/*`
 - `packages/domain-model/src/research-hypothesis.ts`
 - `packages/domain-model/src/research-run.ts`
+
+Lifecycle writes are owned by `ResearchRunService`
+(`packages/domain-model/src/services/research-run-service.ts`). It validates research context
+and controls planned, running, and terminal transitions without taking on runtime scheduling.
