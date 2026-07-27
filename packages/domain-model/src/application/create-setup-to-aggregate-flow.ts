@@ -252,19 +252,50 @@ export const createSetupToAggregateFlow = (
         return failResult("evaluation_result_start", error, { ids, completedSteps, warnings });
       }
 
-      try {
-        const finalizedEvaluationResult = await evaluationService.finalizeEvaluationResult({
-          evaluationResultId: evaluationResultId,
-          ...input.evaluation.finalization,
-          metadata: input.metadata,
-          expectedVersion: null
-        });
-        if (!finalizedEvaluationResult) {
-          throw new Error(`evaluation_result finalize returned null for ${evaluationResultId}`);
+      if (input.evaluation.finalization !== undefined) {
+        try {
+          const finalizedEvaluationResult = await evaluationService.finalizeEvaluationResult({
+            evaluationResultId: evaluationResultId,
+            ...input.evaluation.finalization,
+            metadata: input.metadata,
+            expectedVersion: null
+          });
+          if (!finalizedEvaluationResult) {
+            throw new Error(`evaluation_result finalize returned null for ${evaluationResultId}`);
+          }
+          completedSteps.push("evaluation_result_finalize");
+        } catch (error: unknown) {
+          return failResult("evaluation_result_finalize", error, { ids, completedSteps, warnings });
         }
-        completedSteps.push("evaluation_result_finalize");
-      } catch (error: unknown) {
-        return failResult("evaluation_result_finalize", error, { ids, completedSteps, warnings });
+      } else if (input.evaluation.terminalization.kind === "expire") {
+        try {
+          const expiredEvaluationResult = await evaluationService.expireEvaluationResult({
+            evaluationResultId,
+            metadata: input.metadata,
+            expectedVersion: null
+          });
+          if (!expiredEvaluationResult) {
+            throw new Error(`evaluation_result expire returned null for ${evaluationResultId}`);
+          }
+          completedSteps.push("evaluation_result_expire");
+        } catch (error: unknown) {
+          return failResult("evaluation_result_expire", error, { ids, completedSteps, warnings });
+        }
+      } else {
+        try {
+          const invalidatedEvaluationResult = await evaluationService.invalidateEvaluationResult({
+            evaluationResultId,
+            notes: input.evaluation.terminalization.notes,
+            metadata: input.metadata,
+            expectedVersion: null
+          });
+          if (!invalidatedEvaluationResult) {
+            throw new Error(`evaluation_result invalidate returned null for ${evaluationResultId}`);
+          }
+          completedSteps.push("evaluation_result_invalidate");
+        } catch (error: unknown) {
+          return failResult("evaluation_result_invalidate", error, { ids, completedSteps, warnings });
+        }
       }
 
       if (input.researchRun && researchRunService) {

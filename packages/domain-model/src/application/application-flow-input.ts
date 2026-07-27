@@ -9,18 +9,34 @@ import type { ProductRecordMetadata } from "../storage/product-record-metadata.j
 import type { ResearchRun } from "../research-run.js";
 import type { CompleteResearchRunRequest } from "../services/research-run-service.js";
 
+export type EvaluationTerminalization =
+  | { kind: "expire" }
+  | {
+      kind: "invalidate";
+      notes?: string;
+    };
+
+export type SetupToAggregateFlowEvaluation =
+  | {
+      pendingResult: EvaluationResult;
+      finalization: Omit<
+        FinalizeEvaluationResultRequest,
+        "evaluationResultId" | "metadata" | "expectedVersion"
+      >;
+      terminalization?: never;
+    }
+  | {
+      pendingResult: EvaluationResult;
+      finalization?: never;
+      terminalization: EvaluationTerminalization;
+    };
+
 export type SetupToAggregateFlowInput = {
   setupDefinition: SetupDefinition;
   researchHypothesis: ResearchHypothesis;
   monitoredSymbol?: MonitoredSymbol;
   signalCandidate: SignalCandidate;
-  evaluation: {
-    pendingResult: EvaluationResult;
-    finalization: Omit<
-      FinalizeEvaluationResultRequest,
-      "evaluationResultId" | "metadata" | "expectedVersion"
-    >;
-  };
+  evaluation: SetupToAggregateFlowEvaluation;
   researchRun?: {
     run: ResearchRun;
     completion: Omit<

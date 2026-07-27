@@ -1328,7 +1328,9 @@ export {
 export type {
   FlowStatus,
   FlowStepName,
+  EvaluationTerminalization,
   SetupToAggregateFlowDependencies,
+  SetupToAggregateFlowEvaluation,
   SetupToAggregateFlowInput,
   SetupToAggregateFlowRepositories,
   SetupToAggregateFlowResult

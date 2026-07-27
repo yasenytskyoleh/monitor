@@ -1,4 +1,8 @@
-export type { SetupToAggregateFlowInput } from "./application-flow-input.js";
+export type {
+  EvaluationTerminalization,
+  SetupToAggregateFlowEvaluation,
+  SetupToAggregateFlowInput
+} from "./application-flow-input.js";
 export {
   FLOW_STATUSES,
   FLOW_STEP_NAMES

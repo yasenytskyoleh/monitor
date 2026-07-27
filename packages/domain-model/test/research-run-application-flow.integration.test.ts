@@ -175,7 +175,8 @@ const createFlowFixture = async () => {
     researchRunRepository,
     setupAggregateResultRepository,
     setupDefinitionRepository,
-    monitoredSymbolRepository
+    monitoredSymbolRepository,
+    evaluationResultRepository
   };
 };
 
@@ -209,6 +210,55 @@ test("application flow rejects a monitored symbol that does not match the candid
     await setupDefinitionRepository.getById("setup-flow-integration-001"),
     null
   );
+});
+
+test("application flow records an invalidated evaluation as terminal research-run evidence", async () => {
+  const { flow, evaluationResultRepository, researchRunRepository, setupAggregateResultRepository } =
+    await createFlowFixture();
+  const invalidatedInput = structuredClone(input);
+  invalidatedInput.evaluation = {
+    pendingResult: invalidatedInput.evaluation.pendingResult,
+    terminalization: {
+      kind: "invalidate",
+      notes: "Candidate invalidated before outcome evaluation."
+    }
+  };
+
+  const result = await flow.run(invalidatedInput);
+  const evaluationResult = await evaluationResultRepository.getById(
+    "result-flow-integration-001"
+  );
+  const researchRun = await researchRunRepository.getById("research-run-flow-integration-001");
+  const aggregate = await setupAggregateResultRepository.getById("aggregate-flow-integration-001");
+
+  assert.equal(result.status, "completed");
+  assert.ok(result.completedSteps.includes("evaluation_result_invalidate"));
+  assert.equal(evaluationResult?.status, "invalidated");
+  assert.deepEqual(researchRun?.evaluationResultIds, ["result-flow-integration-001"]);
+  assert.equal(aggregate?.status, "invalid");
+});
+
+test("application flow records an expired evaluation as terminal research-run evidence", async () => {
+  const { flow, evaluationResultRepository, researchRunRepository, setupAggregateResultRepository } =
+    await createFlowFixture();
+  const expiredInput = structuredClone(input);
+  expiredInput.evaluation = {
+    pendingResult: expiredInput.evaluation.pendingResult,
+    terminalization: { kind: "expire" }
+  };
+
+  const result = await flow.run(expiredInput);
+  const evaluationResult = await evaluationResultRepository.getById(
+    "result-flow-integration-001"
+  );
+  const researchRun = await researchRunRepository.getById("research-run-flow-integration-001");
+  const aggregate = await setupAggregateResultRepository.getById("aggregate-flow-integration-001");
+
+  assert.equal(result.status, "completed");
+  assert.ok(result.completedSteps.includes("evaluation_result_expire"));
+  assert.equal(evaluationResult?.status, "expired");
+  assert.deepEqual(researchRun?.evaluationResultIds, ["result-flow-integration-001"]);
+  assert.equal(aggregate?.status, "invalid");
 });
 
 test("application flow rejects a research run with a mismatched aggregate scope before writes", async () => {

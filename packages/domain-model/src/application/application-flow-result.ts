@@ -9,6 +9,8 @@ export const FLOW_STEP_NAMES = [
   "evaluation_result_create",
   "evaluation_result_start",
   "evaluation_result_finalize",
+  "evaluation_result_expire",
+  "evaluation_result_invalidate",
   "research_run_record_evidence",
   "research_run_complete",
   "setup_aggregate_result_create",
