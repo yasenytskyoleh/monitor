@@ -10,6 +10,7 @@ import {
   createImplementedProductRelationalPrismaRepositories,
   type EvaluationResult,
   type ImplementedProductRelationalPrismaRepositories,
+  type MonitoredSymbol,
   type ProductRecordMetadata,
   RepositoryError,
   type ResearchDecisionApproval,
@@ -81,6 +82,10 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260711103000_product_domain_setup_revision_activation_record_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260724103000_product_domain_monitored_symbol_relational_v1/migration.sql"
   )
 ];
 
@@ -127,6 +132,20 @@ const buildSignalCandidate = (id: string, setupDefinitionId: string): SignalCand
   evidenceSummary: "Breakout retest candidate",
   createdAt: "2026-05-23T09:30:00.000Z",
   updatedAt: "2026-05-23T09:30:00.000Z"
+});
+
+const buildMonitoredSymbol = (): MonitoredSymbol => ({
+  symbolId: "BTC-USDT",
+  baseAsset: "BTC",
+  quoteAsset: "USDT",
+  displayName: "BTC/USDT",
+  marketScope: "spot",
+  status: "active",
+  providerHint: "unknown",
+  tags: ["primary"],
+  sourceBindings: [],
+  createdAtUtc: "2026-05-23T09:00:00.000Z",
+  updatedAtUtc: "2026-05-23T09:00:00.000Z"
 });
 
 const buildEvaluationResult = (id: string, signalCandidateId: string): EvaluationResult => ({
@@ -444,7 +463,7 @@ const withIntegrationRepositories = async <T>(
 const integrationTest = INTEGRATION_DATABASE_URL ? test : test.skip;
 
 integrationTest(
-  "shared implemented-product bundle persists setup -> candidate -> evaluation -> aggregate -> feedback decision -> approval -> review decision -> routing result -> routed action execution envelope -> setup lifecycle mutation record -> setup refinement request -> setup definition revision -> setup revision activation record against real Postgres",
+  "shared implemented-product bundle persists the monitored catalog and product flow against real Postgres",
   async () => {
     await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
       await repositories.setupDefinitionRepository.create({
@@ -453,6 +472,10 @@ integrationTest(
       });
       await repositories.researchHypothesisRepository.create({
         hypothesis: buildResearchHypothesis("hypothesis-001", "setup-001"),
+        metadata
+      });
+      await repositories.monitoredSymbolRepository.create({
+        symbol: buildMonitoredSymbol(),
         metadata
       });
       await repositories.signalCandidateRepository.create({
@@ -618,6 +641,9 @@ integrationTest(
         }
       });
 
+      const storedMonitoredSymbol = await repositories.monitoredSymbolRepository.getById(
+        "BTC-USDT"
+      );
       const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
       const storedEvaluation =
         await repositories.evaluationResultRepository.getBySignalCandidateAndWindow(
@@ -710,7 +736,12 @@ integrationTest(
           where: { setupFamilyId: "setup-family-002" },
           orderBy: { activatedAtUtc: "asc" }
         });
+      const monitoredSymbolRows = await repositories.prismaClient.monitoredSymbolRecord.findMany({
+        where: { symbolStatus: "active" },
+        orderBy: { monitoredSymbolId: "asc" }
+      });
 
+      assert.equal(storedMonitoredSymbol?.displayName, "BTC/USDT");
       assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
       assert.equal(storedEvaluation?.id, "result-001");
       assert.equal(storedAggregate?.status, "completed");
@@ -764,6 +795,8 @@ integrationTest(
       assert.equal(activationsForFamily.length, 1);
       assert.equal(activationsForFamily[0]?.id, "activation-001");
       assert.equal(activationsForTarget.length, 1);
+      assert.equal(monitoredSymbolRows.length, 1);
+      assert.equal(monitoredSymbolRows[0]?.baseAsset, "BTC");
       assert.equal(activationsForTarget[0]?.setupFamilyId, "setup-family-002");
       assert.equal(aggregateRows.length, 2);
       assert.equal(aggregateRows[0]?.completedEvaluations, 1);
