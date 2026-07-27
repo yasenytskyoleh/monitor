@@ -10,7 +10,7 @@ The downstream execution runtime creates and terminalizes attempts. The domain-m
 layer retains a sanitized audit record. This entity does not execute a command, schedule retries,
 or replace runtime evidence.
 
-## Proposed v1 contract
+## v1 contract
 
 `ExecutionAttemptAudit` has:
 
@@ -19,9 +19,15 @@ or replace runtime evidence.
   `researchReviewDecisionId` for correlation when source context exists
 - `actionTarget` and `downstreamCommandType` snapshots
 - status lifecycle: `received` → `executed` | `rejected` | `failed`
-- `attemptedAt`, optional `completedAt`, actor/source identifiers, and product metadata
+- `attemptedAt`, optional `completedAt`, and `attemptedBy`; product metadata is added by the
+  persistence layer
 - sanitized `outcomeCode`, optional `outcomeSummary`, and warning identifiers
 - optimistic versioning and append-only terminal evidence semantics
+
+The domain contract is exported from
+`packages/domain-model/src/execution/execution-attempt-audit.ts`. Product record metadata,
+optimistic versioning, and append-only persistence semantics are introduced with the repository
+and durable-record layers; they do not belong to the runtime-facing value shape.
 
 ## Evidence and retention
 

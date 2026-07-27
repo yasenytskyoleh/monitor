@@ -193,6 +193,7 @@ export type {
   SetupRefinementStatus
 } from "./review/index.js";
 export {
+  EXECUTION_ATTEMPT_AUDIT_STATUSES,
   ROUTED_ACTION_EXECUTION_RESULT_STATUSES,
   ROUTED_ACTION_EXECUTION_STATUSES,
   createDownstreamActionExecutionPreparationService
@@ -203,6 +204,8 @@ export type {
   BuildRoutedActionExecutionEnvelopeRequest,
   DownstreamActionExecutionPreparationService,
   DownstreamActionExecutionPreparationServiceDependencies,
+  ExecutionAttemptAudit,
+  ExecutionAttemptAuditStatus,
   RouteMetadataSnapshot,
   RoutedActionExecutionEnvelope,
   RoutedActionExecutionPayloadSnapshot,

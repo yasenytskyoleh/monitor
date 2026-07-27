@@ -68,8 +68,9 @@ Committed Prisma schema/migrations, repository adapter contracts, adapter-backed
 The one shared Prisma-backed composition and opt-in real-database integration path span the full implemented product chain through `SetupRevisionActivationRecord`, including `ReviewDecisionRoutingResult`.
 
 Durable relational persistence still pending:
-- `ExecutionAttemptAudit` is selected for the next durable entity; `RoutedActionExecutionResult`
-  remains explicitly ephemeral
+- `ExecutionAttemptAudit` defines the retained execution-attempt contract; its repository and
+  durable persistence are introduced separately. `RoutedActionExecutionResult` remains explicitly
+  ephemeral
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI
@@ -93,7 +94,7 @@ Durable relational persistence still pending:
 - `ResearchReviewDecision`
 - `ReviewDecisionRoutingResult`
 - `RoutedActionExecutionEnvelope`
-- planned `ExecutionAttemptAudit`
+- `ExecutionAttemptAudit`
 - `SetupLifecycleMutationRecord`
 - `SetupRefinementRequest`
 - `SetupDefinitionRevision`
