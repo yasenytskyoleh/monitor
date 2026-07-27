@@ -747,6 +747,19 @@ export {
   InMemoryExecutionAttemptAuditRelationalRepositoryAdapter
 } from "./execution-attempt-audit-relational-repository-adapter.impl.js";
 export {
+  PrismaExecutionAttemptAuditRelationalRepositoryAdapter
+} from "./execution-attempt-audit-relational-prisma-adapter.js";
+export type {
+  ExecutionAttemptAuditRelationalPrismaClient
+} from "./execution-attempt-audit-relational-prisma-adapter.js";
+export {
+  createExecutionAttemptAuditRelationalPrismaRepositories,
+  createExecutionAttemptAuditRelationalPrismaRepositoryAdapter
+} from "./execution-attempt-audit-relational-prisma-client.js";
+export type {
+  ExecutionAttemptAuditRelationalPrismaRepositories
+} from "./execution-attempt-audit-relational-prisma-client.js";
+export {
   dehydrateExecutionAttemptAuditToDurableRecord,
   hydrateExecutionAttemptAuditFromDurableRecord
 } from "./execution-attempt-audit-relational-repository-mappers.js";
