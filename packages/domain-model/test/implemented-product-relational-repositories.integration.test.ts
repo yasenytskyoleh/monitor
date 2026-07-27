@@ -10,6 +10,7 @@ import {
   createImplementedProductRelationalPrismaRepositories,
   createSetupToAggregateFlowFromRepositories,
   type EvaluationTerminalization,
+  type ExecutionAttemptAudit,
   type EvaluationResult,
   type ImplementedProductRelationalPrismaRepositories,
   type MonitoredSymbol,
@@ -94,6 +95,10 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260727103000_product_domain_research_run_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260727130000_product_domain_execution_attempt_audit_relational_v1/migration.sql"
   )
 ];
 
@@ -1381,6 +1386,53 @@ integrationTest(
           error.entityType === "setup_refinement_request" &&
           error.referenceEntityType === "research_decision_approval" &&
           error.referenceEntityId === "approval-001"
+      );
+    });
+  }
+);
+
+integrationTest(
+  "shared implemented-product bundle persists terminal execution-attempt audit evidence against real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      const received: ExecutionAttemptAudit = {
+        attemptId: "execution-attempt-001",
+        actionTarget: "activate_setup_revision",
+        downstreamCommandType: "ActivateSetupDefinitionRevisionCommand",
+        status: "received",
+        attemptedBy: "execution-runtime",
+        attemptedAt: "2026-07-27T12:00:00.000Z",
+        warningCodes: [],
+        createdAtUtc: "2026-07-27T12:00:00.000Z",
+        updatedAtUtc: "2026-07-27T12:00:00.000Z"
+      };
+      await repositories.executionAttemptAuditRepository.create({ audit: received, metadata });
+
+      const failed: ExecutionAttemptAudit = {
+        ...received,
+        reviewDecisionRoutingResultId: "routing-result-not-required",
+        status: "failed",
+        completedAt: "2026-07-27T12:00:03.000Z",
+        outcomeCode: "provider_unavailable",
+        warningCodes: ["retry_not_scheduled"],
+        updatedAtUtc: "2026-07-27T12:00:03.000Z"
+      };
+      const updated = await repositories.executionAttemptAuditRepository.update({
+        audit: failed,
+        metadata: { ...metadata, sourceObservedAtUtc: failed.updatedAtUtc },
+        expectedVersion: 1
+      });
+
+      assert.deepEqual(updated, failed);
+      assert.deepEqual(
+        await repositories.executionAttemptAuditRepository.listByStatus(["failed"]),
+        [failed]
+      );
+      assert.deepEqual(
+        await repositories.executionAttemptAuditRepository.listByReviewDecisionRoutingResultId(
+          "routing-result-not-required"
+        ),
+        [failed]
       );
     });
   }

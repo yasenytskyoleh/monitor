@@ -5,6 +5,7 @@ import {
   composeImplementedProductRelationalRepositories,
   createSetupToAggregateFlowFromRepositories,
   InMemoryFirstDurableRelationalRepositoryAdapter,
+  InMemoryExecutionAttemptAuditRelationalRepositoryAdapter,
   InMemoryMonitoredSymbolRelationalRepositoryAdapter,
   InMemoryResearchDecisionApprovalRelationalRepositoryAdapter,
   InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter,
@@ -456,6 +457,8 @@ test(
         loadResearchReviewDecisionRecord:
           reviewDecisionAdapter.loadResearchReviewDecisionRecord.bind(reviewDecisionAdapter)
       }),
+      executionAttemptAuditAdapter:
+        new InMemoryExecutionAttemptAuditRelationalRepositoryAdapter(),
       setupLifecycleMutationRecordAdapter:
         new InMemorySetupLifecycleMutationRecordRelationalRepositoryAdapter({
           loadSetupDefinitionRecord:

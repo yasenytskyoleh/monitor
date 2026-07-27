@@ -41,6 +41,13 @@ import {
   type RoutedActionExecutionEnvelopeRelationalRepositories
 } from "./routed-action-execution-envelope-relational-repositories.js";
 import type {
+  ExecutionAttemptAuditRelationalRepositoryAdapter
+} from "./execution-attempt-audit-relational-repository-adapter.js";
+import {
+  composeExecutionAttemptAuditRelationalRepositories,
+  type ExecutionAttemptAuditRelationalRepositories
+} from "./execution-attempt-audit-relational-repositories.js";
+import type {
   SetupLifecycleMutationRecordRelationalRepositoryAdapter
 } from "./setup-lifecycle-mutation-record-relational-repository-adapter.js";
 import {
@@ -108,6 +115,7 @@ export type ImplementedProductRelationalAdapters = {
   reviewDecisionAdapter: ResearchReviewDecisionRelationalRepositoryAdapter;
   reviewDecisionRoutingResultAdapter: ReviewDecisionRoutingResultRelationalRepositoryAdapter;
   routedActionAdapter: RoutedActionExecutionEnvelopeRelationalRepositoryAdapter;
+  executionAttemptAuditAdapter: ExecutionAttemptAuditRelationalRepositoryAdapter;
   setupLifecycleMutationRecordAdapter: SetupLifecycleMutationRecordRelationalRepositoryAdapter;
   setupDefinitionRevisionAdapter: SetupDefinitionRevisionRelationalRepositoryAdapter;
   setupRefinementRequestAdapter: SetupRefinementRequestRelationalRepositoryAdapter;
@@ -126,6 +134,7 @@ export type ImplementedProductRelationalRepositories =
   ResearchReviewDecisionRelationalRepositories &
   ReviewDecisionRoutingResultRelationalRepositories &
   RoutedActionExecutionEnvelopeRelationalRepositories &
+  ExecutionAttemptAuditRelationalRepositories &
   SetupLifecycleMutationRecordRelationalRepositories &
   SetupDefinitionRevisionRelationalRepositories &
   SetupRefinementRequestRelationalRepositories &
@@ -146,6 +155,7 @@ export const composeImplementedProductRelationalRepositories = (
     adapters.reviewDecisionRoutingResultAdapter
   ),
   ...composeRoutedActionExecutionEnvelopeRelationalRepositories(adapters.routedActionAdapter),
+  ...composeExecutionAttemptAuditRelationalRepositories(adapters.executionAttemptAuditAdapter),
   ...composeSetupLifecycleMutationRecordRelationalRepositories(
     adapters.setupLifecycleMutationRecordAdapter
   ),
