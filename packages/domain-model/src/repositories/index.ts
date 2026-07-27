@@ -641,6 +641,13 @@ export {
 export { RelationalResearchRunRepository } from "./research-run-relational-repository.impl.js";
 export { composeResearchRunRelationalRepositories } from "./research-run-relational-repositories.js";
 export type { ResearchRunRelationalRepositories } from "./research-run-relational-repositories.js";
+export { PrismaResearchRunRelationalRepositoryAdapter } from "./research-run-relational-prisma-adapter.js";
+export type { ResearchRunRelationalPrismaClient } from "./research-run-relational-prisma-adapter.js";
+export {
+  createResearchRunRelationalPrismaRepositories,
+  createResearchRunRelationalPrismaRepositoryAdapter
+} from "./research-run-relational-prisma-client.js";
+export type { ResearchRunRelationalPrismaRepositories } from "./research-run-relational-prisma-client.js";
 export type {
   SetupDefinitionCreateRequest,
   SetupDefinitionRepository,
