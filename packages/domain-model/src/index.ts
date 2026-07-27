@@ -1161,6 +1161,33 @@ export type {
 export {
   InMemoryExecutionAttemptAuditRepository
 } from "./repositories/execution-attempt-audit-repository.impl.js";
+export type {
+  ExecutionAttemptAuditRecordWriteRequest,
+  ExecutionAttemptAuditRelationalAdapterOperation,
+  ExecutionAttemptAuditRelationalRepositoryAdapter
+} from "./repositories/execution-attempt-audit-relational-repository-adapter.js";
+export {
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_ADAPTER_OPERATIONS,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isExecutionAttemptAuditRelationalDeterministicErrorCode
+} from "./repositories/execution-attempt-audit-relational-repository-adapter.js";
+export {
+  InMemoryExecutionAttemptAuditRelationalRepositoryAdapter
+} from "./repositories/execution-attempt-audit-relational-repository-adapter.impl.js";
+export {
+  dehydrateExecutionAttemptAuditToDurableRecord,
+  hydrateExecutionAttemptAuditFromDurableRecord
+} from "./repositories/execution-attempt-audit-relational-repository-mappers.js";
+export {
+  RelationalExecutionAttemptAuditRepository
+} from "./repositories/execution-attempt-audit-relational-repository.impl.js";
+export {
+  composeExecutionAttemptAuditRelationalRepositories
+} from "./repositories/execution-attempt-audit-relational-repositories.js";
+export type {
+  ExecutionAttemptAuditRelationalRepositories
+} from "./repositories/execution-attempt-audit-relational-repositories.js";
 export {
   RelationalSetupLifecycleMutationRecordRepository
 } from "./repositories/setup-lifecycle-mutation-record-relational-repository.impl.js";
