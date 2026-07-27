@@ -1043,6 +1043,12 @@ export type {
   MonitoredSymbolRelationalRetryableErrorCode
 } from "./repositories/monitored-symbol-relational-repository-adapter.js";
 export type {
+  ResearchRunCreateRequest,
+  ResearchRunRepository,
+  ResearchRunUpdateRequest
+} from "./repositories/research-run-repository.js";
+export { InMemoryResearchRunRepository } from "./repositories/research-run-repository.impl.js";
+export type {
   ResearchHypothesisCreateRequest,
   ResearchHypothesisRepository,
   ResearchHypothesisStatusUpdateRequest,

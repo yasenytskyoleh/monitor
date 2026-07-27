@@ -618,6 +618,12 @@ export type {
   MonitoredSymbolRelationalRetryableErrorCode
 } from "./monitored-symbol-relational-repository-adapter.js";
 export type {
+  ResearchRunCreateRequest,
+  ResearchRunRepository,
+  ResearchRunUpdateRequest
+} from "./research-run-repository.js";
+export { InMemoryResearchRunRepository } from "./research-run-repository.impl.js";
+export type {
   SetupDefinitionCreateRequest,
   SetupDefinitionRepository,
   SetupDefinitionStatusUpdateRequest,
