@@ -717,6 +717,8 @@ export { InMemoryMonitoredSymbolRelationalRepositoryAdapter } from "./repositori
 export { RelationalMonitoredSymbolRepository } from "./repositories/monitored-symbol-relational-repository.impl.js";
 export { composeMonitoredSymbolRelationalRepositories } from "./repositories/monitored-symbol-relational-repositories.js";
 export type { MonitoredSymbolRelationalRepositories } from "./repositories/monitored-symbol-relational-repositories.js";
+export { PrismaMonitoredSymbolRelationalRepositoryAdapter } from "./repositories/monitored-symbol-relational-prisma-adapter.js";
+export type { MonitoredSymbolRelationalPrismaClient } from "./repositories/monitored-symbol-relational-prisma-adapter.js";
 export {
   dehydrateSetupAggregateResultToDurableRecord,
   hydrateSetupAggregateResultFromDurableRecord

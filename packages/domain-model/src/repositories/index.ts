@@ -311,6 +311,8 @@ export { InMemoryMonitoredSymbolRelationalRepositoryAdapter } from "./monitored-
 export { RelationalMonitoredSymbolRepository } from "./monitored-symbol-relational-repository.impl.js";
 export { composeMonitoredSymbolRelationalRepositories } from "./monitored-symbol-relational-repositories.js";
 export type { MonitoredSymbolRelationalRepositories } from "./monitored-symbol-relational-repositories.js";
+export { PrismaMonitoredSymbolRelationalRepositoryAdapter } from "./monitored-symbol-relational-prisma-adapter.js";
+export type { MonitoredSymbolRelationalPrismaClient } from "./monitored-symbol-relational-prisma-adapter.js";
 export {
   dehydrateSetupAggregateResultToDurableRecord,
   hydrateSetupAggregateResultFromDurableRecord
