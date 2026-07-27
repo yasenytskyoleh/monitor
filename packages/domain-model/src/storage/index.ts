@@ -20,6 +20,13 @@ export type {
   MonitoredSymbolRelationalEntityType
 } from "./monitored-symbol-relational-slice.js";
 export {
+  RESEARCH_RUN_RELATIONAL_ENTITY_TYPES
+} from "./research-run-relational-slice.js";
+export type {
+  ResearchRunDurableRecord,
+  ResearchRunRelationalEntityType
+} from "./research-run-relational-slice.js";
+export {
   MONITORED_SYMBOL_RELATIONAL_INDEXES,
   MONITORED_SYMBOL_RELATIONAL_MIGRATION_SLUG,
   MONITORED_SYMBOL_RELATIONAL_PRISMA_MODELS,

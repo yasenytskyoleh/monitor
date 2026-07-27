@@ -20,6 +20,7 @@ export const PRODUCT_PERSISTED_ENTITY_TYPES = [
   "signal_candidate",
   "evaluation_result",
   "research_hypothesis",
+  "research_run",
   "setup_aggregate_result",
   "research_feedback_decision",
   "research_decision_approval",
