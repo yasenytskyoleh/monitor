@@ -36,9 +36,11 @@ lifetime. It must not include raw command inputs, credentials, provider response
 traces, or runtime logs. Those artifacts belong to runtime evidence and are linked only through
 safe external identifiers if needed later.
 
-## Persistence sequence
+## Persistence status
 
-1. add the domain contract and in-memory repository/service path
-2. define the durable relational record and Prisma migration
-3. add adapter, mapper, shared composition, and real-Postgres coverage
-4. integrate only after an execution runtime explicitly owns attempt creation
+The domain contract, in-memory repository/service path, durable relational record, Prisma
+migration, mapper, adapters, shared product composition, and real-Postgres coverage are complete.
+The shared bundle is exposed through `executionAttemptAuditRepository`.
+
+Runtime integration remains intentionally deferred until an execution runtime explicitly owns
+attempt creation and terminalization.

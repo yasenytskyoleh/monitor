@@ -64,13 +64,13 @@ Durable relational contracts exist today for:
 Committed Prisma schema/migrations, repository adapter contracts, adapter-backed relational repositories, concrete Prisma adapters, shared composition, and opt-in real-database integration coverage now exist for:
 - `ReviewDecisionRoutingResult`
 - `SetupRevisionActivationRecord`
+- `ExecutionAttemptAudit`
 
-The one shared Prisma-backed composition and opt-in real-database integration path span the full implemented product chain through `SetupRevisionActivationRecord`, including `ReviewDecisionRoutingResult`.
+The one shared Prisma-backed composition and opt-in real-database integration path span the full
+implemented product chain through `ExecutionAttemptAudit`, including `ReviewDecisionRoutingResult`.
 
 Durable relational persistence still pending:
-- `ExecutionAttemptAudit` defines the retained execution-attempt contract; its repository and
-  durable persistence are introduced separately. `RoutedActionExecutionResult` remains explicitly
-  ephemeral
+- `RoutedActionExecutionResult` remains explicitly ephemeral
 - exchange ingestion runtime
 - setup-detection / evaluation / aggregation runtime engines
 - UI
