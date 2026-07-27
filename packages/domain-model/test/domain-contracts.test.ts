@@ -344,10 +344,11 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "signal_candidate_service",
     "evaluation_service",
     "research_service",
+    "research_run_service",
     "research_aggregation_service"
   ]);
   assert.deepEqual(FIRST_PERSISTED_PRODUCT_SLICE, ["setup_definition", "research_hypothesis"]);
-  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 14);
+  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 15);
   assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
   assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
   assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 16);

@@ -1,10 +1,12 @@
 import type {
   EvaluationResultRepository,
   ResearchHypothesisRepository,
+  ResearchRunRepository,
   SetupAggregateResultRepository,
   SetupDefinitionRepository,
   SignalCandidateRepository
 } from "../repositories/index.js";
+import type { ResearchRun } from "../research-run.js";
 import type { SetupAggregateResult } from "../research/index.js";
 import { AGGREGATE_COMPUTATION_STATUSES } from "../research/index.js";
 import type { ProductRecordMetadata } from "../storage/index.js";
@@ -34,6 +36,7 @@ export type ResearchAggregationServiceDependencies = {
   setupAggregateResultRepository: SetupAggregateResultRepository;
   setupDefinitionRepository: SetupDefinitionRepository;
   researchHypothesisRepository: Pick<ResearchHypothesisRepository, "getById">;
+  researchRunRepository: Pick<ResearchRunRepository, "getById">;
   evaluationResultRepository: Pick<EvaluationResultRepository, "getById">;
   signalCandidateRepository: Pick<SignalCandidateRepository, "getById">;
 };
@@ -181,6 +184,74 @@ const assertPendingMetricsOnCreate = (aggregate: SetupAggregateResult): void => 
   }
 };
 
+const assertScopeHypothesisMatchesAggregate = (aggregate: SetupAggregateResult): void => {
+  const scopeHypothesisId = aggregate.aggregationScope.hypothesisId;
+  if (
+    scopeHypothesisId &&
+    aggregate.researchHypothesisId &&
+    scopeHypothesisId !== aggregate.researchHypothesisId
+  ) {
+    throw new SetupAggregateResultValidationError(
+      "aggregationScope.hypothesisId must match researchHypothesisId"
+    );
+  }
+};
+
+const loadResearchRunForAggregate = async (
+  aggregate: SetupAggregateResult,
+  researchRunRepository: Pick<ResearchRunRepository, "getById">
+): Promise<ResearchRun | null> => {
+  const researchRunId = aggregate.aggregationScope.researchRunId;
+  if (!researchRunId) {
+    return null;
+  }
+
+  const run = await researchRunRepository.getById(researchRunId);
+  if (!run) {
+    throw new SetupAggregateResultValidationError(`research_run not found: ${researchRunId}`);
+  }
+
+  if (run.setupId !== aggregate.setupDefinitionId) {
+    throw new SetupAggregateResultValidationError(
+      `research_run ${researchRunId} does not belong to setup_definition ${aggregate.setupDefinitionId}`
+    );
+  }
+
+  const hypothesisId = aggregate.researchHypothesisId ?? aggregate.aggregationScope.hypothesisId;
+  if (hypothesisId && run.hypothesisId !== hypothesisId) {
+    throw new SetupAggregateResultValidationError(
+      `research_run ${researchRunId} does not belong to research_hypothesis ${hypothesisId}`
+    );
+  }
+
+  return run;
+};
+
+const assertEvaluationIsInResearchRun = (
+  run: ResearchRun,
+  evaluationResultId: string,
+  candidateId: string,
+  evaluationWindowId: string
+): void => {
+  if (!run.evaluationResultIds.includes(evaluationResultId)) {
+    throw new SetupAggregateResultValidationError(
+      `evaluation_result ${evaluationResultId} is outside research_run ${run.runId}`
+    );
+  }
+
+  if (!run.candidateIds.includes(candidateId)) {
+    throw new SetupAggregateResultValidationError(
+      `signal_candidate ${candidateId} is outside research_run ${run.runId}`
+    );
+  }
+
+  if (!run.evaluationWindowIds.includes(evaluationWindowId)) {
+    throw new SetupAggregateResultValidationError(
+      `evaluation_window ${evaluationWindowId} is outside research_run ${run.runId}`
+    );
+  }
+};
+
 const assertStatusTransitionAllowed = (
   currentStatus: SetupAggregateResult["status"],
   nextStatus: SetupAggregateResult["status"]
@@ -217,6 +288,7 @@ export const createResearchAggregationService = (
     setupAggregateResultRepository,
     setupDefinitionRepository,
     researchHypothesisRepository,
+    researchRunRepository,
     evaluationResultRepository,
     signalCandidateRepository
   } = dependencies;
@@ -225,6 +297,7 @@ export const createResearchAggregationService = (
     async createPendingSetupAggregateResult(request) {
       validateAggregateShape(request.aggregate);
       assertPendingMetricsOnCreate(request.aggregate);
+      assertScopeHypothesisMatchesAggregate(request.aggregate);
 
       if (request.aggregate.aggregationScope.setupDefinitionId !== request.aggregate.setupDefinitionId) {
         throw new SetupAggregateResultValidationError(
@@ -249,6 +322,8 @@ export const createResearchAggregationService = (
           );
         }
       }
+
+      await loadResearchRunForAggregate(request.aggregate, researchRunRepository);
 
       const duplicate = await setupAggregateResultRepository.getBySetupDefinitionAndScope(
         request.aggregate.setupDefinitionId,
@@ -279,6 +354,11 @@ export const createResearchAggregationService = (
         current.aggregationScope.timeRange.endAtUtc,
         "aggregationScope.timeRange.endAtUtc"
       );
+      assertScopeHypothesisMatchesAggregate(current);
+      const researchRun = await loadResearchRunForAggregate(
+        current,
+        researchRunRepository
+      );
 
       const evaluationResults = [];
       for (const evaluationResultId of request.evaluationResultIds) {
@@ -291,6 +371,15 @@ export const createResearchAggregationService = (
         if (!signalCandidate || signalCandidate.setupDefinitionId !== current.setupDefinitionId) {
           throw new SetupAggregateResultValidationError(
             `evaluation_result ${evaluationResult.id} does not belong to setup_definition ${current.setupDefinitionId}`
+          );
+        }
+
+        if (researchRun) {
+          assertEvaluationIsInResearchRun(
+            researchRun,
+            evaluationResult.id,
+            signalCandidate.id,
+            evaluationResult.evaluationWindowId
           );
         }
 

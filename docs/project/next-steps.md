@@ -5,7 +5,8 @@
 
 Reason:
 - `research_run` now has relational mappers, a repository adapter, a Prisma adapter, and shared Prisma composition coverage
-- the shared integration test seeds a run and verifies its durable row alongside the product workflow
+- the shared integration suite now also executes the repository-composed setup-to-aggregate flow
+  and verifies its completed durable run and aggregate
 - the real-Postgres test remains environment-gated and should run against the deployment target before durable run writes are enabled
 - the research-run migration must be applied through the production migration workflow
 

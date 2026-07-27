@@ -1274,6 +1274,20 @@ export {
   createEvaluationService
 } from "./services/evaluation-service.js";
 export type {
+  CancelResearchRunRequest,
+  CompleteResearchRunRequest,
+  CreatePlannedResearchRunRequest,
+  FailResearchRunRequest,
+  RecordResearchRunEvaluationResultsRequest,
+  ResearchRunService,
+  ResearchRunServiceDependencies,
+  StartResearchRunRequest
+} from "./services/research-run-service.js";
+export {
+  ResearchRunServiceValidationError,
+  createResearchRunService
+} from "./services/research-run-service.js";
+export type {
   ApproveFeedbackDecisionRequest,
   AttachHypothesisToSetupDefinitionsRequest,
   CreateRefinementRequest,
@@ -1308,13 +1322,17 @@ export {
 export {
   FLOW_STATUSES,
   FLOW_STEP_NAMES,
-  createSetupToAggregateFlow
+  createSetupToAggregateFlow,
+  createSetupToAggregateFlowFromRepositories
 } from "./application/index.js";
 export type {
   FlowStatus,
   FlowStepName,
+  EvaluationTerminalization,
   SetupToAggregateFlowDependencies,
+  SetupToAggregateFlowEvaluation,
   SetupToAggregateFlowInput,
+  SetupToAggregateFlowRepositories,
   SetupToAggregateFlowResult
 } from "./application/index.js";
 export {

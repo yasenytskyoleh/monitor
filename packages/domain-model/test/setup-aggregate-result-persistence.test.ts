@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   InMemoryEvaluationResultRepository,
   InMemoryResearchHypothesisRepository,
+  InMemoryResearchRunRepository,
   InMemorySetupAggregateResultRepository,
   InMemorySetupDefinitionRepository,
   InMemorySignalCandidateRepository,
@@ -11,6 +12,7 @@ import {
   type EvaluationResult,
   type ProductRecordMetadata,
   type ResearchHypothesis,
+  type ResearchRun,
   type SetupAggregateResult,
   type SetupDefinition,
   type SignalCandidate,
@@ -48,6 +50,23 @@ const buildHypothesis = (id: string, setupDefinitionId: string): ResearchHypothe
   notes: [],
   createdAt: "2026-04-17T10:00:00.000Z",
   updatedAt: "2026-04-17T10:00:00.000Z"
+});
+
+const buildResearchRun = (
+  runId: string,
+  hypothesisId: string,
+  setupId: string
+): ResearchRun => ({
+  runId,
+  hypothesisId,
+  setupId,
+  candidateIds: ["candidate-110a"],
+  evaluationWindowIds: ["window-24h"],
+  evaluationResultIds: ["result-110a"],
+  status: "running",
+  startedAtUtc: "2026-04-17T10:00:00.000Z",
+  createdAtUtc: "2026-04-17T10:00:00.000Z",
+  updatedAtUtc: "2026-04-17T10:00:00.000Z"
 });
 
 const buildSignalCandidate = (
@@ -130,6 +149,7 @@ const buildPendingAggregate = (
 const createFixture = () => {
   const setupDefinitionRepository = new InMemorySetupDefinitionRepository();
   const researchHypothesisRepository = new InMemoryResearchHypothesisRepository();
+  const researchRunRepository = new InMemoryResearchRunRepository();
   const setupAggregateResultRepository = new InMemorySetupAggregateResultRepository();
   const evaluationResultRepository = new InMemoryEvaluationResultRepository();
   const signalCandidateRepository = new InMemorySignalCandidateRepository();
@@ -138,6 +158,7 @@ const createFixture = () => {
     setupAggregateResultRepository,
     setupDefinitionRepository,
     researchHypothesisRepository,
+    researchRunRepository,
     evaluationResultRepository,
     signalCandidateRepository
   });
@@ -146,6 +167,7 @@ const createFixture = () => {
     service,
     setupDefinitionRepository,
     researchHypothesisRepository,
+    researchRunRepository,
     setupAggregateResultRepository,
     evaluationResultRepository,
     signalCandidateRepository
@@ -253,6 +275,65 @@ test("complete aggregate with valid metrics", async () => {
   assert.equal(recomputed?.positiveOutcomeCount, 2);
 });
 
+test("reject recompute with an evaluation outside the research run", async () => {
+  const {
+    service,
+    setupDefinitionRepository,
+    researchHypothesisRepository,
+    researchRunRepository,
+    signalCandidateRepository,
+    evaluationResultRepository
+  } = createFixture();
+  await setupDefinitionRepository.create({
+    definition: buildSetupDefinition("setup-113"),
+    metadata
+  });
+  await researchHypothesisRepository.create({
+    hypothesis: buildHypothesis("hypothesis-113", "setup-113"),
+    metadata
+  });
+  await signalCandidateRepository.create({
+    candidate: buildSignalCandidate("candidate-113", "setup-113", "BTC-USDT"),
+    metadata
+  });
+  await evaluationResultRepository.create({
+    result: buildEvaluationResult("result-113", "candidate-113", "window-24h", 2),
+    metadata
+  });
+  await researchRunRepository.create({
+    run: {
+      ...buildResearchRun("run-113", "hypothesis-113", "setup-113"),
+      candidateIds: ["candidate-113"],
+      evaluationResultIds: ["result-other"]
+    },
+    metadata
+  });
+  await service.createPendingSetupAggregateResult({
+    aggregate: {
+      ...buildPendingAggregate("aggregate-113", "setup-113", "hypothesis-113"),
+      aggregationScope: {
+        ...buildScope("setup-113"),
+        researchRunId: "run-113",
+        hypothesisId: "hypothesis-113"
+      }
+    },
+    metadata
+  });
+
+  await assert.rejects(
+    async () =>
+      service.recomputeSetupAggregateResult({
+        setupAggregateResultId: "aggregate-113",
+        evaluationResultIds: ["result-113"],
+        metadata,
+        expectedVersion: null
+      }),
+    (error: unknown) =>
+      error instanceof SetupAggregateResultValidationError &&
+      error.message.includes("outside research_run run-113")
+  );
+});
+
 test("reject invalid count/average consistency", async () => {
   const { service, setupDefinitionRepository } = createFixture();
   await setupDefinitionRepository.create({
@@ -302,6 +383,99 @@ test("optional hypothesis linkage succeeds and fails correctly", async () => {
     (error: unknown) =>
       error instanceof SetupAggregateResultValidationError &&
       error.message.includes("research_hypothesis not found")
+  );
+});
+
+test("reject aggregate creation with a missing research run", async () => {
+  const { service, setupDefinitionRepository } = createFixture();
+  await setupDefinitionRepository.create({
+    definition: buildSetupDefinition("setup-110"),
+    metadata
+  });
+
+  await assert.rejects(
+    async () =>
+      service.createPendingSetupAggregateResult({
+        aggregate: {
+          ...buildPendingAggregate("aggregate-110", "setup-110"),
+          aggregationScope: {
+            ...buildScope("setup-110"),
+            researchRunId: "run-missing"
+          }
+        },
+        metadata
+      }),
+    (error: unknown) =>
+      error instanceof SetupAggregateResultValidationError &&
+      error.message.includes("research_run not found")
+  );
+});
+
+test("reject aggregate creation with mismatched research-run context", async () => {
+  const {
+    service,
+    setupDefinitionRepository,
+    researchHypothesisRepository,
+    researchRunRepository
+  } = createFixture();
+  await setupDefinitionRepository.create({
+    definition: buildSetupDefinition("setup-111"),
+    metadata
+  });
+  await setupDefinitionRepository.create({
+    definition: buildSetupDefinition("setup-other"),
+    metadata
+  });
+  await researchHypothesisRepository.create({
+    hypothesis: buildHypothesis("hypothesis-111", "setup-111"),
+    metadata
+  });
+  await researchRunRepository.create({
+    run: buildResearchRun("run-111", "hypothesis-111", "setup-other"),
+    metadata
+  });
+
+  await assert.rejects(
+    async () =>
+      service.createPendingSetupAggregateResult({
+        aggregate: {
+          ...buildPendingAggregate("aggregate-111", "setup-111", "hypothesis-111"),
+          aggregationScope: {
+            ...buildScope("setup-111"),
+            researchRunId: "run-111",
+            hypothesisId: "hypothesis-111"
+          }
+        },
+        metadata
+      }),
+    (error: unknown) =>
+      error instanceof SetupAggregateResultValidationError &&
+      error.message.includes("does not belong to setup_definition")
+  );
+});
+
+test("reject aggregation scope hypothesis that disagrees with the aggregate", async () => {
+  const { service, setupDefinitionRepository } = createFixture();
+  await setupDefinitionRepository.create({
+    definition: buildSetupDefinition("setup-112"),
+    metadata
+  });
+
+  await assert.rejects(
+    async () =>
+      service.createPendingSetupAggregateResult({
+        aggregate: {
+          ...buildPendingAggregate("aggregate-112", "setup-112", "hypothesis-112a"),
+          aggregationScope: {
+            ...buildScope("setup-112"),
+            hypothesisId: "hypothesis-112b"
+          }
+        },
+        metadata
+      }),
+    (error: unknown) =>
+      error instanceof SetupAggregateResultValidationError &&
+      error.message.includes("aggregationScope.hypothesisId must match")
   );
 });
 

@@ -6,6 +6,7 @@ export const PRODUCT_SERVICE_NAMES = [
   "signal_candidate_service",
   "evaluation_service",
   "research_service",
+  "research_run_service",
   "research_aggregation_service"
 ] as const;
 export type ProductServiceName = (typeof PRODUCT_SERVICE_NAMES)[number];
@@ -47,6 +48,12 @@ export const PRODUCT_WRITE_PATH_OWNERSHIP: ProductWritePathOwnership[] = [
     ownerService: "research_service",
     createPath: "research hypothesis authoring flow",
     updatePath: "hypothesis lifecycle/evidence updates"
+  },
+  {
+    entityType: "research_run",
+    ownerService: "research_run_service",
+    createPath: "research run planning flow",
+    updatePath: "research run lifecycle and evidence completion flow"
   },
   {
     entityType: "setup_aggregate_result",

@@ -8,6 +8,8 @@ import { Client } from "pg";
 
 import {
   createImplementedProductRelationalPrismaRepositories,
+  createSetupToAggregateFlowFromRepositories,
+  type EvaluationTerminalization,
   type EvaluationResult,
   type ImplementedProductRelationalPrismaRepositories,
   type MonitoredSymbol,
@@ -26,6 +28,7 @@ import {
   type SetupRevisionActivationRecord,
   type SetupRefinementRequest,
   type SetupLifecycleMutationRecord,
+  type SetupToAggregateFlowInput,
   type SignalCandidate
 } from "../src/index.js";
 import { resolveIntegrationDatabaseUrl } from "./integration-test-helpers.js";
@@ -221,6 +224,113 @@ const buildAggregate = (
   createdAt: "2026-05-24T10:00:00.000Z",
   updatedAt: "2026-05-24T10:00:00.000Z"
 });
+
+const buildApplicationFlowInput = (
+  terminalization?: EvaluationTerminalization
+): SetupToAggregateFlowInput => {
+  const setupDefinition = buildSetupDefinition("setup-flow-001");
+  const researchHypothesis = {
+    ...buildResearchHypothesis("hypothesis-flow-001", setupDefinition.id),
+    relatedSetupDefinitionIds: []
+  };
+  const signalCandidate = {
+    ...buildSignalCandidate("candidate-flow-001", setupDefinition.id),
+    status: "detected" as const
+  };
+  const pendingResult = {
+    ...buildEvaluationResult("result-flow-001", signalCandidate.id),
+    status: "pending" as const,
+    referencePrice: null,
+    finalPrice: null,
+    highInWindow: null,
+    lowInWindow: null,
+    absoluteMove: null,
+    percentageMove: null,
+    maxFavorableExcursion: null,
+    maxAdverseExcursion: null,
+    evaluatedAt: null
+  };
+
+  const evaluation: SetupToAggregateFlowInput["evaluation"] = terminalization
+    ? {
+        pendingResult,
+        terminalization
+      }
+    : {
+        pendingResult,
+        finalization: {
+          referencePrice: 100,
+          finalPrice: 103,
+          highInWindow: 104,
+          lowInWindow: 99,
+          maxFavorableExcursion: 4,
+          maxAdverseExcursion: -1,
+          evaluatedAt: "2026-05-24T10:00:00.000Z"
+        }
+      };
+
+  return {
+    setupDefinition,
+    researchHypothesis,
+    monitoredSymbol: buildMonitoredSymbol(),
+    signalCandidate,
+    evaluation,
+    researchRun: {
+      run: {
+        runId: "research-run-flow-001",
+        hypothesisId: researchHypothesis.id,
+        setupId: setupDefinition.id,
+        candidateIds: [signalCandidate.id],
+        evaluationWindowIds: [pendingResult.evaluationWindowId],
+        evaluationResultIds: [],
+        status: "planned",
+        startedAtUtc: "2026-05-24T09:30:00.000Z",
+        createdAtUtc: "2026-05-24T09:30:00.000Z",
+        updatedAtUtc: "2026-05-24T09:30:00.000Z"
+      },
+      completion: {
+        completedAtUtc: "2026-05-24T10:05:00.000Z",
+        summary: "Real-Postgres application flow completed."
+      }
+    },
+    aggregation: {
+      pendingAggregate: {
+        id: "aggregate-flow-001",
+        setupDefinitionId: setupDefinition.id,
+        researchHypothesisId: researchHypothesis.id,
+        aggregationScope: {
+          setupDefinitionId: setupDefinition.id,
+          evaluationWindowId: pendingResult.evaluationWindowId,
+          symbolScope: {
+            kind: "single_symbol",
+            symbolIds: [signalCandidate.monitoredSymbolId]
+          },
+          timeRange: {
+            startAtUtc: "2026-05-01T00:00:00.000Z",
+            endAtUtc: "2026-05-31T23:59:59.000Z"
+          },
+          researchRunId: "research-run-flow-001",
+          hypothesisId: researchHypothesis.id
+        },
+        status: "pending",
+        totalCandidates: 0,
+        completedEvaluations: 0,
+        invalidatedEvaluations: 0,
+        averagePercentageMove: null,
+        averageAbsoluteMove: null,
+        averageFinalOutcome: null,
+        averageMaxFavorableExcursion: null,
+        averageMaxAdverseExcursion: null,
+        positiveOutcomeCount: 0,
+        computedAt: null,
+        createdAt: "2026-05-24T10:05:00.000Z",
+        updatedAt: "2026-05-24T10:05:00.000Z"
+      },
+      recomputeEvaluationResultIds: [pendingResult.id]
+    },
+    metadata
+  };
+};
 
 const buildFeedbackDecision = (
   id: string,
@@ -479,6 +589,41 @@ const withIntegrationRepositories = async <T>(
 };
 
 const integrationTest = INTEGRATION_DATABASE_URL ? test : test.skip;
+
+const assertTerminalApplicationFlowPersistence = async (
+  terminalization: EvaluationTerminalization,
+  expectedEvaluationStatus: "expired" | "invalidated"
+): Promise<void> => {
+  await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+    const flow = createSetupToAggregateFlowFromRepositories(repositories);
+    const result = await flow.run(buildApplicationFlowInput(terminalization));
+    const storedEvaluation =
+      await repositories.evaluationResultRepository.getBySignalCandidateAndWindow(
+        "candidate-flow-001",
+        "window-24h"
+      );
+    const storedRun = await repositories.researchRunRepository.getById(
+      "research-run-flow-001"
+    );
+    const storedAggregate = await repositories.setupAggregateResultRepository.getById(
+      "aggregate-flow-001"
+    );
+    const researchRunRow = await repositories.prismaClient.researchRunRecord.findUnique({
+      where: { researchRunId: "research-run-flow-001" }
+    });
+
+    assert.equal(result.status, "completed");
+    assert.equal(result.outcomes?.evaluationResultStatus, expectedEvaluationStatus);
+    assert.equal(result.outcomes?.researchRunStatus, "completed");
+    assert.equal(result.outcomes?.setupAggregateResultStatus, "invalid");
+    assert.equal(storedEvaluation?.status, expectedEvaluationStatus);
+    assert.equal(storedRun?.status, "completed");
+    assert.deepEqual(storedRun?.evaluationResultIds, ["result-flow-001"]);
+    assert.equal(storedAggregate?.status, "invalid");
+    assert.equal(researchRunRow?.researchRunStatus, "completed");
+    assert.deepEqual(researchRunRow?.evaluationResultIds, ["result-flow-001"]);
+  });
+};
 
 integrationTest(
   "shared implemented-product bundle persists the monitored catalog and product flow against real Postgres",
@@ -880,6 +1025,52 @@ integrationTest(
         "setup-003"
       );
     });
+  }
+);
+
+integrationTest(
+  "repository-composed application flow persists a completed research run before aggregation against real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      const flow = createSetupToAggregateFlowFromRepositories(repositories);
+      const result = await flow.run(buildApplicationFlowInput());
+      const storedRun = await repositories.researchRunRepository.getById(
+        "research-run-flow-001"
+      );
+      const storedAggregate = await repositories.setupAggregateResultRepository.getById(
+        "aggregate-flow-001"
+      );
+      const researchRunRow = await repositories.prismaClient.researchRunRecord.findUnique({
+        where: { researchRunId: "research-run-flow-001" }
+      });
+
+      assert.equal(result.status, "completed");
+      assert.equal(storedRun?.status, "completed");
+      assert.deepEqual(storedRun?.evaluationResultIds, ["result-flow-001"]);
+      assert.equal(storedAggregate?.status, "completed");
+      assert.equal(researchRunRow?.researchRunStatus, "completed");
+      assert.deepEqual(researchRunRow?.evaluationResultIds, ["result-flow-001"]);
+    });
+  }
+);
+
+integrationTest(
+  "repository-composed application flow persists invalidated research-run evidence against real Postgres",
+  async () => {
+    await assertTerminalApplicationFlowPersistence(
+      {
+        kind: "invalidate",
+        notes: "Invalidated through real-Postgres application flow coverage."
+      },
+      "invalidated"
+    );
+  }
+);
+
+integrationTest(
+  "repository-composed application flow persists expired research-run evidence against real Postgres",
+  async () => {
+    await assertTerminalApplicationFlowPersistence({ kind: "expire" }, "expired");
   }
 );
 

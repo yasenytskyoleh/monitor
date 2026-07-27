@@ -11,6 +11,7 @@ Define the initial durable relational contract for `ResearchRun`, the product-do
 - `packages/domain-model/prisma/migrations/20260727103000_product_domain_research_run_relational_v1/migration.sql`
 - `packages/domain-model/src/repositories/research-run-relational-prisma-adapter.ts`
 - `packages/domain-model/src/repositories/research-run-relational-prisma-client.ts`
+- `packages/domain-model/src/services/research-aggregation-service.ts`
 - `docs/architecture/adr/ADR-090-research-run-durable-relational-contract.md`
 
 ## Durable record shape
@@ -26,7 +27,9 @@ Define the initial durable relational contract for `ResearchRun`, the product-do
 
 - `research_run` is a product-domain record; it is not a runtime-evidence artifact
 - `identity.relatedEntityIds` snapshots the hypothesis, setup, candidate, and evaluation-result references observed by the run
-- the existing optional aggregate-scope `researchRunId` remains a reference only; this contract does not add a foreign key or change aggregate behavior
+- the existing optional aggregate-scope `researchRunId` remains a reference only; it does not add a relational foreign key
+- when an aggregation declares that reference, the aggregation service validates that the
+  run exists, shares its setup/hypothesis context, and owns each recomputed evidence id
 
 ## Delivery status
 
