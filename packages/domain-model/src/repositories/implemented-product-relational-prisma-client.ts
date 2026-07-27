@@ -21,6 +21,8 @@ import { createResearchDecisionApprovalRelationalPrismaRepositoryAdapter } from 
 import { type PrismaResearchDecisionApprovalRelationalRepositoryAdapter } from "./research-decision-approval-relational-prisma-adapter.js";
 import { createResearchReviewDecisionRelationalPrismaRepositoryAdapter } from "./research-review-decision-relational-prisma-client.js";
 import { type PrismaResearchReviewDecisionRelationalRepositoryAdapter } from "./research-review-decision-relational-prisma-adapter.js";
+import { createResearchRunRelationalPrismaRepositoryAdapter } from "./research-run-relational-prisma-client.js";
+import { type PrismaResearchRunRelationalRepositoryAdapter } from "./research-run-relational-prisma-adapter.js";
 import { createReviewDecisionRoutingResultRelationalPrismaRepositoryAdapter } from "./review-decision-routing-result-relational-prisma-client.js";
 import { type PrismaReviewDecisionRoutingResultRelationalRepositoryAdapter } from "./review-decision-routing-result-relational-prisma-adapter.js";
 import { createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter } from "./research-feedback-decision-relational-prisma-client.js";
@@ -46,6 +48,7 @@ export type ImplementedProductRelationalPrismaAdapters = ImplementedProductRelat
   signalEvaluationAdapter: PrismaSignalEvaluationRelationalRepositoryAdapter;
   setupAggregateAdapter: PrismaSetupAggregateRelationalRepositoryAdapter;
   feedbackDecisionAdapter: PrismaResearchFeedbackDecisionRelationalRepositoryAdapter;
+  researchRunAdapter: PrismaResearchRunRelationalRepositoryAdapter;
   approvalAdapter: PrismaResearchDecisionApprovalRelationalRepositoryAdapter;
   reviewDecisionAdapter: PrismaResearchReviewDecisionRelationalRepositoryAdapter;
   reviewDecisionRoutingResultAdapter:
@@ -77,6 +80,7 @@ export const createImplementedProductRelationalPrismaAdapters = (
   signalEvaluationAdapter: createSignalEvaluationRelationalPrismaRepositoryAdapter(client),
   setupAggregateAdapter: createSetupAggregateRelationalPrismaRepositoryAdapter(client),
   feedbackDecisionAdapter: createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter(client),
+  researchRunAdapter: createResearchRunRelationalPrismaRepositoryAdapter(client),
   approvalAdapter: createResearchDecisionApprovalRelationalPrismaRepositoryAdapter(client),
   reviewDecisionAdapter: createResearchReviewDecisionRelationalPrismaRepositoryAdapter(client),
   reviewDecisionRoutingResultAdapter:

@@ -75,6 +75,13 @@ import {
 import type {
   ResearchFeedbackDecisionRelationalRepositoryAdapter
 } from "./research-feedback-decision-relational-repository-adapter.js";
+import type {
+  ResearchRunRelationalRepositoryAdapter
+} from "./research-run-relational-repository-adapter.js";
+import {
+  composeResearchRunRelationalRepositories,
+  type ResearchRunRelationalRepositories
+} from "./research-run-relational-repositories.js";
 import {
   composeSetupAggregateRelationalRepositories,
   type SetupAggregateRelationalRepositories
@@ -96,6 +103,7 @@ export type ImplementedProductRelationalAdapters = {
   signalEvaluationAdapter: SignalEvaluationRelationalRepositoryAdapter;
   setupAggregateAdapter: SetupAggregateRelationalRepositoryAdapter;
   feedbackDecisionAdapter: ResearchFeedbackDecisionRelationalRepositoryAdapter;
+  researchRunAdapter: ResearchRunRelationalRepositoryAdapter;
   approvalAdapter: ResearchDecisionApprovalRelationalRepositoryAdapter;
   reviewDecisionAdapter: ResearchReviewDecisionRelationalRepositoryAdapter;
   reviewDecisionRoutingResultAdapter: ReviewDecisionRoutingResultRelationalRepositoryAdapter;
@@ -113,6 +121,7 @@ export type ImplementedProductRelationalRepositories =
   SignalEvaluationRelationalRepositories &
   SetupAggregateRelationalRepositories &
   ResearchFeedbackDecisionRelationalRepositories &
+  ResearchRunRelationalRepositories &
   ResearchDecisionApprovalRelationalRepositories &
   ResearchReviewDecisionRelationalRepositories &
   ReviewDecisionRoutingResultRelationalRepositories &
@@ -130,6 +139,7 @@ export const composeImplementedProductRelationalRepositories = (
   ...composeSignalEvaluationRelationalRepositories(adapters.signalEvaluationAdapter),
   ...composeSetupAggregateRelationalRepositories(adapters.setupAggregateAdapter),
   ...composeResearchFeedbackDecisionRelationalRepositories(adapters.feedbackDecisionAdapter),
+  ...composeResearchRunRelationalRepositories(adapters.researchRunAdapter),
   ...composeResearchDecisionApprovalRelationalRepositories(adapters.approvalAdapter),
   ...composeResearchReviewDecisionRelationalRepositories(adapters.reviewDecisionAdapter),
   ...composeReviewDecisionRoutingResultRelationalRepositories(

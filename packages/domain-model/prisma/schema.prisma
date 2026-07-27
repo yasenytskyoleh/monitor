@@ -48,6 +48,17 @@ enum ResearchHypothesisStatus {
   @@schema("product_domain")
 }
 
+enum ResearchRunStatus {
+  planned
+  running
+  completed
+  failed
+  cancelled
+
+  @@map("research_run_status")
+  @@schema("product_domain")
+}
+
 enum SignalCandidateStatus {
   detected
   under_review
@@ -289,6 +300,37 @@ model MonitoredSymbolRecord {
   @@index([symbolStatus], map: "idx_monitored_symbol_status")
   @@index([marketScope, symbolStatus], map: "idx_monitored_symbol_market_scope_status")
   @@map("monitored_symbol")
+  @@schema("product_domain")
+}
+
+model ResearchRunRecord {
+  researchRunId       String                   @id(map: "research_run_pkey") @map("research_run_id") @db.Text
+  version             Int                      @map("version")
+  lifecycleStatus     PersistedLifecycleStatus @map("lifecycle_status")
+  researchRunStatus   ResearchRunStatus        @map("research_run_status")
+  hypothesisId        String                   @map("hypothesis_id") @db.Text
+  setupId             String                   @map("setup_id") @db.Text
+  candidateIds        String[]                 @map("candidate_ids")
+  evaluationWindowIds String[]                 @map("evaluation_window_ids")
+  evaluationResultIds String[]                 @map("evaluation_result_ids")
+  startedAtUtc        DateTime                 @map("started_at_utc") @db.Timestamptz(3)
+  completedAtUtc      DateTime?                @map("completed_at_utc") @db.Timestamptz(3)
+  summary             String?                  @map("summary") @db.Text
+  originRunId         String?                  @map("origin_run_id") @db.Text
+  originTransitionId  String?                  @map("origin_transition_id") @db.Text
+  createdBySource     ProductRecordSource      @map("created_by_source")
+  lastUpdatedBySource ProductRecordSource      @map("last_updated_by_source")
+  traceId             String?                  @map("trace_id") @db.Text
+  sourceObservedAtUtc DateTime?                @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes       String?                  @map("metadata_notes") @db.Text
+  createdAtUtc        DateTime                 @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc        DateTime                 @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc       DateTime?                @map("archived_at_utc") @db.Timestamptz(3)
+
+  @@index([researchRunStatus], map: "idx_research_run_status")
+  @@index([hypothesisId, researchRunStatus], map: "idx_research_run_hypothesis_status")
+  @@index([setupId, researchRunStatus], map: "idx_research_run_setup_status")
+  @@map("research_run")
   @@schema("product_domain")
 }
 

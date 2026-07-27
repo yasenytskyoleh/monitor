@@ -228,6 +228,12 @@ export {
   MONITORED_SYMBOL_RELATIONAL_PRISMA_MODELS,
   MONITORED_SYMBOL_RELATIONAL_REQUIRED_COLUMNS,
   MONITORED_SYMBOL_RELATIONAL_TABLES,
+  RESEARCH_RUN_RELATIONAL_ENTITY_TYPES,
+  RESEARCH_RUN_RELATIONAL_INDEXES,
+  RESEARCH_RUN_RELATIONAL_MIGRATION_SLUG,
+  RESEARCH_RUN_RELATIONAL_PRISMA_MODELS,
+  RESEARCH_RUN_RELATIONAL_REQUIRED_COLUMNS,
+  RESEARCH_RUN_RELATIONAL_TABLES,
   SIGNAL_EVALUATION_RELATIONAL_ENTITY_TYPES,
   SIGNAL_EVALUATION_RELATIONAL_INDEXES,
   SIGNAL_EVALUATION_RELATIONAL_MIGRATION_SLUG,
@@ -333,6 +339,11 @@ export type {
   ProductPersistedEntityType,
   ProductRecordMetadata,
   ProductRecordSource,
+  ResearchRunDurableRecord,
+  ResearchRunRelationalIndexName,
+  ResearchRunRelationalEntityType,
+  ResearchRunRelationalPrismaModelName,
+  ResearchRunRelationalTableName,
   ResearchDecisionApprovalDurableRecord,
   ResearchDecisionApprovalRelationalIndexName,
   ResearchDecisionApprovalRelationalPrismaModelName,
@@ -1031,6 +1042,42 @@ export type {
   MonitoredSymbolRelationalRepositoryAdapter,
   MonitoredSymbolRelationalRetryableErrorCode
 } from "./repositories/monitored-symbol-relational-repository-adapter.js";
+export type {
+  ResearchRunCreateRequest,
+  ResearchRunRepository,
+  ResearchRunUpdateRequest
+} from "./repositories/research-run-repository.js";
+export {
+  assertResearchRunContextIsUnchanged,
+  assertValidResearchRunCompletionState,
+  ResearchRunValidationError
+} from "./repositories/research-run-repository.js";
+export { InMemoryResearchRunRepository } from "./repositories/research-run-repository.impl.js";
+export type {
+  ResearchRunRecordWriteRequest,
+  ResearchRunRelationalRepositoryAdapter
+} from "./repositories/research-run-relational-repository-adapter.js";
+export {
+  RESEARCH_RUN_RELATIONAL_ADAPTER_OPERATIONS,
+  RESEARCH_RUN_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  RESEARCH_RUN_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isResearchRunRelationalDeterministicErrorCode
+} from "./repositories/research-run-relational-repository-adapter.js";
+export { InMemoryResearchRunRelationalRepositoryAdapter } from "./repositories/research-run-relational-repository-adapter.impl.js";
+export {
+  dehydrateResearchRunToDurableRecord,
+  hydrateResearchRunFromDurableRecord
+} from "./repositories/research-run-relational-repository-mappers.js";
+export { RelationalResearchRunRepository } from "./repositories/research-run-relational-repository.impl.js";
+export { composeResearchRunRelationalRepositories } from "./repositories/research-run-relational-repositories.js";
+export type { ResearchRunRelationalRepositories } from "./repositories/research-run-relational-repositories.js";
+export { PrismaResearchRunRelationalRepositoryAdapter } from "./repositories/research-run-relational-prisma-adapter.js";
+export type { ResearchRunRelationalPrismaClient } from "./repositories/research-run-relational-prisma-adapter.js";
+export {
+  createResearchRunRelationalPrismaRepositories,
+  createResearchRunRelationalPrismaRepositoryAdapter
+} from "./repositories/research-run-relational-prisma-client.js";
+export type { ResearchRunRelationalPrismaRepositories } from "./repositories/research-run-relational-prisma-client.js";
 export type {
   ResearchHypothesisCreateRequest,
   ResearchHypothesisRepository,

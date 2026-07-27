@@ -11,6 +11,8 @@ import {
   type ProductRecordMetadata,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_ENTITY_TYPES,
   type ResearchDecisionApprovalDurableRecord,
+  RESEARCH_RUN_RELATIONAL_ENTITY_TYPES,
+  type ResearchRunDurableRecord,
   RESEARCH_REVIEW_DECISION_RELATIONAL_ENTITY_TYPES,
   type ResearchReviewDecisionDurableRecord,
   REVIEW_DECISION_ROUTING_RESULT_RELATIONAL_ENTITY_TYPES,
@@ -157,6 +159,40 @@ test("supports typed monitored-symbol durable records", () => {
 
   assert.equal(monitoredSymbolRecord.identity.entityId, monitoredSymbolRecord.symbolId);
   assert.equal(monitoredSymbolRecord.sourceBindings[0]?.isPrimary, true);
+});
+
+test("exposes research-run durable relational storage planning constants", () => {
+  assert.deepEqual(RESEARCH_RUN_RELATIONAL_ENTITY_TYPES, ["research_run"]);
+});
+
+test("supports typed research-run durable records", () => {
+  const researchRunRecord: ResearchRunDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "research_run",
+      entityId: "research-run-001",
+      version: 1,
+      relatedEntityIds: ["hypothesis-001", "setup-001", "candidate-001", "result-001"]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-07-27T08:00:00.000Z",
+    updatedAtUtc: "2026-07-27T09:00:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    researchRunStatus: "completed",
+    hypothesisId: "hypothesis-001",
+    setupId: "setup-001",
+    candidateIds: ["candidate-001"],
+    evaluationWindowIds: ["window-24h"],
+    evaluationResultIds: ["result-001"],
+    startedAtUtc: "2026-07-27T08:05:00.000Z",
+    completedAtUtc: "2026-07-27T09:00:00.000Z",
+    summary: "Completed one candidate evaluation."
+  };
+
+  assert.equal(researchRunRecord.identity.entityId, "research-run-001");
+  assert.equal(researchRunRecord.evaluationResultIds[0], "result-001");
 });
 
 test("exposes signal/evaluation durable relational storage planning constants", () => {

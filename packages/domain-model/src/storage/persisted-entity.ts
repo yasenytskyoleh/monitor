@@ -85,6 +85,17 @@ export const FIRST_CLASS_PERSISTED_ENTITY_PROFILES: PersistedEntityProfile[] = [
     }
   },
   {
+    entityType: "research_run",
+    firstClassPersisted: true,
+    timing: {
+      createdWhen: "created when a hypothesis evaluation run is planned",
+      updatedWhen: "updated as the run records candidates, evaluations, and completion state",
+      immutableFields: ["identity.entityId", "hypothesisId", "setupId"],
+      mutableFields: ["lifecycleStatus", "metadata", "updatedAtUtc"],
+      canBeArchived: true
+    }
+  },
+  {
     entityType: "setup_aggregate_result",
     firstClassPersisted: true,
     timing: {

@@ -618,6 +618,42 @@ export type {
   MonitoredSymbolRelationalRetryableErrorCode
 } from "./monitored-symbol-relational-repository-adapter.js";
 export type {
+  ResearchRunCreateRequest,
+  ResearchRunRepository,
+  ResearchRunUpdateRequest
+} from "./research-run-repository.js";
+export {
+  assertResearchRunContextIsUnchanged,
+  assertValidResearchRunCompletionState,
+  ResearchRunValidationError
+} from "./research-run-repository.js";
+export { InMemoryResearchRunRepository } from "./research-run-repository.impl.js";
+export type {
+  ResearchRunRecordWriteRequest,
+  ResearchRunRelationalRepositoryAdapter
+} from "./research-run-relational-repository-adapter.js";
+export {
+  RESEARCH_RUN_RELATIONAL_ADAPTER_OPERATIONS,
+  RESEARCH_RUN_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  RESEARCH_RUN_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isResearchRunRelationalDeterministicErrorCode
+} from "./research-run-relational-repository-adapter.js";
+export { InMemoryResearchRunRelationalRepositoryAdapter } from "./research-run-relational-repository-adapter.impl.js";
+export {
+  dehydrateResearchRunToDurableRecord,
+  hydrateResearchRunFromDurableRecord
+} from "./research-run-relational-repository-mappers.js";
+export { RelationalResearchRunRepository } from "./research-run-relational-repository.impl.js";
+export { composeResearchRunRelationalRepositories } from "./research-run-relational-repositories.js";
+export type { ResearchRunRelationalRepositories } from "./research-run-relational-repositories.js";
+export { PrismaResearchRunRelationalRepositoryAdapter } from "./research-run-relational-prisma-adapter.js";
+export type { ResearchRunRelationalPrismaClient } from "./research-run-relational-prisma-adapter.js";
+export {
+  createResearchRunRelationalPrismaRepositories,
+  createResearchRunRelationalPrismaRepositoryAdapter
+} from "./research-run-relational-prisma-client.js";
+export type { ResearchRunRelationalPrismaRepositories } from "./research-run-relational-prisma-client.js";
+export type {
   SetupDefinitionCreateRequest,
   SetupDefinitionRepository,
   SetupDefinitionStatusUpdateRequest,

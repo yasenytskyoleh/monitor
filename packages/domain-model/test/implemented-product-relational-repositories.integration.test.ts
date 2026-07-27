@@ -17,6 +17,7 @@ import {
   type ResearchFeedbackDecision,
   type ResearchHypothesis,
   type ResearchReviewDecision,
+  type ResearchRun,
   type ReviewDecisionRoutingResult,
   type RoutedActionExecutionEnvelope,
   type SetupAggregateResult,
@@ -86,6 +87,10 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260724103000_product_domain_monitored_symbol_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260727103000_product_domain_research_run_relational_v1/migration.sql"
   )
 ];
 
@@ -120,6 +125,19 @@ const buildResearchHypothesis = (id: string, setupDefinitionId: string): Researc
   status: "active",
   createdAt: "2026-05-23T08:00:00.000Z",
   updatedAt: "2026-05-23T09:00:00.000Z"
+});
+
+const buildResearchRun = (runId: string, hypothesisId: string, setupId: string): ResearchRun => ({
+  runId,
+  hypothesisId,
+  setupId,
+  candidateIds: ["candidate-001"],
+  evaluationWindowIds: ["window-24h"],
+  evaluationResultIds: ["result-001"],
+  status: "running",
+  startedAtUtc: "2026-05-24T09:30:00.000Z",
+  createdAtUtc: "2026-05-24T09:30:00.000Z",
+  updatedAtUtc: "2026-05-24T09:30:00.000Z"
 });
 
 const buildSignalCandidate = (id: string, setupDefinitionId: string): SignalCandidate => ({
@@ -486,6 +504,10 @@ integrationTest(
         result: buildEvaluationResult("result-001", "candidate-001"),
         metadata
       });
+      await repositories.researchRunRepository.create({
+        run: buildResearchRun("research-run-001", "hypothesis-001", "setup-001"),
+        metadata
+      });
       await repositories.setupAggregateResultRepository.create({
         aggregate: buildAggregate("aggregate-001", "setup-001", "hypothesis-001"),
         metadata
@@ -655,6 +677,9 @@ integrationTest(
           "setup-001",
           buildAggregate("aggregate-001", "setup-001", "hypothesis-001").aggregationScope
         );
+      const storedResearchRun = await repositories.researchRunRepository.getById(
+        "research-run-001"
+      );
       const storedFeedbackDecision =
         await repositories.researchFeedbackDecisionRepository.getById("feedback-001");
       const storedApproval =
@@ -740,10 +765,15 @@ integrationTest(
         where: { symbolStatus: "active" },
         orderBy: { monitoredSymbolId: "asc" }
       });
+      const researchRunRows = await repositories.prismaClient.researchRunRecord.findMany({
+        where: { hypothesisId: "hypothesis-001" },
+        orderBy: { researchRunId: "asc" }
+      });
 
       assert.equal(storedMonitoredSymbol?.displayName, "BTC/USDT");
       assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
       assert.equal(storedEvaluation?.id, "result-001");
+      assert.equal(storedResearchRun?.setupId, "setup-001");
       assert.equal(storedAggregate?.status, "completed");
       assert.equal(approvalPersistenceResult.decision.decisionStatus, "accepted");
       assert.equal(storedFeedbackDecision?.reviewerMetadata?.reviewedBy, "reviewer-001");
@@ -797,6 +827,8 @@ integrationTest(
       assert.equal(activationsForTarget.length, 1);
       assert.equal(monitoredSymbolRows.length, 1);
       assert.equal(monitoredSymbolRows[0]?.baseAsset, "BTC");
+      assert.equal(researchRunRows.length, 1);
+      assert.equal(researchRunRows[0]?.researchRunStatus, "running");
       assert.equal(activationsForTarget[0]?.setupFamilyId, "setup-family-002");
       assert.equal(aggregateRows.length, 2);
       assert.equal(aggregateRows[0]?.completedEvaluations, 1);

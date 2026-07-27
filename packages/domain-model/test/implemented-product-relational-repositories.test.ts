@@ -8,6 +8,7 @@ import {
   InMemoryResearchDecisionApprovalRelationalRepositoryAdapter,
   InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter,
   InMemoryResearchReviewDecisionRelationalRepositoryAdapter,
+  InMemoryResearchRunRelationalRepositoryAdapter,
   InMemoryReviewDecisionRoutingResultRelationalRepositoryAdapter,
   InMemoryRoutedActionExecutionEnvelopeRelationalRepositoryAdapter,
   InMemorySetupDefinitionRevisionRelationalRepositoryAdapter,
@@ -23,6 +24,7 @@ import {
   type ResearchFeedbackDecision,
   type ResearchHypothesis,
   type ResearchReviewDecision,
+  type ResearchRun,
   type ReviewDecisionRoutingResult,
   type RoutedActionExecutionEnvelope,
   type SetupAggregateResult,
@@ -65,6 +67,19 @@ const buildResearchHypothesis = (id: string, setupDefinitionId: string): Researc
   status: "active",
   createdAt: "2026-05-23T08:00:00.000Z",
   updatedAt: "2026-05-23T09:00:00.000Z"
+});
+
+const buildResearchRun = (runId: string, hypothesisId: string, setupId: string): ResearchRun => ({
+  runId,
+  hypothesisId,
+  setupId,
+  candidateIds: ["candidate-001"],
+  evaluationWindowIds: ["window-24h"],
+  evaluationResultIds: ["result-001"],
+  status: "running",
+  startedAtUtc: "2026-05-24T09:30:00.000Z",
+  createdAtUtc: "2026-05-24T09:30:00.000Z",
+  updatedAtUtc: "2026-05-24T09:30:00.000Z"
 });
 
 const buildSignalCandidate = (id: string, setupDefinitionId: string): SignalCandidate => ({
@@ -358,7 +373,7 @@ const buildSetupRevisionActivationRecord = (
 });
 
 test(
-  "implemented product repository composition includes the monitored-symbol catalog and activation records",
+  "implemented product repository composition includes research runs and activation records",
   async () => {
     const firstDurableAdapter = new InMemoryFirstDurableRelationalRepositoryAdapter();
     const monitoredSymbolAdapter = new InMemoryMonitoredSymbolRelationalRepositoryAdapter();
@@ -432,6 +447,7 @@ test(
       ),
       setupAggregateAdapter,
       feedbackDecisionAdapter,
+      researchRunAdapter: new InMemoryResearchRunRelationalRepositoryAdapter(),
       approvalAdapter,
       reviewDecisionAdapter,
       reviewDecisionRoutingResultAdapter,
@@ -473,6 +489,10 @@ test(
     });
     await repositories.evaluationResultRepository.create({
       result: buildEvaluationResult("result-001", "candidate-001"),
+      metadata
+    });
+    await repositories.researchRunRepository.create({
+      run: buildResearchRun("research-run-001", "hypothesis-001", "setup-001"),
       metadata
     });
     await repositories.setupAggregateResultRepository.create({
@@ -584,6 +604,9 @@ test(
         "candidate-001",
         "window-24h"
       );
+    const storedResearchRun = await repositories.researchRunRepository.getById(
+      "research-run-001"
+    );
     const storedAggregate =
       await repositories.setupAggregateResultRepository.getBySetupDefinitionAndScope(
         "setup-001",
@@ -624,6 +647,7 @@ test(
     assert.equal(storedMonitoredSymbol?.displayName, "BTC/USDT");
     assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
     assert.equal(storedEvaluation?.id, "result-001");
+    assert.equal(storedResearchRun?.hypothesisId, "hypothesis-001");
     assert.equal(storedAggregate?.researchHypothesisId, "hypothesis-001");
     assert.equal(storedFeedbackDecision?.setupAggregateResultId, "aggregate-001");
     assert.equal(storedApproval?.researchFeedbackDecisionId, "feedback-001");
