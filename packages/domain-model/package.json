@@ -18,7 +18,7 @@
     "prelint": "pnpm run prisma:generate",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --import tsx --test --test-concurrency=1 ./test/**/*.test.ts",
-    "test:integration": "node --import tsx --test --test-concurrency=1 ./test/**/*.integration.test.ts",
+    "test:integration": "node --env-file=../../.env --import tsx --test --test-concurrency=1 ./test/**/*.integration.test.ts",
     "verify:persistence": "pnpm run typecheck && pnpm run test && pnpm run test:integration",
     "lint": "tsc -p tsconfig.json --noEmit"
   },

@@ -12,6 +12,7 @@ Reason:
 
 ## Recommended near-future sequence
 1. run `pnpm --filter @monitor/domain-model test:integration` with `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL` configured
+   and a reachable disposable Postgres database
 2. apply `20260727103000_product_domain_research_run_relational_v1` through the deployment migration workflow
 3. enable durable research-run writes in the target runtime composition
 
