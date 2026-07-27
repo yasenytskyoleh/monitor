@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   composeImplementedProductRelationalRepositories,
   InMemoryFirstDurableRelationalRepositoryAdapter,
+  InMemoryMonitoredSymbolRelationalRepositoryAdapter,
   InMemoryResearchDecisionApprovalRelationalRepositoryAdapter,
   InMemoryResearchFeedbackDecisionRelationalRepositoryAdapter,
   InMemoryResearchReviewDecisionRelationalRepositoryAdapter,
@@ -16,6 +17,7 @@ import {
   InMemorySetupRefinementRequestRelationalRepositoryAdapter,
   InMemorySetupRevisionActivationRecordRelationalRepositoryAdapter,
   type EvaluationResult,
+  type MonitoredSymbol,
   type ProductRecordMetadata,
   type ResearchDecisionApproval,
   type ResearchFeedbackDecision,
@@ -75,6 +77,20 @@ const buildSignalCandidate = (id: string, setupDefinitionId: string): SignalCand
   evidenceSummary: "Breakout retest candidate",
   createdAt: "2026-05-23T09:30:00.000Z",
   updatedAt: "2026-05-23T09:30:00.000Z"
+});
+
+const buildMonitoredSymbol = (): MonitoredSymbol => ({
+  symbolId: "BTC-USDT",
+  baseAsset: "BTC",
+  quoteAsset: "USDT",
+  displayName: "BTC/USDT",
+  marketScope: "spot",
+  status: "active",
+  providerHint: "unknown",
+  tags: ["primary"],
+  sourceBindings: [],
+  createdAtUtc: "2026-05-23T09:00:00.000Z",
+  updatedAtUtc: "2026-05-23T09:00:00.000Z"
 });
 
 const buildEvaluationResult = (id: string, signalCandidateId: string): EvaluationResult => ({
@@ -342,9 +358,10 @@ const buildSetupRevisionActivationRecord = (
 });
 
 test(
-  "implemented product repository composition supports the current end-to-end entity chain including setup-revision activation records",
+  "implemented product repository composition includes the monitored-symbol catalog and activation records",
   async () => {
     const firstDurableAdapter = new InMemoryFirstDurableRelationalRepositoryAdapter();
+    const monitoredSymbolAdapter = new InMemoryMonitoredSymbolRelationalRepositoryAdapter();
     const setupAggregateAdapter = new InMemorySetupAggregateRelationalRepositoryAdapter(
       firstDurableAdapter
     );
@@ -409,6 +426,7 @@ test(
       });
     const repositories = composeImplementedProductRelationalRepositories({
       firstDurableAdapter,
+      monitoredSymbolAdapter,
       signalEvaluationAdapter: new InMemorySignalEvaluationRelationalRepositoryAdapter(
         firstDurableAdapter
       ),
@@ -443,6 +461,10 @@ test(
     });
     await repositories.researchHypothesisRepository.create({
       hypothesis: buildResearchHypothesis("hypothesis-001", "setup-001"),
+      metadata
+    });
+    await repositories.monitoredSymbolRepository.create({
+      symbol: buildMonitoredSymbol(),
       metadata
     });
     await repositories.signalCandidateRepository.create({
@@ -553,6 +575,9 @@ test(
       metadata
     });
 
+    const storedMonitoredSymbol = await repositories.monitoredSymbolRepository.getById(
+      "BTC-USDT"
+    );
     const storedCandidate = await repositories.signalCandidateRepository.getById("candidate-001");
     const storedEvaluation =
       await repositories.evaluationResultRepository.getBySignalCandidateAndWindow(
@@ -596,6 +621,7 @@ test(
         "setup-family-002"
       );
 
+    assert.equal(storedMonitoredSymbol?.displayName, "BTC/USDT");
     assert.equal(storedCandidate?.setupDefinitionId, "setup-001");
     assert.equal(storedEvaluation?.id, "result-001");
     assert.equal(storedAggregate?.researchHypothesisId, "hypothesis-001");
