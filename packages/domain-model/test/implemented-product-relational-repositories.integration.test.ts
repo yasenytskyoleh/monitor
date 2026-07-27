@@ -65,10 +65,6 @@ const migrationSqlPaths = [
   ),
   resolve(
     migrationsDirectory,
-    "20260723103000_product_domain_review_decision_routing_result_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
     "20260702103000_product_domain_routed_action_execution_envelope_relational_v1/migration.sql"
   ),
   resolve(
@@ -86,6 +82,10 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260711103000_product_domain_setup_revision_activation_record_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260723103000_product_domain_review_decision_routing_result_relational_v1/migration.sql"
   ),
   resolve(
     migrationsDirectory,
@@ -284,9 +284,9 @@ const buildApplicationFlowInput = (
         evaluationWindowIds: [pendingResult.evaluationWindowId],
         evaluationResultIds: [],
         status: "planned",
-        startedAtUtc: "2026-05-24T09:30:00.000Z",
-        createdAtUtc: "2026-05-24T09:30:00.000Z",
-        updatedAtUtc: "2026-05-24T09:30:00.000Z"
+        startedAtUtc: "2026-05-23T08:30:00.000Z",
+        createdAtUtc: "2026-05-23T08:30:00.000Z",
+        updatedAtUtc: "2026-05-23T08:30:00.000Z"
       },
       completion: {
         completedAtUtc: "2026-05-24T10:05:00.000Z",
@@ -328,7 +328,10 @@ const buildApplicationFlowInput = (
       },
       recomputeEvaluationResultIds: [pendingResult.id]
     },
-    metadata
+    metadata: {
+      ...metadata,
+      sourceObservedAtUtc: "2026-05-24T10:05:00.000Z"
+    }
   };
 };
 

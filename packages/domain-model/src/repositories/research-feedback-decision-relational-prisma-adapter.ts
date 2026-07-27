@@ -198,7 +198,7 @@ const toPrismaReviewerMetadata = (
   | Prisma.NullableJsonNullValueInput
   | undefined => {
   if (value === null) {
-    return Prisma.JsonNull;
+    return Prisma.DbNull;
   }
 
   return structuredClone(value) as Prisma.InputJsonValue;
