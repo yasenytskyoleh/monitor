@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   createExecutionAttemptAuditService,
+  ExecutionAttemptAuditRepositoryValidationError,
   InMemoryExecutionAttemptAuditRelationalRepositoryAdapter,
   RelationalExecutionAttemptAuditRepository,
   RepositoryError,
@@ -72,6 +73,31 @@ test("relational execution-attempt audit repository permits one audit per prepar
         metadata
       }),
     (error: unknown) => error instanceof RepositoryError && error.code === "already_exists"
+  );
+});
+
+test("relational execution-attempt audit repository preserves its received snapshot", async () => {
+  const repository = new RelationalExecutionAttemptAuditRepository(
+    new InMemoryExecutionAttemptAuditRelationalRepositoryAdapter()
+  );
+  const audit = { ...buildAudit(), routedActionExecutionEnvelopeId: "execution-envelope-001" };
+  await repository.create({ audit, metadata });
+
+  await assert.rejects(
+    () =>
+      repository.update({
+        audit: {
+          ...audit,
+          routedActionExecutionEnvelopeId: "execution-envelope-reassigned-001",
+          status: "failed",
+          completedAt: "2026-07-27T12:00:05.000Z",
+          outcomeCode: "provider_unavailable",
+          warningCodes: []
+        },
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditRepositoryValidationError
   );
 });
 

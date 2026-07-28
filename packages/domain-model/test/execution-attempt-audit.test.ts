@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   ExecutionAttemptAuditValidationError,
+  ExecutionAttemptAuditRepositoryValidationError,
   InMemoryExecutionAttemptAuditRepository,
   RepositoryError,
   type ExecutionAttemptAudit,
@@ -92,6 +93,29 @@ test("execution-attempt audit repository permits one audit per prepared envelope
     },
     metadata
   });
+});
+
+test("execution-attempt audit repository preserves its received snapshot", async () => {
+  const repository = new InMemoryExecutionAttemptAuditRepository();
+  const audit = buildAudit();
+  await repository.create({ audit, metadata });
+
+  await assert.rejects(
+    () =>
+      repository.update({
+        audit: {
+          ...audit,
+          routedActionExecutionEnvelopeId: "execution-envelope-reassigned-001",
+          status: "failed",
+          completedAt: "2026-07-27T12:00:05.000Z",
+          outcomeCode: "provider_unavailable",
+          warningCodes: []
+        },
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditRepositoryValidationError
+  );
 });
 
 test("execution-attempt audit service records a received attempt and one terminal outcome", async () => {

@@ -24,3 +24,30 @@ export type ExecutionAttemptAuditRepository = {
   create(request: ExecutionAttemptAuditCreateRequest): Promise<ExecutionAttemptAudit>;
   update(request: ExecutionAttemptAuditUpdateRequest): Promise<ExecutionAttemptAudit>;
 };
+
+export class ExecutionAttemptAuditRepositoryValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ExecutionAttemptAuditRepositoryValidationError";
+  }
+}
+
+export const assertExecutionAttemptAuditSnapshotIsUnchanged = (
+  current: ExecutionAttemptAudit,
+  next: ExecutionAttemptAudit
+): void => {
+  if (
+    current.routedActionExecutionEnvelopeId !== next.routedActionExecutionEnvelopeId ||
+    current.reviewDecisionRoutingResultId !== next.reviewDecisionRoutingResultId ||
+    current.researchReviewDecisionId !== next.researchReviewDecisionId ||
+    current.actionTarget !== next.actionTarget ||
+    current.downstreamCommandType !== next.downstreamCommandType ||
+    current.attemptedBy !== next.attemptedBy ||
+    current.attemptedAt !== next.attemptedAt ||
+    current.createdAtUtc !== next.createdAtUtc
+  ) {
+    throw new ExecutionAttemptAuditRepositoryValidationError(
+      "execution_attempt_audit received snapshot is immutable"
+    );
+  }
+};

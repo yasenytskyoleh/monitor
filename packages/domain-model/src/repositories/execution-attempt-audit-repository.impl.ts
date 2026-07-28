@@ -5,6 +5,7 @@ import {
   createNotFoundRepositoryError,
   createVersionMismatchRepositoryError
 } from "./repository-error.js";
+import { assertExecutionAttemptAuditSnapshotIsUnchanged } from "./execution-attempt-audit-repository.js";
 import type {
   ExecutionAttemptAuditCreateRequest,
   ExecutionAttemptAuditRepository,
@@ -95,6 +96,8 @@ export class InMemoryExecutionAttemptAuditRepository
     if (currentRecord.audit.status !== "received" || request.audit.status === "received") {
       throw new Error("execution_attempt_audit terminal outcome is append-only");
     }
+
+    assertExecutionAttemptAuditSnapshotIsUnchanged(currentRecord.audit, request.audit);
 
     if (request.expectedVersion !== null && request.expectedVersion !== currentRecord.version) {
       throw createVersionMismatchRepositoryError({
