@@ -171,6 +171,25 @@ test("execution-attempt audit service records a received attempt and one termina
 
 });
 
+test("execution-attempt audit service resolves retained evidence for a prepared envelope", async () => {
+  const repository = new InMemoryExecutionAttemptAuditRepository();
+  const service = createExecutionAttemptAuditService({
+    executionAttemptAuditRepository: repository
+  });
+  const audit = buildAudit();
+  await service.recordReceivedAttempt({ audit, metadata });
+
+  assert.deepEqual(await service.getById(audit.attemptId), audit);
+  assert.deepEqual(
+    await service.getByRoutedActionExecutionEnvelopeId("execution-envelope-001"),
+    audit
+  );
+  assert.equal(
+    await service.getByRoutedActionExecutionEnvelopeId("execution-envelope-missing-001"),
+    null
+  );
+});
+
 test("execution-attempt audit service keeps terminal update timestamps monotonic", async () => {
   const repository = new InMemoryExecutionAttemptAuditRepository();
   const service = createExecutionAttemptAuditService({
