@@ -1516,3 +1516,37 @@ integrationTest(
     });
   }
 );
+
+integrationTest(
+  "shared implemented-product bundle permits one execution attempt per prepared envelope against real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      const audit: ExecutionAttemptAudit = {
+        attemptId: "execution-attempt-envelope-001",
+        routedActionExecutionEnvelopeId: "execution-envelope-single-dispatch-001",
+        actionTarget: "activate_setup_revision",
+        downstreamCommandType: "ActivateSetupDefinitionRevisionCommand",
+        status: "received",
+        attemptedBy: "execution-runtime",
+        attemptedAt: "2026-07-28T10:00:00.000Z",
+        warningCodes: [],
+        createdAtUtc: "2026-07-28T10:00:00.000Z",
+        updatedAtUtc: "2026-07-28T10:00:00.000Z"
+      };
+      await repositories.executionAttemptAuditRepository.create({ audit, metadata });
+
+      await assert.rejects(
+        async () =>
+          repositories.executionAttemptAuditRepository.create({
+            audit: { ...audit, attemptId: "execution-attempt-envelope-002" },
+            metadata
+          }),
+        (error: unknown) =>
+          error instanceof RepositoryError &&
+          error.code === "already_exists" &&
+          error.entityType === "execution_attempt_audit" &&
+          error.entityId === "execution-attempt-envelope-002"
+      );
+    });
+  }
+);
