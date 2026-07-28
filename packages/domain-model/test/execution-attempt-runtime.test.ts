@@ -268,6 +268,37 @@ test("runtime sanitizes duplicate-conflict reconciliation lookup failures", asyn
   assert.equal(executed, false);
 });
 
+test("runtime treats an unresolved duplicate conflict as a safe persistence failure", async () => {
+  let executed = false;
+  const runtime = createRuntimeWithAuditService(
+    {
+      getById: async () => null,
+      getByRoutedActionExecutionEnvelopeId: async () => null,
+      recordReceivedAttempt: async () => {
+        throw new RepositoryError("duplicate audit", {
+          code: "already_exists",
+          operation: "create",
+          entityType: "execution_attempt_audit",
+          entityId: "execution-attempt-runtime-001",
+          retryDisposition: "do_not_retry"
+        });
+      },
+      recordTerminalOutcome: async () => null
+    },
+    async () => {
+      executed = true;
+      return { status: "executed", outcomeCode: "should_not_run" };
+    }
+  );
+
+  await assert.rejects(
+    () => runtime.execute({ audit: buildAudit(), envelope, metadata }),
+    (error: unknown) =>
+      error instanceof ExecutionAttemptRuntimeAuditPersistenceError && error.phase === "received"
+  );
+  assert.equal(executed, false);
+});
+
 test("runtime distinguishes a duplicate attempt ID from an envelope conflict", async () => {
   let executionCount = 0;
   const { runtime } = createFixture(async () => {
