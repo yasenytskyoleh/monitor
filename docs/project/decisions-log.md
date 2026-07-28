@@ -173,4 +173,5 @@
 - per-run approvals are persisted (`approvals.json`)
 
 ## Current next-step decision
-- the currently recommended next step is: **select a new product-domain durable entity, or explicitly design a retained execution-attempt audit entity**
+- the currently recommended next step is: **define a provider-specific downstream executor and its
+  authorization and retry policy only when an external action is explicitly approved**

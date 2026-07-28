@@ -226,13 +226,16 @@ Current limitation:
   - one end-to-end real-database integration flow now spans the full implemented product chain through `setup_revision_activation_record`
   - `setup_revision_activation_record` now has implemented in-memory persistence, a service-owned write path, a durable relational contract, committed Prisma schema/migration coverage, a relational adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, slice-level shared composition, shared implemented-product bundle coverage, and opt-in real-database integration coverage
   - `review_decision_routing_result` has its durable contract, committed Prisma schema/migration, relational adapter contract, mappers, adapter-backed repository, concrete Prisma adapter, shared-bundle composition, and opt-in real-Postgres integration coverage
-  - `routed_action_execution_result` is explicitly product-ephemeral; a retained execution-attempt audit would require a separate entity and owner
+  - `routed_action_execution_result` is explicitly product-ephemeral; `execution_attempt_audit` is
+    the dedicated retained audit entity, with a generic runtime that records received and terminal
+    sanitized outcomes through the shared repository bundle
   - no exchange ingestion runtime yet
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- select a new product-domain durable entity, or explicitly design a retained execution-attempt audit entity
+- define a provider-specific downstream executor and its authorization and retry policy only when an
+  external action is explicitly approved
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
