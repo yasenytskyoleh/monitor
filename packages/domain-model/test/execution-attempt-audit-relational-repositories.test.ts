@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  createExecutionAttemptAuditService,
   InMemoryExecutionAttemptAuditRelationalRepositoryAdapter,
   RelationalExecutionAttemptAuditRepository,
   type ExecutionAttemptAudit,
@@ -54,4 +55,37 @@ test("execution-attempt audit relational repository round-trips optional correla
   assert.deepEqual(updated, completed);
   assert.equal((await repository.listByReviewDecisionRoutingResultId("routing-result-001")).length, 1);
   assert.equal((await repository.listByStatus(["failed"])).length, 1);
+});
+
+test("execution-attempt audit terminalization uses a version check when callers omit one", async () => {
+  const repository = new RelationalExecutionAttemptAuditRepository(
+    new InMemoryExecutionAttemptAuditRelationalRepositoryAdapter()
+  );
+  const service = createExecutionAttemptAuditService({ executionAttemptAuditRepository: repository });
+  const audit = buildAudit();
+  await service.recordReceivedAttempt({ audit, metadata });
+
+  const outcomes = await Promise.allSettled([
+    service.recordTerminalOutcome({
+      attemptId: audit.attemptId,
+      status: "executed",
+      completedAt: "2026-07-27T12:00:05.000Z",
+      outcomeCode: "setup_revision_activated",
+      warningCodes: [],
+      metadata,
+      expectedVersion: null
+    }),
+    service.recordTerminalOutcome({
+      attemptId: audit.attemptId,
+      status: "failed",
+      completedAt: "2026-07-27T12:00:06.000Z",
+      outcomeCode: "provider_unavailable",
+      warningCodes: [],
+      metadata,
+      expectedVersion: null
+    })
+  ]);
+
+  assert.equal(outcomes.filter((outcome) => outcome.status === "fulfilled").length, 1);
+  assert.equal(outcomes.filter((outcome) => outcome.status === "rejected").length, 1);
 });

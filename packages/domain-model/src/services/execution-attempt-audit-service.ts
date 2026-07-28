@@ -81,8 +81,19 @@ const assertTerminalRequest = (request: RecordTerminalExecutionAttemptAuditReque
   assertNonEmptyString(request.outcomeCode, "outcomeCode");
 };
 
-const buildUpdatedAt = (metadata: ProductRecordMetadata): TimestampUtc =>
-  metadata.sourceObservedAtUtc ?? new Date().toISOString();
+const buildUpdatedAt = (
+  current: ExecutionAttemptAudit,
+  completedAt: TimestampUtc,
+  metadata: ProductRecordMetadata
+): TimestampUtc => {
+  const candidates = [current.updatedAtUtc, completedAt, metadata.sourceObservedAtUtc].filter(
+    (value): value is TimestampUtc => value !== null && value !== undefined
+  );
+
+  return candidates.reduce((latest, value) =>
+    Date.parse(value) > Date.parse(latest) ? value : latest
+  );
+};
 
 export const createExecutionAttemptAuditService = (
   dependencies: ExecutionAttemptAuditServiceDependencies
@@ -122,7 +133,7 @@ export const createExecutionAttemptAuditService = (
           outcomeCode: request.outcomeCode,
           outcomeSummary: request.outcomeSummary,
           warningCodes: [...request.warningCodes],
-          updatedAtUtc: buildUpdatedAt(request.metadata)
+          updatedAtUtc: buildUpdatedAt(current, request.completedAt, request.metadata)
         },
         metadata: request.metadata,
         expectedVersion: request.expectedVersion

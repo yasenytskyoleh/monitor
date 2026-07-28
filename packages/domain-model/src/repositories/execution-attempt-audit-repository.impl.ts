@@ -77,6 +77,10 @@ export class InMemoryExecutionAttemptAuditRepository
       });
     }
 
+    if (currentRecord.audit.status !== "received" || request.audit.status === "received") {
+      throw new Error("execution_attempt_audit terminal outcome is append-only");
+    }
+
     if (request.expectedVersion !== null && request.expectedVersion !== currentRecord.version) {
       throw createVersionMismatchRepositoryError({
         entityType: "execution_attempt_audit",

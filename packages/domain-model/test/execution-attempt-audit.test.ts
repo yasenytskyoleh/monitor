@@ -103,6 +103,30 @@ test("execution-attempt audit service records a received attempt and one termina
   );
 });
 
+test("execution-attempt audit service keeps terminal update timestamps monotonic", async () => {
+  const repository = new InMemoryExecutionAttemptAuditRepository();
+  const service = createExecutionAttemptAuditService({
+    executionAttemptAuditRepository: repository
+  });
+  const audit = buildAudit();
+  await service.recordReceivedAttempt({ audit, metadata });
+
+  const completed = await service.recordTerminalOutcome({
+    attemptId: audit.attemptId,
+    status: "executed",
+    completedAt: "2026-07-27T12:00:05.000Z",
+    outcomeCode: "setup_revision_activated",
+    warningCodes: [],
+    metadata: {
+      ...metadata,
+      sourceObservedAtUtc: "2026-07-27T11:59:00.000Z"
+    },
+    expectedVersion: 1
+  });
+
+  assert.equal(completed?.updatedAtUtc, "2026-07-27T12:00:05.000Z");
+});
+
 test("execution-attempt audit service rejects invalid received and terminal evidence", async () => {
   const service = createExecutionAttemptAuditService({
     executionAttemptAuditRepository: new InMemoryExecutionAttemptAuditRepository()

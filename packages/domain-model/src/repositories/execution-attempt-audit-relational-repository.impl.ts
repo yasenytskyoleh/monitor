@@ -52,13 +52,20 @@ export class RelationalExecutionAttemptAuditRepository
       });
     }
 
+    if (
+      current.executionAttemptAuditStatus !== "received" ||
+      request.audit.status === "received"
+    ) {
+      throw new Error("execution_attempt_audit terminal outcome is append-only");
+    }
+
     const record = await this.adapter.updateExecutionAttemptAuditRecord({
       record: dehydrateExecutionAttemptAuditToDurableRecord(
         request.audit,
         request.metadata,
         current.identity.version + 1
       ),
-      expectedVersion: request.expectedVersion
+      expectedVersion: request.expectedVersion ?? current.identity.version
     });
     return hydrateExecutionAttemptAuditFromDurableRecord(record);
   }
