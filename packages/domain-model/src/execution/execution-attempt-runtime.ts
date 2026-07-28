@@ -53,7 +53,10 @@ export class ExecutionAttemptRuntimeAuditPersistenceError extends Error {
 }
 
 export class ExecutionAttemptRuntimeAuditAlreadyRecordedError extends Error {
-  constructor(readonly attemptId: string) {
+  constructor(
+    readonly attemptId: string,
+    readonly routedActionExecutionEnvelopeId: string | undefined
+  ) {
     super("execution_attempt_audit has already been recorded");
     this.name = "ExecutionAttemptRuntimeAuditAlreadyRecordedError";
   }
@@ -164,7 +167,10 @@ const recordReceivedAttempt = async (
     }
 
     if (error instanceof RepositoryError && error.code === "already_exists") {
-      throw new ExecutionAttemptRuntimeAuditAlreadyRecordedError(audit.attemptId);
+      throw new ExecutionAttemptRuntimeAuditAlreadyRecordedError(
+        audit.attemptId,
+        audit.routedActionExecutionEnvelopeId
+      );
     }
 
     throw new ExecutionAttemptRuntimeAuditPersistenceError(audit.attemptId, "received");

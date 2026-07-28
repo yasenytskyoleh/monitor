@@ -222,7 +222,8 @@ test("runtime does not dispatch a prepared envelope more than once", async () =>
       }),
     (error: unknown) =>
       error instanceof ExecutionAttemptRuntimeAuditAlreadyRecordedError &&
-      error.attemptId === "execution-attempt-runtime-duplicate-001"
+      error.attemptId === "execution-attempt-runtime-duplicate-001" &&
+      error.routedActionExecutionEnvelopeId === envelope.id
   );
   assert.equal(executionCount, 1);
 });
