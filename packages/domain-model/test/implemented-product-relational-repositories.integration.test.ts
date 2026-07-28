@@ -100,6 +100,10 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260727130000_product_domain_execution_attempt_audit_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260728100000_product_domain_execution_attempt_envelope_single_dispatch_v1/migration.sql"
   )
 ];
 

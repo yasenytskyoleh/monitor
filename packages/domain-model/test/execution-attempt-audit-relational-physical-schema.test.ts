@@ -9,7 +9,8 @@ import {
   EXECUTION_ATTEMPT_AUDIT_RELATIONAL_MIGRATION_SLUG,
   EXECUTION_ATTEMPT_AUDIT_RELATIONAL_PRISMA_MODELS,
   EXECUTION_ATTEMPT_AUDIT_RELATIONAL_REQUIRED_COLUMNS,
-  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_TABLES
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_TABLES,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_UNIQUE_CONSTRAINTS
 } from "../src/index.js";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
@@ -22,6 +23,13 @@ const migrationPath = join(
   "20260727130000_product_domain_execution_attempt_audit_relational_v1",
   "migration.sql"
 );
+const singleDispatchMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260728100000_product_domain_execution_attempt_envelope_single_dispatch_v1",
+  "migration.sql"
+);
 
 function resolvePackageRoot(startDirectory: string): string {
   return dirname(startDirectory);
@@ -30,6 +38,7 @@ function resolvePackageRoot(startDirectory: string): string {
 test("execution-attempt audit physical schema defines the retained sanitized audit record", async () => {
   const schema = await readFile(schemaPath, "utf8");
   const migration = await readFile(migrationPath, "utf8");
+  const singleDispatchMigration = await readFile(singleDispatchMigrationPath, "utf8");
 
   assert.equal(
     EXECUTION_ATTEMPT_AUDIT_RELATIONAL_MIGRATION_SLUG,
@@ -44,6 +53,10 @@ test("execution-attempt audit physical schema defines the retained sanitized aud
 
   for (const indexName of EXECUTION_ATTEMPT_AUDIT_RELATIONAL_INDEXES) {
     assert.equal(migration.includes(`CREATE INDEX "${indexName}"`), true);
+  }
+  for (const constraintName of EXECUTION_ATTEMPT_AUDIT_RELATIONAL_UNIQUE_CONSTRAINTS) {
+    assert.equal(schema.includes(`@unique(map: "${constraintName}")`), true);
+    assert.equal(singleDispatchMigration.includes(`"${constraintName}"`), true);
   }
   for (const columns of Object.values(EXECUTION_ATTEMPT_AUDIT_RELATIONAL_REQUIRED_COLUMNS)) {
     for (const columnName of columns) {

@@ -41,7 +41,6 @@ export const EXECUTION_ATTEMPT_AUDIT_RELATIONAL_REQUIRED_COLUMNS = {
 } as const;
 
 export const EXECUTION_ATTEMPT_AUDIT_RELATIONAL_INDEXES = [
-  "idx_execution_attempt_audit_routed_action_execution_envelope_id",
   "idx_execution_attempt_audit_review_decision_routing_result_id",
   "idx_execution_attempt_audit_research_review_decision_id",
   "idx_execution_attempt_audit_status",
@@ -49,6 +48,12 @@ export const EXECUTION_ATTEMPT_AUDIT_RELATIONAL_INDEXES = [
 ] as const;
 export type ExecutionAttemptAuditRelationalIndexName =
   (typeof EXECUTION_ATTEMPT_AUDIT_RELATIONAL_INDEXES)[number];
+
+export const EXECUTION_ATTEMPT_AUDIT_RELATIONAL_UNIQUE_CONSTRAINTS = [
+  "execution_attempt_audit_routed_action_execution_envelope_key"
+] as const;
+export type ExecutionAttemptAuditRelationalUniqueConstraintName =
+  (typeof EXECUTION_ATTEMPT_AUDIT_RELATIONAL_UNIQUE_CONSTRAINTS)[number];
 
 export const EXECUTION_ATTEMPT_AUDIT_RELATIONAL_MIGRATION_SLUG =
   "product_domain_execution_attempt_audit_relational_v1" as const;
