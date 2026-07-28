@@ -5,6 +5,7 @@ import {
   ExecutionAttemptRuntimeValidationError,
   InMemoryExecutionAttemptAuditRepository,
   type ExecutionAttemptAudit,
+  type DownstreamActionExecutorOutcome,
   type ProductRecordMetadata,
   type RoutedActionExecutionEnvelope,
   createExecutionAttemptAuditService,
@@ -113,6 +114,23 @@ test("runtime sanitizes executor failures into a failed terminal audit", async (
 
   assert.equal(result.status, "failed");
   assert.equal(result.audit.outcomeCode, "executor_failed");
+  assert.deepEqual(result.audit.warningCodes, ["executor_failure"]);
+  assert.equal(result.audit.outcomeSummary, undefined);
+});
+
+test("runtime sanitizes malformed executor outcomes into failed terminal evidence", async () => {
+  const { runtime } = createFixture(async () =>
+    ({
+      status: "executed",
+      outcomeCode: "",
+      outcomeSummary: "provider response should not be persisted"
+    }) as DownstreamActionExecutorOutcome
+  );
+
+  const result = await runtime.execute({ audit: buildAudit(), envelope, metadata });
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.audit.outcomeCode, "executor_invalid_outcome");
   assert.deepEqual(result.audit.warningCodes, ["executor_failure"]);
   assert.equal(result.audit.outcomeSummary, undefined);
 });

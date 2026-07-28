@@ -41,6 +41,31 @@ export class ExecutionAttemptRuntimeValidationError extends Error {
   }
 }
 
+class InvalidExecutorOutcomeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidExecutorOutcomeError";
+  }
+}
+
+const assertExecutorOutcome = (outcome: DownstreamActionExecutorOutcome): void => {
+  if (outcome.status !== "executed" && outcome.status !== "rejected") {
+    throw new InvalidExecutorOutcomeError("executor outcome status must be executed or rejected");
+  }
+
+  if (!outcome.outcomeCode.trim()) {
+    throw new InvalidExecutorOutcomeError("executor outcomeCode is required");
+  }
+
+  if (outcome.outcomeSummary !== undefined && !outcome.outcomeSummary.trim()) {
+    throw new InvalidExecutorOutcomeError("executor outcomeSummary must not be blank");
+  }
+
+  if (outcome.warningCodes?.some((warningCode) => !warningCode.trim())) {
+    throw new InvalidExecutorOutcomeError("executor warningCodes must not include blank values");
+  }
+};
+
 const assertAuditMatchesEnvelope = (
   audit: ExecutionAttemptAudit,
   envelope: RoutedActionExecutionEnvelope
@@ -118,12 +143,19 @@ export const createExecutionAttemptRuntime = (
       let outcome: DownstreamActionExecutorOutcome;
       try {
         outcome = await downstreamActionExecutor.execute(request.envelope);
-      } catch {
+        assertExecutorOutcome(outcome);
+      } catch (error) {
         const audit = await recordTerminalOutcome(
           executionAttemptAuditService,
           request.audit,
           request.metadata,
-          { status: "failed", outcomeCode: "executor_failed" }
+          {
+            status: "failed",
+            outcomeCode:
+              error instanceof InvalidExecutorOutcomeError
+                ? "executor_invalid_outcome"
+                : "executor_failed"
+          }
         );
         return { status: "failed", audit };
       }
