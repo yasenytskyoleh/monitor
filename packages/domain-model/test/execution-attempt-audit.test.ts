@@ -101,6 +101,7 @@ test("execution-attempt audit service records a received attempt and one termina
       }),
     (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
   );
+
 });
 
 test("execution-attempt audit service keeps terminal update timestamps monotonic", async () => {
@@ -159,6 +160,49 @@ test("execution-attempt audit service rejects invalid received and terminal evid
         completedAt: "2026-07-27T11:59:59.000Z",
         outcomeCode: "validation_rejected",
         warningCodes: [],
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordTerminalOutcome({
+        attemptId: "execution-attempt-001",
+        status: "received" as "rejected",
+        completedAt: "2026-07-27T12:00:05.000Z",
+        outcomeCode: "invalid_terminal_status",
+        warningCodes: [],
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordTerminalOutcome({
+        attemptId: "execution-attempt-001",
+        status: "rejected",
+        completedAt: "2026-07-27T12:00:05.000Z",
+        outcomeCode: "validation_rejected",
+        outcomeSummary: " ",
+        warningCodes: [],
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordTerminalOutcome({
+        attemptId: "execution-attempt-001",
+        status: "rejected",
+        completedAt: "2026-07-27T12:00:05.000Z",
+        outcomeCode: "validation_rejected",
+        warningCodes: [""],
         metadata,
         expectedVersion: 1
       }),

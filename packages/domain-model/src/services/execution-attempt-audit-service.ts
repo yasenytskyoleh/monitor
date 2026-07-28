@@ -8,6 +8,8 @@ import type { ProductRecordMetadata } from "../storage/product-record-metadata.j
 
 type TerminalExecutionAttemptAuditStatus = Exclude<ExecutionAttemptAuditStatus, "received">;
 
+const TERMINAL_EXECUTION_ATTEMPT_AUDIT_STATUSES = ["executed", "rejected", "failed"] as const;
+
 export type RecordReceivedExecutionAttemptAuditRequest = {
   audit: ExecutionAttemptAudit;
   metadata: ProductRecordMetadata;
@@ -79,6 +81,20 @@ const assertTerminalRequest = (request: RecordTerminalExecutionAttemptAuditReque
   assertNonEmptyString(request.attemptId, "attemptId");
   assertValidTimestamp(request.completedAt, "completedAt");
   assertNonEmptyString(request.outcomeCode, "outcomeCode");
+
+  if (!TERMINAL_EXECUTION_ATTEMPT_AUDIT_STATUSES.includes(request.status)) {
+    throw new ExecutionAttemptAuditValidationError(
+      "execution_attempt_audit terminal status must be executed, rejected, or failed"
+    );
+  }
+
+  if (request.outcomeSummary !== undefined) {
+    assertNonEmptyString(request.outcomeSummary, "outcomeSummary");
+  }
+
+  if (request.warningCodes.some((warningCode) => !warningCode.trim())) {
+    throw new ExecutionAttemptAuditValidationError("warningCodes must not include blank values");
+  }
 };
 
 const buildUpdatedAt = (
