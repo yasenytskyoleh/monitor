@@ -1536,6 +1536,19 @@ integrationTest(
       };
       await repositories.executionAttemptAuditRepository.create({ audit, metadata });
 
+      assert.deepEqual(
+        await repositories.executionAttemptAuditRepository.getByRoutedActionExecutionEnvelopeId(
+          "execution-envelope-single-dispatch-001"
+        ),
+        audit
+      );
+      assert.equal(
+        await repositories.executionAttemptAuditRepository.getByRoutedActionExecutionEnvelopeId(
+          "execution-envelope-missing-001"
+        ),
+        null
+      );
+
       await assert.rejects(
         async () =>
           repositories.executionAttemptAuditRepository.create({
