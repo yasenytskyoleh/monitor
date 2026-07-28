@@ -95,7 +95,11 @@ const assertReceivedAudit = (audit: ExecutionAttemptAudit): void => {
     );
   }
 
-  if (audit.completedAt || audit.outcomeCode || audit.outcomeSummary) {
+  if (
+    audit.completedAt !== undefined ||
+    audit.outcomeCode !== undefined ||
+    audit.outcomeSummary !== undefined
+  ) {
     throw new ExecutionAttemptAuditValidationError(
       "received execution_attempt_audit cannot include terminal outcome evidence"
     );

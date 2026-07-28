@@ -154,6 +154,15 @@ test("execution-attempt audit service rejects invalid received and terminal evid
   await assert.rejects(
     () =>
       service.recordReceivedAttempt({
+        audit: { ...buildAudit(), completedAt: "" },
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordReceivedAttempt({
         audit: { ...buildAudit(), routedActionExecutionEnvelopeId: "" },
         metadata
       }),
