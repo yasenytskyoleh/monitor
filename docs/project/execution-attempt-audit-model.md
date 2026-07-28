@@ -17,6 +17,8 @@ or replace runtime evidence.
 - `attemptId` as its stable product identity
 - optional `routedActionExecutionEnvelopeId`, `reviewDecisionRoutingResultId`, and
   `researchReviewDecisionId` for correlation when source context exists
+- at most one audit for each non-null `routedActionExecutionEnvelopeId`; audits without an
+  envelope reference remain valid for incomplete source context
 - `actionTarget` and `downstreamCommandType` snapshots
 - status lifecycle: `received` → `executed` | `rejected` | `failed`
 - `attemptedAt`, optional `completedAt`, and `attemptedBy`; product metadata is added by the
@@ -55,6 +57,8 @@ underscore-delimited machine identifiers.
 
 If audit persistence fails, the runtime surfaces a safe phase-specific reconciliation error rather
 than misclassifying the external outcome as an executor failure. A received-audit failure prevents
-dispatch entirely.
+dispatch entirely. A duplicate received audit produces the non-retryable
+`ExecutionAttemptRuntimeAuditAlreadyRecordedError` and also prevents dispatch, so a prepared
+envelope can reach the injected executor at most once.
 
 Concrete provider executors, retries, scheduling, and trading actions remain out of scope.

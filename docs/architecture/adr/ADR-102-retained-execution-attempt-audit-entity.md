@@ -17,6 +17,7 @@ The v1 contract will include:
 
 - stable `attemptId`, attempt timestamps, and a received-to-terminal lifecycle
 - optional references to execution envelope, routing result, and review decision
+- one retained audit per non-null prepared execution-envelope reference
 - action target and command type snapshots sufficient for audit correlation
 - terminal `executed`, `rejected`, or `failed` outcome and a sanitized outcome code/summary
 - product metadata and optimistic versioning
@@ -28,6 +29,8 @@ traces, or runtime logs. Those remain runtime evidence under their own retention
 
 - rejected attempts can be retained without inventing incomplete envelope records
 - execution preparation responses remain ephemeral and backward-compatible
+- duplicate audit receipt is a deterministic, non-retryable outcome and prevents a second
+  executor dispatch for the same prepared envelope
 - v1 retention is product-audit lifetime; deletion and archival workflows require a later policy
 - the generic runtime dispatches only through an injected executor; concrete provider executors,
   retry behavior, and trading actions remain out of scope
