@@ -62,17 +62,23 @@ class InvalidExecutorOutcomeError extends Error {
   }
 }
 
+const EXECUTION_AUDIT_CODE_PATTERN = /^[a-z][a-z0-9_]*$/;
+
 const assertExecutorOutcome = (outcome: DownstreamActionExecutorOutcome): void => {
   if (outcome.status !== "executed" && outcome.status !== "rejected") {
     throw new InvalidExecutorOutcomeError("executor outcome status must be executed or rejected");
   }
 
-  if (!outcome.outcomeCode.trim()) {
-    throw new InvalidExecutorOutcomeError("executor outcomeCode is required");
+  if (!EXECUTION_AUDIT_CODE_PATTERN.test(outcome.outcomeCode)) {
+    throw new InvalidExecutorOutcomeError(
+      "executor outcomeCode must be a lowercase underscore-delimited identifier"
+    );
   }
 
-  if (outcome.warningCodes?.some((warningCode) => !warningCode.trim())) {
-    throw new InvalidExecutorOutcomeError("executor warningCodes must not include blank values");
+  if (outcome.warningCodes?.some((warningCode) => !EXECUTION_AUDIT_CODE_PATTERN.test(warningCode))) {
+    throw new InvalidExecutorOutcomeError(
+      "executor warningCodes must be lowercase underscore-delimited identifiers"
+    );
   }
 };
 

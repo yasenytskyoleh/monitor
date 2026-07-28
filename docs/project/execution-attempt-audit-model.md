@@ -49,7 +49,8 @@ the injected executor's sanitized outcome. An executor failure becomes the sanit
 available through `createExecutionAttemptRuntimeFromRepositories`.
 
 The generic executor contract carries outcome codes and warning identifiers only; it does not
-transport executor-provided text summaries into retained audit records.
+transport executor-provided text summaries into retained audit records. Its codes use lowercase
+underscore-delimited machine identifiers.
 
 If audit persistence fails, the runtime surfaces a safe phase-specific reconciliation error rather
 than misclassifying the external outcome as an executor failure. A received-audit failure prevents

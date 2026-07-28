@@ -134,7 +134,7 @@ test("runtime sanitizes malformed executor outcomes into failed terminal evidenc
   const { runtime } = createFixture(async () =>
     ({
       status: "executed",
-      outcomeCode: ""
+      outcomeCode: "provider response should not be retained"
     }) as DownstreamActionExecutorOutcome
   );
 
@@ -144,6 +144,22 @@ test("runtime sanitizes malformed executor outcomes into failed terminal evidenc
   assert.equal(result.audit.outcomeCode, "executor_invalid_outcome");
   assert.deepEqual(result.audit.warningCodes, ["executor_failure"]);
   assert.equal(result.audit.outcomeSummary, undefined);
+});
+
+test("runtime rejects executor warning text that is not a stable identifier", async () => {
+  const { runtime } = createFixture(async () =>
+    ({
+      status: "rejected",
+      outcomeCode: "command_rejected",
+      warningCodes: ["provider response should not be retained"]
+    }) as DownstreamActionExecutorOutcome
+  );
+
+  const result = await runtime.execute({ audit: buildAudit(), envelope, metadata });
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.audit.outcomeCode, "executor_invalid_outcome");
+  assert.deepEqual(result.audit.warningCodes, ["executor_failure"]);
 });
 
 test("runtime does not retain executor-provided text summaries", async () => {
