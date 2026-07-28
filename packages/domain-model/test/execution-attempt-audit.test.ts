@@ -151,6 +151,45 @@ test("execution-attempt audit service rejects invalid received and terminal evid
     (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
   );
 
+  await assert.rejects(
+    () =>
+      service.recordReceivedAttempt({
+        audit: { ...buildAudit(), routedActionExecutionEnvelopeId: "" },
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordReceivedAttempt({
+        audit: { ...buildAudit(), actionTarget: "invalid" as "activate_setup_revision" },
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordReceivedAttempt({
+        audit: {
+          ...buildAudit(),
+          downstreamCommandType: "invalid" as "ActivateSetupDefinitionRevisionCommand"
+        },
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordReceivedAttempt({
+        audit: { ...buildAudit(), warningCodes: [""] },
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
   await service.recordReceivedAttempt({ audit: buildAudit(), metadata });
   await assert.rejects(
     () =>

@@ -4,6 +4,8 @@ import type {
   ExecutionAttemptAuditStatus
 } from "../execution/execution-attempt-audit.js";
 import type { ExecutionAttemptAuditRepository } from "../repositories/execution-attempt-audit-repository.js";
+import { DOWNSTREAM_ACTION_TARGETS } from "../review/downstream-action-target.js";
+import { REVIEW_DECISION_DOWNSTREAM_COMMAND_TYPES } from "../review/review-decision-routing-result.js";
 import type { ProductRecordMetadata } from "../storage/product-record-metadata.js";
 
 type TerminalExecutionAttemptAuditStatus = Exclude<ExecutionAttemptAuditStatus, "received">;
@@ -59,10 +61,33 @@ const assertValidTimestamp = (value: TimestampUtc, fieldName: string): void => {
   }
 };
 
+const assertOptionalNonEmptyString = (value: string | undefined, fieldName: string): void => {
+  if (value !== undefined) {
+    assertNonEmptyString(value, fieldName);
+  }
+};
+
 const assertReceivedAudit = (audit: ExecutionAttemptAudit): void => {
   assertNonEmptyString(audit.attemptId, "attemptId");
   assertNonEmptyString(audit.attemptedBy, "attemptedBy");
   assertValidTimestamp(audit.attemptedAt, "attemptedAt");
+  assertOptionalNonEmptyString(
+    audit.routedActionExecutionEnvelopeId,
+    "routedActionExecutionEnvelopeId"
+  );
+  assertOptionalNonEmptyString(
+    audit.reviewDecisionRoutingResultId,
+    "reviewDecisionRoutingResultId"
+  );
+  assertOptionalNonEmptyString(audit.researchReviewDecisionId, "researchReviewDecisionId");
+
+  if (!DOWNSTREAM_ACTION_TARGETS.includes(audit.actionTarget)) {
+    throw new ExecutionAttemptAuditValidationError("actionTarget is invalid");
+  }
+
+  if (!REVIEW_DECISION_DOWNSTREAM_COMMAND_TYPES.includes(audit.downstreamCommandType)) {
+    throw new ExecutionAttemptAuditValidationError("downstreamCommandType is invalid");
+  }
 
   if (audit.status !== "received") {
     throw new ExecutionAttemptAuditValidationError(
@@ -74,6 +99,10 @@ const assertReceivedAudit = (audit: ExecutionAttemptAudit): void => {
     throw new ExecutionAttemptAuditValidationError(
       "received execution_attempt_audit cannot include terminal outcome evidence"
     );
+  }
+
+  if (audit.warningCodes.some((warningCode) => !warningCode.trim())) {
+    throw new ExecutionAttemptAuditValidationError("warningCodes must not include blank values");
   }
 };
 
