@@ -58,6 +58,10 @@ test("execution-attempt audit physical schema defines the retained sanitized aud
     assert.equal(schema.includes(`@unique(map: "${constraintName}")`), true);
     assert.equal(singleDispatchMigration.includes(`"${constraintName}"`), true);
   }
+  assert.match(
+    singleDispatchMigration,
+    /Cannot enforce one execution-attempt audit per prepared envelope while duplicate retained audits exist\./
+  );
   for (const columns of Object.values(EXECUTION_ATTEMPT_AUDIT_RELATIONAL_REQUIRED_COLUMNS)) {
     for (const columnName of columns) {
       assert.equal(migration.includes(`"${columnName}"`), true);

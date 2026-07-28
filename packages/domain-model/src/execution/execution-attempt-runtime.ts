@@ -133,6 +133,21 @@ const assertAuditMatchesEnvelope = (
   }
 };
 
+const resolveCompletedAt = (
+  audit: ExecutionAttemptAudit,
+  metadata: ProductRecordMetadata
+): string => {
+  const candidates = [
+    audit.attemptedAt,
+    metadata.sourceObservedAtUtc,
+    new Date().toISOString()
+  ].filter((value): value is string => value !== null && value !== undefined);
+
+  return candidates.reduce((latest, value) =>
+    Date.parse(value) > Date.parse(latest) ? value : latest
+  );
+};
+
 const recordTerminalOutcome = async (
   executionAttemptAuditService: ExecutionAttemptAuditService,
   audit: ExecutionAttemptAudit,
@@ -142,7 +157,7 @@ const recordTerminalOutcome = async (
   const terminalAudit = await executionAttemptAuditService.recordTerminalOutcome({
     attemptId: audit.attemptId,
     status: outcome.status,
-    completedAt: metadata.sourceObservedAtUtc ?? new Date().toISOString(),
+    completedAt: resolveCompletedAt(audit, metadata),
     outcomeCode: outcome.outcomeCode,
     warningCodes: outcome.status === "failed" ? ["executor_failure"] : outcome.warningCodes ?? [],
     metadata,

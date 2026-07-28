@@ -107,6 +107,26 @@ test("runtime records an executed terminal audit after dispatch", async () => {
   assert.equal((await repository.getById(result.audit.attemptId))?.status, "executed");
 });
 
+test("runtime terminalizes audits after their receipt when source metadata is stale", async () => {
+  const { runtime } = createFixture(async () => ({
+    status: "executed",
+    outcomeCode: "setup_revision_activated"
+  }));
+  const audit = buildAudit();
+  const staleMetadata = {
+    ...metadata,
+    sourceObservedAtUtc: "2026-07-28T09:59:00.000Z"
+  };
+
+  const result = await runtime.execute({ audit, envelope, metadata: staleMetadata });
+
+  assert.notEqual(result.audit.completedAt, staleMetadata.sourceObservedAtUtc);
+  assert.equal(
+    Date.parse(result.audit.completedAt ?? "") >= Date.parse(audit.attemptedAt),
+    true
+  );
+});
+
 test("runtime records a rejected terminal audit without executing a provider retry", async () => {
   const { runtime } = createFixture(async () => ({
     status: "rejected",
