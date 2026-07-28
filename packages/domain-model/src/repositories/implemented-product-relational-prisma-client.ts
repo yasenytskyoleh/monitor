@@ -29,6 +29,8 @@ import { createResearchFeedbackDecisionRelationalPrismaRepositoryAdapter } from 
 import { type PrismaResearchFeedbackDecisionRelationalRepositoryAdapter } from "./research-feedback-decision-relational-prisma-adapter.js";
 import { createRoutedActionExecutionEnvelopeRelationalPrismaRepositoryAdapter } from "./routed-action-execution-envelope-relational-prisma-client.js";
 import { type PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter } from "./routed-action-execution-envelope-relational-prisma-adapter.js";
+import { createExecutionAttemptAuditRelationalPrismaRepositoryAdapter } from "./execution-attempt-audit-relational-prisma-client.js";
+import { type PrismaExecutionAttemptAuditRelationalRepositoryAdapter } from "./execution-attempt-audit-relational-prisma-adapter.js";
 import { createSetupLifecycleMutationRecordRelationalPrismaRepositoryAdapter } from "./setup-lifecycle-mutation-record-relational-prisma-client.js";
 import { type PrismaSetupLifecycleMutationRecordRelationalRepositoryAdapter } from "./setup-lifecycle-mutation-record-relational-prisma-adapter.js";
 import { createSetupDefinitionRevisionRelationalPrismaRepositoryAdapter } from "./setup-definition-revision-relational-prisma-client.js";
@@ -54,6 +56,7 @@ export type ImplementedProductRelationalPrismaAdapters = ImplementedProductRelat
   reviewDecisionRoutingResultAdapter:
     PrismaReviewDecisionRoutingResultRelationalRepositoryAdapter;
   routedActionAdapter: PrismaRoutedActionExecutionEnvelopeRelationalRepositoryAdapter;
+  executionAttemptAuditAdapter: PrismaExecutionAttemptAuditRelationalRepositoryAdapter;
   setupLifecycleMutationRecordAdapter:
     PrismaSetupLifecycleMutationRecordRelationalRepositoryAdapter;
   setupDefinitionRevisionAdapter:
@@ -88,6 +91,8 @@ export const createImplementedProductRelationalPrismaAdapters = (
   routedActionAdapter: createRoutedActionExecutionEnvelopeRelationalPrismaRepositoryAdapter(
     client
   ),
+  executionAttemptAuditAdapter:
+    createExecutionAttemptAuditRelationalPrismaRepositoryAdapter(client),
   setupLifecycleMutationRecordAdapter:
     createSetupLifecycleMutationRecordRelationalPrismaRepositoryAdapter(client),
   setupDefinitionRevisionAdapter:

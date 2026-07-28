@@ -25,6 +25,14 @@ export type {
   RoutedActionExecutionResultStatus
 } from "./routed-action-execution-result.js";
 
+export {
+  EXECUTION_ATTEMPT_AUDIT_STATUSES
+} from "./execution-attempt-audit.js";
+export type {
+  ExecutionAttemptAudit,
+  ExecutionAttemptAuditStatus
+} from "./execution-attempt-audit.js";
+
 export type {
   BuildRoutedActionExecutionEnvelopeRequest,
   DownstreamActionExecutionPreparationService,

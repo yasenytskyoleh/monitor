@@ -250,6 +250,16 @@ enum RoutedActionExecutionStatus {
   @@schema("product_domain")
 }
 
+enum ExecutionAttemptAuditStatus {
+  received
+  executed
+  rejected
+  failed
+
+  @@map("execution_attempt_audit_status")
+  @@schema("product_domain")
+}
+
 enum MonitoredSymbolStatus {
   active
   paused
@@ -723,6 +733,42 @@ model RoutedActionExecutionEnvelopeRecord {
   @@index([actionTarget], map: "idx_routed_action_execution_envelope_action_target")
   @@index([actionCommandType], map: "idx_routed_action_execution_envelope_action_command_type")
   @@map("routed_action_execution_envelope")
+  @@schema("product_domain")
+}
+
+model ExecutionAttemptAuditRecord {
+  executionAttemptAuditId       String                              @id(map: "execution_attempt_audit_pkey") @map("execution_attempt_audit_id") @db.Text
+  version                       Int                                 @map("version")
+  lifecycleStatus               PersistedLifecycleStatus             @map("lifecycle_status")
+  executionAttemptAuditStatus   ExecutionAttemptAuditStatus          @map("execution_attempt_audit_status")
+  routedActionExecutionEnvelopeId String?                            @map("routed_action_execution_envelope_id") @db.Text
+  reviewDecisionRoutingResultId String?                              @map("review_decision_routing_result_id") @db.Text
+  researchReviewDecisionId      String?                              @map("research_review_decision_id") @db.Text
+  actionTarget                  DownstreamActionTarget               @map("action_target")
+  downstreamCommandType         ReviewDecisionDownstreamCommandType  @map("downstream_command_type")
+  attemptedBy                   String                               @map("attempted_by") @db.Text
+  attemptedAtUtc                DateTime                             @map("attempted_at_utc") @db.Timestamptz(3)
+  completedAtUtc                DateTime?                            @map("completed_at_utc") @db.Timestamptz(3)
+  outcomeCode                   String?                              @map("outcome_code") @db.Text
+  outcomeSummary                String?                              @map("outcome_summary") @db.Text
+  warningCodes                  Json                                 @map("warning_codes")
+  originRunId                   String?                              @map("origin_run_id") @db.Text
+  originTransitionId            String?                              @map("origin_transition_id") @db.Text
+  createdBySource               ProductRecordSource                  @map("created_by_source")
+  lastUpdatedBySource           ProductRecordSource                  @map("last_updated_by_source")
+  traceId                       String?                              @map("trace_id") @db.Text
+  sourceObservedAtUtc           DateTime?                            @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes                 String?                              @map("metadata_notes") @db.Text
+  createdAtUtc                  DateTime                             @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc                  DateTime                             @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc                 DateTime?                            @map("archived_at_utc") @db.Timestamptz(3)
+
+  @@index([routedActionExecutionEnvelopeId], map: "idx_execution_attempt_audit_routed_action_execution_envelope_id")
+  @@index([reviewDecisionRoutingResultId], map: "idx_execution_attempt_audit_review_decision_routing_result_id")
+  @@index([researchReviewDecisionId], map: "idx_execution_attempt_audit_research_review_decision_id")
+  @@index([executionAttemptAuditStatus], map: "idx_execution_attempt_audit_status")
+  @@index([actionTarget], map: "idx_execution_attempt_audit_action_target")
+  @@map("execution_attempt_audit")
   @@schema("product_domain")
 }
 

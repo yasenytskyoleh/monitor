@@ -193,6 +193,7 @@ export type {
   SetupRefinementStatus
 } from "./review/index.js";
 export {
+  EXECUTION_ATTEMPT_AUDIT_STATUSES,
   ROUTED_ACTION_EXECUTION_RESULT_STATUSES,
   ROUTED_ACTION_EXECUTION_STATUSES,
   createDownstreamActionExecutionPreparationService
@@ -203,6 +204,8 @@ export type {
   BuildRoutedActionExecutionEnvelopeRequest,
   DownstreamActionExecutionPreparationService,
   DownstreamActionExecutionPreparationServiceDependencies,
+  ExecutionAttemptAudit,
+  ExecutionAttemptAuditStatus,
   RouteMetadataSnapshot,
   RoutedActionExecutionEnvelope,
   RoutedActionExecutionPayloadSnapshot,
@@ -283,6 +286,12 @@ export {
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_REQUIRED_COLUMNS,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_TABLES,
   ROUTED_ACTION_EXECUTION_ENVELOPE_RELATIONAL_ENTITY_TYPES,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_INDEXES,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_MIGRATION_SLUG,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_PRISMA_MODELS,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_REQUIRED_COLUMNS,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_TABLES,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_ENTITY_TYPES,
   SETUP_DEFINITION_REVISION_RELATIONAL_INDEXES,
   SETUP_DEFINITION_REVISION_RELATIONAL_MIGRATION_SLUG,
   SETUP_DEFINITION_REVISION_RELATIONAL_PRISMA_MODELS,
@@ -355,6 +364,11 @@ export type {
   RoutedActionExecutionEnvelopeRelationalPrismaModelName,
   RoutedActionExecutionEnvelopeRelationalEntityType,
   RoutedActionExecutionEnvelopeRelationalTableName,
+  ExecutionAttemptAuditDurableRecord,
+  ExecutionAttemptAuditRelationalIndexName,
+  ExecutionAttemptAuditRelationalPrismaModelName,
+  ExecutionAttemptAuditRelationalEntityType,
+  ExecutionAttemptAuditRelationalTableName,
   SetupDefinitionRevisionDurableRecord,
   SetupDefinitionRevisionRelationalIndexName,
   SetupDefinitionRevisionRelationalPrismaModelName,
@@ -1139,6 +1153,54 @@ export {
 export {
   RelationalRoutedActionExecutionEnvelopeRepository
 } from "./repositories/routed-action-execution-envelope-relational-repository.impl.js";
+export type {
+  ExecutionAttemptAuditCreateRequest,
+  ExecutionAttemptAuditRepository,
+  ExecutionAttemptAuditUpdateRequest
+} from "./repositories/execution-attempt-audit-repository.js";
+export {
+  InMemoryExecutionAttemptAuditRepository
+} from "./repositories/execution-attempt-audit-repository.impl.js";
+export type {
+  ExecutionAttemptAuditRecordWriteRequest,
+  ExecutionAttemptAuditRelationalAdapterOperation,
+  ExecutionAttemptAuditRelationalRepositoryAdapter
+} from "./repositories/execution-attempt-audit-relational-repository-adapter.js";
+export {
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_ADAPTER_OPERATIONS,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isExecutionAttemptAuditRelationalDeterministicErrorCode
+} from "./repositories/execution-attempt-audit-relational-repository-adapter.js";
+export {
+  InMemoryExecutionAttemptAuditRelationalRepositoryAdapter
+} from "./repositories/execution-attempt-audit-relational-repository-adapter.impl.js";
+export {
+  PrismaExecutionAttemptAuditRelationalRepositoryAdapter
+} from "./repositories/execution-attempt-audit-relational-prisma-adapter.js";
+export type {
+  ExecutionAttemptAuditRelationalPrismaClient
+} from "./repositories/execution-attempt-audit-relational-prisma-adapter.js";
+export {
+  createExecutionAttemptAuditRelationalPrismaRepositories,
+  createExecutionAttemptAuditRelationalPrismaRepositoryAdapter
+} from "./repositories/execution-attempt-audit-relational-prisma-client.js";
+export type {
+  ExecutionAttemptAuditRelationalPrismaRepositories
+} from "./repositories/execution-attempt-audit-relational-prisma-client.js";
+export {
+  dehydrateExecutionAttemptAuditToDurableRecord,
+  hydrateExecutionAttemptAuditFromDurableRecord
+} from "./repositories/execution-attempt-audit-relational-repository-mappers.js";
+export {
+  RelationalExecutionAttemptAuditRepository
+} from "./repositories/execution-attempt-audit-relational-repository.impl.js";
+export {
+  composeExecutionAttemptAuditRelationalRepositories
+} from "./repositories/execution-attempt-audit-relational-repositories.js";
+export type {
+  ExecutionAttemptAuditRelationalRepositories
+} from "./repositories/execution-attempt-audit-relational-repositories.js";
 export {
   RelationalSetupLifecycleMutationRecordRepository
 } from "./repositories/setup-lifecycle-mutation-record-relational-repository.impl.js";
@@ -1319,6 +1381,16 @@ export {
   SetupAggregateResultValidationError,
   createResearchAggregationService
 } from "./services/research-aggregation-service.js";
+export type {
+  ExecutionAttemptAuditService,
+  ExecutionAttemptAuditServiceDependencies,
+  RecordReceivedExecutionAttemptAuditRequest,
+  RecordTerminalExecutionAttemptAuditRequest
+} from "./services/execution-attempt-audit-service.js";
+export {
+  ExecutionAttemptAuditValidationError,
+  createExecutionAttemptAuditService
+} from "./services/execution-attempt-audit-service.js";
 export {
   FLOW_STATUSES,
   FLOW_STEP_NAMES,

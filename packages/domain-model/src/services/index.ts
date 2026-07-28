@@ -114,3 +114,14 @@ export {
   SetupAggregateResultValidationError,
   createResearchAggregationService
 } from "./research-aggregation-service.js";
+
+export type {
+  ExecutionAttemptAuditService,
+  ExecutionAttemptAuditServiceDependencies,
+  RecordReceivedExecutionAttemptAuditRequest,
+  RecordTerminalExecutionAttemptAuditRequest
+} from "./execution-attempt-audit-service.js";
+export {
+  ExecutionAttemptAuditValidationError,
+  createExecutionAttemptAuditService
+} from "./execution-attempt-audit-service.js";

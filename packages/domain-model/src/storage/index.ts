@@ -132,6 +132,13 @@ export type {
   RoutedActionExecutionEnvelopeRelationalEntityType
 } from "./routed-action-execution-envelope-relational-slice.js";
 export {
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_ENTITY_TYPES
+} from "./execution-attempt-audit-relational-slice.js";
+export type {
+  ExecutionAttemptAuditDurableRecord,
+  ExecutionAttemptAuditRelationalEntityType
+} from "./execution-attempt-audit-relational-slice.js";
+export {
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_ENTITY_TYPES
 } from "./setup-lifecycle-mutation-record-relational-slice.js";
 export type {
@@ -250,6 +257,18 @@ export type {
   RoutedActionExecutionEnvelopeRelationalPrismaModelName,
   RoutedActionExecutionEnvelopeRelationalTableName
 } from "./routed-action-execution-envelope-relational-physical-schema.js";
+export {
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_INDEXES,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_MIGRATION_SLUG,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_PRISMA_MODELS,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_REQUIRED_COLUMNS,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_TABLES
+} from "./execution-attempt-audit-relational-physical-schema.js";
+export type {
+  ExecutionAttemptAuditRelationalIndexName,
+  ExecutionAttemptAuditRelationalPrismaModelName,
+  ExecutionAttemptAuditRelationalTableName
+} from "./execution-attempt-audit-relational-physical-schema.js";
 export {
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_INDEXES,
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_MIGRATION_SLUG,

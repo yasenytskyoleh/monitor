@@ -12,6 +12,7 @@ import {
   EVALUATION_STATUSES,
   EVALUATION_WINDOW_MODES,
   EVALUATION_WINDOW_UNITS,
+  EXECUTION_ATTEMPT_AUDIT_STATUSES,
   ROUTED_ACTION_EXECUTION_RESULT_STATUSES,
   ROUTED_ACTION_EXECUTION_STATUSES,
   FEEDBACK_DECISION_RESULT_STATUSES,
@@ -70,6 +71,7 @@ import {
   type EvaluationInput,
   type EvaluationResult,
   type EvaluationWindow,
+  type ExecutionAttemptAudit,
   type MarketDataSource,
   type MonitoredSymbol,
   type NormalizedMarketEvent,
@@ -191,6 +193,12 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "no_envelope",
     "rejected_validation",
     "rejected_lifecycle",
+    "failed"
+  ]);
+  assert.deepEqual(EXECUTION_ATTEMPT_AUDIT_STATUSES, [
+    "received",
+    "executed",
+    "rejected",
     "failed"
   ]);
   assert.deepEqual(APPROVED_SETUP_LIFECYCLE_ACTIONS, [
@@ -319,6 +327,7 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "research_review_decision",
     "review_decision_routing_result",
     "routed_action_execution_envelope",
+    "execution_attempt_audit",
     "setup_lifecycle_mutation_record",
     "setup_refinement_request",
     "setup_definition_revision",
@@ -345,10 +354,11 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "evaluation_service",
     "research_service",
     "research_run_service",
-    "research_aggregation_service"
+    "research_aggregation_service",
+    "execution_attempt_audit_service"
   ]);
   assert.deepEqual(FIRST_PERSISTED_PRODUCT_SLICE, ["setup_definition", "research_hypothesis"]);
-  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 15);
+  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 16);
   assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
   assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
   assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 16);
@@ -484,9 +494,28 @@ test("supports constructing typed contracts without implementation logic", () =>
     updatedAtUtc: "2026-04-14T11:00:00.000Z"
   };
 
+  const executionAttemptAudit: ExecutionAttemptAudit = {
+    attemptId: "execution-attempt-001",
+    routedActionExecutionEnvelopeId: "execution-envelope-001",
+    reviewDecisionRoutingResultId: "routing-result-001",
+    researchReviewDecisionId: "review-decision-001",
+    actionTarget: "activate_setup_revision",
+    downstreamCommandType: "ActivateSetupDefinitionRevisionCommand",
+    status: "executed",
+    attemptedBy: "execution-runtime",
+    attemptedAt: "2026-04-15T11:00:00.000Z",
+    completedAt: "2026-04-15T11:00:02.000Z",
+    outcomeCode: "setup_revision_activated",
+    outcomeSummary: "Activated the requested setup revision.",
+    warningCodes: [],
+    createdAtUtc: "2026-04-15T11:00:00.000Z",
+    updatedAtUtc: "2026-04-15T11:00:02.000Z"
+  };
+
   assert.equal(run.evaluationResultIds.length, 1);
   assert.equal(result.absoluteMove, 800);
   assert.equal(result.status, "completed");
+  assert.equal(executionAttemptAudit.status, "executed");
 });
 
 test("supports monitoring source and normalized event contracts", () => {
