@@ -70,10 +70,20 @@ test("execution-attempt audit repository stores, lists, and protects optimistic 
 
 test("execution-attempt audit repository permits one audit per prepared envelope", async () => {
   const repository = new InMemoryExecutionAttemptAuditRepository();
-  await repository.create({ audit: buildAudit(), metadata });
+  const audit = buildAudit();
+  await repository.create({ audit, metadata });
+
+  assert.deepEqual(
+    await repository.getByRoutedActionExecutionEnvelopeId("execution-envelope-001"),
+    audit
+  );
+  assert.equal(
+    await repository.getByRoutedActionExecutionEnvelopeId("execution-envelope-missing-001"),
+    null
+  );
 
   await assert.rejects(
-    () => repository.create({ audit: { ...buildAudit(), attemptId: "execution-attempt-002" }, metadata }),
+    () => repository.create({ audit: { ...audit, attemptId: "execution-attempt-002" }, metadata }),
     (error: unknown) => error instanceof RepositoryError && error.code === "already_exists"
   );
 

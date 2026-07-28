@@ -22,6 +22,15 @@ export class RelationalExecutionAttemptAuditRepository
     return record ? hydrateExecutionAttemptAuditFromDurableRecord(record) : null;
   }
 
+  async getByRoutedActionExecutionEnvelopeId(
+    routedActionExecutionEnvelopeId: string
+  ): Promise<ExecutionAttemptAudit | null> {
+    const record = await this.adapter.loadExecutionAttemptAuditRecordByEnvelopeId(
+      routedActionExecutionEnvelopeId
+    );
+    return record ? hydrateExecutionAttemptAuditFromDurableRecord(record) : null;
+  }
+
   async listByReviewDecisionRoutingResultId(
     reviewDecisionRoutingResultId: string
   ): Promise<ExecutionAttemptAudit[]> {

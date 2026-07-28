@@ -66,6 +66,15 @@ test("relational execution-attempt audit repository permits one audit per prepar
   const audit = { ...buildAudit(), routedActionExecutionEnvelopeId: "execution-envelope-001" };
   await repository.create({ audit, metadata });
 
+  assert.deepEqual(
+    await repository.getByRoutedActionExecutionEnvelopeId("execution-envelope-001"),
+    audit
+  );
+  assert.equal(
+    await repository.getByRoutedActionExecutionEnvelopeId("execution-envelope-missing-001"),
+    null
+  );
+
   await assert.rejects(
     () =>
       repository.create({

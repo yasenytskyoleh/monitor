@@ -22,6 +22,16 @@ export class InMemoryExecutionAttemptAuditRelationalRepositoryAdapter
     return record ? cloneRecord(record) : null;
   }
 
+  async loadExecutionAttemptAuditRecordByEnvelopeId(
+    routedActionExecutionEnvelopeId: string
+  ): Promise<ExecutionAttemptAuditDurableRecord | null> {
+    const record = [...this.recordsById.values()].find(
+      (candidate) =>
+        candidate.routedActionExecutionEnvelopeId === routedActionExecutionEnvelopeId
+    );
+    return record ? cloneRecord(record) : null;
+  }
+
   async listExecutionAttemptAuditRecordsByRoutingResultId(routingResultId: string): Promise<ExecutionAttemptAuditDurableRecord[]> {
     return [...this.recordsById.values()]
       .filter((record) => record.reviewDecisionRoutingResultId === routingResultId)

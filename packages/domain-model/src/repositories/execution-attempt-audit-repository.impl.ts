@@ -33,6 +33,16 @@ export class InMemoryExecutionAttemptAuditRepository
     return record ? cloneAudit(record.audit) : null;
   }
 
+  async getByRoutedActionExecutionEnvelopeId(
+    routedActionExecutionEnvelopeId: string
+  ): Promise<ExecutionAttemptAudit | null> {
+    const record = [...this.recordsByAttemptId.values()].find(
+      (candidate) =>
+        candidate.audit.routedActionExecutionEnvelopeId === routedActionExecutionEnvelopeId
+    );
+    return record ? cloneAudit(record.audit) : null;
+  }
+
   async listByReviewDecisionRoutingResultId(
     reviewDecisionRoutingResultId: string
   ): Promise<ExecutionAttemptAudit[]> {

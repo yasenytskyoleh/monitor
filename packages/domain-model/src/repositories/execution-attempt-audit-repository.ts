@@ -17,6 +17,9 @@ export type ExecutionAttemptAuditUpdateRequest = {
 
 export type ExecutionAttemptAuditRepository = {
   getById(attemptId: string): Promise<ExecutionAttemptAudit | null>;
+  getByRoutedActionExecutionEnvelopeId(
+    routedActionExecutionEnvelopeId: string
+  ): Promise<ExecutionAttemptAudit | null>;
   listByReviewDecisionRoutingResultId(
     reviewDecisionRoutingResultId: string
   ): Promise<ExecutionAttemptAudit[]>;
