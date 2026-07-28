@@ -10,6 +10,7 @@ import {
   createImplementedProductRelationalPrismaRepositories,
   createExecutionAttemptRuntimeFromRepositories,
   createSetupToAggregateFlowFromRepositories,
+  ExecutionAttemptAuditRepositoryValidationError,
   type EvaluationTerminalization,
   type ExecutionAttemptAudit,
   type EvaluationResult,
@@ -1402,6 +1403,7 @@ integrationTest(
     await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
       const received: ExecutionAttemptAudit = {
         attemptId: "execution-attempt-001",
+        reviewDecisionRoutingResultId: "routing-result-not-required",
         actionTarget: "activate_setup_revision",
         downstreamCommandType: "ActivateSetupDefinitionRevisionCommand",
         status: "received",
@@ -1415,7 +1417,6 @@ integrationTest(
 
       const failed: ExecutionAttemptAudit = {
         ...received,
-        reviewDecisionRoutingResultId: "routing-result-not-required",
         status: "failed",
         completedAt: "2026-07-27T12:00:03.000Z",
         outcomeCode: "provider_unavailable",
@@ -1546,6 +1547,59 @@ integrationTest(
           error.code === "already_exists" &&
           error.entityType === "execution_attempt_audit" &&
           error.entityId === "execution-attempt-envelope-002"
+      );
+    });
+  }
+);
+
+integrationTest(
+  "shared implemented-product bundle preserves execution-audit envelope correlation against real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      const audit: ExecutionAttemptAudit = {
+        attemptId: "execution-attempt-immutable-001",
+        routedActionExecutionEnvelopeId: "execution-envelope-immutable-001",
+        actionTarget: "activate_setup_revision",
+        downstreamCommandType: "ActivateSetupDefinitionRevisionCommand",
+        status: "received",
+        attemptedBy: "execution-runtime",
+        attemptedAt: "2026-07-28T10:00:00.000Z",
+        warningCodes: [],
+        createdAtUtc: "2026-07-28T10:00:00.000Z",
+        updatedAtUtc: "2026-07-28T10:00:00.000Z"
+      };
+      await repositories.executionAttemptAuditRepository.create({ audit, metadata });
+
+      await assert.rejects(
+        () =>
+          repositories.executionAttemptAuditRepository.update({
+            audit: {
+              ...audit,
+              routedActionExecutionEnvelopeId: "execution-envelope-reassigned-001",
+              status: "failed",
+              completedAt: "2026-07-28T10:00:05.000Z",
+              outcomeCode: "provider_unavailable",
+              warningCodes: []
+            },
+            metadata,
+            expectedVersion: 1
+          }),
+        (error: unknown) => error instanceof ExecutionAttemptAuditRepositoryValidationError
+      );
+      assert.equal(
+        (
+          await repositories.executionAttemptAuditRepository.getById(audit.attemptId)
+        )?.routedActionExecutionEnvelopeId,
+        audit.routedActionExecutionEnvelopeId
+      );
+
+      await assert.rejects(
+        () =>
+          repositories.executionAttemptAuditRepository.create({
+            audit: { ...audit, attemptId: "execution-attempt-immutable-002" },
+            metadata
+          }),
+        (error: unknown) => error instanceof RepositoryError && error.code === "already_exists"
       );
     });
   }
