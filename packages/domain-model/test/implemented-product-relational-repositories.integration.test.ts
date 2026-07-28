@@ -11,7 +11,9 @@ import {
   createExecutionAttemptRuntimeFromRepositories,
   createSetupToAggregateFlowFromRepositories,
   ExecutionAttemptAuditRepositoryValidationError,
+  ExecutionAttemptRuntimeAuditAlreadyRecordedError,
   type EvaluationTerminalization,
+  type ExecutePreparedRoutedActionRequest,
   type ExecutionAttemptAudit,
   type EvaluationResult,
   type ImplementedProductRelationalPrismaRepositories,
@@ -1454,7 +1456,7 @@ integrationTest(
           outcomeCode: "setup_revision_activated"
         })
       });
-      const result = await runtime.execute({
+      const request: ExecutePreparedRoutedActionRequest = {
         audit: {
           attemptId: "execution-attempt-runtime-001",
           routedActionExecutionEnvelopeId: "execution-envelope-runtime-001",
@@ -1504,7 +1506,8 @@ integrationTest(
           ...metadata,
           sourceObservedAtUtc: "2026-07-28T10:00:05.000Z"
         }
-      });
+      };
+      const result = await runtime.execute(request);
 
       assert.equal(result.status, "executed");
       assert.equal(result.audit.outcomeCode, "setup_revision_activated");
@@ -1513,6 +1516,30 @@ integrationTest(
           "execution-attempt-runtime-001"
         ))?.status,
         "executed"
+      );
+
+      await assert.rejects(
+        () =>
+          runtime.execute({
+            ...request,
+            audit: {
+              ...request.audit,
+              attemptId: "execution-attempt-runtime-envelope-conflict-001"
+            }
+          }),
+        (error: unknown) =>
+          error instanceof ExecutionAttemptRuntimeAuditAlreadyRecordedError &&
+          error.conflictKind === "prepared_envelope" &&
+          error.existingAttemptId === "execution-attempt-runtime-001" &&
+          error.routedActionExecutionEnvelopeId === "execution-envelope-runtime-001"
+      );
+      await assert.rejects(
+        () => runtime.execute(request),
+        (error: unknown) =>
+          error instanceof ExecutionAttemptRuntimeAuditAlreadyRecordedError &&
+          error.conflictKind === "attempt_id" &&
+          error.existingAttemptId === "execution-attempt-runtime-001" &&
+          error.routedActionExecutionEnvelopeId === undefined
       );
     });
   }
