@@ -34,6 +34,19 @@ export type {
 } from "./execution-attempt-audit.js";
 
 export type {
+  DownstreamActionExecutor,
+  DownstreamActionExecutorOutcome,
+  ExecutePreparedRoutedActionRequest,
+  ExecutionAttemptRuntime,
+  ExecutionAttemptRuntimeDependencies,
+  ExecutionAttemptRuntimeResult
+} from "./execution-attempt-runtime.js";
+export {
+  ExecutionAttemptRuntimeValidationError,
+  createExecutionAttemptRuntime
+} from "./execution-attempt-runtime.js";
+
+export type {
   BuildRoutedActionExecutionEnvelopeRequest,
   DownstreamActionExecutionPreparationService,
   DownstreamActionExecutionPreparationServiceDependencies

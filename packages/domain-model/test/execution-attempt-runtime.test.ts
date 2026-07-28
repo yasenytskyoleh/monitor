@@ -1,0 +1,136 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  ExecutionAttemptRuntimeValidationError,
+  InMemoryExecutionAttemptAuditRepository,
+  type ExecutionAttemptAudit,
+  type ProductRecordMetadata,
+  type RoutedActionExecutionEnvelope,
+  createExecutionAttemptAuditService,
+  createExecutionAttemptRuntime
+} from "../src/index.js";
+
+const metadata: ProductRecordMetadata = {
+  originRunId: "run-execution-runtime-001",
+  originTransitionId: "transition-execution-runtime-001",
+  createdBySource: "manual_curation",
+  lastUpdatedBySource: "manual_curation",
+  traceId: "trace-execution-runtime-001",
+  sourceObservedAtUtc: "2026-07-28T10:00:05.000Z"
+};
+
+const envelope: RoutedActionExecutionEnvelope = {
+  id: "execution-envelope-runtime-001",
+  sourceRoutingResultId: "routing-result-runtime-001",
+  sourceReviewDecisionId: "review-decision-runtime-001",
+  actionTarget: "activate_setup_revision",
+  actionCommandType: "ActivateSetupDefinitionRevisionCommand",
+  targetEntityRefs: {
+    setupFamilyId: "setup-family-runtime-001",
+    setupRevisionId: "setup-revision-runtime-001"
+  },
+  routeMetadataSnapshot: {
+    routeStatus: "routed",
+    decisionOutcome: "accepted",
+    authorizedNextAction: "prepare_activation_follow_up"
+  },
+  executionPayloadSnapshot: {
+    commandType: "ActivateSetupDefinitionRevisionCommand",
+    target: "activate_setup_revision",
+    commandInput: {
+      setupRevisionId: "setup-revision-runtime-001",
+      setupFamilyId: "setup-family-runtime-001",
+      sourceReviewDecisionId: "review-decision-runtime-001",
+      sourceRoutingResultId: "routing-result-runtime-001"
+    }
+  },
+  executionStatus: "prepared",
+  preparedBy: "execution-preparer",
+  preparedAt: "2026-07-28T10:00:00.000Z",
+  createdAt: "2026-07-28T10:00:00.000Z",
+  updatedAt: "2026-07-28T10:00:00.000Z"
+};
+
+const buildAudit = (): ExecutionAttemptAudit => ({
+  attemptId: "execution-attempt-runtime-001",
+  routedActionExecutionEnvelopeId: envelope.id,
+  reviewDecisionRoutingResultId: envelope.sourceRoutingResultId,
+  researchReviewDecisionId: envelope.sourceReviewDecisionId,
+  actionTarget: envelope.actionTarget,
+  downstreamCommandType: envelope.actionCommandType,
+  status: "received",
+  attemptedBy: "execution-runtime",
+  attemptedAt: "2026-07-28T10:00:00.000Z",
+  warningCodes: [],
+  createdAtUtc: "2026-07-28T10:00:00.000Z",
+  updatedAtUtc: "2026-07-28T10:00:00.000Z"
+});
+
+const createFixture = (execute: () => Promise<{ status: "executed" | "rejected"; outcomeCode: string }>) => {
+  const repository = new InMemoryExecutionAttemptAuditRepository();
+  const runtime = createExecutionAttemptRuntime({
+    executionAttemptAuditService: createExecutionAttemptAuditService({
+      executionAttemptAuditRepository: repository
+    }),
+    downstreamActionExecutor: { execute }
+  });
+  return { repository, runtime };
+};
+
+test("runtime records an executed terminal audit after dispatch", async () => {
+  const { repository, runtime } = createFixture(async () => ({
+    status: "executed",
+    outcomeCode: "setup_revision_activated"
+  }));
+
+  const result = await runtime.execute({ audit: buildAudit(), envelope, metadata });
+
+  assert.equal(result.status, "executed");
+  assert.equal(result.audit.outcomeCode, "setup_revision_activated");
+  assert.equal((await repository.getById(result.audit.attemptId))?.status, "executed");
+});
+
+test("runtime records a rejected terminal audit without executing a provider retry", async () => {
+  const { runtime } = createFixture(async () => ({
+    status: "rejected",
+    outcomeCode: "command_rejected"
+  }));
+
+  const result = await runtime.execute({ audit: buildAudit(), envelope, metadata });
+
+  assert.equal(result.status, "rejected");
+  assert.equal(result.audit.status, "rejected");
+});
+
+test("runtime sanitizes executor failures into a failed terminal audit", async () => {
+  const { runtime } = createFixture(async () => {
+    throw new Error("provider token should not be stored");
+  });
+
+  const result = await runtime.execute({ audit: buildAudit(), envelope, metadata });
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.audit.outcomeCode, "executor_failed");
+  assert.deepEqual(result.audit.warningCodes, ["executor_failure"]);
+  assert.equal(result.audit.outcomeSummary, undefined);
+});
+
+test("runtime rejects audit and envelope correlation mismatches before dispatch", async () => {
+  let executed = false;
+  const { runtime } = createFixture(async () => {
+    executed = true;
+    return { status: "executed", outcomeCode: "should_not_run" };
+  });
+
+  await assert.rejects(
+    () =>
+      runtime.execute({
+        audit: { ...buildAudit(), routedActionExecutionEnvelopeId: "different-envelope" },
+        envelope,
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptRuntimeValidationError
+  );
+  assert.equal(executed, false);
+});

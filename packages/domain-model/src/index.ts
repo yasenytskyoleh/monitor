@@ -196,6 +196,8 @@ export {
   EXECUTION_ATTEMPT_AUDIT_STATUSES,
   ROUTED_ACTION_EXECUTION_RESULT_STATUSES,
   ROUTED_ACTION_EXECUTION_STATUSES,
+  ExecutionAttemptRuntimeValidationError,
+  createExecutionAttemptRuntime,
   createDownstreamActionExecutionPreparationService
 } from "./execution/index.js";
 export type {
@@ -204,8 +206,14 @@ export type {
   BuildRoutedActionExecutionEnvelopeRequest,
   DownstreamActionExecutionPreparationService,
   DownstreamActionExecutionPreparationServiceDependencies,
+  DownstreamActionExecutor,
+  DownstreamActionExecutorOutcome,
   ExecutionAttemptAudit,
   ExecutionAttemptAuditStatus,
+  ExecutionAttemptRuntime,
+  ExecutionAttemptRuntimeDependencies,
+  ExecutionAttemptRuntimeResult,
+  ExecutePreparedRoutedActionRequest,
   RouteMetadataSnapshot,
   RoutedActionExecutionEnvelope,
   RoutedActionExecutionPayloadSnapshot,
