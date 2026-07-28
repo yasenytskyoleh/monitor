@@ -182,6 +182,8 @@ test("runtime does not dispatch when received audit persistence fails", async ()
   let executed = false;
   const runtime = createRuntimeWithAuditService(
     {
+      getById: async () => null,
+      getByRoutedActionExecutionEnvelopeId: async () => null,
       recordReceivedAttempt: async () => {
         throw new Error("database connection details");
       },
@@ -223,7 +225,30 @@ test("runtime does not dispatch a prepared envelope more than once", async () =>
     (error: unknown) =>
       error instanceof ExecutionAttemptRuntimeAuditAlreadyRecordedError &&
       error.attemptId === "execution-attempt-runtime-duplicate-001" &&
+      error.conflictKind === "prepared_envelope" &&
+      error.existingAttemptId === "execution-attempt-runtime-001" &&
       error.routedActionExecutionEnvelopeId === envelope.id
+  );
+  assert.equal(executionCount, 1);
+});
+
+test("runtime distinguishes a duplicate attempt ID from an envelope conflict", async () => {
+  let executionCount = 0;
+  const { runtime } = createFixture(async () => {
+    executionCount += 1;
+    return { status: "executed", outcomeCode: "setup_revision_activated" };
+  });
+
+  await runtime.execute({ audit: buildAudit(), envelope, metadata });
+
+  await assert.rejects(
+    () => runtime.execute({ audit: buildAudit(), envelope, metadata }),
+    (error: unknown) =>
+      error instanceof ExecutionAttemptRuntimeAuditAlreadyRecordedError &&
+      error.conflictKind === "attempt_id" &&
+      error.attemptId === "execution-attempt-runtime-001" &&
+      error.existingAttemptId === "execution-attempt-runtime-001" &&
+      error.routedActionExecutionEnvelopeId === undefined
   );
   assert.equal(executionCount, 1);
 });
@@ -251,6 +276,8 @@ test("runtime surfaces terminal audit persistence as a safe reconciliation error
   const audit = buildAudit();
   const runtime = createRuntimeWithAuditService(
     {
+      getById: async () => null,
+      getByRoutedActionExecutionEnvelopeId: async () => null,
       recordReceivedAttempt: async () => audit,
       recordTerminalOutcome: async () => {
         throw new Error("database connection details");

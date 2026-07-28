@@ -42,6 +42,8 @@ export type ExecutionAttemptRuntime = {
 
 export type ExecutionAttemptAuditPersistencePhase = "received" | "terminal";
 
+export type ExecutionAttemptAuditConflictKind = "attempt_id" | "prepared_envelope";
+
 export class ExecutionAttemptRuntimeAuditPersistenceError extends Error {
   constructor(
     readonly attemptId: string,
@@ -55,7 +57,9 @@ export class ExecutionAttemptRuntimeAuditPersistenceError extends Error {
 export class ExecutionAttemptRuntimeAuditAlreadyRecordedError extends Error {
   constructor(
     readonly attemptId: string,
-    readonly routedActionExecutionEnvelopeId: string | undefined
+    readonly conflictKind: ExecutionAttemptAuditConflictKind,
+    readonly existingAttemptId: string,
+    readonly routedActionExecutionEnvelopeId?: string
   ) {
     super("execution_attempt_audit has already been recorded");
     this.name = "ExecutionAttemptRuntimeAuditAlreadyRecordedError";
@@ -167,10 +171,35 @@ const recordReceivedAttempt = async (
     }
 
     if (error instanceof RepositoryError && error.code === "already_exists") {
-      throw new ExecutionAttemptRuntimeAuditAlreadyRecordedError(
-        audit.attemptId,
-        audit.routedActionExecutionEnvelopeId
-      );
+      try {
+        const existingByAttemptId = await executionAttemptAuditService.getById(audit.attemptId);
+        if (existingByAttemptId) {
+          throw new ExecutionAttemptRuntimeAuditAlreadyRecordedError(
+            audit.attemptId,
+            "attempt_id",
+            existingByAttemptId.attemptId
+          );
+        }
+
+        if (audit.routedActionExecutionEnvelopeId) {
+          const existingByEnvelope =
+            await executionAttemptAuditService.getByRoutedActionExecutionEnvelopeId(
+              audit.routedActionExecutionEnvelopeId
+            );
+          if (existingByEnvelope) {
+            throw new ExecutionAttemptRuntimeAuditAlreadyRecordedError(
+              audit.attemptId,
+              "prepared_envelope",
+              existingByEnvelope.attemptId,
+              audit.routedActionExecutionEnvelopeId
+            );
+          }
+        }
+      } catch (reconciliationError) {
+        if (reconciliationError instanceof ExecutionAttemptRuntimeAuditAlreadyRecordedError) {
+          throw reconciliationError;
+        }
+      }
     }
 
     throw new ExecutionAttemptRuntimeAuditPersistenceError(audit.attemptId, "received");

@@ -37,6 +37,7 @@ export type {
 export type {
   DownstreamActionExecutor,
   DownstreamActionExecutorOutcome,
+  ExecutionAttemptAuditConflictKind,
   ExecutionAttemptAuditPersistencePhase,
   ExecutePreparedRoutedActionRequest,
   ExecutionAttemptRuntime,

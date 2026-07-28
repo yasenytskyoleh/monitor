@@ -212,6 +212,7 @@ export type {
   DownstreamActionExecutionPreparationServiceDependencies,
   DownstreamActionExecutor,
   DownstreamActionExecutorOutcome,
+  ExecutionAttemptAuditConflictKind,
   ExecutionAttemptAudit,
   ExecutionAttemptAuditStatus,
   ExecutionAttemptAuditPersistencePhase,

@@ -34,6 +34,10 @@ export type ExecutionAttemptAuditServiceDependencies = {
 };
 
 export type ExecutionAttemptAuditService = {
+  getById(attemptId: string): Promise<ExecutionAttemptAudit | null>;
+  getByRoutedActionExecutionEnvelopeId(
+    routedActionExecutionEnvelopeId: string
+  ): Promise<ExecutionAttemptAudit | null>;
   recordReceivedAttempt(
     request: RecordReceivedExecutionAttemptAuditRequest
   ): Promise<ExecutionAttemptAudit>;
@@ -167,6 +171,16 @@ export const createExecutionAttemptAuditService = (
   const { executionAttemptAuditRepository } = dependencies;
 
   return {
+    async getById(attemptId) {
+      return executionAttemptAuditRepository.getById(attemptId);
+    },
+
+    async getByRoutedActionExecutionEnvelopeId(routedActionExecutionEnvelopeId) {
+      return executionAttemptAuditRepository.getByRoutedActionExecutionEnvelopeId(
+        routedActionExecutionEnvelopeId
+      );
+    },
+
     async recordReceivedAttempt(request) {
       assertReceivedAudit(request.audit);
       return executionAttemptAuditRepository.create(request);
