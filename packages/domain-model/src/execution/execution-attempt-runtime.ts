@@ -9,7 +9,6 @@ import type { ProductRecordMetadata } from "../storage/product-record-metadata.j
 export type DownstreamActionExecutorOutcome = {
   status: "executed" | "rejected";
   outcomeCode: string;
-  outcomeSummary?: string;
   warningCodes?: string[];
 };
 
@@ -72,10 +71,6 @@ const assertExecutorOutcome = (outcome: DownstreamActionExecutorOutcome): void =
     throw new InvalidExecutorOutcomeError("executor outcomeCode is required");
   }
 
-  if (outcome.outcomeSummary !== undefined && !outcome.outcomeSummary.trim()) {
-    throw new InvalidExecutorOutcomeError("executor outcomeSummary must not be blank");
-  }
-
   if (outcome.warningCodes?.some((warningCode) => !warningCode.trim())) {
     throw new InvalidExecutorOutcomeError("executor warningCodes must not include blank values");
   }
@@ -127,7 +122,6 @@ const recordTerminalOutcome = async (
     status: outcome.status,
     completedAt: metadata.sourceObservedAtUtc ?? new Date().toISOString(),
     outcomeCode: outcome.outcomeCode,
-    ...(outcome.status === "failed" ? {} : { outcomeSummary: outcome.outcomeSummary }),
     warningCodes: outcome.status === "failed" ? ["executor_failure"] : outcome.warningCodes ?? [],
     metadata,
     expectedVersion: 1
