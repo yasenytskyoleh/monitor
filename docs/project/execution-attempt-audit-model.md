@@ -42,5 +42,10 @@ The domain contract, in-memory repository/service path, durable relational recor
 migration, mapper, adapters, shared product composition, and real-Postgres coverage are complete.
 The shared bundle is exposed through `executionAttemptAuditRepository`.
 
-Runtime integration remains intentionally deferred until an execution runtime explicitly owns
-attempt creation and terminalization.
+The generic execution runtime is complete. It accepts only prepared envelopes whose correlation
+matches the audit snapshot, records the received attempt before dispatch, and terminalizes it with
+the injected executor's sanitized outcome. An executor failure becomes the sanitized
+`executor_failed` audit outcome; provider errors are not retained. Repository-backed composition is
+available through `createExecutionAttemptRuntimeFromRepositories`.
+
+Concrete provider executors, retries, scheduling, and trading actions remain out of scope.
