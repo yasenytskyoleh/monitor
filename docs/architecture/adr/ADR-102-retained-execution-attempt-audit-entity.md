@@ -19,6 +19,8 @@ The v1 contract will include:
 - optional references to execution envelope, routing result, and review decision
 - one retained audit per non-null prepared execution-envelope reference
 - action target and command type snapshots sufficient for audit correlation
+- immutable received correlation and action snapshot, with terminalization limited to terminal
+  outcome evidence
 - terminal `executed`, `rejected`, or `failed` outcome and a sanitized outcome code/summary
 - product metadata and optimistic versioning
 

@@ -23,6 +23,8 @@ or replace runtime evidence.
 - status lifecycle: `received` → `executed` | `rejected` | `failed`
 - `attemptedAt`, optional `completedAt`, and `attemptedBy`; product metadata is added by the
   persistence layer
+- once received, its envelope/routing/review references, action snapshot, actor, receipt time, and
+  creation timestamp are immutable; terminalization adds only terminal outcome evidence
 - sanitized `outcomeCode`, optional `outcomeSummary`, and warning identifiers; codes and warnings
   use lowercase underscore-delimited machine identifiers
 - optimistic versioning and append-only terminal evidence semantics
