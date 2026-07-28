@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   ExecutionAttemptAuditValidationError,
+  ExecutionAttemptRuntimeAuditAlreadyRecordedError,
   ExecutionAttemptRuntimeAuditPersistenceError,
   ExecutionAttemptRuntimeValidationError,
   InMemoryExecutionAttemptAuditRepository,
@@ -220,8 +221,7 @@ test("runtime does not dispatch a prepared envelope more than once", async () =>
         metadata
       }),
     (error: unknown) =>
-      error instanceof ExecutionAttemptRuntimeAuditPersistenceError &&
-      error.phase === "received" &&
+      error instanceof ExecutionAttemptRuntimeAuditAlreadyRecordedError &&
       error.attemptId === "execution-attempt-runtime-duplicate-001"
   );
   assert.equal(executionCount, 1);

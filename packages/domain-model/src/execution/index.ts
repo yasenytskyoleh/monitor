@@ -44,6 +44,7 @@ export type {
   ExecutionAttemptRuntimeResult
 } from "./execution-attempt-runtime.js";
 export {
+  ExecutionAttemptRuntimeAuditAlreadyRecordedError,
   ExecutionAttemptRuntimeAuditPersistenceError,
   ExecutionAttemptRuntimeValidationError,
   createExecutionAttemptRuntime

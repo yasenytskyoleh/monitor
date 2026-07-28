@@ -3,6 +3,7 @@ import {
   type ExecutionAttemptAudit
 } from "./execution-attempt-audit.js";
 import type { RoutedActionExecutionEnvelope } from "./routed-action-execution-envelope.js";
+import { RepositoryError } from "../repositories/repository-error.js";
 import {
   ExecutionAttemptAuditValidationError,
   type ExecutionAttemptAuditService
@@ -48,6 +49,13 @@ export class ExecutionAttemptRuntimeAuditPersistenceError extends Error {
   ) {
     super(`execution_attempt_audit ${phase} persistence failed`);
     this.name = "ExecutionAttemptRuntimeAuditPersistenceError";
+  }
+}
+
+export class ExecutionAttemptRuntimeAuditAlreadyRecordedError extends Error {
+  constructor(readonly attemptId: string) {
+    super("execution_attempt_audit has already been recorded");
+    this.name = "ExecutionAttemptRuntimeAuditAlreadyRecordedError";
   }
 }
 
@@ -153,6 +161,10 @@ const recordReceivedAttempt = async (
   } catch (error) {
     if (error instanceof ExecutionAttemptAuditValidationError) {
       throw error;
+    }
+
+    if (error instanceof RepositoryError && error.code === "already_exists") {
+      throw new ExecutionAttemptRuntimeAuditAlreadyRecordedError(audit.attemptId);
     }
 
     throw new ExecutionAttemptRuntimeAuditPersistenceError(audit.attemptId, "received");
