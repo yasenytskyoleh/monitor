@@ -8,6 +8,7 @@ import { Client } from "pg";
 
 import {
   createImplementedProductRelationalPrismaRepositories,
+  createExecutionAttemptRuntimeFromRepositories,
   createSetupToAggregateFlowFromRepositories,
   type EvaluationTerminalization,
   type ExecutionAttemptAudit,
@@ -1433,6 +1434,80 @@ integrationTest(
           "routing-result-not-required"
         ),
         [failed]
+      );
+    });
+  }
+);
+
+integrationTest(
+  "repository-composed execution runtime records terminal audit evidence against real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      const runtime = createExecutionAttemptRuntimeFromRepositories(repositories, {
+        execute: async () => ({
+          status: "executed",
+          outcomeCode: "setup_revision_activated"
+        })
+      });
+      const result = await runtime.execute({
+        audit: {
+          attemptId: "execution-attempt-runtime-001",
+          routedActionExecutionEnvelopeId: "execution-envelope-runtime-001",
+          reviewDecisionRoutingResultId: "routing-result-runtime-001",
+          researchReviewDecisionId: "review-decision-runtime-001",
+          actionTarget: "activate_setup_revision",
+          downstreamCommandType: "ActivateSetupDefinitionRevisionCommand",
+          status: "received",
+          attemptedBy: "execution-runtime",
+          attemptedAt: "2026-07-28T10:00:00.000Z",
+          warningCodes: [],
+          createdAtUtc: "2026-07-28T10:00:00.000Z",
+          updatedAtUtc: "2026-07-28T10:00:00.000Z"
+        },
+        envelope: {
+          id: "execution-envelope-runtime-001",
+          sourceRoutingResultId: "routing-result-runtime-001",
+          sourceReviewDecisionId: "review-decision-runtime-001",
+          actionTarget: "activate_setup_revision",
+          actionCommandType: "ActivateSetupDefinitionRevisionCommand",
+          targetEntityRefs: {
+            setupFamilyId: "setup-family-runtime-001",
+            setupRevisionId: "setup-revision-runtime-001"
+          },
+          routeMetadataSnapshot: {
+            routeStatus: "routed",
+            decisionOutcome: "accepted",
+            authorizedNextAction: "prepare_activation_follow_up"
+          },
+          executionPayloadSnapshot: {
+            commandType: "ActivateSetupDefinitionRevisionCommand",
+            target: "activate_setup_revision",
+            commandInput: {
+              setupRevisionId: "setup-revision-runtime-001",
+              setupFamilyId: "setup-family-runtime-001",
+              sourceReviewDecisionId: "review-decision-runtime-001",
+              sourceRoutingResultId: "routing-result-runtime-001"
+            }
+          },
+          executionStatus: "prepared",
+          preparedBy: "execution-preparer",
+          preparedAt: "2026-07-28T10:00:00.000Z",
+          createdAt: "2026-07-28T10:00:00.000Z",
+          updatedAt: "2026-07-28T10:00:00.000Z"
+        },
+        metadata: {
+          ...metadata,
+          sourceObservedAtUtc: "2026-07-28T10:00:05.000Z"
+        }
+      });
+
+      assert.equal(result.status, "executed");
+      assert.equal(result.audit.outcomeCode, "setup_revision_activated");
+      assert.equal(
+        (await repositories.executionAttemptAuditRepository.getById(
+          "execution-attempt-runtime-001"
+        ))?.status,
+        "executed"
       );
     });
   }

@@ -45,6 +45,12 @@ export {
   ExecutionAttemptRuntimeValidationError,
   createExecutionAttemptRuntime
 } from "./execution-attempt-runtime.js";
+export type {
+  ExecutionAttemptRuntimeRepositories
+} from "./create-execution-attempt-runtime-from-repositories.js";
+export {
+  createExecutionAttemptRuntimeFromRepositories
+} from "./create-execution-attempt-runtime-from-repositories.js";
 
 export type {
   BuildRoutedActionExecutionEnvelopeRequest,

@@ -8,7 +8,8 @@ import {
   type ProductRecordMetadata,
   type RoutedActionExecutionEnvelope,
   createExecutionAttemptAuditService,
-  createExecutionAttemptRuntime
+  createExecutionAttemptRuntime,
+  createExecutionAttemptRuntimeFromRepositories
 } from "../src/index.js";
 
 const metadata: ProductRecordMetadata = {
@@ -133,4 +134,17 @@ test("runtime rejects audit and envelope correlation mismatches before dispatch"
     (error: unknown) => error instanceof ExecutionAttemptRuntimeValidationError
   );
   assert.equal(executed, false);
+});
+
+test("runtime factory composes the audit service from a repository bundle", async () => {
+  const repository = new InMemoryExecutionAttemptAuditRepository();
+  const runtime = createExecutionAttemptRuntimeFromRepositories(
+    { executionAttemptAuditRepository: repository },
+    { execute: async () => ({ status: "executed", outcomeCode: "setup_revision_activated" }) }
+  );
+
+  const result = await runtime.execute({ audit: buildAudit(), envelope, metadata });
+
+  assert.equal(result.status, "executed");
+  assert.equal((await repository.getById(result.audit.attemptId))?.status, "executed");
 });
