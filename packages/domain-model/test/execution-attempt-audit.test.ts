@@ -67,6 +67,33 @@ test("execution-attempt audit repository stores, lists, and protects optimistic 
   );
 });
 
+test("execution-attempt audit repository permits one audit per prepared envelope", async () => {
+  const repository = new InMemoryExecutionAttemptAuditRepository();
+  await repository.create({ audit: buildAudit(), metadata });
+
+  await assert.rejects(
+    () => repository.create({ audit: { ...buildAudit(), attemptId: "execution-attempt-002" }, metadata }),
+    (error: unknown) => error instanceof RepositoryError && error.code === "already_exists"
+  );
+
+  await repository.create({
+    audit: {
+      ...buildAudit(),
+      attemptId: "execution-attempt-003",
+      routedActionExecutionEnvelopeId: undefined
+    },
+    metadata
+  });
+  await repository.create({
+    audit: {
+      ...buildAudit(),
+      attemptId: "execution-attempt-004",
+      routedActionExecutionEnvelopeId: undefined
+    },
+    metadata
+  });
+});
+
 test("execution-attempt audit service records a received attempt and one terminal outcome", async () => {
   const repository = new InMemoryExecutionAttemptAuditRepository();
   const service = createExecutionAttemptAuditService({

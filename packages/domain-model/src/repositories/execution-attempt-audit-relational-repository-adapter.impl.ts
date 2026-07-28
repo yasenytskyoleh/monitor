@@ -40,6 +40,20 @@ export class InMemoryExecutionAttemptAuditRelationalRepositoryAdapter
     if (this.recordsById.has(attemptId)) {
       throw createAlreadyExistsRepositoryError({ entityType: "execution_attempt_audit", entityId: attemptId, operation: "create" });
     }
+    if (
+      request.record.routedActionExecutionEnvelopeId &&
+      [...this.recordsById.values()].some(
+        (record) =>
+          record.routedActionExecutionEnvelopeId ===
+          request.record.routedActionExecutionEnvelopeId
+      )
+    ) {
+      throw createAlreadyExistsRepositoryError({
+        entityType: "execution_attempt_audit",
+        entityId: attemptId,
+        operation: "create"
+      });
+    }
     const record = cloneRecord(request.record);
     this.recordsById.set(attemptId, record);
     return cloneRecord(record);

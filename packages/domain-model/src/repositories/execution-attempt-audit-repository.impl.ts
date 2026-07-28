@@ -57,6 +57,21 @@ export class InMemoryExecutionAttemptAuditRepository
       });
     }
 
+    if (
+      request.audit.routedActionExecutionEnvelopeId &&
+      [...this.recordsByAttemptId.values()].some(
+        (record) =>
+          record.audit.routedActionExecutionEnvelopeId ===
+          request.audit.routedActionExecutionEnvelopeId
+      )
+    ) {
+      throw createAlreadyExistsRepositoryError({
+        entityType: "execution_attempt_audit",
+        entityId: attemptId,
+        operation: "create"
+      });
+    }
+
     const audit = cloneAudit(request.audit);
     this.recordsByAttemptId.set(attemptId, {
       audit,
