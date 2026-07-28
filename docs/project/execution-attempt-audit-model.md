@@ -64,6 +64,7 @@ dispatch entirely. A duplicate received audit produces the non-retryable
 envelope can reach the injected executor at most once. Its `conflictKind` distinguishes a
 duplicate `attempt_id` from a `prepared_envelope` conflict. The latter includes the prepared
 envelope ID for `executionAttemptAuditRepository.getByRoutedActionExecutionEnvelopeId`; both
-variants include the retained audit's `existingAttemptId`.
+variants include the retained audit's `existingAttemptId`. If retained evidence cannot prove either
+conflict, the runtime returns its safe received-phase persistence error instead of guessing.
 
 Concrete provider executors, retries, scheduling, and trading actions remain out of scope.

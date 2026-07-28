@@ -35,6 +35,8 @@ traces, or runtime logs. Those remain runtime evidence under their own retention
   executor dispatch for the same prepared envelope
 - duplicate conflicts distinguish attempt identity from prepared-envelope identity; the runtime
   error carries the retained attempt identity and, for envelope conflicts, the lookup reference
+- an unresolvable duplicate stays a safe reconciliation failure rather than being assigned a
+  speculative conflict kind
 - v1 retention is product-audit lifetime; deletion and archival workflows require a later policy
 - the generic runtime dispatches only through an injected executor; concrete provider executors,
   retry behavior, and trading actions remain out of scope
