@@ -3,11 +3,13 @@ import test from "node:test";
 
 import {
   ExecutionAttemptAuditValidationError,
+  ExecutionAttemptAuditRepositoryValidationError,
   InMemoryExecutionAttemptAuditRepository,
   RepositoryError,
   type ExecutionAttemptAudit,
   type ProductRecordMetadata,
-  createExecutionAttemptAuditService
+  createExecutionAttemptAuditService,
+  isExecutionAttemptAuditCode
 } from "../src/index.js";
 
 const metadata: ProductRecordMetadata = {
@@ -34,6 +36,11 @@ const buildAudit = (): ExecutionAttemptAudit => ({
   updatedAtUtc: "2026-07-27T12:00:00.000Z"
 });
 
+test("execution-attempt audit codes use stable machine identifiers", () => {
+  assert.equal(isExecutionAttemptAuditCode("setup_revision_activated"), true);
+  assert.equal(isExecutionAttemptAuditCode("provider response should not be retained"), false);
+});
+
 test("execution-attempt audit repository stores, lists, and protects optimistic updates", async () => {
   const repository = new InMemoryExecutionAttemptAuditRepository();
   const audit = buildAudit();
@@ -58,6 +65,66 @@ test("execution-attempt audit repository stores, lists, and protects optimistic 
         expectedVersion: 2
       }),
     (error: unknown) => error instanceof RepositoryError && error.code === "version_mismatch"
+  );
+});
+
+test("execution-attempt audit repository permits one audit per prepared envelope", async () => {
+  const repository = new InMemoryExecutionAttemptAuditRepository();
+  const audit = buildAudit();
+  await repository.create({ audit, metadata });
+
+  assert.deepEqual(
+    await repository.getByRoutedActionExecutionEnvelopeId("execution-envelope-001"),
+    audit
+  );
+  assert.equal(
+    await repository.getByRoutedActionExecutionEnvelopeId("execution-envelope-missing-001"),
+    null
+  );
+
+  await assert.rejects(
+    () => repository.create({ audit: { ...audit, attemptId: "execution-attempt-002" }, metadata }),
+    (error: unknown) => error instanceof RepositoryError && error.code === "already_exists"
+  );
+
+  await repository.create({
+    audit: {
+      ...buildAudit(),
+      attemptId: "execution-attempt-003",
+      routedActionExecutionEnvelopeId: undefined
+    },
+    metadata
+  });
+  await repository.create({
+    audit: {
+      ...buildAudit(),
+      attemptId: "execution-attempt-004",
+      routedActionExecutionEnvelopeId: undefined
+    },
+    metadata
+  });
+});
+
+test("execution-attempt audit repository preserves its received snapshot", async () => {
+  const repository = new InMemoryExecutionAttemptAuditRepository();
+  const audit = buildAudit();
+  await repository.create({ audit, metadata });
+
+  await assert.rejects(
+    () =>
+      repository.update({
+        audit: {
+          ...audit,
+          routedActionExecutionEnvelopeId: "execution-envelope-reassigned-001",
+          status: "failed",
+          completedAt: "2026-07-27T12:00:05.000Z",
+          outcomeCode: "provider_unavailable",
+          warningCodes: []
+        },
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditRepositoryValidationError
   );
 });
 
@@ -100,6 +167,26 @@ test("execution-attempt audit service records a received attempt and one termina
         expectedVersion: 2
       }),
     (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+});
+
+test("execution-attempt audit service resolves retained evidence for a prepared envelope", async () => {
+  const repository = new InMemoryExecutionAttemptAuditRepository();
+  const service = createExecutionAttemptAuditService({
+    executionAttemptAuditRepository: repository
+  });
+  const audit = buildAudit();
+  await service.recordReceivedAttempt({ audit, metadata });
+
+  assert.deepEqual(await service.getById(audit.attemptId), audit);
+  assert.deepEqual(
+    await service.getByRoutedActionExecutionEnvelopeId("execution-envelope-001"),
+    audit
+  );
+  assert.equal(
+    await service.getByRoutedActionExecutionEnvelopeId("execution-envelope-missing-001"),
+    null
   );
 });
 
@@ -150,6 +237,54 @@ test("execution-attempt audit service rejects invalid received and terminal evid
     (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
   );
 
+  await assert.rejects(
+    () =>
+      service.recordReceivedAttempt({
+        audit: { ...buildAudit(), completedAt: "" },
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordReceivedAttempt({
+        audit: { ...buildAudit(), routedActionExecutionEnvelopeId: "" },
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordReceivedAttempt({
+        audit: { ...buildAudit(), actionTarget: "invalid" as "activate_setup_revision" },
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordReceivedAttempt({
+        audit: {
+          ...buildAudit(),
+          downstreamCommandType: "invalid" as "ActivateSetupDefinitionRevisionCommand"
+        },
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordReceivedAttempt({
+        audit: { ...buildAudit(), warningCodes: ["provider response should not be retained"] },
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
   await service.recordReceivedAttempt({ audit: buildAudit(), metadata });
   await assert.rejects(
     () =>
@@ -158,6 +293,63 @@ test("execution-attempt audit service rejects invalid received and terminal evid
         status: "rejected",
         completedAt: "2026-07-27T11:59:59.000Z",
         outcomeCode: "validation_rejected",
+        warningCodes: [],
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordTerminalOutcome({
+        attemptId: "execution-attempt-001",
+        status: "received" as "rejected",
+        completedAt: "2026-07-27T12:00:05.000Z",
+        outcomeCode: "invalid_terminal_status",
+        warningCodes: [],
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordTerminalOutcome({
+        attemptId: "execution-attempt-001",
+        status: "rejected",
+        completedAt: "2026-07-27T12:00:05.000Z",
+        outcomeCode: "validation_rejected",
+        outcomeSummary: " ",
+        warningCodes: [],
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordTerminalOutcome({
+        attemptId: "execution-attempt-001",
+        status: "rejected",
+        completedAt: "2026-07-27T12:00:05.000Z",
+        outcomeCode: "validation_rejected",
+        warningCodes: [""],
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordTerminalOutcome({
+        attemptId: "execution-attempt-001",
+        status: "rejected",
+        completedAt: "2026-07-27T12:00:05.000Z",
+        outcomeCode: "provider response should not be retained",
         warningCodes: [],
         metadata,
         expectedVersion: 1

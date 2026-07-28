@@ -731,6 +731,10 @@ export type {
   ExecutionAttemptAuditRepository,
   ExecutionAttemptAuditUpdateRequest
 } from "./execution-attempt-audit-repository.js";
+export {
+  assertExecutionAttemptAuditSnapshotIsUnchanged,
+  ExecutionAttemptAuditRepositoryValidationError
+} from "./execution-attempt-audit-repository.js";
 export { InMemoryExecutionAttemptAuditRepository } from "./execution-attempt-audit-repository.impl.js";
 export type {
   ExecutionAttemptAuditRecordWriteRequest,

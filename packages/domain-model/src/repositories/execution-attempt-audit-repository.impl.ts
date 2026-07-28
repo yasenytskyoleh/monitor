@@ -5,6 +5,7 @@ import {
   createNotFoundRepositoryError,
   createVersionMismatchRepositoryError
 } from "./repository-error.js";
+import { assertExecutionAttemptAuditSnapshotIsUnchanged } from "./execution-attempt-audit-repository.js";
 import type {
   ExecutionAttemptAuditCreateRequest,
   ExecutionAttemptAuditRepository,
@@ -32,6 +33,16 @@ export class InMemoryExecutionAttemptAuditRepository
     return record ? cloneAudit(record.audit) : null;
   }
 
+  async getByRoutedActionExecutionEnvelopeId(
+    routedActionExecutionEnvelopeId: string
+  ): Promise<ExecutionAttemptAudit | null> {
+    const record = [...this.recordsByAttemptId.values()].find(
+      (candidate) =>
+        candidate.audit.routedActionExecutionEnvelopeId === routedActionExecutionEnvelopeId
+    );
+    return record ? cloneAudit(record.audit) : null;
+  }
+
   async listByReviewDecisionRoutingResultId(
     reviewDecisionRoutingResultId: string
   ): Promise<ExecutionAttemptAudit[]> {
@@ -50,6 +61,21 @@ export class InMemoryExecutionAttemptAuditRepository
   async create(request: ExecutionAttemptAuditCreateRequest): Promise<ExecutionAttemptAudit> {
     const attemptId = request.audit.attemptId;
     if (this.recordsByAttemptId.has(attemptId)) {
+      throw createAlreadyExistsRepositoryError({
+        entityType: "execution_attempt_audit",
+        entityId: attemptId,
+        operation: "create"
+      });
+    }
+
+    if (
+      request.audit.routedActionExecutionEnvelopeId &&
+      [...this.recordsByAttemptId.values()].some(
+        (record) =>
+          record.audit.routedActionExecutionEnvelopeId ===
+          request.audit.routedActionExecutionEnvelopeId
+      )
+    ) {
       throw createAlreadyExistsRepositoryError({
         entityType: "execution_attempt_audit",
         entityId: attemptId,
@@ -80,6 +106,8 @@ export class InMemoryExecutionAttemptAuditRepository
     if (currentRecord.audit.status !== "received" || request.audit.status === "received") {
       throw new Error("execution_attempt_audit terminal outcome is append-only");
     }
+
+    assertExecutionAttemptAuditSnapshotIsUnchanged(currentRecord.audit, request.audit);
 
     if (request.expectedVersion !== null && request.expectedVersion !== currentRecord.version) {
       throw createVersionMismatchRepositoryError({

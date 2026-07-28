@@ -22,6 +22,16 @@ export class InMemoryExecutionAttemptAuditRelationalRepositoryAdapter
     return record ? cloneRecord(record) : null;
   }
 
+  async loadExecutionAttemptAuditRecordByEnvelopeId(
+    routedActionExecutionEnvelopeId: string
+  ): Promise<ExecutionAttemptAuditDurableRecord | null> {
+    const record = [...this.recordsById.values()].find(
+      (candidate) =>
+        candidate.routedActionExecutionEnvelopeId === routedActionExecutionEnvelopeId
+    );
+    return record ? cloneRecord(record) : null;
+  }
+
   async listExecutionAttemptAuditRecordsByRoutingResultId(routingResultId: string): Promise<ExecutionAttemptAuditDurableRecord[]> {
     return [...this.recordsById.values()]
       .filter((record) => record.reviewDecisionRoutingResultId === routingResultId)
@@ -39,6 +49,20 @@ export class InMemoryExecutionAttemptAuditRelationalRepositoryAdapter
     const attemptId = request.record.identity.entityId;
     if (this.recordsById.has(attemptId)) {
       throw createAlreadyExistsRepositoryError({ entityType: "execution_attempt_audit", entityId: attemptId, operation: "create" });
+    }
+    if (
+      request.record.routedActionExecutionEnvelopeId &&
+      [...this.recordsById.values()].some(
+        (record) =>
+          record.routedActionExecutionEnvelopeId ===
+          request.record.routedActionExecutionEnvelopeId
+      )
+    ) {
+      throw createAlreadyExistsRepositoryError({
+        entityType: "execution_attempt_audit",
+        entityId: attemptId,
+        operation: "create"
+      });
     }
     const record = cloneRecord(request.record);
     this.recordsById.set(attemptId, record);

@@ -226,12 +226,14 @@ Current product-domain scope includes:
 - one end-to-end real-database integration flow now also spans the full implemented product chain through `setup_revision_activation_record`
 - `setup_definition_revision` now also has shared-bundle and opt-in real-database integration coverage
 - `review_decision_routing_result` now also has its durable contract, committed Prisma schema/migration, relational adapter contract, mappers, adapter-backed repository, concrete Prisma adapter, shared-bundle composition, and opt-in real-Postgres integration coverage
-- `routed_action_execution_result` is product-ephemeral; a retained execution-attempt audit requires a dedicated future entity and owner
+- `routed_action_execution_result` is product-ephemeral; `execution_attempt_audit` is the dedicated
+  retained audit entity, and the generic runtime records received and terminal sanitized outcomes
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- select a new product-domain durable entity, or explicitly design a retained execution-attempt audit entity
+- define a provider-specific downstream executor and its authorization and retry policy only when an
+  external action is explicitly approved
 
 ## Behavioral instructions for future assistants
 When continuing this project:

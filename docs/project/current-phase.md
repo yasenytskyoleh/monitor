@@ -463,7 +463,9 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- select a new product-domain durable entity, or explicitly design a retained execution-attempt audit entity
+- define a provider-specific downstream executor and its authorization and retry policy only when an
+  external action is explicitly approved; the durable execution-attempt audit and generic dispatch
+  boundary are already implemented
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

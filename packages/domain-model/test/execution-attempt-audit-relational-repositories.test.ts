@@ -3,8 +3,10 @@ import test from "node:test";
 
 import {
   createExecutionAttemptAuditService,
+  ExecutionAttemptAuditRepositoryValidationError,
   InMemoryExecutionAttemptAuditRelationalRepositoryAdapter,
   RelationalExecutionAttemptAuditRepository,
+  RepositoryError,
   type ExecutionAttemptAudit,
   type ProductRecordMetadata
 } from "../src/index.js";
@@ -55,6 +57,57 @@ test("execution-attempt audit relational repository round-trips optional correla
   assert.deepEqual(updated, completed);
   assert.equal((await repository.listByReviewDecisionRoutingResultId("routing-result-001")).length, 1);
   assert.equal((await repository.listByStatus(["failed"])).length, 1);
+});
+
+test("relational execution-attempt audit repository permits one audit per prepared envelope", async () => {
+  const repository = new RelationalExecutionAttemptAuditRepository(
+    new InMemoryExecutionAttemptAuditRelationalRepositoryAdapter()
+  );
+  const audit = { ...buildAudit(), routedActionExecutionEnvelopeId: "execution-envelope-001" };
+  await repository.create({ audit, metadata });
+
+  assert.deepEqual(
+    await repository.getByRoutedActionExecutionEnvelopeId("execution-envelope-001"),
+    audit
+  );
+  assert.equal(
+    await repository.getByRoutedActionExecutionEnvelopeId("execution-envelope-missing-001"),
+    null
+  );
+
+  await assert.rejects(
+    () =>
+      repository.create({
+        audit: { ...audit, attemptId: "execution-attempt-relational-002" },
+        metadata
+      }),
+    (error: unknown) => error instanceof RepositoryError && error.code === "already_exists"
+  );
+});
+
+test("relational execution-attempt audit repository preserves its received snapshot", async () => {
+  const repository = new RelationalExecutionAttemptAuditRepository(
+    new InMemoryExecutionAttemptAuditRelationalRepositoryAdapter()
+  );
+  const audit = { ...buildAudit(), routedActionExecutionEnvelopeId: "execution-envelope-001" };
+  await repository.create({ audit, metadata });
+
+  await assert.rejects(
+    () =>
+      repository.update({
+        audit: {
+          ...audit,
+          routedActionExecutionEnvelopeId: "execution-envelope-reassigned-001",
+          status: "failed",
+          completedAt: "2026-07-27T12:00:05.000Z",
+          outcomeCode: "provider_unavailable",
+          warningCodes: []
+        },
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditRepositoryValidationError
+  );
 });
 
 test("execution-attempt audit terminalization uses a version check when callers omit one", async () => {

@@ -196,6 +196,12 @@ export {
   EXECUTION_ATTEMPT_AUDIT_STATUSES,
   ROUTED_ACTION_EXECUTION_RESULT_STATUSES,
   ROUTED_ACTION_EXECUTION_STATUSES,
+  isExecutionAttemptAuditCode,
+  ExecutionAttemptRuntimeAuditAlreadyRecordedError,
+  ExecutionAttemptRuntimeAuditPersistenceError,
+  ExecutionAttemptRuntimeValidationError,
+  createExecutionAttemptRuntime,
+  createExecutionAttemptRuntimeFromRepositories,
   createDownstreamActionExecutionPreparationService
 } from "./execution/index.js";
 export type {
@@ -204,8 +210,17 @@ export type {
   BuildRoutedActionExecutionEnvelopeRequest,
   DownstreamActionExecutionPreparationService,
   DownstreamActionExecutionPreparationServiceDependencies,
+  DownstreamActionExecutor,
+  DownstreamActionExecutorOutcome,
+  ExecutionAttemptAuditConflictKind,
   ExecutionAttemptAudit,
   ExecutionAttemptAuditStatus,
+  ExecutionAttemptAuditPersistencePhase,
+  ExecutionAttemptRuntime,
+  ExecutionAttemptRuntimeDependencies,
+  ExecutionAttemptRuntimeRepositories,
+  ExecutionAttemptRuntimeResult,
+  ExecutePreparedRoutedActionRequest,
   RouteMetadataSnapshot,
   RoutedActionExecutionEnvelope,
   RoutedActionExecutionPayloadSnapshot,
@@ -291,6 +306,7 @@ export {
   EXECUTION_ATTEMPT_AUDIT_RELATIONAL_PRISMA_MODELS,
   EXECUTION_ATTEMPT_AUDIT_RELATIONAL_REQUIRED_COLUMNS,
   EXECUTION_ATTEMPT_AUDIT_RELATIONAL_TABLES,
+  EXECUTION_ATTEMPT_AUDIT_RELATIONAL_UNIQUE_CONSTRAINTS,
   EXECUTION_ATTEMPT_AUDIT_RELATIONAL_ENTITY_TYPES,
   SETUP_DEFINITION_REVISION_RELATIONAL_INDEXES,
   SETUP_DEFINITION_REVISION_RELATIONAL_MIGRATION_SLUG,
@@ -1157,6 +1173,10 @@ export type {
   ExecutionAttemptAuditCreateRequest,
   ExecutionAttemptAuditRepository,
   ExecutionAttemptAuditUpdateRequest
+} from "./repositories/execution-attempt-audit-repository.js";
+export {
+  assertExecutionAttemptAuditSnapshotIsUnchanged,
+  ExecutionAttemptAuditRepositoryValidationError
 } from "./repositories/execution-attempt-audit-repository.js";
 export {
   InMemoryExecutionAttemptAuditRepository

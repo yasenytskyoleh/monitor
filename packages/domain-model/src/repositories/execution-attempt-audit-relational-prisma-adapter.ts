@@ -22,7 +22,12 @@ type PrismaExecutionAttemptAuditRecordDelegate = {
     };
     orderBy: { executionAttemptAuditId: "asc" };
   }): Promise<PrismaExecutionAttemptAuditRecordModel[]>;
-  findUnique(args: { where: { executionAttemptAuditId: string } }): Promise<PrismaExecutionAttemptAuditRecordModel | null>;
+  findUnique(args: {
+    where: {
+      executionAttemptAuditId?: string;
+      routedActionExecutionEnvelopeId?: string;
+    };
+  }): Promise<PrismaExecutionAttemptAuditRecordModel | null>;
   updateMany(args: {
     where: { executionAttemptAuditId: string; version?: number };
     data: Prisma.ExecutionAttemptAuditRecordUncheckedUpdateManyInput;
@@ -34,7 +39,13 @@ export type ExecutionAttemptAuditRelationalPrismaClient = {
 };
 
 type ErrorContext = {
-  operation: "create" | "get_by_id" | "list_by_reference" | "list_by_status" | "update";
+  operation:
+    | "create"
+    | "get_by_id"
+    | "get_by_reference"
+    | "list_by_reference"
+    | "list_by_status"
+    | "update";
   entityId?: string;
   expectedVersion?: number | null;
 };
@@ -139,6 +150,22 @@ export class PrismaExecutionAttemptAuditRelationalRepositoryAdapter implements E
       return row ? hydrateRecord(row) : null;
     } catch (error) {
       throw mapError(error, { operation: "get_by_id", entityId: attemptId });
+    }
+  }
+
+  async loadExecutionAttemptAuditRecordByEnvelopeId(
+    routedActionExecutionEnvelopeId: string
+  ): Promise<ExecutionAttemptAuditDurableRecord | null> {
+    try {
+      const row = await this.prisma.executionAttemptAuditRecord.findUnique({
+        where: { routedActionExecutionEnvelopeId }
+      });
+      return row ? hydrateRecord(row) : null;
+    } catch (error) {
+      throw mapError(error, {
+        operation: "get_by_reference",
+        entityId: routedActionExecutionEnvelopeId
+      });
     }
   }
 

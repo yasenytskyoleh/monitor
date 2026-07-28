@@ -1,5 +1,6 @@
 import type { ExecutionAttemptAudit } from "../execution/execution-attempt-audit.js";
 import { createNotFoundRepositoryError } from "./repository-error.js";
+import { assertExecutionAttemptAuditSnapshotIsUnchanged } from "./execution-attempt-audit-repository.js";
 import type {
   ExecutionAttemptAuditCreateRequest,
   ExecutionAttemptAuditRepository,
@@ -18,6 +19,15 @@ export class RelationalExecutionAttemptAuditRepository
 
   async getById(attemptId: string): Promise<ExecutionAttemptAudit | null> {
     const record = await this.adapter.loadExecutionAttemptAuditRecord(attemptId);
+    return record ? hydrateExecutionAttemptAuditFromDurableRecord(record) : null;
+  }
+
+  async getByRoutedActionExecutionEnvelopeId(
+    routedActionExecutionEnvelopeId: string
+  ): Promise<ExecutionAttemptAudit | null> {
+    const record = await this.adapter.loadExecutionAttemptAuditRecordByEnvelopeId(
+      routedActionExecutionEnvelopeId
+    );
     return record ? hydrateExecutionAttemptAuditFromDurableRecord(record) : null;
   }
 
@@ -58,6 +68,11 @@ export class RelationalExecutionAttemptAuditRepository
     ) {
       throw new Error("execution_attempt_audit terminal outcome is append-only");
     }
+
+    assertExecutionAttemptAuditSnapshotIsUnchanged(
+      hydrateExecutionAttemptAuditFromDurableRecord(current),
+      request.audit
+    );
 
     const record = await this.adapter.updateExecutionAttemptAuditRecord({
       record: dehydrateExecutionAttemptAuditToDurableRecord(

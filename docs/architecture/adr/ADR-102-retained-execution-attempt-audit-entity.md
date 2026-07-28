@@ -4,19 +4,23 @@
 
 `RoutedActionExecutionResult` remains intentionally ephemeral because rejected and failed
 responses do not always have stable product identifiers. Product audit requirements nevertheless
-need a durable record of a downstream execution attempt once an execution runtime is introduced.
+need a durable record of each downstream execution attempt now that a generic execution runtime
+boundary exists.
 
 ## Decision
 
-Introduce a future `ExecutionAttemptAudit` product entity rather than persisting the response
-type. The execution runtime owns creation and terminalization; product persistence owns the
-durable audit record.
+Introduce `ExecutionAttemptAudit` as a product entity rather than persisting the response type.
+The execution runtime owns creation and terminalization; product persistence owns the durable
+audit record.
 
 The v1 contract will include:
 
 - stable `attemptId`, attempt timestamps, and a received-to-terminal lifecycle
 - optional references to execution envelope, routing result, and review decision
+- one retained audit per non-null prepared execution-envelope reference
 - action target and command type snapshots sufficient for audit correlation
+- immutable received correlation and action snapshot, with terminalization limited to terminal
+  outcome evidence
 - terminal `executed`, `rejected`, or `failed` outcome and a sanitized outcome code/summary
 - product metadata and optimistic versioning
 
@@ -27,5 +31,12 @@ traces, or runtime logs. Those remain runtime evidence under their own retention
 
 - rejected attempts can be retained without inventing incomplete envelope records
 - execution preparation responses remain ephemeral and backward-compatible
+- duplicate audit receipt is a deterministic, non-retryable outcome and prevents a second
+  executor dispatch for the same prepared envelope
+- duplicate conflicts distinguish attempt identity from prepared-envelope identity; the runtime
+  error carries the retained attempt identity and, for envelope conflicts, the lookup reference
+- an unresolvable duplicate stays a safe reconciliation failure rather than being assigned a
+  speculative conflict kind
 - v1 retention is product-audit lifetime; deletion and archival workflows require a later policy
-- no execution engine, retry behavior, or trading action is introduced by this decision
+- the generic runtime dispatches only through an injected executor; concrete provider executors,
+  retry behavior, and trading actions remain out of scope

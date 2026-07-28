@@ -1,12 +1,17 @@
 import type { TimestampUtc } from "../common.js";
-import type {
-  ExecutionAttemptAudit,
-  ExecutionAttemptAuditStatus
+import {
+  isExecutionAttemptAuditCode,
+  type ExecutionAttemptAudit,
+  type ExecutionAttemptAuditStatus
 } from "../execution/execution-attempt-audit.js";
 import type { ExecutionAttemptAuditRepository } from "../repositories/execution-attempt-audit-repository.js";
+import { DOWNSTREAM_ACTION_TARGETS } from "../review/downstream-action-target.js";
+import { REVIEW_DECISION_DOWNSTREAM_COMMAND_TYPES } from "../review/review-decision-routing-result.js";
 import type { ProductRecordMetadata } from "../storage/product-record-metadata.js";
 
 type TerminalExecutionAttemptAuditStatus = Exclude<ExecutionAttemptAuditStatus, "received">;
+
+const TERMINAL_EXECUTION_ATTEMPT_AUDIT_STATUSES = ["executed", "rejected", "failed"] as const;
 
 export type RecordReceivedExecutionAttemptAuditRequest = {
   audit: ExecutionAttemptAudit;
@@ -29,6 +34,10 @@ export type ExecutionAttemptAuditServiceDependencies = {
 };
 
 export type ExecutionAttemptAuditService = {
+  getById(attemptId: string): Promise<ExecutionAttemptAudit | null>;
+  getByRoutedActionExecutionEnvelopeId(
+    routedActionExecutionEnvelopeId: string
+  ): Promise<ExecutionAttemptAudit | null>;
   recordReceivedAttempt(
     request: RecordReceivedExecutionAttemptAuditRequest
   ): Promise<ExecutionAttemptAudit>;
@@ -57,10 +66,41 @@ const assertValidTimestamp = (value: TimestampUtc, fieldName: string): void => {
   }
 };
 
+const assertOptionalNonEmptyString = (value: string | undefined, fieldName: string): void => {
+  if (value !== undefined) {
+    assertNonEmptyString(value, fieldName);
+  }
+};
+
+const assertAuditCode = (value: string, fieldName: string): void => {
+  if (!isExecutionAttemptAuditCode(value)) {
+    throw new ExecutionAttemptAuditValidationError(
+      `${fieldName} must be a lowercase underscore-delimited identifier`
+    );
+  }
+};
+
 const assertReceivedAudit = (audit: ExecutionAttemptAudit): void => {
   assertNonEmptyString(audit.attemptId, "attemptId");
   assertNonEmptyString(audit.attemptedBy, "attemptedBy");
   assertValidTimestamp(audit.attemptedAt, "attemptedAt");
+  assertOptionalNonEmptyString(
+    audit.routedActionExecutionEnvelopeId,
+    "routedActionExecutionEnvelopeId"
+  );
+  assertOptionalNonEmptyString(
+    audit.reviewDecisionRoutingResultId,
+    "reviewDecisionRoutingResultId"
+  );
+  assertOptionalNonEmptyString(audit.researchReviewDecisionId, "researchReviewDecisionId");
+
+  if (!DOWNSTREAM_ACTION_TARGETS.includes(audit.actionTarget)) {
+    throw new ExecutionAttemptAuditValidationError("actionTarget is invalid");
+  }
+
+  if (!REVIEW_DECISION_DOWNSTREAM_COMMAND_TYPES.includes(audit.downstreamCommandType)) {
+    throw new ExecutionAttemptAuditValidationError("downstreamCommandType is invalid");
+  }
 
   if (audit.status !== "received") {
     throw new ExecutionAttemptAuditValidationError(
@@ -68,9 +108,21 @@ const assertReceivedAudit = (audit: ExecutionAttemptAudit): void => {
     );
   }
 
-  if (audit.completedAt || audit.outcomeCode || audit.outcomeSummary) {
+  if (
+    audit.completedAt !== undefined ||
+    audit.outcomeCode !== undefined ||
+    audit.outcomeSummary !== undefined
+  ) {
     throw new ExecutionAttemptAuditValidationError(
       "received execution_attempt_audit cannot include terminal outcome evidence"
+    );
+  }
+
+  if (
+    audit.warningCodes.some((warningCode) => !isExecutionAttemptAuditCode(warningCode))
+  ) {
+    throw new ExecutionAttemptAuditValidationError(
+      "warningCodes must be lowercase underscore-delimited identifiers"
     );
   }
 };
@@ -78,7 +130,25 @@ const assertReceivedAudit = (audit: ExecutionAttemptAudit): void => {
 const assertTerminalRequest = (request: RecordTerminalExecutionAttemptAuditRequest): void => {
   assertNonEmptyString(request.attemptId, "attemptId");
   assertValidTimestamp(request.completedAt, "completedAt");
-  assertNonEmptyString(request.outcomeCode, "outcomeCode");
+  assertAuditCode(request.outcomeCode, "outcomeCode");
+
+  if (!TERMINAL_EXECUTION_ATTEMPT_AUDIT_STATUSES.includes(request.status)) {
+    throw new ExecutionAttemptAuditValidationError(
+      "execution_attempt_audit terminal status must be executed, rejected, or failed"
+    );
+  }
+
+  if (request.outcomeSummary !== undefined) {
+    assertNonEmptyString(request.outcomeSummary, "outcomeSummary");
+  }
+
+  if (
+    request.warningCodes.some((warningCode) => !isExecutionAttemptAuditCode(warningCode))
+  ) {
+    throw new ExecutionAttemptAuditValidationError(
+      "warningCodes must be lowercase underscore-delimited identifiers"
+    );
+  }
 };
 
 const buildUpdatedAt = (
@@ -101,6 +171,16 @@ export const createExecutionAttemptAuditService = (
   const { executionAttemptAuditRepository } = dependencies;
 
   return {
+    async getById(attemptId) {
+      return executionAttemptAuditRepository.getById(attemptId);
+    },
+
+    async getByRoutedActionExecutionEnvelopeId(routedActionExecutionEnvelopeId) {
+      return executionAttemptAuditRepository.getByRoutedActionExecutionEnvelopeId(
+        routedActionExecutionEnvelopeId
+      );
+    },
+
     async recordReceivedAttempt(request) {
       assertReceivedAudit(request.audit);
       return executionAttemptAuditRepository.create(request);

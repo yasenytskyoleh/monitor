@@ -3,6 +3,7 @@ import type { RepositoryErrorCode } from "./repository-error.js";
 
 export const EXECUTION_ATTEMPT_AUDIT_RELATIONAL_ADAPTER_OPERATIONS = [
   "load_execution_attempt_audit_record",
+  "load_execution_attempt_audit_record_by_envelope_id",
   "list_execution_attempt_audit_records_by_routing_result_id",
   "list_execution_attempt_audit_records_by_status",
   "insert_execution_attempt_audit_record",
@@ -33,6 +34,9 @@ export type ExecutionAttemptAuditRecordWriteRequest = {
 
 export type ExecutionAttemptAuditRelationalRepositoryAdapter = {
   loadExecutionAttemptAuditRecord(attemptId: string): Promise<ExecutionAttemptAuditDurableRecord | null>;
+  loadExecutionAttemptAuditRecordByEnvelopeId(
+    routedActionExecutionEnvelopeId: string
+  ): Promise<ExecutionAttemptAuditDurableRecord | null>;
   listExecutionAttemptAuditRecordsByRoutingResultId(routingResultId: string): Promise<ExecutionAttemptAuditDurableRecord[]>;
   listExecutionAttemptAuditRecordsByStatus(statuses: ExecutionAttemptAuditDurableRecord["executionAttemptAuditStatus"][]): Promise<ExecutionAttemptAuditDurableRecord[]>;
   insertExecutionAttemptAuditRecord(request: ExecutionAttemptAuditRecordWriteRequest): Promise<ExecutionAttemptAuditDurableRecord>;

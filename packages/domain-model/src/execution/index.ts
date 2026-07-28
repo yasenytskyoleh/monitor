@@ -26,12 +26,36 @@ export type {
 } from "./routed-action-execution-result.js";
 
 export {
-  EXECUTION_ATTEMPT_AUDIT_STATUSES
+  EXECUTION_ATTEMPT_AUDIT_STATUSES,
+  isExecutionAttemptAuditCode
 } from "./execution-attempt-audit.js";
 export type {
   ExecutionAttemptAudit,
   ExecutionAttemptAuditStatus
 } from "./execution-attempt-audit.js";
+
+export type {
+  DownstreamActionExecutor,
+  DownstreamActionExecutorOutcome,
+  ExecutionAttemptAuditConflictKind,
+  ExecutionAttemptAuditPersistencePhase,
+  ExecutePreparedRoutedActionRequest,
+  ExecutionAttemptRuntime,
+  ExecutionAttemptRuntimeDependencies,
+  ExecutionAttemptRuntimeResult
+} from "./execution-attempt-runtime.js";
+export {
+  ExecutionAttemptRuntimeAuditAlreadyRecordedError,
+  ExecutionAttemptRuntimeAuditPersistenceError,
+  ExecutionAttemptRuntimeValidationError,
+  createExecutionAttemptRuntime
+} from "./execution-attempt-runtime.js";
+export type {
+  ExecutionAttemptRuntimeRepositories
+} from "./create-execution-attempt-runtime-from-repositories.js";
+export {
+  createExecutionAttemptRuntimeFromRepositories
+} from "./create-execution-attempt-runtime-from-repositories.js";
 
 export type {
   BuildRoutedActionExecutionEnvelopeRequest,

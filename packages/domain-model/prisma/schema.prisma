@@ -741,7 +741,7 @@ model ExecutionAttemptAuditRecord {
   version                       Int                                 @map("version")
   lifecycleStatus               PersistedLifecycleStatus             @map("lifecycle_status")
   executionAttemptAuditStatus   ExecutionAttemptAuditStatus          @map("execution_attempt_audit_status")
-  routedActionExecutionEnvelopeId String?                            @map("routed_action_execution_envelope_id") @db.Text
+  routedActionExecutionEnvelopeId String?                            @unique(map: "execution_attempt_audit_routed_action_execution_envelope_key") @map("routed_action_execution_envelope_id") @db.Text
   reviewDecisionRoutingResultId String?                              @map("review_decision_routing_result_id") @db.Text
   researchReviewDecisionId      String?                              @map("research_review_decision_id") @db.Text
   actionTarget                  DownstreamActionTarget               @map("action_target")
