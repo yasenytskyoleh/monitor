@@ -7,6 +7,7 @@ import {
   ExecutionAttemptRuntimeAuditPersistenceError,
   ExecutionAttemptRuntimeValidationError,
   InMemoryExecutionAttemptAuditRepository,
+  RepositoryError,
   type ExecutionAttemptAudit,
   type ExecutionAttemptAuditService,
   type DownstreamActionExecutorOutcome,
@@ -230,6 +231,41 @@ test("runtime does not dispatch a prepared envelope more than once", async () =>
       error.routedActionExecutionEnvelopeId === envelope.id
   );
   assert.equal(executionCount, 1);
+});
+
+test("runtime sanitizes duplicate-conflict reconciliation lookup failures", async () => {
+  let executed = false;
+  const runtime = createRuntimeWithAuditService(
+    {
+      getById: async () => {
+        throw new Error("database connection details");
+      },
+      getByRoutedActionExecutionEnvelopeId: async () => null,
+      recordReceivedAttempt: async () => {
+        throw new RepositoryError("duplicate audit", {
+          code: "already_exists",
+          operation: "create",
+          entityType: "execution_attempt_audit",
+          entityId: "execution-attempt-runtime-001",
+          retryDisposition: "do_not_retry"
+        });
+      },
+      recordTerminalOutcome: async () => null
+    },
+    async () => {
+      executed = true;
+      return { status: "executed", outcomeCode: "should_not_run" };
+    }
+  );
+
+  await assert.rejects(
+    () => runtime.execute({ audit: buildAudit(), envelope, metadata }),
+    (error: unknown) =>
+      error instanceof ExecutionAttemptRuntimeAuditPersistenceError &&
+      error.phase === "received" &&
+      !error.message.includes("database connection details")
+  );
+  assert.equal(executed, false);
 });
 
 test("runtime distinguishes a duplicate attempt ID from an envelope conflict", async () => {
