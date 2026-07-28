@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ExecutionAttemptAuditValidationError,
+  ExecutionAttemptRuntimeAuditPersistenceError,
   ExecutionAttemptRuntimeValidationError,
   InMemoryExecutionAttemptAuditRepository,
   type ExecutionAttemptAudit,
+  type ExecutionAttemptAuditService,
   type DownstreamActionExecutorOutcome,
   type ProductRecordMetadata,
   type RoutedActionExecutionEnvelope,
@@ -80,6 +83,15 @@ const createFixture = (execute: () => Promise<{ status: "executed" | "rejected";
   return { repository, runtime };
 };
 
+const createRuntimeWithAuditService = (
+  executionAttemptAuditService: ExecutionAttemptAuditService,
+  execute: () => Promise<{ status: "executed" | "rejected"; outcomeCode: string }>
+) =>
+  createExecutionAttemptRuntime({
+    executionAttemptAuditService,
+    downstreamActionExecutor: { execute }
+  });
+
 test("runtime records an executed terminal audit after dispatch", async () => {
   const { repository, runtime } = createFixture(async () => ({
     status: "executed",
@@ -133,6 +145,73 @@ test("runtime sanitizes malformed executor outcomes into failed terminal evidenc
   assert.equal(result.audit.outcomeCode, "executor_invalid_outcome");
   assert.deepEqual(result.audit.warningCodes, ["executor_failure"]);
   assert.equal(result.audit.outcomeSummary, undefined);
+});
+
+test("runtime does not dispatch when received audit persistence fails", async () => {
+  let executed = false;
+  const runtime = createRuntimeWithAuditService(
+    {
+      recordReceivedAttempt: async () => {
+        throw new Error("database connection details");
+      },
+      recordTerminalOutcome: async () => null
+    },
+    async () => {
+      executed = true;
+      return { status: "executed", outcomeCode: "should_not_run" };
+    }
+  );
+
+  await assert.rejects(
+    () => runtime.execute({ audit: buildAudit(), envelope, metadata }),
+    (error: unknown) =>
+      error instanceof ExecutionAttemptRuntimeAuditPersistenceError &&
+      error.phase === "received" &&
+      error.attemptId === "execution-attempt-runtime-001" &&
+      !error.message.includes("database connection details")
+  );
+  assert.equal(executed, false);
+});
+
+test("runtime keeps invalid received evidence distinct from persistence failures", async () => {
+  let executed = false;
+  const { runtime } = createFixture(async () => {
+    executed = true;
+    return { status: "executed", outcomeCode: "should_not_run" };
+  });
+
+  await assert.rejects(
+    () =>
+      runtime.execute({
+        audit: { ...buildAudit(), attemptedAt: "invalid-timestamp" },
+        envelope,
+        metadata
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+  assert.equal(executed, false);
+});
+
+test("runtime surfaces terminal audit persistence as a safe reconciliation error", async () => {
+  const audit = buildAudit();
+  const runtime = createRuntimeWithAuditService(
+    {
+      recordReceivedAttempt: async () => audit,
+      recordTerminalOutcome: async () => {
+        throw new Error("database connection details");
+      }
+    },
+    async () => ({ status: "executed", outcomeCode: "setup_revision_activated" })
+  );
+
+  await assert.rejects(
+    () => runtime.execute({ audit, envelope, metadata }),
+    (error: unknown) =>
+      error instanceof ExecutionAttemptRuntimeAuditPersistenceError &&
+      error.phase === "terminal" &&
+      error.attemptId === audit.attemptId &&
+      !error.message.includes("database connection details")
+  );
 });
 
 test("runtime rejects audit and envelope correlation mismatches before dispatch", async () => {

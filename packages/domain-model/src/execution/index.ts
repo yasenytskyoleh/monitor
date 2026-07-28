@@ -36,12 +36,14 @@ export type {
 export type {
   DownstreamActionExecutor,
   DownstreamActionExecutorOutcome,
+  ExecutionAttemptAuditPersistencePhase,
   ExecutePreparedRoutedActionRequest,
   ExecutionAttemptRuntime,
   ExecutionAttemptRuntimeDependencies,
   ExecutionAttemptRuntimeResult
 } from "./execution-attempt-runtime.js";
 export {
+  ExecutionAttemptRuntimeAuditPersistenceError,
   ExecutionAttemptRuntimeValidationError,
   createExecutionAttemptRuntime
 } from "./execution-attempt-runtime.js";

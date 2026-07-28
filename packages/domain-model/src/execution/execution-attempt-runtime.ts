@@ -1,6 +1,9 @@
 import type { ExecutionAttemptAudit } from "./execution-attempt-audit.js";
 import type { RoutedActionExecutionEnvelope } from "./routed-action-execution-envelope.js";
-import type { ExecutionAttemptAuditService } from "../services/execution-attempt-audit-service.js";
+import {
+  ExecutionAttemptAuditValidationError,
+  type ExecutionAttemptAuditService
+} from "../services/execution-attempt-audit-service.js";
 import type { ProductRecordMetadata } from "../storage/product-record-metadata.js";
 
 export type DownstreamActionExecutorOutcome = {
@@ -33,6 +36,18 @@ export type ExecutionAttemptRuntimeDependencies = {
 export type ExecutionAttemptRuntime = {
   execute(request: ExecutePreparedRoutedActionRequest): Promise<ExecutionAttemptRuntimeResult>;
 };
+
+export type ExecutionAttemptAuditPersistencePhase = "received" | "terminal";
+
+export class ExecutionAttemptRuntimeAuditPersistenceError extends Error {
+  constructor(
+    readonly attemptId: string,
+    readonly phase: ExecutionAttemptAuditPersistencePhase
+  ) {
+    super(`execution_attempt_audit ${phase} persistence failed`);
+    this.name = "ExecutionAttemptRuntimeAuditPersistenceError";
+  }
+}
 
 export class ExecutionAttemptRuntimeValidationError extends Error {
   constructor(message: string) {
@@ -127,6 +142,39 @@ const recordTerminalOutcome = async (
   return terminalAudit;
 };
 
+const recordReceivedAttempt = async (
+  executionAttemptAuditService: ExecutionAttemptAuditService,
+  audit: ExecutionAttemptAudit,
+  metadata: ProductRecordMetadata
+): Promise<void> => {
+  try {
+    await executionAttemptAuditService.recordReceivedAttempt({ audit, metadata });
+  } catch (error) {
+    if (error instanceof ExecutionAttemptAuditValidationError) {
+      throw error;
+    }
+
+    throw new ExecutionAttemptRuntimeAuditPersistenceError(audit.attemptId, "received");
+  }
+};
+
+const recordTerminalAuditOutcome = async (
+  executionAttemptAuditService: ExecutionAttemptAuditService,
+  audit: ExecutionAttemptAudit,
+  metadata: ProductRecordMetadata,
+  outcome: DownstreamActionExecutorOutcome | { status: "failed"; outcomeCode: string }
+): Promise<ExecutionAttemptAudit> => {
+  try {
+    return await recordTerminalOutcome(executionAttemptAuditService, audit, metadata, outcome);
+  } catch (error) {
+    if (error instanceof ExecutionAttemptAuditValidationError) {
+      throw error;
+    }
+
+    throw new ExecutionAttemptRuntimeAuditPersistenceError(audit.attemptId, "terminal");
+  }
+};
+
 export const createExecutionAttemptRuntime = (
   dependencies: ExecutionAttemptRuntimeDependencies
 ): ExecutionAttemptRuntime => {
@@ -135,17 +183,18 @@ export const createExecutionAttemptRuntime = (
   return {
     async execute(request: ExecutePreparedRoutedActionRequest): Promise<ExecutionAttemptRuntimeResult> {
       assertAuditMatchesEnvelope(request.audit, request.envelope);
-      await executionAttemptAuditService.recordReceivedAttempt({
-        audit: request.audit,
-        metadata: request.metadata
-      });
+      await recordReceivedAttempt(
+        executionAttemptAuditService,
+        request.audit,
+        request.metadata
+      );
 
       let outcome: DownstreamActionExecutorOutcome;
       try {
         outcome = await downstreamActionExecutor.execute(request.envelope);
         assertExecutorOutcome(outcome);
       } catch (error) {
-        const audit = await recordTerminalOutcome(
+        const audit = await recordTerminalAuditOutcome(
           executionAttemptAuditService,
           request.audit,
           request.metadata,
@@ -160,7 +209,7 @@ export const createExecutionAttemptRuntime = (
         return { status: "failed", audit };
       }
 
-      const audit = await recordTerminalOutcome(
+      const audit = await recordTerminalAuditOutcome(
         executionAttemptAuditService,
         request.audit,
         request.metadata,
