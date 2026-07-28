@@ -294,7 +294,9 @@ test("runtime treats an unresolved duplicate conflict as a safe persistence fail
   await assert.rejects(
     () => runtime.execute({ audit: buildAudit(), envelope, metadata }),
     (error: unknown) =>
-      error instanceof ExecutionAttemptRuntimeAuditPersistenceError && error.phase === "received"
+      error instanceof ExecutionAttemptRuntimeAuditPersistenceError &&
+      error.phase === "received" &&
+      !error.message.includes("duplicate audit")
   );
   assert.equal(executed, false);
 });
