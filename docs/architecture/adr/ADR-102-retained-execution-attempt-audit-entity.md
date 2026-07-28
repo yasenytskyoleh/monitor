@@ -33,6 +33,8 @@ traces, or runtime logs. Those remain runtime evidence under their own retention
 - execution preparation responses remain ephemeral and backward-compatible
 - duplicate audit receipt is a deterministic, non-retryable outcome and prevents a second
   executor dispatch for the same prepared envelope
+- duplicate-dispatch reconciliation retrieves the retained audit by the prepared-envelope
+  reference carried by the runtime error
 - v1 retention is product-audit lifetime; deletion and archival workflows require a later policy
 - the generic runtime dispatches only through an injected executor; concrete provider executors,
   retry behavior, and trading actions remain out of scope

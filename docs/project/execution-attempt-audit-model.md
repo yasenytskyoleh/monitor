@@ -61,6 +61,8 @@ If audit persistence fails, the runtime surfaces a safe phase-specific reconcili
 than misclassifying the external outcome as an executor failure. A received-audit failure prevents
 dispatch entirely. A duplicate received audit produces the non-retryable
 `ExecutionAttemptRuntimeAuditAlreadyRecordedError` and also prevents dispatch, so a prepared
-envelope can reach the injected executor at most once.
+envelope can reach the injected executor at most once. The error includes the prepared-envelope
+ID; callers can resolve the retained evidence through
+`executionAttemptAuditRepository.getByRoutedActionExecutionEnvelopeId`.
 
 Concrete provider executors, retries, scheduling, and trading actions remain out of scope.
