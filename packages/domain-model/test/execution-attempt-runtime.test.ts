@@ -203,6 +203,30 @@ test("runtime does not dispatch when received audit persistence fails", async ()
   assert.equal(executed, false);
 });
 
+test("runtime does not dispatch a prepared envelope more than once", async () => {
+  let executionCount = 0;
+  const { runtime } = createFixture(async () => {
+    executionCount += 1;
+    return { status: "executed", outcomeCode: "setup_revision_activated" };
+  });
+
+  await runtime.execute({ audit: buildAudit(), envelope, metadata });
+
+  await assert.rejects(
+    () =>
+      runtime.execute({
+        audit: { ...buildAudit(), attemptId: "execution-attempt-runtime-duplicate-001" },
+        envelope,
+        metadata
+      }),
+    (error: unknown) =>
+      error instanceof ExecutionAttemptRuntimeAuditPersistenceError &&
+      error.phase === "received" &&
+      error.attemptId === "execution-attempt-runtime-duplicate-001"
+  );
+  assert.equal(executionCount, 1);
+});
+
 test("runtime keeps invalid received evidence distinct from persistence failures", async () => {
   let executed = false;
   const { runtime } = createFixture(async () => {
