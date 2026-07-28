@@ -26,7 +26,8 @@ export type {
 } from "./routed-action-execution-result.js";
 
 export {
-  EXECUTION_ATTEMPT_AUDIT_STATUSES
+  EXECUTION_ATTEMPT_AUDIT_STATUSES,
+  isExecutionAttemptAuditCode
 } from "./execution-attempt-audit.js";
 export type {
   ExecutionAttemptAudit,

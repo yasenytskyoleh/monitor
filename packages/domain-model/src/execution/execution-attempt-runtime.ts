@@ -1,4 +1,7 @@
-import type { ExecutionAttemptAudit } from "./execution-attempt-audit.js";
+import {
+  isExecutionAttemptAuditCode,
+  type ExecutionAttemptAudit
+} from "./execution-attempt-audit.js";
 import type { RoutedActionExecutionEnvelope } from "./routed-action-execution-envelope.js";
 import {
   ExecutionAttemptAuditValidationError,
@@ -62,20 +65,18 @@ class InvalidExecutorOutcomeError extends Error {
   }
 }
 
-const EXECUTION_AUDIT_CODE_PATTERN = /^[a-z][a-z0-9_]*$/;
-
 const assertExecutorOutcome = (outcome: DownstreamActionExecutorOutcome): void => {
   if (outcome.status !== "executed" && outcome.status !== "rejected") {
     throw new InvalidExecutorOutcomeError("executor outcome status must be executed or rejected");
   }
 
-  if (!EXECUTION_AUDIT_CODE_PATTERN.test(outcome.outcomeCode)) {
+  if (!isExecutionAttemptAuditCode(outcome.outcomeCode)) {
     throw new InvalidExecutorOutcomeError(
       "executor outcomeCode must be a lowercase underscore-delimited identifier"
     );
   }
 
-  if (outcome.warningCodes?.some((warningCode) => !EXECUTION_AUDIT_CODE_PATTERN.test(warningCode))) {
+  if (outcome.warningCodes?.some((warningCode) => !isExecutionAttemptAuditCode(warningCode))) {
     throw new InvalidExecutorOutcomeError(
       "executor warningCodes must be lowercase underscore-delimited identifiers"
     );

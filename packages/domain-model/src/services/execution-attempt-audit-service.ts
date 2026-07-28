@@ -1,7 +1,8 @@
 import type { TimestampUtc } from "../common.js";
-import type {
-  ExecutionAttemptAudit,
-  ExecutionAttemptAuditStatus
+import {
+  isExecutionAttemptAuditCode,
+  type ExecutionAttemptAudit,
+  type ExecutionAttemptAuditStatus
 } from "../execution/execution-attempt-audit.js";
 import type { ExecutionAttemptAuditRepository } from "../repositories/execution-attempt-audit-repository.js";
 import { DOWNSTREAM_ACTION_TARGETS } from "../review/downstream-action-target.js";
@@ -67,6 +68,14 @@ const assertOptionalNonEmptyString = (value: string | undefined, fieldName: stri
   }
 };
 
+const assertAuditCode = (value: string, fieldName: string): void => {
+  if (!isExecutionAttemptAuditCode(value)) {
+    throw new ExecutionAttemptAuditValidationError(
+      `${fieldName} must be a lowercase underscore-delimited identifier`
+    );
+  }
+};
+
 const assertReceivedAudit = (audit: ExecutionAttemptAudit): void => {
   assertNonEmptyString(audit.attemptId, "attemptId");
   assertNonEmptyString(audit.attemptedBy, "attemptedBy");
@@ -105,15 +114,19 @@ const assertReceivedAudit = (audit: ExecutionAttemptAudit): void => {
     );
   }
 
-  if (audit.warningCodes.some((warningCode) => !warningCode.trim())) {
-    throw new ExecutionAttemptAuditValidationError("warningCodes must not include blank values");
+  if (
+    audit.warningCodes.some((warningCode) => !isExecutionAttemptAuditCode(warningCode))
+  ) {
+    throw new ExecutionAttemptAuditValidationError(
+      "warningCodes must be lowercase underscore-delimited identifiers"
+    );
   }
 };
 
 const assertTerminalRequest = (request: RecordTerminalExecutionAttemptAuditRequest): void => {
   assertNonEmptyString(request.attemptId, "attemptId");
   assertValidTimestamp(request.completedAt, "completedAt");
-  assertNonEmptyString(request.outcomeCode, "outcomeCode");
+  assertAuditCode(request.outcomeCode, "outcomeCode");
 
   if (!TERMINAL_EXECUTION_ATTEMPT_AUDIT_STATUSES.includes(request.status)) {
     throw new ExecutionAttemptAuditValidationError(
@@ -125,8 +138,12 @@ const assertTerminalRequest = (request: RecordTerminalExecutionAttemptAuditReque
     assertNonEmptyString(request.outcomeSummary, "outcomeSummary");
   }
 
-  if (request.warningCodes.some((warningCode) => !warningCode.trim())) {
-    throw new ExecutionAttemptAuditValidationError("warningCodes must not include blank values");
+  if (
+    request.warningCodes.some((warningCode) => !isExecutionAttemptAuditCode(warningCode))
+  ) {
+    throw new ExecutionAttemptAuditValidationError(
+      "warningCodes must be lowercase underscore-delimited identifiers"
+    );
   }
 };
 

@@ -7,7 +7,8 @@ import {
   RepositoryError,
   type ExecutionAttemptAudit,
   type ProductRecordMetadata,
-  createExecutionAttemptAuditService
+  createExecutionAttemptAuditService,
+  isExecutionAttemptAuditCode
 } from "../src/index.js";
 
 const metadata: ProductRecordMetadata = {
@@ -32,6 +33,11 @@ const buildAudit = (): ExecutionAttemptAudit => ({
   warningCodes: [],
   createdAtUtc: "2026-07-27T12:00:00.000Z",
   updatedAtUtc: "2026-07-27T12:00:00.000Z"
+});
+
+test("execution-attempt audit codes use stable machine identifiers", () => {
+  assert.equal(isExecutionAttemptAuditCode("setup_revision_activated"), true);
+  assert.equal(isExecutionAttemptAuditCode("provider response should not be retained"), false);
 });
 
 test("execution-attempt audit repository stores, lists, and protects optimistic updates", async () => {
@@ -193,7 +199,7 @@ test("execution-attempt audit service rejects invalid received and terminal evid
   await assert.rejects(
     () =>
       service.recordReceivedAttempt({
-        audit: { ...buildAudit(), warningCodes: [""] },
+        audit: { ...buildAudit(), warningCodes: ["provider response should not be retained"] },
         metadata
       }),
     (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
@@ -251,6 +257,20 @@ test("execution-attempt audit service rejects invalid received and terminal evid
         completedAt: "2026-07-27T12:00:05.000Z",
         outcomeCode: "validation_rejected",
         warningCodes: [""],
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof ExecutionAttemptAuditValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      service.recordTerminalOutcome({
+        attemptId: "execution-attempt-001",
+        status: "rejected",
+        completedAt: "2026-07-27T12:00:05.000Z",
+        outcomeCode: "provider response should not be retained",
+        warningCodes: [],
         metadata,
         expectedVersion: 1
       }),

@@ -12,6 +12,11 @@ export const EXECUTION_ATTEMPT_AUDIT_STATUSES = [
 export type ExecutionAttemptAuditStatus =
   (typeof EXECUTION_ATTEMPT_AUDIT_STATUSES)[number];
 
+const EXECUTION_ATTEMPT_AUDIT_CODE_PATTERN = /^[a-z][a-z0-9_]*$/;
+
+export const isExecutionAttemptAuditCode = (value: string): boolean =>
+  EXECUTION_ATTEMPT_AUDIT_CODE_PATTERN.test(value);
+
 export type ExecutionAttemptAudit = DomainEntityBase & {
   attemptId: string;
   routedActionExecutionEnvelopeId?: string;

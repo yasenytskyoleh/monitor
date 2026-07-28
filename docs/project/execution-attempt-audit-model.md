@@ -21,7 +21,8 @@ or replace runtime evidence.
 - status lifecycle: `received` → `executed` | `rejected` | `failed`
 - `attemptedAt`, optional `completedAt`, and `attemptedBy`; product metadata is added by the
   persistence layer
-- sanitized `outcomeCode`, optional `outcomeSummary`, and warning identifiers
+- sanitized `outcomeCode`, optional `outcomeSummary`, and warning identifiers; codes and warnings
+  use lowercase underscore-delimited machine identifiers
 - optimistic versioning and append-only terminal evidence semantics
 
 The domain contract is exported from

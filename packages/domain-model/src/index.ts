@@ -196,6 +196,7 @@ export {
   EXECUTION_ATTEMPT_AUDIT_STATUSES,
   ROUTED_ACTION_EXECUTION_RESULT_STATUSES,
   ROUTED_ACTION_EXECUTION_STATUSES,
+  isExecutionAttemptAuditCode,
   ExecutionAttemptRuntimeAuditPersistenceError,
   ExecutionAttemptRuntimeValidationError,
   createExecutionAttemptRuntime,
