@@ -234,11 +234,12 @@ Current limitation:
   - an exchange-neutral closed-candle breakout runtime now turns normalized 5m candles into
     traceable signal candidates through the existing product-domain handoff
   - an exchange-neutral batch evaluator now completes 24-hour closed-candle candidate evaluations
-  - no aggregation runtime engine yet
+  - an explicit provider-neutral aggregation runtime now refreshes setup evidence from completed
+    evaluation results
   - no UI yet
 
 Current recommended next step:
-- define an aggregation runtime for completed evaluation results; keep trading execution outside
+- define an aggregate-to-hypothesis evidence runtime; keep scoring and trading execution outside
   the current phase
 
 ## Core philosophy
@@ -269,7 +270,7 @@ without losing:
 The new product-domain contracts are intentionally thin:
 - no ingestion runtime engine yet,
 - no evaluation runtime engine yet,
-- no aggregation runtime engine yet,
+- no batch aggregation, scoring, or hypothesis-evidence runtime yet,
 - no statistics/scoring engine yet,
 - durable relational persistence is partially implemented, but later integration/runtime adapters remain pending,
 - no exchange integration yet.
