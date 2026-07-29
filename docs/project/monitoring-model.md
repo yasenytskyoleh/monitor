@@ -3,7 +3,8 @@
 ## Purpose
 Define the first monitoring ingestion architecture for Monitor, with stable contracts and explicit boundaries.
 
-This slice is contracts and architecture only. It does not implement connectors, schedulers, or persistence engines.
+The first provider connector is implemented for public Binance Spot closed candles. Schedulers and
+persistence engines remain outside this slice.
 
 ## Source model (first scope)
 Current scope is intentionally narrow:
@@ -26,7 +27,7 @@ Source model covers:
 - `NormalizedMarketEvent` is the product-domain contract consumed by future setup detection.
 
 ## Ingestion pipeline boundaries
-1. source fetch/stream layer (future implementation)
+1. source fetch/stream layer (Binance Spot BTCUSDT 1m/5m candles implemented)
 2. provider raw payload layer (provider-specific, out of product domain)
 3. normalization layer (maps raw payload to stable contracts)
 4. normalized event layer (`NormalizedMarketEvent`)
@@ -44,7 +45,7 @@ Rule:
 - evaluation remains a separate downstream layer.
 
 ## Explicitly postponed
-- real exchange/websocket integration
+- other exchange integrations and event types beyond closed candles
 - polling/scheduling logic
 - ingestion worker lifecycle
 - persistence and replay model

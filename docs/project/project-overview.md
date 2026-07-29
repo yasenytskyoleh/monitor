@@ -229,13 +229,14 @@ Current limitation:
   - `routed_action_execution_result` is explicitly product-ephemeral; `execution_attempt_audit` is
     the dedicated retained audit entity, with a generic runtime that records received and terminal
     sanitized outcomes through the shared repository bundle
-  - no exchange ingestion runtime yet
+  - a public Binance Spot BTCUSDT 1m/5m closed-candle adapter now provides historical backfill and
+    live normalized events without credentials or persistence
   - no setup-detection / evaluation / aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- define a provider-specific downstream executor and its authorization and retry policy only when an
-  external action is explicitly approved
+- define an exchange-neutral pattern-detection runtime that consumes normalized closed candles and
+  produces auditable signal candidates; keep trading execution outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
