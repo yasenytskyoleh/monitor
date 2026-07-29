@@ -31,7 +31,8 @@ Source model covers:
 2. provider raw payload layer (provider-specific, out of product domain)
 3. normalization layer (maps raw payload to stable contracts)
 4. normalized event layer (`NormalizedMarketEvent`)
-5. handoff layer to future setup detection/evaluation flows
+5. exchange-neutral closed-candle pattern detection (implemented)
+6. handoff layer to future evaluation flows
 
 Rule:
 - only normalized events cross into product-domain monitoring contracts
@@ -40,8 +41,8 @@ Rule:
 ## Monitoring to product-domain relationship
 - `MonitoredSymbol` defines which symbols are in scope.
 - normalized events describe observations for those symbols.
-- future setup detection consumes normalized events + setup definitions.
-- setup hits may create `SignalCandidate`.
+- the closed-candle runtime consumes normalized events + typed detector configuration.
+- setup hits resolve an active setup revision and may create `SignalCandidate` through the existing handoff.
 - evaluation remains a separate downstream layer.
 
 ## Explicitly postponed
@@ -59,3 +60,4 @@ Rule:
 - `packages/domain-model/src/monitoring/candle-closed.ts`
 - `packages/domain-model/src/monitoring/volume-update.ts`
 - `packages/domain-model/src/monitoring/monitoring-heartbeat.ts`
+- `packages/pattern-detection/src/closed-candle-pattern-detection-runtime.ts`

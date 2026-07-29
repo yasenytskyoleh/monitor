@@ -231,12 +231,14 @@ Current limitation:
     sanitized outcomes through the shared repository bundle
   - a public Binance Spot BTCUSDT 1m/5m closed-candle adapter now provides historical backfill and
     live normalized events without credentials or persistence
-  - no setup-detection / evaluation / aggregation runtime engines yet
+  - an exchange-neutral closed-candle breakout runtime now turns normalized 5m candles into
+    traceable signal candidates through the existing product-domain handoff
+  - no evaluation or aggregation runtime engines yet
   - no UI yet
 
 Current recommended next step:
-- define an exchange-neutral pattern-detection runtime that consumes normalized closed candles and
-  produces auditable signal candidates; keep trading execution outside the current phase
+- define an exchange-neutral evaluation runtime for signal candidates; keep trading execution
+  outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
