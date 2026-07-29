@@ -3,7 +3,8 @@
 ## Purpose
 Define the first monitoring ingestion architecture for Monitor, with stable contracts and explicit boundaries.
 
-This slice is contracts and architecture only. It does not implement connectors, schedulers, or persistence engines.
+The first provider connector is implemented for public Binance Spot closed candles. Schedulers and
+persistence engines remain outside this slice.
 
 ## Source model (first scope)
 Current scope is intentionally narrow:
@@ -26,11 +27,12 @@ Source model covers:
 - `NormalizedMarketEvent` is the product-domain contract consumed by future setup detection.
 
 ## Ingestion pipeline boundaries
-1. source fetch/stream layer (future implementation)
+1. source fetch/stream layer (Binance Spot BTCUSDT 1m/5m candles implemented)
 2. provider raw payload layer (provider-specific, out of product domain)
 3. normalization layer (maps raw payload to stable contracts)
 4. normalized event layer (`NormalizedMarketEvent`)
-5. handoff layer to future setup detection/evaluation flows
+5. exchange-neutral closed-candle pattern detection (implemented)
+6. handoff layer to future evaluation flows
 
 Rule:
 - only normalized events cross into product-domain monitoring contracts
@@ -39,12 +41,12 @@ Rule:
 ## Monitoring to product-domain relationship
 - `MonitoredSymbol` defines which symbols are in scope.
 - normalized events describe observations for those symbols.
-- future setup detection consumes normalized events + setup definitions.
-- setup hits may create `SignalCandidate`.
+- the closed-candle runtime consumes normalized events + typed detector configuration.
+- setup hits resolve an active setup revision and may create `SignalCandidate` through the existing handoff.
 - evaluation remains a separate downstream layer.
 
 ## Explicitly postponed
-- real exchange/websocket integration
+- other exchange integrations and event types beyond closed candles
 - polling/scheduling logic
 - ingestion worker lifecycle
 - persistence and replay model
@@ -58,3 +60,4 @@ Rule:
 - `packages/domain-model/src/monitoring/candle-closed.ts`
 - `packages/domain-model/src/monitoring/volume-update.ts`
 - `packages/domain-model/src/monitoring/monitoring-heartbeat.ts`
+- `packages/pattern-detection/src/closed-candle-pattern-detection-runtime.ts`
