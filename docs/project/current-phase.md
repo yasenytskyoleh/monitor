@@ -463,8 +463,8 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- define an aggregate-to-hypothesis evidence runtime; keep scoring and trading execution outside
-  the current phase
+- define a hypothesis-evidence-to-setup-feedback runtime; keep automated lifecycle changes and
+  trading execution outside the current phase
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
