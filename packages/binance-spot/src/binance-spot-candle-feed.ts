@@ -144,6 +144,7 @@ export const createBinanceSpotCandleFeed = (
       let startResolved = false;
       let bootstrapping = true;
       let bufferedCandles: CandleClosedEvent[] = [];
+      let messageQueue: Promise<void> = Promise.resolve();
       const recentEventIds = new Set<string>();
       const recentEventIdOrder: string[] = [];
       const latestOpenTimeByInterval = new Map<BinanceSpotBtcUsdtCandleInterval, string>();
@@ -211,7 +212,9 @@ export const createBinanceSpotCandleFeed = (
         let socketClosed = false;
 
         nextSocket.addEventListener("message", (event) => {
-          void processMessage(event.data).catch(reportError);
+          messageQueue = messageQueue
+            .then(() => processMessage(event.data))
+            .catch((error: unknown) => reportError(error).catch(() => undefined));
         });
         nextSocket.addEventListener("error", () => {
           void reportError(new BinanceSpotCandleFeedError("Binance WebSocket error"));

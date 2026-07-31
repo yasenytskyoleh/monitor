@@ -28,7 +28,12 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 const asFiniteNumber = (value: unknown, fieldName: string): number => {
-  const numberValue = typeof value === "number" ? value : Number(value);
+  const numberValue =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && value.trim()
+        ? Number(value)
+        : Number.NaN;
   if (!Number.isFinite(numberValue)) {
     throw new BinanceSpotCandleFeedError(`${fieldName} must be a finite number`);
   }
