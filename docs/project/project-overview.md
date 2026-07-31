@@ -252,11 +252,12 @@ Current limitation:
   - an explicit human review-decision runtime now records packet outcomes without routing them
   - a review-decision routing runtime now delegates persisted human decisions to domain-owned routes
   - a routed-action preparation runtime now creates auditable envelopes without dispatching them
+  - an execution-attempt runtime now delegates prepared envelopes through the audited executor boundary
   - no UI yet
 
 Current recommended next step:
-- define an explicit execution-attempt runtime for prepared envelopes; keep scheduling and trading
-  outside the current phase
+- add a concrete, non-trading downstream action executor for one prepared envelope type; keep
+  scheduling and automated trading outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
