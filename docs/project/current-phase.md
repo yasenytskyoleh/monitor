@@ -463,8 +463,8 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- add a concrete, non-trading downstream action executor for one prepared envelope type; keep
-  scheduling and automated trading outside the current phase
+- add a concrete executor for one remaining non-trading envelope type; keep scheduling and
+  automated trading outside the current phase
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
