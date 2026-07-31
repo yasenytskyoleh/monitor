@@ -67,10 +67,20 @@ const persistRoutableResult = async (
     return existing;
   }
 
-  return options.reviewDecisionRoutingResultRepository.create({
-    result,
-    metadata: metadataFor(result.routingId, request),
-  });
+  try {
+    return await options.reviewDecisionRoutingResultRepository.create({
+      result,
+      metadata: metadataFor(result.routingId, request),
+    });
+  } catch (error: unknown) {
+    const persistedAfterCreate = await options.reviewDecisionRoutingResultRepository.getById(
+      result.routingId,
+    );
+    if (persistedAfterCreate) {
+      return persistedAfterCreate;
+    }
+    throw error;
+  }
 };
 
 const createRejectedOutcome = (

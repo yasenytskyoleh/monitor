@@ -76,6 +76,41 @@ test("derives the route command from the persisted human decision", async () => 
   assert.equal(metadata?.traceId, "route-001");
 });
 
+test("returns the persisted route when a concurrent create wins", async () => {
+  const persisted: ReviewDecisionRoutingResult = {
+    status: "routed",
+    routingId: "route-001",
+    researchReviewDecisionId: decision.id,
+    setupFamilyId: decision.setupFamilyId,
+    target: "create_setup_refinement_request",
+    warnings: [],
+  };
+  let lookupCount = 0;
+  const runtime = createReviewDecisionRoutingRuntime({
+    researchReviewDecisionRepository: {
+      async getById(): Promise<ResearchReviewDecision> {
+        return decision;
+      },
+    },
+    reviewDecisionRoutingResultRepository: {
+      async getById(): Promise<ReviewDecisionRoutingResult | null> {
+        lookupCount += 1;
+        return lookupCount === 1 ? null : persisted;
+      },
+      async create(): Promise<never> {
+        throw new Error("review_decision_routing_result already exists: route-001");
+      },
+    },
+    reviewDecisionRoutingService: {
+      async route(): Promise<ReviewDecisionRoutingResult> {
+        return persisted;
+      },
+    },
+  });
+
+  assert.equal(await runtime.route(request), persisted);
+});
+
 test("rejects malformed and missing decisions before routing", async () => {
   let routingCalls = 0;
   const runtime = createReviewDecisionRoutingRuntime({
