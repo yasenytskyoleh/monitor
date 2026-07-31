@@ -463,8 +463,8 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- define a review-packet runtime before automated review routing; keep trading execution outside
-  the current phase
+- define an explicit human review-decision runtime for review packets; keep automated routing and
+  trading execution outside the current phase
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
