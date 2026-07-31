@@ -251,6 +251,7 @@ Current limitation:
   - a read-only review-packet runtime now assembles revision and evidence context before review
   - an explicit human review-decision runtime now records packet outcomes without routing them
   - a review-decision routing runtime now delegates persisted human decisions to domain-owned routes
+  - routable review-decision results are retained under their deterministic routing IDs
   - a routed-action preparation runtime now creates auditable envelopes without dispatching them
   - an execution-attempt runtime now delegates prepared envelopes through the audited executor boundary
   - an activation-envelope executor now applies only validated non-trading revision activations

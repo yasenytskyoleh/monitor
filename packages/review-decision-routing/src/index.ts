@@ -1,8 +1,10 @@
 import type {
   ResearchReviewDecision,
   ResearchReviewDecisionRepository,
+  ProductRecordMetadata,
   RouteAcceptedReviewDecisionCommand,
   ReviewDecisionRoutingResult,
+  ReviewDecisionRoutingResultRepository,
   ReviewDecisionRoutingService,
 } from "@monitor/domain-model";
 
@@ -13,6 +15,10 @@ export type RouteReviewDecisionRequest = {
 
 export type ReviewDecisionRoutingRuntimeOptions = {
   researchReviewDecisionRepository: Pick<ResearchReviewDecisionRepository, "getById">;
+  reviewDecisionRoutingResultRepository: Pick<
+    ReviewDecisionRoutingResultRepository,
+    "create" | "getById"
+  >;
   reviewDecisionRoutingService: Pick<ReviewDecisionRoutingService, "route">;
 };
 
@@ -39,12 +45,33 @@ export const createReviewDecisionRoutingRuntime = (
         );
       }
 
-      return await options.reviewDecisionRoutingService.route(buildRouteCommand(decision, request));
+      const result = await options.reviewDecisionRoutingService.route(buildRouteCommand(decision, request));
+      return await persistRoutableResult(options, result, request);
     } catch (error: unknown) {
       return createFailedOutcome(error, request);
     }
   },
 });
+
+const persistRoutableResult = async (
+  options: ReviewDecisionRoutingRuntimeOptions,
+  result: ReviewDecisionRoutingResult,
+  request: RouteReviewDecisionRequest,
+): Promise<ReviewDecisionRoutingResult> => {
+  if ((result.status !== "routed" && result.status !== "no_action") || !result.routingId) {
+    return result;
+  }
+
+  const existing = await options.reviewDecisionRoutingResultRepository.getById(result.routingId);
+  if (existing) {
+    return existing;
+  }
+
+  return options.reviewDecisionRoutingResultRepository.create({
+    result,
+    metadata: metadataFor(result.routingId, request),
+  });
+};
 
 const createRejectedOutcome = (
   reason: string,
@@ -78,6 +105,19 @@ const buildRouteCommand = (
     ? { authorizedNextAction: decision.authorizedNextAction }
     : {}),
   routedAt: request.routedAt,
+});
+
+const metadataFor = (
+  routingId: string,
+  request: RouteReviewDecisionRequest,
+): ProductRecordMetadata => ({
+  originRunId: null,
+  originTransitionId: null,
+  createdBySource: "manual_curation",
+  lastUpdatedBySource: "manual_curation",
+  traceId: routingId,
+  sourceObservedAtUtc: request.routedAt,
+  notes: `review decision routing: routing=${routingId}`,
 });
 
 const isValidRequest = (request: RouteReviewDecisionRequest): boolean =>

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type {
+  ProductRecordMetadata,
   ResearchReviewDecision,
   ReviewDecisionRoutingResult,
   RouteAcceptedReviewDecisionCommand,
@@ -30,10 +31,18 @@ const request = {
 
 test("derives the route command from the persisted human decision", async () => {
   let received: RouteAcceptedReviewDecisionCommand | undefined;
+  let metadata: ProductRecordMetadata | undefined;
   const runtime = createReviewDecisionRoutingRuntime({
     researchReviewDecisionRepository: {
       async getById(): Promise<ResearchReviewDecision> {
         return decision;
+      },
+    },
+    reviewDecisionRoutingResultRepository: {
+      async getById(): Promise<null> { return null; },
+      async create(input): Promise<ReviewDecisionRoutingResult> {
+        metadata = input.metadata;
+        return input.result;
       },
     },
     reviewDecisionRoutingService: {
@@ -64,6 +73,7 @@ test("derives the route command from the persisted human decision", async () => 
     authorizedNextAction: decision.authorizedNextAction,
     routedAt: request.routedAt,
   });
+  assert.equal(metadata?.traceId, "route-001");
 });
 
 test("rejects malformed and missing decisions before routing", async () => {
@@ -73,6 +83,10 @@ test("rejects malformed and missing decisions before routing", async () => {
       async getById(): Promise<null> {
         return null;
       },
+    },
+    reviewDecisionRoutingResultRepository: {
+      async getById(): Promise<null> { return null; },
+      async create(): Promise<never> { throw new Error("should not persist"); },
     },
     reviewDecisionRoutingService: {
       async route(): Promise<never> {
@@ -97,6 +111,10 @@ test("preserves domain routing outcomes and maps runtime failures", async () => 
         return decision;
       },
     },
+    reviewDecisionRoutingResultRepository: {
+      async getById(): Promise<ReviewDecisionRoutingResult> { return { status: "no_action", routingId: "route-001", warnings: [] }; },
+      async create(): Promise<never> { throw new Error("should not create duplicate"); },
+    },
     reviewDecisionRoutingService: {
       async route(): Promise<ReviewDecisionRoutingResult> {
         return { status: "no_action", routingId: "route-001", warnings: [] };
@@ -108,6 +126,10 @@ test("preserves domain routing outcomes and maps runtime failures", async () => 
       async getById(): Promise<never> {
         throw new Error("temporary lookup failure");
       },
+    },
+    reviewDecisionRoutingResultRepository: {
+      async getById(): Promise<null> { return null; },
+      async create(): Promise<never> { throw new Error("should not persist"); },
     },
     reviewDecisionRoutingService: {
       async route(): Promise<never> {
