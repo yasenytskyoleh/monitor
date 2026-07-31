@@ -244,11 +244,13 @@ Current limitation:
     without automatically executing authorized actions
   - an approved refinement follow-up runtime now creates auditable refinement requests without
     changing setup definitions
+  - an explicit lifecycle runtime now applies only caller-selected actions already authorized by
+    a persisted human approval
   - no UI yet
 
 Current recommended next step:
-- define an explicit approved-lifecycle-action runtime; keep automated lifecycle changes and
-  trading execution outside the current phase
+- define a refinement-request review runtime for proposed refinements; keep automated lifecycle
+  changes and trading execution outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
