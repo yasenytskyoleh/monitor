@@ -238,11 +238,13 @@ Current limitation:
     evaluation results
   - an explicit provider-neutral hypothesis-evidence runtime now updates linked research hypotheses
     from completed aggregate evidence
+  - an explicit provider-neutral setup-feedback runtime now turns persisted hypothesis evidence into
+    proposed, human-review-required feedback decisions
   - no UI yet
 
 Current recommended next step:
-- define a hypothesis-evidence-to-setup-feedback runtime; keep automated lifecycle changes and
-  trading execution outside the current phase
+- define an explicit review-decision runtime for proposed setup feedback; keep approval, automated
+  lifecycle changes, and trading execution outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
