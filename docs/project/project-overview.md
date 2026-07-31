@@ -242,11 +242,13 @@ Current limitation:
     proposed, human-review-required feedback decisions
   - an explicit manual-approval runtime now records reviewer-supplied feedback-decision outcomes
     without automatically executing authorized actions
+  - an approved refinement follow-up runtime now creates auditable refinement requests without
+    changing setup definitions
   - no UI yet
 
 Current recommended next step:
-- define explicit follow-up runtimes for approved setup actions; keep automated lifecycle changes
-  and trading execution outside the current phase
+- define an explicit approved-lifecycle-action runtime; keep automated lifecycle changes and
+  trading execution outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
