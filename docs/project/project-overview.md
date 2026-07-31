@@ -249,11 +249,12 @@ Current limitation:
   - an explicit revision runtime now proposes setup-definition revisions from refinement requests
   - an explicit activation runtime now activates persisted revisions only from caller-provided input
   - a read-only review-packet runtime now assembles revision and evidence context before review
+  - an explicit human review-decision runtime now records packet outcomes without routing them
   - no UI yet
 
 Current recommended next step:
-- define an explicit human review-decision runtime for review packets; keep automated routing and
-  trading execution outside the current phase
+- define explicit routing for accepted human review decisions; keep automatic routing and trading
+  execution outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
