@@ -246,11 +246,12 @@ Current limitation:
     changing setup definitions
   - an explicit lifecycle runtime now applies only caller-selected actions already authorized by
     a persisted human approval
+  - an explicit revision runtime now proposes setup-definition revisions from refinement requests
   - no UI yet
 
 Current recommended next step:
-- define a refinement-request review runtime for proposed refinements; keep automated lifecycle
-  changes and trading execution outside the current phase
+- define an explicit setup-revision activation runtime for proposed revisions; keep automatic
+  activation and trading execution outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
