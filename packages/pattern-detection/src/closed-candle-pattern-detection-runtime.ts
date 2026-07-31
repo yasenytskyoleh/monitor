@@ -146,6 +146,7 @@ export const createClosedCandlePatternDetectionRuntime = (
   const histories = new Map<string, CandleHistory>();
   const recentEventIds = new Set<string>();
   const recentEventIdOrder: string[] = [];
+  const inFlightEventIds = new Set<string>();
 
   return {
     async process(candle): Promise<ClosedCandleProcessingOutcome[]> {
@@ -153,6 +154,9 @@ export const createClosedCandlePatternDetectionRuntime = (
         return [{ status: "ignored", eventId: candle.eventId, reason: "invalid_candle" }];
       }
       if (recentEventIds.has(candle.eventId)) {
+        return [{ status: "ignored", eventId: candle.eventId, reason: "duplicate_event" }];
+      }
+      if (inFlightEventIds.has(candle.eventId)) {
         return [{ status: "ignored", eventId: candle.eventId, reason: "duplicate_event" }];
       }
 
@@ -175,12 +179,14 @@ export const createClosedCandlePatternDetectionRuntime = (
       }
 
       histories.set(historyKey, history);
-      rememberEventId(candle.eventId, recentEventIds, recentEventIdOrder);
+      inFlightEventIds.add(candle.eventId);
 
       const threshold = Math.max(...history.candles.map((previous) => previous.payload.high));
       const hasEnoughHistory = history.candles.length === CLOSED_CANDLE_BREAKOUT_LOOKBACK;
-      appendCandle(history, candle);
       if (!hasEnoughHistory || candle.payload.close <= threshold) {
+        appendCandle(history, candle);
+        rememberEventId(candle.eventId, recentEventIds, recentEventIdOrder);
+        inFlightEventIds.delete(candle.eventId);
         return detectors.map((detector) => ({
           status: "no_match",
           eventId: candle.eventId,
@@ -188,7 +194,7 @@ export const createClosedCandlePatternDetectionRuntime = (
         }));
       }
 
-      return Promise.all(
+      const outcomes = await Promise.all(
         detectors.map(async (detector): Promise<ClosedCandleProcessingOutcome> => {
           try {
             const resolution = await options.activeSetupRevisionResolver.resolve({
@@ -245,6 +251,13 @@ export const createClosedCandlePatternDetectionRuntime = (
           }
         })
       );
+      inFlightEventIds.delete(candle.eventId);
+      if (!outcomes.some((outcome) => outcome.status === "failed")) {
+        appendCandle(history, candle);
+        rememberEventId(candle.eventId, recentEventIds, recentEventIdOrder);
+      }
+
+      return outcomes;
     }
   };
 };

@@ -174,6 +174,22 @@ test("rejects malformed REST candles without emitting incomplete normalized even
   );
 });
 
+test("rejects coercible nonnumeric REST candle values", async () => {
+  const malformedCandle = restKline(Date.parse("2026-07-29T00:00:00.000Z"), ONE_MINUTE_MS);
+  malformedCandle[5] = null;
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: createFetch({ "1m": [malformedCandle], "5m": [] }),
+    createWebSocket: () => new FakeWebSocket(),
+    now: () => NOW
+  });
+
+  await assert.rejects(
+    () => feed.backfillClosedCandles({ startTimeUtc: "2026-07-29T00:00:00.000Z" }),
+    (error: unknown) =>
+      error instanceof BinanceSpotCandleFeedError && error.message === "volume must be a finite number"
+  );
+});
+
 test("buffers live candles during backfill and emits each closed candle once", async () => {
   const sockets: FakeWebSocket[] = [];
   const delivered: string[] = [];
@@ -264,6 +280,49 @@ test("reconnects once after a disconnect, catches up, and reports malformed live
   assert.equal(delivered.filter((eventId) => eventId.endsWith(":1785283200000")).length, 1);
   assert.ok(delivered.includes("binance-spot:BTCUSDT:1m:1785283260000"));
   assert.deepEqual(errors, ["Binance WebSocket message must contain JSON"]);
+
+  await subscription.stop();
+});
+
+test("serializes live candle delivery while a sink is still processing", async () => {
+  const sockets: FakeWebSocket[] = [];
+  const delivered: string[] = [];
+  let releaseFirstDelivery: (() => void) | undefined;
+  const firstDelivery = new Promise<void>((resolve) => {
+    releaseFirstDelivery = resolve;
+  });
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: createFetch({}),
+    createWebSocket: () => {
+      const socket = new FakeWebSocket();
+      sockets.push(socket);
+      return socket;
+    },
+    now: () => NOW
+  });
+  const start = feed.startClosedCandleFeed(
+    { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+    {
+      onCandle: async (candle) => {
+        delivered.push(candle.eventId);
+        if (delivered.length === 1) {
+          await firstDelivery;
+        }
+      }
+    }
+  );
+  sockets[0]?.emitOpen();
+  const subscription = await start;
+
+  sockets[0]?.emitMessage(webSocketKline(Date.parse("2026-07-29T00:01:00.000Z"), "1m"));
+  await waitForTimers();
+  sockets[0]?.emitMessage(webSocketKline(Date.parse("2026-07-29T00:02:00.000Z"), "1m"));
+  await waitForTimers();
+
+  assert.equal(delivered.length, 1);
+  releaseFirstDelivery?.();
+  await waitForTimers();
+  assert.equal(delivered.length, 2);
 
   await subscription.stop();
 });

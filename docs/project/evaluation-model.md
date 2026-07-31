@@ -3,8 +3,9 @@
 ## Purpose
 Define the first post-detection evaluation model for Monitor.
 
-This slice now includes the first persisted evaluation-result implementation with explicit service and repository ownership.
-It still does not implement replay, aggregation, or scoring engines.
+This slice includes persisted evaluation-result implementation with explicit service and repository
+ownership, plus a bounded batch runtime for normalized 5m closed candles. It still does not
+implement replay storage, aggregation, or scoring engines.
 
 ## Evaluation flow boundary
 1. setup detection creates `SignalCandidate`
@@ -86,8 +87,7 @@ Implementation references:
   - `maxAdverseExcursion <= 0`
 
 ## Explicitly postponed
-- runtime evaluation engine
-- candle replay and sampling implementation
+- live evaluation workers, replay, and sampling implementation
 - DB migrations and relational adapter implementation
 - aggregation/scoring runtime engines
 - ranking/reporting/UI behavior

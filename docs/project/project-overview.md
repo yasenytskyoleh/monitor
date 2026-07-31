@@ -233,12 +233,33 @@ Current limitation:
     live normalized events without credentials or persistence
   - an exchange-neutral closed-candle breakout runtime now turns normalized 5m candles into
     traceable signal candidates through the existing product-domain handoff
-  - no evaluation or aggregation runtime engines yet
+  - an exchange-neutral batch evaluator now completes 24-hour closed-candle candidate evaluations
+  - an explicit provider-neutral aggregation runtime now refreshes setup evidence from completed
+    evaluation results
+  - an explicit provider-neutral hypothesis-evidence runtime now updates linked research hypotheses
+    from completed aggregate evidence
+  - an explicit provider-neutral setup-feedback runtime now turns persisted hypothesis evidence into
+    proposed, human-review-required feedback decisions
+  - an explicit manual-approval runtime now records reviewer-supplied feedback-decision outcomes
+    without automatically executing authorized actions
+  - an approved refinement follow-up runtime now creates auditable refinement requests without
+    changing setup definitions
+  - an explicit lifecycle runtime now applies only caller-selected actions already authorized by
+    a persisted human approval
+  - an explicit revision runtime now proposes setup-definition revisions from refinement requests
+  - an explicit activation runtime now activates persisted revisions only from caller-provided input
+  - a read-only review-packet runtime now assembles revision and evidence context before review
+  - an explicit human review-decision runtime now records packet outcomes without routing them
+  - a review-decision routing runtime now delegates persisted human decisions to domain-owned routes
+  - routable review-decision results are retained under their deterministic routing IDs
+  - a routed-action preparation runtime now creates auditable envelopes without dispatching them
+  - an execution-attempt runtime now delegates prepared envelopes through the audited executor boundary
+  - an activation-envelope executor now applies only validated non-trading revision activations
   - no UI yet
 
 Current recommended next step:
-- define an exchange-neutral evaluation runtime for signal candidates; keep trading execution
-  outside the current phase
+- add a concrete executor for one remaining non-trading envelope type; keep scheduling and
+  automated trading outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
@@ -268,7 +289,7 @@ without losing:
 The new product-domain contracts are intentionally thin:
 - no ingestion runtime engine yet,
 - no evaluation runtime engine yet,
-- no aggregation runtime engine yet,
+- no batch aggregation, scoring, or hypothesis-evidence runtime yet,
 - no statistics/scoring engine yet,
 - durable relational persistence is partially implemented, but later integration/runtime adapters remain pending,
 - no exchange integration yet.

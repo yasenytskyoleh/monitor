@@ -36,7 +36,7 @@ The product side now proves that the repo can:
 - extend one opt-in real-database integration path through `setup_revision_activation_record`,
 - complete the review-decision-routing-result durable relational contract, Prisma schema, adapter, shared-composition, and integration rollout,
 - classify `routed_action_execution_result` as product-ephemeral rather than inferring a durable record from a service response,
-- and keep later evaluation, aggregation, review, and execution runtime engines pending.
+- and keep later hypothesis-evidence, review, and execution runtime engines pending.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -463,8 +463,8 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- define an exchange-neutral evaluation runtime for signal candidates; keep trading execution
-  outside the current phase
+- add a concrete executor for one remaining non-trading envelope type; keep scheduling and
+  automated trading outside the current phase
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

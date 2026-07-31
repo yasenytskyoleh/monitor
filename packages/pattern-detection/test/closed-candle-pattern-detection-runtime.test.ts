@@ -372,6 +372,28 @@ test("surfaces revision resolution and handoff outcomes without changing their m
   assert.equal(thrownFailure[0]?.reason, "connection lost");
 });
 
+test("retries a detected candle after a transient handoff failure", async () => {
+  let handoffAttempts = 0;
+  const runtime = createClosedCandlePatternDetectionRuntime({
+    detectors: [detector],
+    activeSetupRevisionResolver: createResolver(),
+    candidateHandoff: {
+      async handoff(): Promise<RuntimeHandoffResult> {
+        handoffAttempts += 1;
+        return handoffAttempts === 1
+          ? { status: "failed", reason: "database unavailable", warnings: [] }
+          : { status: "created", signalCandidateId: "candidate-001", warnings: [] };
+      }
+    }
+  });
+  await seedHistory(runtime);
+  const trigger = candle(20, { high: 101, close: 101 });
+
+  assert.equal((await runtime.process(trigger))[0]?.status, "failed");
+  assert.equal((await runtime.process(trigger))[0]?.status, "detected");
+  assert.equal(handoffAttempts, 2);
+});
+
 test("rejects invalid and duplicate detector configurations", () => {
   const handoff = createHandoff();
   assert.throws(
