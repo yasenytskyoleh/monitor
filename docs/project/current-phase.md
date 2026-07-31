@@ -463,8 +463,8 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- prepare routed downstream actions as explicit execution envelopes; keep automatic execution and
-  trading outside the current phase
+- define an explicit execution-attempt runtime for prepared envelopes; keep scheduling and trading
+  outside the current phase
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
