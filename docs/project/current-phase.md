@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.47 — Codex-first workflow, bounded autonomous mode, and complete current non-trading envelope execution**
+**Phase 1.48 — Codex-first workflow, complete current non-trading envelope execution, and explainable BTC notification eligibility**
 
 ## What this phase is about
 This phase is focused on:
@@ -37,7 +37,9 @@ The product side now proves that the repo can:
 - complete the review-decision-routing-result durable relational contract, Prisma schema, adapter, shared-composition, and integration rollout,
 - classify `routed_action_execution_result` as product-ephemeral rather than inferring a durable record from a service response,
 - complete all current non-trading envelope executors while keeping scheduling and automated
-  trading pending.
+  trading pending, and
+- derive explainable BTC notification eligibility from fresh signal candidates and historical
+  aggregate evidence without delivering notifications or trading.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -464,9 +466,9 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- define the durable, provider-neutral notification contract for detected BTC market states;
-  preserve human decision support and keep exchanges, order placement, and automated trading out
-  of scope
+- persist notification candidates and define a provider-neutral delivery boundary with retained
+  idempotency and delivery outcomes; preserve human decision support and keep exchanges, order
+  placement, and automated trading out of scope
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

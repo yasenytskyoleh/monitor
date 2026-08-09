@@ -230,12 +230,16 @@ Current product-domain scope includes:
   retained audit entity, and the generic runtime records received and terminal sanitized outcomes
 - all current non-trading routed-action targets execute through audited activation, lifecycle, and
   refinement envelope executors; refinement requests use immutable reviewer-supplied input
+- a pattern-notification eligibility runtime now combines fresh BTC signal candidates with explicit
+  compatible aggregate evidence using caller-configured quality thresholds; it does not persist or
+  deliver notifications
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- define a durable, provider-neutral notification contract for detected BTC market states; keep
-  alerts as explainable human decision support and automated trading out of scope
+- persist notification candidates and define a provider-neutral delivery boundary with retained
+  idempotency and delivery outcomes; keep alerts as explainable human decision support and
+  automated trading out of scope
 
 ## Behavioral instructions for future assistants
 When continuing this project:

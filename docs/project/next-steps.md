@@ -1,23 +1,22 @@
 # Next Steps
 
 ## Current recommended next step
-### Define the BTC pattern-notification contract
+### Persist notification candidates and add a delivery boundary
 
 Reason:
-- all currently supported non-trading routed-action targets now execute through the audited
-  execution-attempt boundary
-- the refinement executor snapshots reviewer-supplied rationale and requested changes at
-  preparation time rather than inferring them from mutable records
-- the product direction is autonomous BTC market monitoring and explainable alerts, but it has no
-  durable notification contract or delivery boundary yet
+- the pattern-notification runtime now combines a fresh detected signal with an explicit historical
+  aggregate and configurable quality thresholds
+- it returns a deterministic candidate and deduplication key, but it deliberately does not persist
+  that result or call a provider
+- autonomous BTC monitoring now has an explainable eligibility boundary, but still has no retained
+  notification history or delivery outcome
 
 ## Recommended near-future sequence
-1. define a provider-neutral notification candidate that links a detected BTC setup, current market
-   state, timeframe, price context, and supporting evaluation evidence
-2. define explicit notification eligibility and deduplication rules so a signal cannot repeatedly
-   alert without a meaningful state change
-3. add a delivery boundary that records attempted and delivered alerts, while leaving exchanges and
-   order placement out of scope
+1. persist an immutable notification candidate and enforce one delivery attempt per deduplication
+   key through a service-owned write path
+2. define a provider-neutral delivery port that records attempted, delivered, and failed outcomes
+   without persisting provider payloads
+3. add a scheduler/worker only after retained idempotency and delivery-audit semantics exist
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
