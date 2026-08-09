@@ -64,6 +64,12 @@ export const createActivationEnvelopeExecutor = (
   },
 });
 
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === "string" && value.trim().length > 0;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 const activationPayload = (envelope: RoutedActionExecutionEnvelope) => {
   if (
     envelope.executionStatus !== "prepared" ||
@@ -75,7 +81,17 @@ const activationPayload = (envelope: RoutedActionExecutionEnvelope) => {
     return null;
   }
 
-  const payload = envelope.executionPayloadSnapshot.commandInput;
+  const payload = envelope.executionPayloadSnapshot.commandInput as unknown;
+  if (
+    !isRecord(payload) ||
+    !isNonEmptyString(payload.setupRevisionId) ||
+    !isNonEmptyString(payload.setupFamilyId) ||
+    !isNonEmptyString(payload.sourceReviewDecisionId) ||
+    !isNonEmptyString(payload.sourceRoutingResultId)
+  ) {
+    return null;
+  }
+
   if (
     payload.setupRevisionId !== envelope.targetEntityRefs.setupRevisionId ||
     payload.setupFamilyId !== envelope.targetEntityRefs.setupFamilyId ||
@@ -85,7 +101,12 @@ const activationPayload = (envelope: RoutedActionExecutionEnvelope) => {
     return null;
   }
 
-  return payload;
+  return {
+    setupRevisionId: payload.setupRevisionId,
+    setupFamilyId: payload.setupFamilyId,
+    sourceReviewDecisionId: payload.sourceReviewDecisionId,
+    sourceRoutingResultId: payload.sourceRoutingResultId
+  };
 };
 
 const metadataFor = (envelope: RoutedActionExecutionEnvelope, activatedAt: string): ProductRecordMetadata => ({

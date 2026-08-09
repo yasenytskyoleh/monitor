@@ -255,12 +255,13 @@ Current limitation:
   - a routed-action preparation runtime now creates auditable envelopes without dispatching them
   - an execution-attempt runtime now delegates prepared envelopes through the audited executor boundary
   - an activation-envelope executor now applies only validated non-trading revision activations
+  - a lifecycle-envelope executor now applies only validated lifecycle actions from persisted
+    approvals carried by prepared envelopes
   - no UI yet
 
 Current recommended next step:
-- define the payload contract needed to execute one remaining non-trading envelope type without
-  inferring manual-approval or reviewer-supplied command fields; keep scheduling and automated
-  trading outside the current phase
+- define the payload contract for refinement execution without inferring reviewer-supplied
+  rationale or requested changes; keep scheduling and automated trading outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

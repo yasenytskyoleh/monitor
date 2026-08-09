@@ -133,3 +133,29 @@ test("rejects activation targets with a malformed payload command type", async (
   assert.deepEqual(outcome, { status: "rejected", outcomeCode: "invalid_activation_envelope" });
   assert.equal(activations, 0);
 });
+
+test("rejects malformed activation command inputs without activating", async () => {
+  let activations = 0;
+  const executor = createActivationEnvelopeExecutor({
+    setupDefinitionRevisionRepository: { async getById(): Promise<SetupDefinitionRevision> { return revision; } },
+    setupRevisionActivationHandoff: { async activate(): Promise<never> { activations += 1; throw new Error("should not activate"); } },
+    activatedBy: "activation-executor",
+    now: () => "2026-08-01T01:05:00.000Z"
+  });
+  const malformedInputs = [null, "not-an-object", {}];
+
+  for (const commandInput of malformedInputs) {
+    const executionPayloadSnapshot = {
+      commandType: "ActivateSetupDefinitionRevisionCommand",
+      target: "activate_setup_revision",
+      commandInput
+    } as unknown as RoutedActionExecutionEnvelope["executionPayloadSnapshot"];
+
+    assert.deepEqual(
+      await executor.execute({ ...envelope, executionPayloadSnapshot }),
+      { status: "rejected", outcomeCode: "invalid_activation_envelope" }
+    );
+  }
+
+  assert.equal(activations, 0);
+});

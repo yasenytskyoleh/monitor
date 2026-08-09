@@ -232,8 +232,9 @@ Current product-domain scope includes:
 - no automated trading logic
 
 ## Recommended next step
-- define a provider-specific downstream executor and its authorization and retry policy only when an
-  external action is explicitly approved
+- define the payload contract for refinement execution without inferring reviewer-supplied
+  rationale or requested changes; keep scheduling, provider actions, and automated trading out of
+  scope
 
 ## Behavioral instructions for future assistants
 When continuing this project:
