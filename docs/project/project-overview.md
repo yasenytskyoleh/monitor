@@ -258,8 +258,9 @@ Current limitation:
   - no UI yet
 
 Current recommended next step:
-- add a concrete executor for one remaining non-trading envelope type; keep scheduling and
-  automated trading outside the current phase
+- define the payload contract needed to execute one remaining non-trading envelope type without
+  inferring manual-approval or reviewer-supplied command fields; keep scheduling and automated
+  trading outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

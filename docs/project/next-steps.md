@@ -1,27 +1,31 @@
 # Next Steps
 
 ## Current recommended next step
-### Run the research-run real-Postgres integration rollout
+### Define the payload contract for remaining non-trading execution envelopes
 
 Reason:
-- `research_run` now has relational mappers, a repository adapter, a Prisma adapter, and shared Prisma composition coverage
-- the shared integration suite now also executes the repository-composed setup-to-aggregate flow
-  and verifies its completed durable run and aggregate
-- the real-Postgres test remains environment-gated and should run against the deployment target before durable run writes are enabled
-- the research-run migration must be applied through the production migration workflow
+- the implemented generic execution-attempt runtime has one concrete executor for
+  `activate_setup_revision`
+- the remaining `apply_setup_lifecycle_mutation` and `create_setup_refinement_request` envelopes
+  currently retain routing references only, while their service commands require an explicit
+  approved decision, action/input, and operator-supplied fields; refinement additionally requires
+  rationale and requested-change summaries
+- inferring those missing fields during execution would bypass the service-owned approval boundary
+  and weaken auditability
 
 ## Recommended near-future sequence
-1. run `pnpm --filter @monitor/domain-model test:integration` with `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL` configured
-   and a reachable disposable Postgres database
-2. apply `20260727103000_product_domain_research_run_relational_v1` through the deployment migration workflow
-3. enable durable research-run writes in the target runtime composition
+1. decide whether each remaining envelope snapshots all required approved-command fields at
+   preparation time or instead resolves an explicitly persisted approved-command reference
+2. add the selected contract and validation coverage without inferring approval, lifecycle action,
+   reviewer rationale, or requested changes at execution time
+3. implement one matching non-trading executor through the existing execution-attempt audit boundary
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
-- expanding into runtime review/execution workflow logic prematurely
-- mixing activation workflow semantics or later mutation/refinement runtime behavior into downstream durable-slice planning and rollout work
+- inferring manual-approval or reviewer-supplied command fields from routing metadata
+- dispatching envelopes through a provider, queue, retry scheduler, or trading integration
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

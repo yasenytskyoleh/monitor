@@ -69,12 +69,23 @@ const activationPayload = (envelope: RoutedActionExecutionEnvelope) => {
     envelope.executionStatus !== "prepared" ||
     envelope.actionTarget !== "activate_setup_revision" ||
     envelope.actionCommandType !== "ActivateSetupDefinitionRevisionCommand" ||
+    envelope.executionPayloadSnapshot.commandType !== "ActivateSetupDefinitionRevisionCommand" ||
     envelope.executionPayloadSnapshot.target !== "activate_setup_revision"
   ) {
     return null;
   }
 
-  return envelope.executionPayloadSnapshot.commandInput;
+  const payload = envelope.executionPayloadSnapshot.commandInput;
+  if (
+    payload.setupRevisionId !== envelope.targetEntityRefs.setupRevisionId ||
+    payload.setupFamilyId !== envelope.targetEntityRefs.setupFamilyId ||
+    payload.sourceReviewDecisionId !== envelope.sourceReviewDecisionId ||
+    payload.sourceRoutingResultId !== envelope.sourceRoutingResultId
+  ) {
+    return null;
+  }
+
+  return payload;
 };
 
 const metadataFor = (envelope: RoutedActionExecutionEnvelope, activatedAt: string): ProductRecordMetadata => ({

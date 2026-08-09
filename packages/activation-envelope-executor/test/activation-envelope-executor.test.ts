@@ -86,3 +86,50 @@ test("rejects invalid envelopes and revision mismatches without activating", asy
   assert.equal((await executor.execute(envelope)).outcomeCode, "setup_revision_family_mismatch");
   assert.equal(activations, 0);
 });
+
+test("rejects activation payloads that do not match their immutable envelope references", async () => {
+  let activations = 0;
+  const executor = createActivationEnvelopeExecutor({
+    setupDefinitionRevisionRepository: { async getById(): Promise<SetupDefinitionRevision> { return revision; } },
+    setupRevisionActivationHandoff: { async activate(): Promise<never> { activations += 1; throw new Error("should not activate"); } },
+    activatedBy: "activation-executor",
+    now: () => "2026-08-01T01:05:00.000Z",
+  });
+
+  const outcome = await executor.execute({
+    ...envelope,
+    executionPayloadSnapshot: {
+      commandType: "ActivateSetupDefinitionRevisionCommand",
+      target: "activate_setup_revision",
+      commandInput: {
+        setupFamilyId: "family-001",
+        setupRevisionId: "revision-002",
+        sourceReviewDecisionId: "decision-001",
+        sourceRoutingResultId: "route-001",
+      },
+    },
+  });
+
+  assert.deepEqual(outcome, { status: "rejected", outcomeCode: "invalid_activation_envelope" });
+  assert.equal(activations, 0);
+});
+
+test("rejects activation targets with a malformed payload command type", async () => {
+  let activations = 0;
+  const executor = createActivationEnvelopeExecutor({
+    setupDefinitionRevisionRepository: { async getById(): Promise<SetupDefinitionRevision> { return revision; } },
+    setupRevisionActivationHandoff: { async activate(): Promise<never> { activations += 1; throw new Error("should not activate"); } },
+    activatedBy: "activation-executor",
+    now: () => "2026-08-01T01:05:00.000Z",
+  });
+  const malformedPayload = {
+    commandType: "CreateSetupRefinementRequestCommand",
+    target: "activate_setup_revision",
+    commandInput: envelope.executionPayloadSnapshot.commandInput,
+  } as unknown as RoutedActionExecutionEnvelope["executionPayloadSnapshot"];
+
+  const outcome = await executor.execute({ ...envelope, executionPayloadSnapshot: malformedPayload });
+
+  assert.deepEqual(outcome, { status: "rejected", outcomeCode: "invalid_activation_envelope" });
+  assert.equal(activations, 0);
+});
