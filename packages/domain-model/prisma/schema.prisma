@@ -21,6 +21,7 @@ enum ProductRecordSource {
   detection_pipeline
   evaluation_pipeline
   research_aggregation_pipeline
+  notification_pipeline
   manual_curation
   migration_backfill
 
@@ -260,6 +261,16 @@ enum ExecutionAttemptAuditStatus {
   @@schema("product_domain")
 }
 
+enum PatternNotificationDeliveryStatus {
+  pending_delivery
+  delivery_attempted
+  delivered
+  failed
+
+  @@map("pattern_notification_delivery_status")
+  @@schema("product_domain")
+}
+
 enum MonitoredSymbolStatus {
   active
   paused
@@ -461,6 +472,46 @@ model SignalCandidateRecord {
   @@index([monitoredSymbolId], map: "idx_signal_candidate_monitored_symbol_id")
   @@index([candidateStatus], map: "idx_signal_candidate_candidate_status")
   @@map("signal_candidate")
+  @@schema("product_domain")
+}
+
+model PatternNotificationRecord {
+  notificationId              String                            @id(map: "pattern_notification_pkey") @map("notification_id") @db.Text
+  version                     Int                               @map("version")
+  lifecycleStatus             PersistedLifecycleStatus          @map("lifecycle_status")
+  deliveryStatus              PatternNotificationDeliveryStatus @map("delivery_status")
+  deduplicationKey            String                            @unique(map: "pattern_notification_deduplication_key") @map("deduplication_key") @db.Text
+  signalCandidateId           String                            @map("signal_candidate_id") @db.Text
+  setupDefinitionId           String                            @map("setup_definition_id") @db.Text
+  setupRevisionId             String                            @map("setup_revision_id") @db.Text
+  monitoredSymbolId           String                            @map("monitored_symbol_id") @db.Text
+  setupAggregateResultId      String                            @map("setup_aggregate_result_id") @db.Text
+  direction                   String                            @map("direction") @db.Text
+  observedAtUtc               DateTime                          @map("observed_at_utc") @db.Timestamptz(3)
+  currentPrice                Float                             @map("current_price") @db.DoublePrecision
+  policyId                    String                            @map("policy_id") @db.Text
+  completedEvaluations        Int                               @map("completed_evaluations")
+  positiveOutcomeRate         Float                             @map("positive_outcome_rate") @db.DoublePrecision
+  averagePercentageMove       Float                             @map("average_percentage_move") @db.DoublePrecision
+  aggregateComputedAtUtc      DateTime                          @map("aggregate_computed_at_utc") @db.Timestamptz(3)
+  deliveryAttemptedAtUtc      DateTime?                         @map("delivery_attempted_at_utc") @db.Timestamptz(3)
+  completedAtUtc              DateTime?                         @map("completed_at_utc") @db.Timestamptz(3)
+  outcomeCode                 String?                           @map("outcome_code") @db.Text
+  originRunId                 String?                           @map("origin_run_id") @db.Text
+  originTransitionId          String?                           @map("origin_transition_id") @db.Text
+  createdBySource             ProductRecordSource               @map("created_by_source")
+  lastUpdatedBySource         ProductRecordSource               @map("last_updated_by_source")
+  traceId                     String?                           @map("trace_id") @db.Text
+  sourceObservedAtUtc         DateTime?                         @map("source_observed_at_utc") @db.Timestamptz(3)
+  metadataNotes               String?                           @map("metadata_notes") @db.Text
+  createdAtUtc                DateTime                          @map("created_at_utc") @db.Timestamptz(3)
+  updatedAtUtc                DateTime                          @map("updated_at_utc") @db.Timestamptz(3)
+  archivedAtUtc               DateTime?                         @map("archived_at_utc") @db.Timestamptz(3)
+
+  @@index([deliveryStatus], map: "idx_pattern_notification_delivery_status")
+  @@index([signalCandidateId], map: "idx_pattern_notification_signal_candidate_id")
+  @@index([observedAtUtc], map: "idx_pattern_notification_observed_at_utc")
+  @@map("pattern_notification")
   @@schema("product_domain")
 }
 

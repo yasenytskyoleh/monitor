@@ -5,6 +5,19 @@ import type {
   SignalCandidateRepository
 } from "@monitor/domain-model";
 
+export {
+  createPatternNotificationRetentionRuntime
+} from "./retention.js";
+export type {
+  PatternNotificationDeliveryPort,
+  PatternNotificationDeliveryPortOutcome,
+  PatternNotificationDeliveryPortRequest,
+  PatternNotificationRetentionRuntime,
+  PatternNotificationRetentionRuntimeOptions,
+  RetainEligiblePatternNotificationRequest,
+  RetainEligiblePatternNotificationResult
+} from "./retention.js";
+
 export const PATTERN_NOTIFICATION_DIRECTIONS = ["consider_long"] as const;
 export type PatternNotificationDirection = (typeof PATTERN_NOTIFICATION_DIRECTIONS)[number];
 

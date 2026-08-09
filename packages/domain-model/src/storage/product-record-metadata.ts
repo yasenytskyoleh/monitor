@@ -5,6 +5,7 @@ export const PRODUCT_RECORD_SOURCES = [
   "detection_pipeline",
   "evaluation_pipeline",
   "research_aggregation_pipeline",
+  "notification_pipeline",
   "manual_curation",
   "migration_backfill"
 ] as const;

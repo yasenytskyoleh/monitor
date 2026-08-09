@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.48 — Codex-first workflow, complete current non-trading envelope execution, and explainable BTC notification eligibility**
+**Phase 1.49 — Codex-first workflow, explainable BTC notification retention, and provider-neutral delivery state**
 
 ## What this phase is about
 This phase is focused on:
@@ -39,7 +39,8 @@ The product side now proves that the repo can:
 - complete all current non-trading envelope executors while keeping scheduling and automated
   trading pending, and
 - derive explainable BTC notification eligibility from fresh signal candidates and historical
-  aggregate evidence without delivering notifications or trading.
+  aggregate evidence, retain that immutable decision-support snapshot, and record one
+  provider-neutral delivery lifecycle without provider calls or trading.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -466,9 +467,9 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- persist notification candidates and define a provider-neutral delivery boundary with retained
-  idempotency and delivery outcomes; preserve human decision support and keep exchanges, order
-  placement, and automated trading out of scope
+- select the first notification provider, recipient configuration, and reconciliation semantics;
+  preserve human decision support and keep exchanges, order placement, and automated trading out
+  of scope
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

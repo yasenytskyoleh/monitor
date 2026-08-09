@@ -261,13 +261,13 @@ Current limitation:
     immutable reviewer-supplied envelope input
   - a pattern-notification eligibility runtime now combines a fresh BTC signal candidate with
     compatible historical aggregate evidence into a deduplicated, explainable decision-support
-    candidate; it does not persist or deliver notifications
+    candidate; eligible candidates retain an immutable PostgreSQL/Prisma record and one
+    provider-neutral delivery lifecycle, but no provider implementation
   - no UI yet
 
 Current recommended next step:
-- persist notification candidates and add a provider-neutral delivery boundary with idempotent
-  outcomes; keep alerts as explainable human decision support and automated trading outside the
-  current phase
+- select the first notification provider, recipient configuration, and reconciliation behavior;
+  keep alerts as explainable human decision support and automated trading outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

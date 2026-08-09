@@ -1,29 +1,29 @@
 # Next Steps
 
 ## Current recommended next step
-### Persist notification candidates and add a delivery boundary
+### Select and configure the first notification provider
 
 Reason:
-- the pattern-notification runtime now combines a fresh detected signal with an explicit historical
-  aggregate and configurable quality thresholds
-- it returns a deterministic candidate and deduplication key, but it deliberately does not persist
-  that result or call a provider
-- autonomous BTC monitoring now has an explainable eligibility boundary, but still has no retained
-  notification history or delivery outcome
+- eligible BTC notifications now have a unique durable record, immutable evidence snapshot, and
+  at-most-once delivery claim
+- a provider-neutral contract records stable delivered/failed outcomes without storing provider
+  payloads
+- no provider, recipient configuration, scheduler, queue, or recovery/reconciliation workflow
+  exists yet
 
 ## Recommended near-future sequence
-1. persist an immutable notification candidate and enforce one delivery attempt per deduplication
-   key through a service-owned write path
-2. define a provider-neutral delivery port that records attempted, delivered, and failed outcomes
-   without persisting provider payloads
-3. add a scheduler/worker only after retained idempotency and delivery-audit semantics exist
+1. choose the first notification channel and recipient configuration, then implement one explicit
+   provider adapter behind `PatternNotificationDeliveryPort`
+2. define reconciliation for an `delivery_attempted` record with no terminal outcome
+3. add a scheduler/worker only after provider and reconciliation semantics are explicit
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
 - inferring manual-approval or reviewer-supplied command fields from routing metadata
-- dispatching envelopes through a provider, queue, retry scheduler, or trading integration
+- introducing a provider, queue, retry scheduler, or trading integration without explicit channel,
+  recipient, and reconciliation decisions
 - presenting an alert as investment advice or using it to place an order automatically
 
 ## Baseline verification commands

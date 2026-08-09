@@ -65,6 +65,14 @@ export type {
 export { SIGNAL_CANDIDATE_STATUSES } from "./signal-candidate.js";
 export type { SignalCandidate, SignalCandidateStatus } from "./signal-candidate.js";
 export {
+  PATTERN_NOTIFICATION_DELIVERY_STATUSES,
+  isPatternNotificationOutcomeCode
+} from "./notification/pattern-notification-record.js";
+export type {
+  PatternNotificationDeliveryStatus,
+  PatternNotificationRecord
+} from "./notification/pattern-notification-record.js";
+export {
   EVALUATION_OUTCOMES,
   EVALUATION_OUTCOME_SUMMARIES,
   EVALUATION_START_REFERENCE_RULES,
@@ -1183,6 +1191,30 @@ export {
   InMemoryExecutionAttemptAuditRepository
 } from "./repositories/execution-attempt-audit-repository.impl.js";
 export type {
+  PatternNotificationRecordCreateRequest,
+  PatternNotificationRecordRepository,
+  PatternNotificationRecordUpdateRequest
+} from "./repositories/pattern-notification-record-repository.js";
+export {
+  assertPatternNotificationEvidenceIsUnchanged,
+  PatternNotificationRecordRepositoryValidationError
+} from "./repositories/pattern-notification-record-repository.js";
+export {
+  InMemoryPatternNotificationRecordRepository
+} from "./repositories/pattern-notification-record-repository.impl.js";
+export {
+  PrismaPatternNotificationRecordRepository
+} from "./repositories/pattern-notification-record-repository.prisma.js";
+export type {
+  PatternNotificationRecordPrismaClient
+} from "./repositories/pattern-notification-record-repository.prisma.js";
+export {
+  createPatternNotificationRecordPrismaRepositories
+} from "./repositories/pattern-notification-record-repository.prisma-client.js";
+export type {
+  PatternNotificationRecordPrismaRepositories
+} from "./repositories/pattern-notification-record-repository.prisma-client.js";
+export type {
   ExecutionAttemptAuditRecordWriteRequest,
   ExecutionAttemptAuditRelationalAdapterOperation,
   ExecutionAttemptAuditRelationalRepositoryAdapter
@@ -1402,6 +1434,18 @@ export {
   SetupAggregateResultValidationError,
   createResearchAggregationService
 } from "./services/research-aggregation-service.js";
+export type {
+  ClaimPatternNotificationDeliveryRequest,
+  PatternNotificationDeliveryService,
+  PatternNotificationDeliveryServiceDependencies,
+  RecordPatternNotificationDeliveryOutcomeRequest,
+  RetainPatternNotificationRequest,
+  RetainPatternNotificationResult
+} from "./services/pattern-notification-delivery-service.js";
+export {
+  PatternNotificationDeliveryValidationError,
+  createPatternNotificationDeliveryService
+} from "./services/pattern-notification-delivery-service.js";
 export type {
   ExecutionAttemptAuditService,
   ExecutionAttemptAuditServiceDependencies,

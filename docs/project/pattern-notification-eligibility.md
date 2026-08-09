@@ -16,7 +16,8 @@ completed `SetupAggregateResult` containing historical evaluation evidence.
 
 The runtime returns an in-memory candidate with a deterministic notification ID and deduplication
 key based on the signal candidate. It retains the live-price context and the exact historical
-metrics that satisfied the policy.
+metrics that satisfied the policy. The separate retention runtime can then persist that immutable
+candidate through its service-owned notification record boundary.
 
 The policy also sets a maximum age for the fresh signal. A bearish/`consider_short` notification
 remains out of scope until a bearish detector and direction-aware historical evaluation evidence
@@ -25,6 +26,6 @@ are implemented.
 ## Safety boundary
 
 The direction is decision-support language, not an instruction to buy or sell. This package does
-not persist candidates, contact a notification provider, schedule work, access an exchange, or
-place orders. Delivery and persistence require a later, separate boundary that records the
-deduplication result and delivery outcome.
+not contact a notification provider, schedule work, access an exchange, or place orders. Its
+retention boundary records one immutable candidate and a provider-neutral delivery outcome, but
+does not implement a provider or automatic retry.
