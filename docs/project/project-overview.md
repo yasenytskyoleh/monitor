@@ -257,11 +257,13 @@ Current limitation:
   - an activation-envelope executor now applies only validated non-trading revision activations
   - a lifecycle-envelope executor now applies only validated lifecycle actions from persisted
     approvals carried by prepared envelopes
+  - a refinement-envelope executor now creates only approval-authorized refinement requests from
+    immutable reviewer-supplied envelope input
   - no UI yet
 
 Current recommended next step:
-- define the payload contract for refinement execution without inferring reviewer-supplied
-  rationale or requested changes; keep scheduling and automated trading outside the current phase
+- define a durable, provider-neutral notification contract for detected BTC market states; keep
+  alerts as explainable human decision support and automated trading outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

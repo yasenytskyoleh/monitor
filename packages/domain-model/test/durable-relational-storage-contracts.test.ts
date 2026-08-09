@@ -540,7 +540,11 @@ test("supports typed routed-action-execution-envelope durable records", () => {
         setupDefinitionId: "setup-definition-001",
         setupFamilyId: "setup-family-001",
         sourceReviewDecisionId: "review-decision-001",
-        sourceRoutingResultId: "route-001"
+        sourceRoutingResultId: "route-001",
+        requestedBy: "execution-preparer-001",
+        requestedAt: "2026-06-14T12:00:00.000Z",
+        refinementRationaleSummary: "The setup needs a revised confirmation rule.",
+        requestedChangesSummary: "Add a stronger confirmation condition."
       }
     },
     preparedBy: "execution-preparer-001",

@@ -221,6 +221,7 @@ export type {
   ExecutionAttemptRuntimeRepositories,
   ExecutionAttemptRuntimeResult,
   ExecutePreparedRoutedActionRequest,
+  RefinementExecutionInput,
   RouteMetadataSnapshot,
   RoutedActionExecutionEnvelope,
   RoutedActionExecutionPayloadSnapshot,

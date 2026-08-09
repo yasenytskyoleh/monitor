@@ -18,6 +18,13 @@ const metadata: ProductRecordMetadata = {
   sourceObservedAtUtc: "2026-06-14T12:00:00.000Z"
 };
 
+const refinementInput = {
+  requestedBy: "execution-preparer-1",
+  requestedAt: "2026-06-14T12:00:00.000Z",
+  refinementRationaleSummary: "The setup needs a revised confirmation rule.",
+  requestedChangesSummary: "Add a stronger confirmation condition."
+};
+
 const buildRoutingResult = (
   routingId: string,
   target: NonNullable<ReviewDecisionRoutingResult["target"]>,
@@ -106,10 +113,12 @@ test("valid refinement route builds envelope", async () => {
       downstreamActionTarget: "create_setup_refinement_request",
       targetEntityRefs: {
         setupFamilyId: "setup-family-900",
-        setupDefinitionId: "setup-family-900-v2"
+        setupDefinitionId: "setup-family-900-v2",
+        researchDecisionApprovalId: "approval-family-900"
       },
       preparedBy: "execution-preparer-1",
-      preparedAt: "2026-06-14T12:00:00.000Z"
+      preparedAt: "2026-06-14T12:00:00.000Z",
+      refinementInput
     },
     metadata
   });
@@ -117,6 +126,50 @@ test("valid refinement route builds envelope", async () => {
   assert.equal(result.status, "prepared");
   assert.equal(result.envelope?.actionTarget, "create_setup_refinement_request");
   assert.equal(result.envelope?.actionCommandType, "CreateSetupRefinementRequestCommand");
+  assert.deepEqual(result.envelope?.executionPayloadSnapshot.commandInput, {
+    setupDefinitionId: "setup-family-900-v2",
+    setupFamilyId: "setup-family-900",
+    sourceReviewDecisionId: "review-decision-family-900-v2",
+    sourceRoutingResultId: "route-family-900-refine",
+    ...refinementInput
+  });
+});
+
+test("refinement routes require an approval and complete immutable reviewer input", async () => {
+  const routingResult = buildRoutingResult(
+    "route-family-900-refinement-input",
+    "create_setup_refinement_request",
+    "CreateSetupRefinementRequestCommand"
+  );
+  const { service } = await createFixture(routingResult);
+  const command = {
+    reviewDecisionRoutingResultId: "route-family-900-refinement-input",
+    researchReviewDecisionId: "review-decision-family-900-v2",
+    downstreamActionTarget: "create_setup_refinement_request" as const,
+    targetEntityRefs: {
+      setupFamilyId: "setup-family-900",
+      setupDefinitionId: "setup-family-900-v2"
+    },
+    preparedBy: "execution-preparer-1",
+    preparedAt: "2026-06-14T12:00:00.000Z"
+  };
+
+  const missingInput = await service.prepare({ command, metadata });
+  const malformedInput = await service.prepare({
+    command: {
+      ...command,
+      targetEntityRefs: {
+        ...command.targetEntityRefs,
+        researchDecisionApprovalId: "approval-family-900"
+      },
+      refinementInput: { requestedBy: "reviewer" } as typeof refinementInput
+    },
+    metadata
+  });
+
+  assert.equal(missingInput.status, "rejected_validation");
+  assert.equal(malformedInput.status, "rejected_validation");
+  assert.match(malformedInput.reason ?? "", /complete immutable refinement input/);
 });
 
 test("valid revision-activation route builds envelope", async () => {
@@ -162,10 +215,12 @@ test("prepared envelope keeps updatedAt at or after preparedAt", async () => {
       downstreamActionTarget: "create_setup_refinement_request",
       targetEntityRefs: {
         setupFamilyId: "setup-family-900",
-        setupDefinitionId: "setup-family-900-v2"
+        setupDefinitionId: "setup-family-900-v2",
+        researchDecisionApprovalId: "approval-family-900"
       },
       preparedBy: "execution-preparer-1",
-      preparedAt: "2026-06-14T12:00:00.000Z"
+      preparedAt: "2026-06-14T12:00:00.000Z",
+      refinementInput
     },
     metadata: {
       ...metadata,
@@ -279,10 +334,12 @@ test("envelope result keeps explicit route source and command type", async () =>
       targetEntityRefs: {
         setupFamilyId: "setup-family-900",
         setupDefinitionId: "setup-family-900-v2",
-        researchHypothesisId: "hypothesis-family-900"
+        researchHypothesisId: "hypothesis-family-900",
+        researchDecisionApprovalId: "approval-family-900"
       },
       preparedBy: "execution-preparer-1",
-      preparedAt: "2026-06-14T12:00:00.000Z"
+      preparedAt: "2026-06-14T12:00:00.000Z",
+      refinementInput
     },
     metadata
   });

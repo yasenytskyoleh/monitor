@@ -228,13 +228,14 @@ Current product-domain scope includes:
 - `review_decision_routing_result` now also has its durable contract, committed Prisma schema/migration, relational adapter contract, mappers, adapter-backed repository, concrete Prisma adapter, shared-bundle composition, and opt-in real-Postgres integration coverage
 - `routed_action_execution_result` is product-ephemeral; `execution_attempt_audit` is the dedicated
   retained audit entity, and the generic runtime records received and terminal sanitized outcomes
+- all current non-trading routed-action targets execute through audited activation, lifecycle, and
+  refinement envelope executors; refinement requests use immutable reviewer-supplied input
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- define the payload contract for refinement execution without inferring reviewer-supplied
-  rationale or requested changes; keep scheduling, provider actions, and automated trading out of
-  scope
+- define a durable, provider-neutral notification contract for detected BTC market states; keep
+  alerts as explainable human decision support and automated trading out of scope
 
 ## Behavioral instructions for future assistants
 When continuing this project:
