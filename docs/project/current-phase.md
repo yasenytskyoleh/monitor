@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.49 — Codex-first workflow, explainable BTC notification retention, and provider-neutral delivery state**
+**Phase 1.50 — Codex-first workflow, explainable BTC notification retention, and explicit Telegram delivery**
 
 ## What this phase is about
 This phase is focused on:
@@ -40,7 +40,8 @@ The product side now proves that the repo can:
   trading pending, and
 - derive explainable BTC notification eligibility from fresh signal candidates and historical
   aggregate evidence, retain that immutable decision-support snapshot, and record one
-  provider-neutral delivery lifecycle without provider calls or trading.
+  provider-neutral delivery lifecycle with an explicit Telegram adapter but no scheduler, retry,
+  exchange access, or trading.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -467,9 +468,8 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- select the first notification provider, recipient configuration, and reconciliation semantics;
-  preserve human decision support and keep exchanges, order placement, and automated trading out
-  of scope
+- define reconciliation for ambiguous Telegram delivery attempts; preserve human decision support
+  and keep exchanges, order placement, and automated trading out of scope
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

@@ -23,9 +23,9 @@ a crash or ambiguous provider response; reconciliation is an explicit future wor
 
 `PatternNotificationDeliveryPort` defines a provider-neutral request/outcome contract. It carries
 the retained decision-support notification and returns only `delivered`/`failed`, a completion
-time, and stable outcome code. It intentionally has no provider implementation,
-recipient configuration, provider payload persistence, scheduler, queue, exchange access, or
-order placement.
+time, and stable outcome code. Telegram is now the first explicit adapter, but recipient
+configuration and provider response bodies remain outside durable product storage. There is still
+no scheduler, queue, exchange access, or order placement.
 
 `consider_long` remains decision-support language based only on the currently implemented bullish
 evidence. It is not a buy instruction or automated trade.

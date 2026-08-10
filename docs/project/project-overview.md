@@ -262,12 +262,13 @@ Current limitation:
   - a pattern-notification eligibility runtime now combines a fresh BTC signal candidate with
     compatible historical aggregate evidence into a deduplicated, explainable decision-support
     candidate; eligible candidates retain an immutable PostgreSQL/Prisma record and one
-    provider-neutral delivery lifecycle, but no provider implementation
+    provider-neutral delivery lifecycle; Telegram is the first explicit provider adapter with
+    runtime-only credentials, but there is no scheduler, retry, or trading implementation
   - no UI yet
 
 Current recommended next step:
-- select the first notification provider, recipient configuration, and reconciliation behavior;
-  keep alerts as explainable human decision support and automated trading outside the current phase
+- define reconciliation for ambiguous Telegram delivery attempts; keep alerts as explainable human
+  decision support and automated trading outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

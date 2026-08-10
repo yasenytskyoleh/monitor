@@ -17,6 +17,14 @@ export type {
   RetainEligiblePatternNotificationRequest,
   RetainEligiblePatternNotificationResult
 } from "./retention.js";
+export {
+  createTelegramPatternNotificationDeliveryPort,
+  formatTelegramPatternNotification
+} from "./telegram.js";
+export type {
+  TelegramFetch,
+  TelegramPatternNotificationDeliveryPortOptions
+} from "./telegram.js";
 
 export const PATTERN_NOTIFICATION_DIRECTIONS = ["consider_long"] as const;
 export type PatternNotificationDirection = (typeof PATTERN_NOTIFICATION_DIRECTIONS)[number];

@@ -232,13 +232,14 @@ Current product-domain scope includes:
   refinement envelope executors; refinement requests use immutable reviewer-supplied input
 - a pattern-notification eligibility runtime now combines fresh BTC signal candidates with explicit
   compatible aggregate evidence using caller-configured quality thresholds; eligible records are
-  retained immutably with a unique deduplication key and one provider-neutral delivery lifecycle
+  retained immutably with a unique deduplication key and one provider-neutral delivery lifecycle;
+  Telegram is the first explicit adapter with runtime-supplied credentials and stable outcomes
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- select the first notification provider, recipient configuration, and reconciliation behavior;
-  keep alerts as explainable human decision support and automated trading out of scope
+- define reconciliation for ambiguous Telegram delivery attempts; keep alerts as explainable human
+  decision support and automated trading out of scope
 
 ## Behavioral instructions for future assistants
 When continuing this project:
