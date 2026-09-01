@@ -1,7 +1,7 @@
 # Next Steps
 
 ## Current recommended next step
-### Add a bounded scheduler and lease-aware reconciliation runner
+### Add durable scheduler run ownership around the bounded delivery runs
 
 Reason:
 - eligible BTC notifications now have a unique durable record, immutable evidence snapshot, and
@@ -19,9 +19,11 @@ Reason:
   owner and reconciliation waits for expiry
 - the Telegram workflow now acquires a durable lease at claim time, bounds Telegram execution,
   and reserves positive terminal-recording grace before expiry
+- a bounded reconciliation runner observes lease expiry plus clock-skew tolerance and only
+  terminalizes unresolved attempts; it cannot send or re-queue alerts
 
 ## Recommended near-future sequence
-1. add a bounded scheduler/worker with lease-aware reconciliation and observable run ownership
+1. add durable scheduler run ownership around the bounded delivery and reconciliation runs
 2. connect a real monitored BTC market-data ingestion path after the delivery runtime's process
    ownership is explicit
 

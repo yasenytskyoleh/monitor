@@ -14,6 +14,9 @@ export {
 export {
   createPatternNotificationDeliveryDispatch
 } from "./delivery-dispatch.js";
+export {
+  createPatternNotificationDeliveryReconciliationRunner
+} from "./delivery-reconciliation-runner.js";
 export type {
   PatternNotificationDeliveryPort,
   PatternNotificationDeliveryPortOutcome,
@@ -36,6 +39,13 @@ export type {
   PatternNotificationDeliveryDispatchOptions,
   PatternNotificationDeliveryDispatchPolicy
 } from "./delivery-dispatch.js";
+export type {
+  PatternNotificationDeliveryReconciliationPolicy,
+  PatternNotificationDeliveryReconciliationRunner,
+  PatternNotificationDeliveryReconciliationRunnerOptions,
+  ReconcilePatternNotificationsRequest,
+  ReconcilePatternNotificationsResult
+} from "./delivery-reconciliation-runner.js";
 export {
   createTelegramPatternNotificationDeliveryPort,
   formatTelegramPatternNotification

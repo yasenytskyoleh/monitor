@@ -40,9 +40,10 @@ The product side now proves that the repo can:
   trading pending, and
 - derive explainable BTC notification eligibility from fresh signal candidates and historical
   aggregate evidence, retain that immutable decision-support snapshot, record one
-  provider-neutral delivery lifecycle through an explicit one-send, durable-lease workflow, and
-  dispatch bounded pending delivery work without retry; Telegram is the explicit adapter, with no
-  scheduler, automatic reconciliation, exchange access, or trading.
+  provider-neutral delivery lifecycle through an explicit one-send, durable-lease workflow,
+  dispatch bounded pending delivery work, and reconcile bounded unconfirmed work without retry or
+  resend; Telegram is the explicit adapter, with no scheduler, automatic reconciliation, exchange
+  access, or trading.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -469,8 +470,8 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- add a bounded scheduler and lease-aware reconciliation runner; preserve human decision support
-  and keep exchanges, order placement, and automated trading out of scope
+- add durable scheduler run ownership around bounded delivery and reconciliation; preserve human
+  decision support and keep exchanges, order placement, and automated trading out of scope
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

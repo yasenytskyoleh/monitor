@@ -45,9 +45,11 @@ restarts. Automatic reconciliation remains out of this run until delivery execut
 lease or heartbeat that proves the provider call is no longer in flight.
 
 Leased attempts persist an owner ID and expiry. Their terminal outcome must present the same ID,
-and reconciliation waits for lease expiry. Dispatch does not automatically reconcile leased or
-unleased attempts yet; a future reconciliation run must use the bounded Telegram execution
-contract without sending a duplicate alert.
+and reconciliation waits for lease expiry plus a configured positive clock-skew tolerance.
+`createPatternNotificationDeliveryReconciliationRunner` is a separate bounded, caller-invoked
+run for `delivery_attempted` records. It owns its reconciliation timestamp, reports each result,
+and never sends, re-queues, or retries an alert. Its cadence guard is in-process only; no durable
+scheduler or cross-process run ownership exists yet.
 
 `consider_long` remains decision-support language based only on the currently implemented bullish
 evidence. It is not a buy instruction or automated trade.

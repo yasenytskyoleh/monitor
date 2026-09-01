@@ -29,10 +29,10 @@ placed.
 The caller must configure a positive request timeout. The adapter aborts the request at that bound
 and returns `telegram_timeout`; it does not retry the potentially ambiguous send.
 
-There is still no scheduler, provider retry, reconciliation worker, exchange access, or automatic
-trading. A caller must claim a retained notification, invoke the port, and record the returned
-outcome through the existing delivery service. If the process fails before it records an outcome,
-the caller can later terminalize only a stale claimed record as
+There is still no scheduler, provider retry, exchange access, or automatic trading. A caller must
+claim a retained notification, invoke the port, and record the returned outcome through the
+existing delivery service. If the process fails before it records an outcome, a bounded
+reconciliation runner can later terminalize only a stale claimed record as
 `delivery_outcome_unconfirmed`; it must not retry or resend it.
 
 `createPatternNotificationDeliveryWorkflow` provides that claim → Telegram → record composition
@@ -44,9 +44,9 @@ reconciliation rather than attempting a second send.
 
 `createPatternNotificationDeliveryDispatch` can invoke this workflow for a bounded set of pending
 records. Its caller supplies the cadence policy; the dispatch has no background timer or retry
-path. It does not reconcile potentially in-flight Telegram requests until the delivery execution
-has a durable lease or heartbeat.
+path. `createPatternNotificationDeliveryReconciliationRunner` separately processes a bounded set
+of claimed records. It waits for the persisted lease expiry plus a configured clock-skew tolerance,
+then can only terminalize an unconfirmed attempt; it never invokes Telegram.
 
-The delivery service stores each workflow lease ID and expiry for a claimed attempt. A future
-bounded reconciliation caller can use its expiry to resolve an unconfirmed result, without
-resending the Telegram alert.
+The delivery service stores each workflow lease ID and expiry for a claimed attempt. Reconciliation
+uses that durable evidence to resolve an unconfirmed result without resending the Telegram alert.

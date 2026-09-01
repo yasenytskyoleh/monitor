@@ -45,6 +45,7 @@ export type ReconcilePatternNotificationDeliveryRequest = {
   notificationId: string;
   reconciledAt: TimestampUtc;
   minAttemptAgeMs: number;
+  leaseClockSkewToleranceMs?: number;
   metadata: ProductRecordMetadata;
   expectedVersion: number | null;
 };
@@ -107,10 +108,12 @@ const assertTimestamp = (value: unknown, fieldName: string): void => {
 };
 
 const assertPositiveInteger = (value: unknown, fieldName: string): void => {
-  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
     throw new PatternNotificationDeliveryValidationError(`${fieldName} must be a positive integer`);
   }
 };
+
+const DEFAULT_LEASE_CLOCK_SKEW_TOLERANCE_MS = 30_000;
 
 const assertLease = (
   leaseId: string | undefined,
@@ -424,6 +427,9 @@ export const createPatternNotificationDeliveryService = (
       assertNonEmptyString(request.notificationId, "notificationId");
       assertTimestamp(request.reconciledAt, "reconciledAt");
       assertPositiveInteger(request.minAttemptAgeMs, "minAttemptAgeMs");
+      const leaseClockSkewToleranceMs =
+        request.leaseClockSkewToleranceMs ?? DEFAULT_LEASE_CLOCK_SKEW_TOLERANCE_MS;
+      assertPositiveInteger(leaseClockSkewToleranceMs, "leaseClockSkewToleranceMs");
       const current = await patternNotificationRecordRepository.getById(request.notificationId);
       if (!current) return { status: "not_found" };
       assertPersistedNotification(current);
@@ -435,11 +441,16 @@ export const createPatternNotificationDeliveryService = (
           "pattern_notification reconciliation requires a claimed delivery attempt"
         );
       }
-      if (
-        current.deliveryLeaseExpiresAt !== undefined &&
-        Date.parse(request.reconciledAt) < Date.parse(current.deliveryLeaseExpiresAt)
-      ) {
-        return { status: "lease_active", notification: current };
+      if (current.deliveryLeaseExpiresAt !== undefined) {
+        const leaseExpiryMs = Date.parse(current.deliveryLeaseExpiresAt);
+        if (leaseClockSkewToleranceMs > Number.MAX_SAFE_INTEGER - Math.abs(leaseExpiryMs)) {
+          throw new PatternNotificationDeliveryValidationError(
+            "leaseClockSkewToleranceMs exceeds supported timestamp range"
+          );
+        }
+        if (Date.parse(request.reconciledAt) < leaseExpiryMs + leaseClockSkewToleranceMs) {
+          return { status: "lease_active", notification: current };
+        }
       }
       const attemptAgeMs = Date.parse(request.reconciledAt) - Date.parse(current.deliveryAttemptedAt);
       if (attemptAgeMs < 0) {

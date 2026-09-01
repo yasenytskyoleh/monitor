@@ -10,6 +10,7 @@ import {
 
 import {
   createPatternNotificationDeliveryDispatch,
+  createPatternNotificationDeliveryReconciliationRunner,
   createPatternNotificationDeliveryWorkflow,
   createPatternNotificationRetentionRuntime,
   type PatternNotificationCandidate,
@@ -236,8 +237,9 @@ test("enforces durable delivery-lease ownership and expiry before reconciliation
     (
       await service.reconcileUnconfirmedDelivery({
         notificationId: candidate.notificationId,
-        reconciledAt: "2026-08-09T10:05:01.000Z",
+        reconciledAt: "2026-08-09T10:05:31.000Z",
         minAttemptAgeMs: 60_000,
+        leaseClockSkewToleranceMs: 30_000,
         metadata,
         expectedVersion: null
       })
@@ -256,10 +258,23 @@ test("enforces durable delivery-lease ownership and expiry before reconciliation
       }),
     (error: unknown) => error instanceof PatternNotificationDeliveryValidationError
   );
+  await assert.rejects(
+    () =>
+      service.reconcileUnconfirmedDelivery({
+        notificationId: candidate.notificationId,
+        reconciledAt: "2026-08-09T10:05:32.000Z",
+        minAttemptAgeMs: 60_000,
+        leaseClockSkewToleranceMs: Number.MAX_VALUE,
+        metadata,
+        expectedVersion: null
+      }),
+    (error: unknown) => error instanceof PatternNotificationDeliveryValidationError
+  );
   const reconciled = await service.reconcileUnconfirmedDelivery({
     notificationId: candidate.notificationId,
-    reconciledAt: "2026-08-09T10:05:02.000Z",
+    reconciledAt: "2026-08-09T10:05:32.000Z",
     minAttemptAgeMs: 60_000,
+    leaseClockSkewToleranceMs: 30_000,
     metadata,
     expectedVersion: null
   });
@@ -630,6 +645,146 @@ test("dispatches a bounded pending notification set at the declared cadence", as
     { status: "skipped_too_soon", nextEligibleAt: "2026-08-09T10:06:02.000Z" }
   );
   assert.equal(deliveries, 1);
+});
+
+test("reconciles a bounded claimed set without overriding an active delivery lease", async () => {
+  const { runtime, service } = createRuntime();
+  const leasedCandidate = {
+    ...candidate,
+    notificationId: "notification:candidate-002",
+    deduplicationKey: "signal_candidate:candidate-002",
+    signalCandidateId: "candidate-002"
+  };
+  await runtime.retain({ candidate, retainedAt: "2026-08-09T10:00:01.000Z", metadata });
+  await runtime.retain({ candidate: leasedCandidate, retainedAt: "2026-08-09T10:00:01.000Z", metadata });
+  await service.claimDeliveryAttempt({
+    notificationId: candidate.notificationId,
+    attemptedAt: "2026-08-09T10:00:02.000Z",
+    deliveryLeaseId: "expired-lease",
+    deliveryLeaseExpiresAt: "2026-08-09T10:01:03.000Z",
+    metadata,
+    expectedVersion: 1
+  });
+  await service.claimDeliveryAttempt({
+    notificationId: leasedCandidate.notificationId,
+    attemptedAt: "2026-08-09T10:00:02.000Z",
+    deliveryLeaseId: "active-lease",
+    deliveryLeaseExpiresAt: "2026-08-09T10:06:03.000Z",
+    metadata,
+    expectedVersion: 1
+  });
+  const runTimes = ["2026-08-09T10:05:03.000Z", "2026-08-09T10:05:30.000Z"];
+  const runner = createPatternNotificationDeliveryReconciliationRunner({
+    patternNotificationDeliveryService: service,
+    policy: {
+      minRunIntervalMs: 60_000,
+      maxReconciliationsPerRun: 2,
+      minAttemptAgeMs: 60_000,
+      leaseClockSkewToleranceMs: 30_000
+    },
+    now: () => runTimes.shift() ?? ""
+  });
+
+  assert.deepEqual(await runner.reconcile({ metadata }), {
+    status: "completed",
+    reconciliations: [
+      { notificationId: candidate.notificationId, status: "reconciled" },
+      { notificationId: leasedCandidate.notificationId, status: "lease_active" }
+    ]
+  });
+  assert.deepEqual(await runner.reconcile({ metadata }), {
+    status: "skipped_too_soon",
+    nextEligibleAt: "2026-08-09T10:06:03.000Z"
+  });
+  assert.equal(
+    (await service.getById(candidate.notificationId))?.outcomeCode,
+    "delivery_outcome_unconfirmed"
+  );
+  assert.equal(
+    (await service.getById(leasedCandidate.notificationId))?.deliveryStatus,
+    "delivery_attempted"
+  );
+});
+
+test("validates reconciliation policy and prevents concurrent runs", async () => {
+  const { service } = createRuntime();
+  const policy = {
+    minRunIntervalMs: 60_000,
+    maxReconciliationsPerRun: 1,
+    minAttemptAgeMs: 60_000,
+    leaseClockSkewToleranceMs: 30_000
+  };
+  assert.throws(
+    () =>
+      createPatternNotificationDeliveryReconciliationRunner({
+        patternNotificationDeliveryService: service,
+        policy: { ...policy, leaseClockSkewToleranceMs: 0 }
+      }),
+    /reconciliation policy is invalid/
+  );
+
+  let releaseList: (() => void) | undefined;
+  const listStarted = new Promise<void>((resolve) => {
+    service.listByDeliveryStatus = async () => {
+      resolve();
+      await new Promise<void>((release) => {
+        releaseList = release;
+      });
+      return [];
+    };
+  });
+  const runner = createPatternNotificationDeliveryReconciliationRunner({
+    patternNotificationDeliveryService: service,
+    policy,
+    now: () => "2026-08-09T10:05:03.000Z"
+  });
+
+  const first = runner.reconcile({ metadata });
+  await listStarted;
+  assert.deepEqual(await runner.reconcile({ metadata }), { status: "skipped_in_progress" });
+  releaseList?.();
+  assert.deepEqual(await first, { status: "completed", reconciliations: [] });
+});
+
+test("preserves a terminal outcome that wins the reconciliation race", async () => {
+  const { repository, runtime, service } = createRuntime();
+  await runtime.retain({ candidate, retainedAt: "2026-08-09T10:00:01.000Z", metadata });
+  await service.claimDeliveryAttempt({
+    notificationId: candidate.notificationId,
+    attemptedAt: "2026-08-09T10:00:02.000Z",
+    metadata,
+    expectedVersion: 1
+  });
+  const originalUpdate = repository.update.bind(repository);
+  repository.update = async (request) => {
+    if (request.notification.outcomeCode === "delivery_outcome_unconfirmed") {
+      await service.recordDeliveryOutcome({
+        notificationId: candidate.notificationId,
+        status: "delivered",
+        completedAt: "2026-08-09T10:05:03.000Z",
+        outcomeCode: "telegram_accepted",
+        metadata,
+        expectedVersion: null
+      });
+    }
+    return originalUpdate(request);
+  };
+  const runner = createPatternNotificationDeliveryReconciliationRunner({
+    patternNotificationDeliveryService: service,
+    policy: {
+      minRunIntervalMs: 60_000,
+      maxReconciliationsPerRun: 1,
+      minAttemptAgeMs: 60_000,
+      leaseClockSkewToleranceMs: 30_000
+    },
+    now: () => "2026-08-09T10:05:03.000Z"
+  });
+
+  assert.deepEqual(await runner.reconcile({ metadata }), {
+    status: "completed",
+    reconciliations: [{ notificationId: candidate.notificationId, status: "already_terminal" }]
+  });
+  assert.equal((await service.getById(candidate.notificationId))?.outcomeCode, "telegram_accepted");
 });
 
 test("rejects malformed notifications and prevents terminal outcomes without a delivery claim", async () => {
