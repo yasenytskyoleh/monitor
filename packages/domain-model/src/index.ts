@@ -1438,6 +1438,8 @@ export type {
   ClaimPatternNotificationDeliveryRequest,
   PatternNotificationDeliveryService,
   PatternNotificationDeliveryServiceDependencies,
+  ReconcilePatternNotificationDeliveryRequest,
+  ReconcilePatternNotificationDeliveryResult,
   RecordPatternNotificationDeliveryOutcomeRequest,
   RetainPatternNotificationRequest,
   RetainPatternNotificationResult

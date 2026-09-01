@@ -95,7 +95,31 @@ export class InMemoryPatternNotificationRecordRepository
         entityType: "pattern_notification",
         entityId: notification.notificationId,
         operation: "update",
-        expectedVersion: request.expectedVersion,
+        expectedVersion: request.expectedVersion ?? current.version,
+        actualVersion: current.version
+      });
+    }
+    if (
+      request.expectedDeliveryStatus !== undefined &&
+      request.expectedDeliveryStatus !== current.notification.deliveryStatus
+    ) {
+      throw createVersionMismatchRepositoryError({
+        entityType: "pattern_notification",
+        entityId: notification.notificationId,
+        operation: "update",
+        expectedVersion: request.expectedVersion ?? current.version,
+        actualVersion: current.version
+      });
+    }
+    if (
+      request.expectedDeliveryAttemptedAt !== undefined &&
+      request.expectedDeliveryAttemptedAt !== current.notification.deliveryAttemptedAt
+    ) {
+      throw createVersionMismatchRepositoryError({
+        entityType: "pattern_notification",
+        entityId: notification.notificationId,
+        operation: "update",
+        expectedVersion: request.expectedVersion ?? current.version,
         actualVersion: current.version
       });
     }

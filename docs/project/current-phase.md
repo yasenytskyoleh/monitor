@@ -39,9 +39,9 @@ The product side now proves that the repo can:
 - complete all current non-trading envelope executors while keeping scheduling and automated
   trading pending, and
 - derive explainable BTC notification eligibility from fresh signal candidates and historical
-  aggregate evidence, retain that immutable decision-support snapshot, and record one
-  provider-neutral delivery lifecycle with an explicit Telegram adapter but no scheduler, retry,
-  exchange access, or trading.
+  aggregate evidence, retain that immutable decision-support snapshot, record one
+  provider-neutral delivery lifecycle, and terminalize a stale ambiguous attempt without retry;
+  Telegram is the explicit adapter, with no scheduler, retry, exchange access, or trading.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -468,8 +468,8 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- define reconciliation for ambiguous Telegram delivery attempts; preserve human decision support
-  and keep exchanges, order placement, and automated trading out of scope
+- compose an explicit Telegram delivery caller workflow; preserve human decision support and keep
+  exchanges, order placement, and automated trading out of scope
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

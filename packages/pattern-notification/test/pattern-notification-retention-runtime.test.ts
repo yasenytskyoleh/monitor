@@ -140,6 +140,123 @@ test("permits exactly one claimed delivery attempt and one terminal, payload-fre
   );
 });
 
+test("reconciles only stale, unconfirmed delivery attempts without sending a duplicate alert", async () => {
+  const { runtime, service } = createRuntime();
+  await runtime.retain({
+    candidate,
+    retainedAt: "2026-08-09T10:00:01.000Z",
+    metadata
+  });
+  await service.claimDeliveryAttempt({
+    notificationId: candidate.notificationId,
+    attemptedAt: "2026-08-09T10:00:02.000Z",
+    metadata,
+    expectedVersion: 1
+  });
+
+  assert.deepEqual(
+    await service.reconcileUnconfirmedDelivery({
+      notificationId: candidate.notificationId,
+      reconciledAt: "2026-08-09T10:04:59.000Z",
+      minAttemptAgeMs: 5 * 60 * 1_000,
+      metadata,
+      expectedVersion: 2
+    }),
+    {
+      status: "not_stale",
+      notification: {
+        ...candidate,
+        deliveryStatus: "delivery_attempted",
+        deliveryAttemptedAt: "2026-08-09T10:00:02.000Z",
+        createdAtUtc: "2026-08-09T10:00:01.000Z",
+        updatedAtUtc: "2026-08-09T10:00:02.000Z"
+      }
+    }
+  );
+
+  const reconciled = await service.reconcileUnconfirmedDelivery({
+    notificationId: candidate.notificationId,
+    reconciledAt: "2026-08-09T10:05:02.000Z",
+    minAttemptAgeMs: 5 * 60 * 1_000,
+    metadata: { ...metadata, sourceObservedAtUtc: "2026-08-09T10:05:02.000Z" },
+    expectedVersion: 2
+  });
+  assert.equal(reconciled.status, "reconciled");
+  if (reconciled.status !== "reconciled") {
+    assert.fail("expected the stale delivery attempt to be reconciled");
+  }
+  assert.deepEqual(
+    {
+      status: reconciled.status,
+      deliveryStatus: reconciled.notification.deliveryStatus,
+      code: reconciled.notification.outcomeCode
+    },
+    { status: "reconciled", deliveryStatus: "failed", code: "delivery_outcome_unconfirmed" }
+  );
+  assert.deepEqual(
+    await service.reconcileUnconfirmedDelivery({
+      notificationId: candidate.notificationId,
+      reconciledAt: "2026-08-09T10:10:02.000Z",
+      minAttemptAgeMs: 5 * 60 * 1_000,
+      metadata,
+      expectedVersion: 3
+    }),
+    { status: "already_terminal", notification: reconciled.notification }
+  );
+});
+
+test("does not overwrite a terminal outcome recorded while reconciliation is in progress", async () => {
+  const { repository, runtime, service } = createRuntime();
+  await runtime.retain({
+    candidate,
+    retainedAt: "2026-08-09T10:00:01.000Z",
+    metadata
+  });
+  await service.claimDeliveryAttempt({
+    notificationId: candidate.notificationId,
+    attemptedAt: "2026-08-09T10:00:02.000Z",
+    metadata,
+    expectedVersion: 1
+  });
+
+  const originalUpdate = repository.update.bind(repository);
+  repository.update = async (request) => {
+    if (request.notification.outcomeCode === "delivery_outcome_unconfirmed") {
+      await service.recordDeliveryOutcome({
+        notificationId: candidate.notificationId,
+        status: "delivered",
+        completedAt: "2026-08-09T10:05:02.000Z",
+        outcomeCode: "telegram_accepted",
+        metadata,
+        expectedVersion: null
+      });
+    }
+    return originalUpdate(request);
+  };
+
+  assert.deepEqual(
+    await service.reconcileUnconfirmedDelivery({
+      notificationId: candidate.notificationId,
+      reconciledAt: "2026-08-09T10:05:02.000Z",
+      minAttemptAgeMs: 5 * 60 * 1_000,
+      metadata,
+      expectedVersion: null
+    }),
+    {
+      status: "already_terminal",
+      notification: {
+        ...candidate,
+        deliveryStatus: "delivered",
+        deliveryAttemptedAt: "2026-08-09T10:00:02.000Z",
+        completedAt: "2026-08-09T10:05:02.000Z",
+        outcomeCode: "telegram_accepted",
+        createdAtUtc: "2026-08-09T10:00:01.000Z",
+        updatedAtUtc: "2026-08-09T10:05:02.000Z"
+      }
+    }
+  );
+});
+
 test("rejects malformed notifications and prevents terminal outcomes without a delivery claim", async () => {
   const { runtime, service } = createRuntime();
   assert.deepEqual(
@@ -177,6 +294,17 @@ test("rejects malformed notifications and prevents terminal outcomes without a d
         status: "failed",
         completedAt: "2026-08-09T10:00:03.000Z",
         outcomeCode: "provider_rejected",
+        metadata,
+        expectedVersion: 1
+      }),
+    (error: unknown) => error instanceof PatternNotificationDeliveryValidationError
+  );
+  await assert.rejects(
+    () =>
+      service.reconcileUnconfirmedDelivery({
+        notificationId: candidate.notificationId,
+        reconciledAt: "2026-08-09T10:00:03.000Z",
+        minAttemptAgeMs: 0,
         metadata,
         expectedVersion: 1
       }),

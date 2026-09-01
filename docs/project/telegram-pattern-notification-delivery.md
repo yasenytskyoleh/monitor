@@ -27,4 +27,6 @@ placed.
 
 There is still no scheduler, provider retry, reconciliation worker, exchange access, or automatic
 trading. A caller must claim a retained notification, invoke the port, and record the returned
-outcome through the existing delivery service.
+outcome through the existing delivery service. If the process fails before it records an outcome,
+the caller can later terminalize only a stale claimed record as
+`delivery_outcome_unconfirmed`; it must not retry or resend it.

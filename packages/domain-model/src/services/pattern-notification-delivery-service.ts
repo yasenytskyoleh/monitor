@@ -38,6 +38,20 @@ export type RecordPatternNotificationDeliveryOutcomeRequest = {
   expectedVersion: number | null;
 };
 
+export type ReconcilePatternNotificationDeliveryRequest = {
+  notificationId: string;
+  reconciledAt: TimestampUtc;
+  minAttemptAgeMs: number;
+  metadata: ProductRecordMetadata;
+  expectedVersion: number | null;
+};
+
+export type ReconcilePatternNotificationDeliveryResult =
+  | { status: "reconciled"; notification: PatternNotificationRecord }
+  | { status: "not_found" }
+  | { status: "not_stale"; notification: PatternNotificationRecord }
+  | { status: "already_terminal"; notification: PatternNotificationRecord };
+
 export type PatternNotificationDeliveryServiceDependencies = {
   patternNotificationRecordRepository: PatternNotificationRecordRepository;
 };
@@ -54,6 +68,9 @@ export type PatternNotificationDeliveryService = {
   recordDeliveryOutcome(
     request: RecordPatternNotificationDeliveryOutcomeRequest
   ): Promise<PatternNotificationRecord | null>;
+  reconcileUnconfirmedDelivery(
+    request: ReconcilePatternNotificationDeliveryRequest
+  ): Promise<ReconcilePatternNotificationDeliveryResult>;
 };
 
 export class PatternNotificationDeliveryValidationError extends Error {
@@ -78,6 +95,12 @@ const assertNonEmptyString = (value: unknown, fieldName: string): void => {
 const assertTimestamp = (value: unknown, fieldName: string): void => {
   if (!isValidTimestamp(value)) {
     throw new PatternNotificationDeliveryValidationError(`${fieldName} must be a valid timestamp`);
+  }
+};
+
+const assertPositiveInteger = (value: unknown, fieldName: string): void => {
+  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+    throw new PatternNotificationDeliveryValidationError(`${fieldName} must be a positive integer`);
   }
 };
 
@@ -317,6 +340,60 @@ export const createPatternNotificationDeliveryService = (
         metadata: request.metadata,
         expectedVersion: request.expectedVersion
       });
+    },
+
+    async reconcileUnconfirmedDelivery(request) {
+      assertNonEmptyString(request.notificationId, "notificationId");
+      assertTimestamp(request.reconciledAt, "reconciledAt");
+      assertPositiveInteger(request.minAttemptAgeMs, "minAttemptAgeMs");
+      const current = await patternNotificationRecordRepository.getById(request.notificationId);
+      if (!current) return { status: "not_found" };
+      assertPersistedNotification(current);
+      if (current.deliveryStatus === "delivered" || current.deliveryStatus === "failed") {
+        return { status: "already_terminal", notification: current };
+      }
+      if (current.deliveryStatus !== "delivery_attempted" || !current.deliveryAttemptedAt) {
+        throw new PatternNotificationDeliveryValidationError(
+          "pattern_notification reconciliation requires a claimed delivery attempt"
+        );
+      }
+      const attemptAgeMs = Date.parse(request.reconciledAt) - Date.parse(current.deliveryAttemptedAt);
+      if (attemptAgeMs < 0) {
+        throw new PatternNotificationDeliveryValidationError(
+          "reconciledAt must not be before attemptedAt"
+        );
+      }
+      if (attemptAgeMs < request.minAttemptAgeMs) {
+        return { status: "not_stale", notification: current };
+      }
+
+      try {
+        const notification = await patternNotificationRecordRepository.update({
+          notification: {
+            ...current,
+            deliveryStatus: "failed",
+            completedAt: request.reconciledAt,
+            outcomeCode: "delivery_outcome_unconfirmed",
+            updatedAtUtc: buildUpdatedAt(current, request.reconciledAt, request.metadata)
+          },
+          metadata: request.metadata,
+          expectedVersion: request.expectedVersion,
+          expectedDeliveryStatus: "delivery_attempted",
+          expectedDeliveryAttemptedAt: current.deliveryAttemptedAt
+        });
+        return { status: "reconciled", notification };
+      } catch (error) {
+        if (!(error instanceof RepositoryError) || error.code !== "version_mismatch") {
+          throw error;
+        }
+        const updated = await patternNotificationRecordRepository.getById(request.notificationId);
+        if (!updated) throw error;
+        assertPersistedNotification(updated);
+        if (updated.deliveryStatus === "delivered" || updated.deliveryStatus === "failed") {
+          return { status: "already_terminal", notification: updated };
+        }
+        throw error;
+      }
     }
   };
 };

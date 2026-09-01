@@ -16,8 +16,10 @@ The service-owned state transition is deliberately narrow:
 2. `delivery_attempted` — one caller claimed the delivery attempt.
 3. `delivered` or `failed` — the caller recorded a machine-readable outcome code.
 
-An attempted notification has no automatic retry path. This prevents duplicate user alerts after
-a crash or ambiguous provider response; reconciliation is an explicit future workflow.
+An attempted notification has no automatic retry path. A caller may reconcile a claimed attempt
+only after its configured minimum age, which terminalizes it as `failed` with
+`delivery_outcome_unconfirmed`. Reconciliation never re-queues or resends the alert, preserving
+the at-most-once user-alert guarantee after a crash or ambiguous provider response.
 
 ## Provider boundary
 

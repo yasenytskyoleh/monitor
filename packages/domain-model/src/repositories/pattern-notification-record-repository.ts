@@ -10,6 +10,8 @@ export type PatternNotificationRecordUpdateRequest = {
   notification: PatternNotificationRecord;
   metadata: ProductRecordMetadata;
   expectedVersion: number | null;
+  expectedDeliveryStatus?: PatternNotificationRecord["deliveryStatus"];
+  expectedDeliveryAttemptedAt?: string;
 };
 
 export type PatternNotificationRecordRepository = {

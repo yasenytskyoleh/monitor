@@ -28,7 +28,12 @@ type PrismaPatternNotificationRecordDelegate = {
     where: { notificationId?: string; deduplicationKey?: string };
   }): Promise<PrismaPatternNotificationRecord | null>;
   updateMany(args: {
-    where: { notificationId: string; version: number };
+    where: {
+      notificationId: string;
+      version: number;
+      deliveryStatus?: PatternNotificationRecord["deliveryStatus"];
+      deliveryAttemptedAtUtc?: Date;
+    };
     data: Prisma.PatternNotificationRecordUncheckedUpdateManyInput;
   }): Promise<Prisma.BatchPayload>;
 };
@@ -190,7 +195,16 @@ export class PrismaPatternNotificationRecordRepository
       assertPatternNotificationEvidenceIsUnchanged(hydrate(current), request.notification);
       const expectedVersion = request.expectedVersion ?? current.version;
       const result = await this.prisma.patternNotificationRecord.updateMany({
-        where: { notificationId, version: expectedVersion },
+        where: {
+          notificationId,
+          version: expectedVersion,
+          ...(request.expectedDeliveryStatus
+            ? { deliveryStatus: request.expectedDeliveryStatus }
+            : {}),
+          ...(request.expectedDeliveryAttemptedAt
+            ? { deliveryAttemptedAtUtc: new Date(request.expectedDeliveryAttemptedAt) }
+            : {})
+        },
         data: buildData(request.notification, request.metadata, current.version + 1)
       });
       const row = await this.prisma.patternNotificationRecord.findUnique({
