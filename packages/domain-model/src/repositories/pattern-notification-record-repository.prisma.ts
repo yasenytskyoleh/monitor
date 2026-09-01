@@ -23,6 +23,7 @@ type PrismaPatternNotificationRecordDelegate = {
   findMany(args: {
     where: { deliveryStatus: { in: PatternNotificationRecord["deliveryStatus"][] } };
     orderBy: { notificationId: "asc" };
+    take: number;
   }): Promise<PrismaPatternNotificationRecord[]>;
   findUnique(args: {
     where: { notificationId?: string; deduplicationKey?: string };
@@ -155,11 +156,13 @@ export class PrismaPatternNotificationRecordRepository
   }
 
   async listByDeliveryStatus(
-    statuses: PatternNotificationRecord["deliveryStatus"][]
+    statuses: PatternNotificationRecord["deliveryStatus"][],
+    limit: number
   ): Promise<PatternNotificationRecord[]> {
     const rows = await this.prisma.patternNotificationRecord.findMany({
       where: { deliveryStatus: { in: statuses } },
-      orderBy: { notificationId: "asc" }
+      orderBy: { notificationId: "asc" },
+      take: limit
     });
     return rows.map(hydrate);
   }

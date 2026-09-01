@@ -11,6 +11,9 @@ export {
 export {
   createPatternNotificationDeliveryWorkflow
 } from "./delivery-workflow.js";
+export {
+  createPatternNotificationDeliveryDispatch
+} from "./delivery-dispatch.js";
 export type {
   PatternNotificationDeliveryPort,
   PatternNotificationDeliveryPortOutcome,
@@ -26,6 +29,13 @@ export type {
   PatternNotificationDeliveryWorkflow,
   PatternNotificationDeliveryWorkflowOptions
 } from "./delivery-workflow.js";
+export type {
+  DispatchPatternNotificationsRequest,
+  DispatchPatternNotificationsResult,
+  PatternNotificationDeliveryDispatch,
+  PatternNotificationDeliveryDispatchOptions,
+  PatternNotificationDeliveryDispatchPolicy
+} from "./delivery-dispatch.js";
 export {
   createTelegramPatternNotificationDeliveryPort,
   formatTelegramPatternNotification

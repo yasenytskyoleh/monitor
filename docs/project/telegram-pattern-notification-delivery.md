@@ -34,3 +34,8 @@ the caller can later terminalize only a stale claimed record as
 `createPatternNotificationDeliveryWorkflow` provides that claim → Telegram → record composition
 for one caller invocation. It returns an explicit `outcome_unconfirmed` result if the port or
 terminal write fails, leaving the record for reconciliation rather than attempting a second send.
+
+`createPatternNotificationDeliveryDispatch` can invoke this workflow for a bounded set of pending
+records. Its caller supplies the cadence policy; the dispatch has no background timer or retry
+path. It does not reconcile potentially in-flight Telegram requests until the delivery execution
+has a durable lease or heartbeat.

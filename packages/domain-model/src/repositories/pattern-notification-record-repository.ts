@@ -18,7 +18,8 @@ export type PatternNotificationRecordRepository = {
   getById(notificationId: string): Promise<PatternNotificationRecord | null>;
   getByDeduplicationKey(deduplicationKey: string): Promise<PatternNotificationRecord | null>;
   listByDeliveryStatus(
-    statuses: PatternNotificationRecord["deliveryStatus"][]
+    statuses: PatternNotificationRecord["deliveryStatus"][],
+    limit: number
   ): Promise<PatternNotificationRecord[]>;
   create(request: PatternNotificationRecordCreateRequest): Promise<PatternNotificationRecord>;
   update(request: PatternNotificationRecordUpdateRequest): Promise<PatternNotificationRecord>;

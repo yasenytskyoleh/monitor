@@ -61,6 +61,10 @@ export type PatternNotificationDeliveryService = {
   getByDeduplicationKey(
     deduplicationKey: string
   ): Promise<PatternNotificationRecord | null>;
+  listByDeliveryStatus(
+    statuses: PatternNotificationRecord["deliveryStatus"][],
+    limit: number
+  ): Promise<PatternNotificationRecord[]>;
   retain(request: RetainPatternNotificationRequest): Promise<RetainPatternNotificationResult>;
   claimDeliveryAttempt(
     request: ClaimPatternNotificationDeliveryRequest
@@ -248,6 +252,18 @@ export const createPatternNotificationDeliveryService = (
       );
       if (notification) assertPersistedNotification(notification);
       return notification;
+    },
+
+    async listByDeliveryStatus(statuses, limit) {
+      assertPositiveInteger(limit, "limit");
+      const notifications = await patternNotificationRecordRepository.listByDeliveryStatus(
+        statuses,
+        limit
+      );
+      notifications.forEach(assertPersistedNotification);
+      return notifications.sort((left, right) =>
+        left.notificationId.localeCompare(right.notificationId)
+      );
     },
 
     async retain(request) {

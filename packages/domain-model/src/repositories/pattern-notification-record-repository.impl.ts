@@ -44,11 +44,14 @@ export class InMemoryPatternNotificationRecordRepository
   }
 
   async listByDeliveryStatus(
-    statuses: PatternNotificationRecord["deliveryStatus"][]
+    statuses: PatternNotificationRecord["deliveryStatus"][],
+    limit: number
   ): Promise<PatternNotificationRecord[]> {
     const allowedStatuses = new Set(statuses);
     return [...this.recordsById.values()]
       .filter((record) => allowedStatuses.has(record.notification.deliveryStatus))
+      .sort((left, right) => left.notification.notificationId.localeCompare(right.notification.notificationId))
+      .slice(0, limit)
       .map((record) => cloneNotification(record.notification));
   }
 

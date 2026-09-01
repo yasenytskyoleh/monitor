@@ -9,6 +9,7 @@ import {
 } from "@monitor/domain-model";
 
 import {
+  createPatternNotificationDeliveryDispatch,
   createPatternNotificationDeliveryWorkflow,
   createPatternNotificationRetentionRuntime,
   type PatternNotificationCandidate,
@@ -73,7 +74,7 @@ test("retains an immutable eligible notification once and exposes a provider-neu
       updatedAtUtc: "2026-08-09T10:00:01.000Z"
     }
   });
-  assert.equal((await repository.listByDeliveryStatus(["pending_delivery"])).length, 1);
+  assert.equal((await repository.listByDeliveryStatus(["pending_delivery"], 10)).length, 1);
 
   const duplicate = await runtime.retain({
     candidate: { ...candidate, currentPrice: 67_100 },
@@ -98,7 +99,7 @@ test("reports concurrent deduplication as one creation and one already-retained 
     results.map((result) => result.status).sort(),
     ["already_retained", "created"]
   );
-  assert.equal((await repository.listByDeliveryStatus(["pending_delivery"])).length, 1);
+  assert.equal((await repository.listByDeliveryStatus(["pending_delivery"], 10)).length, 1);
 });
 
 test("permits exactly one claimed delivery attempt and one terminal, payload-free outcome", async () => {
@@ -441,6 +442,54 @@ test("does not send when a notification cannot be claimed and leaves uncertain o
       expectedVersion: 2
     }),
     { status: "not_claimed" }
+  );
+  assert.equal(deliveries, 1);
+});
+
+test("dispatches a bounded pending notification set at the declared cadence", async () => {
+  const { runtime, service } = createRuntime();
+  const secondCandidate = {
+    ...candidate,
+    notificationId: "notification:candidate-002",
+    deduplicationKey: "signal_candidate:candidate-002",
+    signalCandidateId: "candidate-002"
+  };
+  await runtime.retain({ candidate, retainedAt: "2026-08-09T10:00:01.000Z", metadata });
+  await runtime.retain({ candidate: secondCandidate, retainedAt: "2026-08-09T10:00:01.000Z", metadata });
+  let deliveries = 0;
+  const workflow = createPatternNotificationDeliveryWorkflow({
+    patternNotificationDeliveryService: service,
+    deliveryPort: {
+      async deliver() {
+        deliveries += 1;
+        return {
+          status: "delivered",
+          completedAt: "2026-08-09T10:05:02.000Z",
+          outcomeCode: "telegram_accepted"
+        };
+      }
+    }
+  });
+  const dispatch = createPatternNotificationDeliveryDispatch({
+    patternNotificationDeliveryService: service,
+    deliveryWorkflow: workflow,
+    policy: {
+      minRunIntervalMs: 60_000,
+      maxDeliveriesPerRun: 1
+    }
+  });
+
+  assert.deepEqual(
+    await dispatch.dispatch({ runAt: "2026-08-09T10:05:02.000Z", metadata }),
+    {
+      status: "completed",
+      deliveries: [{ notificationId: candidate.notificationId, status: "outcome_recorded" }]
+    }
+  );
+  assert.equal(deliveries, 1);
+  assert.deepEqual(
+    await dispatch.dispatch({ runAt: "2026-08-09T10:05:30.000Z", metadata }),
+    { status: "skipped_too_soon", nextEligibleAt: "2026-08-09T10:06:02.000Z" }
   );
   assert.equal(deliveries, 1);
 });

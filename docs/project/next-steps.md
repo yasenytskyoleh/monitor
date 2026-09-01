@@ -1,7 +1,7 @@
 # Next Steps
 
 ## Current recommended next step
-### Define delivery and reconciliation ownership for the first runtime caller
+### Add durable delivery execution leases before automated reconciliation
 
 Reason:
 - eligible BTC notifications now have a unique durable record, immutable evidence snapshot, and
@@ -14,23 +14,25 @@ Reason:
   period as `delivery_outcome_unconfirmed`, without re-queueing or resending the alert
 - the claim, Telegram invocation, and terminal-outcome recording steps are now composed in one
   explicit caller workflow with an `outcome_unconfirmed` result for ambiguous completion
-- no runtime caller owns its cadence, the configured reconciliation grace period, or monitoring of
-  unconfirmed delivery records
+- a caller-invoked dispatch now declares an in-process cadence guard and bounded delivery work
+- automatic reconciliation can race an in-flight provider request without a durable execution
+  lease or heartbeat, so it must remain caller-controlled for now
 
 ## Recommended near-future sequence
-1. define the first runtime caller's cadence, delivery configuration ownership, and reconciliation
-   grace period without adding automatic retries
-2. add a scheduler/worker only after caller workflow and reconciliation ownership are explicit
-3. connect a real monitored BTC market-data ingestion path only after the delivery runtime's
-   operational ownership is explicit
+1. add a durable delivery execution lease or heartbeat that makes stale-attempt reconciliation
+   safe while preserving no-resend behavior
+2. add a bounded scheduler/worker only after the lease contract makes automated reconciliation
+   safe and observable
+3. connect a real monitored BTC market-data ingestion path after the delivery runtime's process
+   ownership is explicit
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
 - inferring manual-approval or reviewer-supplied command fields from routing metadata
-- adding provider retries, a queue, scheduler, or trading integration before caller workflow and
-  reconciliation ownership are explicit
+- adding provider retries, an unbounded queue, automatic reconciliation, or trading integration
+  before the lease and scheduler contracts are explicit
 - presenting an alert as investment advice or using it to place an order automatically
 
 ## Baseline verification commands

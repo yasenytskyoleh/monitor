@@ -34,5 +34,12 @@ record, invokes one delivery port only after that claim, then records the port's
 If delivery or outcome recording does not complete, it leaves the one claimed record unresolved
 for the no-resend reconciliation path. It does not schedule or retry work itself.
 
+`createPatternNotificationDeliveryDispatch` is the bounded, caller-invoked operational run. Its
+policy declares a minimum in-process run interval and delivery limit. Each run returns
+per-notification delivery results. It creates no timer, queue, retry, or durable scheduler state;
+the deployment that invokes it remains responsible for process lifecycle and cadence across
+restarts. Automatic reconciliation remains out of this run until delivery execution has a durable
+lease or heartbeat that proves the provider call is no longer in flight.
+
 `consider_long` remains decision-support language based only on the currently implemented bullish
 evidence. It is not a buy instruction or automated trade.
