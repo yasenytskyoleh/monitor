@@ -36,14 +36,17 @@ the caller can later terminalize only a stale claimed record as
 `delivery_outcome_unconfirmed`; it must not retry or resend it.
 
 `createPatternNotificationDeliveryWorkflow` provides that claim → Telegram → record composition
-for one caller invocation. It returns an explicit `outcome_unconfirmed` result if the port or
-terminal write fails, leaving the record for reconciliation rather than attempting a second send.
+for one caller invocation. It gives every claim a durable owner lease from the workflow clock;
+the lease must cover the adapter's bounded Telegram execution time plus a positive
+terminal-recording grace, and the same owner ID is presented for the terminal write. It returns an
+explicit `outcome_unconfirmed` result if the port or terminal write fails, leaving the record for
+reconciliation rather than attempting a second send.
 
 `createPatternNotificationDeliveryDispatch` can invoke this workflow for a bounded set of pending
 records. Its caller supplies the cadence policy; the dispatch has no background timer or retry
 path. It does not reconcile potentially in-flight Telegram requests until the delivery execution
 has a durable lease or heartbeat.
 
-The delivery service supports a durable lease ID and expiry for a claimed attempt. A future bounded
-Telegram caller must acquire that lease and record its outcome with the same ID before automated
-reconciliation can be enabled.
+The delivery service stores each workflow lease ID and expiry for a claimed attempt. A future
+bounded reconciliation caller can use its expiry to resolve an unconfirmed result, without
+resending the Telegram alert.

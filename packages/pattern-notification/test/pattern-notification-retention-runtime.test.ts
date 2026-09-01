@@ -329,9 +329,12 @@ test("delivers a claimed notification once and records the provider-neutral outc
   });
   let deliveredNotificationId: string | null = null;
   const deliveryPort: PatternNotificationDeliveryPort = {
+    maxExecutionMs: 60_000,
     async deliver({ notification }) {
       deliveredNotificationId = notification.notificationId;
       assert.equal(notification.deliveryStatus, "delivery_attempted");
+      assert.equal(notification.deliveryLeaseId, "delivery-lease-workflow");
+      assert.equal(notification.deliveryLeaseExpiresAt, "2026-08-09T10:01:03.000Z");
       return {
         status: "delivered",
         completedAt: "2026-08-09T10:00:03.000Z",
@@ -341,12 +344,15 @@ test("delivers a claimed notification once and records the provider-neutral outc
   };
   const workflow = createPatternNotificationDeliveryWorkflow({
     patternNotificationDeliveryService: service,
-    deliveryPort
+    deliveryPort,
+    deliveryLeaseDurationMs: 61_000,
+    deliveryLeaseOutcomeGraceMs: 1_000,
+    deliveryLeaseIdFactory: () => "delivery-lease-workflow",
+    now: () => "2026-08-09T10:00:02.000Z"
   });
 
   const result = await workflow.deliver({
     notificationId: candidate.notificationId,
-    attemptedAt: "2026-08-09T10:00:02.000Z",
     metadata,
     expectedVersion: 1
   });
@@ -357,8 +363,63 @@ test("delivers a claimed notification once and records the provider-neutral outc
     assert.fail("expected the delivery outcome to be recorded");
   }
   assert.deepEqual(
-    { deliveryStatus: result.notification.deliveryStatus, outcomeCode: result.notification.outcomeCode },
-    { deliveryStatus: "delivered", outcomeCode: "telegram_accepted" }
+    {
+      deliveryStatus: result.notification.deliveryStatus,
+      outcomeCode: result.notification.outcomeCode,
+      deliveryLeaseId: result.notification.deliveryLeaseId,
+      deliveryLeaseExpiresAt: result.notification.deliveryLeaseExpiresAt
+    },
+    {
+      deliveryStatus: "delivered",
+      outcomeCode: "telegram_accepted",
+      deliveryLeaseId: undefined,
+      deliveryLeaseExpiresAt: undefined
+    }
+  );
+});
+
+test("requires a lease to cover delivery execution and outcome-recording grace", () => {
+  const { service } = createRuntime();
+  const deliveryPort: PatternNotificationDeliveryPort = {
+    maxExecutionMs: 60_000,
+    async deliver() {
+      return {
+        status: "delivered",
+        completedAt: "2026-08-09T10:00:03.000Z",
+        outcomeCode: "telegram_accepted"
+      };
+    }
+  };
+
+  assert.throws(
+    () =>
+      createPatternNotificationDeliveryWorkflow({
+        patternNotificationDeliveryService: service,
+        deliveryPort,
+        deliveryLeaseDurationMs: 60_000,
+        deliveryLeaseOutcomeGraceMs: 1_000
+      }),
+    /lease duration must cover/
+  );
+  assert.throws(
+    () =>
+      createPatternNotificationDeliveryWorkflow({
+        patternNotificationDeliveryService: service,
+        deliveryPort,
+        deliveryLeaseDurationMs: 61_000,
+        deliveryLeaseOutcomeGraceMs: 0
+      }),
+    /lease duration must cover/
+  );
+  assert.throws(
+    () =>
+      createPatternNotificationDeliveryWorkflow({
+        patternNotificationDeliveryService: service,
+        deliveryPort,
+        deliveryLeaseDurationMs: 61_000,
+        deliveryLeaseOutcomeGraceMs: 1.5
+      }),
+    /lease duration must cover/
   );
 });
 
@@ -373,6 +434,7 @@ test("allows only one concurrent workflow caller to reach the delivery port", as
   const workflow = createPatternNotificationDeliveryWorkflow({
     patternNotificationDeliveryService: service,
     deliveryPort: {
+      maxExecutionMs: 60_000,
       async deliver() {
         deliveries += 1;
         return {
@@ -381,11 +443,14 @@ test("allows only one concurrent workflow caller to reach the delivery port", as
           outcomeCode: "telegram_rejected"
         };
       }
-    }
+    },
+    deliveryLeaseDurationMs: 61_000,
+    deliveryLeaseOutcomeGraceMs: 1_000,
+    deliveryLeaseIdFactory: () => "delivery-lease-workflow",
+    now: () => "2026-08-09T10:00:02.000Z"
   });
   const request = {
     notificationId: candidate.notificationId,
-    attemptedAt: "2026-08-09T10:00:02.000Z",
     metadata,
     expectedVersion: null
   };
@@ -422,6 +487,7 @@ test("does not overwrite reconciliation when terminal recording races with it", 
   const workflow = createPatternNotificationDeliveryWorkflow({
     patternNotificationDeliveryService: service,
     deliveryPort: {
+      maxExecutionMs: 60_000,
       async deliver() {
         return {
           status: "delivered",
@@ -429,13 +495,16 @@ test("does not overwrite reconciliation when terminal recording races with it", 
           outcomeCode: "telegram_accepted"
         };
       }
-    }
+    },
+    deliveryLeaseDurationMs: 61_000,
+    deliveryLeaseOutcomeGraceMs: 1_000,
+    deliveryLeaseIdFactory: () => "delivery-lease-workflow",
+    now: () => "2026-08-09T10:00:02.000Z"
   });
 
   assert.deepEqual(
     await workflow.deliver({
       notificationId: candidate.notificationId,
-      attemptedAt: "2026-08-09T10:00:02.000Z",
       metadata,
       expectedVersion: null
     }),
@@ -459,6 +528,7 @@ test("does not send when a notification cannot be claimed and leaves uncertain o
   });
   let deliveries = 0;
   const deliveryPort: PatternNotificationDeliveryPort = {
+    maxExecutionMs: 60_000,
     async deliver() {
       deliveries += 1;
       throw new Error("simulated provider interruption");
@@ -466,13 +536,16 @@ test("does not send when a notification cannot be claimed and leaves uncertain o
   };
   const workflow = createPatternNotificationDeliveryWorkflow({
     patternNotificationDeliveryService: service,
-    deliveryPort
+    deliveryPort,
+    deliveryLeaseDurationMs: 61_000,
+    deliveryLeaseOutcomeGraceMs: 1_000,
+    deliveryLeaseIdFactory: () => "delivery-lease-workflow",
+    now: () => "2026-08-09T10:00:02.000Z"
   });
 
   assert.deepEqual(
     await workflow.deliver({
       notificationId: "notification:missing",
-      attemptedAt: "2026-08-09T10:00:02.000Z",
       metadata,
       expectedVersion: 1
     }),
@@ -483,7 +556,6 @@ test("does not send when a notification cannot be claimed and leaves uncertain o
   assert.deepEqual(
     await workflow.deliver({
       notificationId: candidate.notificationId,
-      attemptedAt: "2026-08-09T10:00:02.000Z",
       metadata,
       expectedVersion: 1
     }),
@@ -497,7 +569,6 @@ test("does not send when a notification cannot be claimed and leaves uncertain o
   assert.deepEqual(
     await workflow.deliver({
       notificationId: candidate.notificationId,
-      attemptedAt: "2026-08-09T10:00:03.000Z",
       metadata,
       expectedVersion: 2
     }),
@@ -520,15 +591,22 @@ test("dispatches a bounded pending notification set at the declared cadence", as
   const workflow = createPatternNotificationDeliveryWorkflow({
     patternNotificationDeliveryService: service,
     deliveryPort: {
-      async deliver() {
+      maxExecutionMs: 60_000,
+      async deliver({ notification }) {
         deliveries += 1;
+        assert.equal(notification.deliveryAttemptedAt, "2026-08-09T10:05:03.000Z");
+        assert.equal(notification.deliveryLeaseExpiresAt, "2026-08-09T10:06:04.000Z");
         return {
           status: "delivered",
-          completedAt: "2026-08-09T10:05:02.000Z",
+          completedAt: "2026-08-09T10:05:04.000Z",
           outcomeCode: "telegram_accepted"
         };
       }
-    }
+    },
+    deliveryLeaseDurationMs: 61_000,
+    deliveryLeaseOutcomeGraceMs: 1_000,
+    deliveryLeaseIdFactory: () => "delivery-lease-workflow",
+    now: () => "2026-08-09T10:05:03.000Z"
   });
   const dispatch = createPatternNotificationDeliveryDispatch({
     patternNotificationDeliveryService: service,

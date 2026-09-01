@@ -1,7 +1,7 @@
 # Next Steps
 
 ## Current recommended next step
-### Bind the Telegram workflow to bounded durable delivery execution leases
+### Add a bounded scheduler and lease-aware reconciliation runner
 
 Reason:
 - eligible BTC notifications now have a unique durable record, immutable evidence snapshot, and
@@ -17,14 +17,12 @@ Reason:
 - a caller-invoked dispatch now declares an in-process cadence guard and bounded delivery work
 - leased delivery attempts now persist an owner ID and expiry; terminal recording requires that
   owner and reconciliation waits for expiry
-- the Telegram workflow does not yet acquire a lease or bound provider execution, so dispatch must
-  not automatically reconcile attempts
+- the Telegram workflow now acquires a durable lease at claim time, bounds Telegram execution,
+  and reserves positive terminal-recording grace before expiry
 
 ## Recommended near-future sequence
-1. bind the Telegram delivery workflow to a durable lease and bounded provider-call lifetime
-2. add a bounded scheduler/worker only after the lease contract makes automated reconciliation
-   safe and observable
-3. connect a real monitored BTC market-data ingestion path after the delivery runtime's process
+1. add a bounded scheduler/worker with lease-aware reconciliation and observable run ownership
+2. connect a real monitored BTC market-data ingestion path after the delivery runtime's process
    ownership is explicit
 
 ## Things to avoid while moving forward

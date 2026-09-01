@@ -263,14 +263,15 @@ Current limitation:
     compatible historical aggregate evidence into a deduplicated, explainable decision-support
     candidate; eligible candidates retain an immutable PostgreSQL/Prisma record and one
     provider-neutral delivery lifecycle; an explicit caller workflow claims, sends once, and
-    records outcomes, while a bounded caller-invoked dispatch processes pending records without
-    retrying; Telegram is the first provider adapter with runtime-only credentials, but there is
-    no scheduler, automatic reconciliation, or trading implementation
+    records outcomes under a durable bounded execution lease, while a bounded caller-invoked
+    dispatch processes pending records without retrying; Telegram is the first provider adapter
+    with runtime-only credentials, but there is no scheduler, automatic reconciliation, or trading
+    implementation
   - no UI yet
 
 Current recommended next step:
-- add durable delivery execution leases before automated reconciliation; keep alerts as explainable
-  human decision support and automated trading outside the current phase
+- add a bounded scheduler and lease-aware reconciliation runner; keep alerts as explainable human
+  decision support and automated trading outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

@@ -126,6 +126,7 @@ export const createTelegramPatternNotificationDeliveryPort = (
   };
 
   return {
+    maxExecutionMs: options.timeoutMs,
     async deliver(
       request: PatternNotificationDeliveryPortRequest
     ): Promise<PatternNotificationDeliveryPortOutcome> {

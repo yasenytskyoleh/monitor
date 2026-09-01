@@ -64,6 +64,8 @@ test("sends one explicit Telegram request and returns a stable accepted outcome"
     now: () => (requestCompleted ? completedAt : "2026-08-10T10:00:00.000Z")
   });
 
+  assert.equal(port.maxExecutionMs, 1_000);
+
   assert.deepEqual(await port.deliver({ notification }), {
     status: "delivered",
     completedAt,

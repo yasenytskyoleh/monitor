@@ -29,6 +29,7 @@ export type PatternNotificationDeliveryPortOutcome = {
 };
 
 export type PatternNotificationDeliveryPort = {
+  maxExecutionMs: number;
   deliver(
     request: PatternNotificationDeliveryPortRequest
   ): Promise<PatternNotificationDeliveryPortOutcome>;

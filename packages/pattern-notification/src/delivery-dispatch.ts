@@ -90,7 +90,6 @@ export const createPatternNotificationDeliveryDispatch = (
                 notification.notificationId,
                 await options.deliveryWorkflow.deliver({
                   notificationId: notification.notificationId,
-                  attemptedAt: request.runAt,
                   metadata: request.metadata,
                   expectedVersion: null
                 })
