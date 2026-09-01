@@ -208,6 +208,66 @@ test("reconciles only stale, unconfirmed delivery attempts without sending a dup
   );
 });
 
+test("enforces durable delivery-lease ownership and expiry before reconciliation", async () => {
+  const { runtime, service } = createRuntime();
+  await runtime.retain({ candidate, retainedAt: "2026-08-09T10:00:01.000Z", metadata });
+  await assert.rejects(
+    () =>
+      service.claimDeliveryAttempt({
+        notificationId: candidate.notificationId,
+        attemptedAt: "2026-08-09T10:00:02.000Z",
+        deliveryLeaseId: "delivery-lease-invalid",
+        deliveryLeaseExpiresAt: "2026-08-09T10:00:02.000Z",
+        metadata,
+        expectedVersion: null
+      }),
+    (error: unknown) => error instanceof PatternNotificationDeliveryValidationError
+  );
+  await service.claimDeliveryAttempt({
+    notificationId: candidate.notificationId,
+    attemptedAt: "2026-08-09T10:00:02.000Z",
+    deliveryLeaseId: "delivery-lease-001",
+    deliveryLeaseExpiresAt: "2026-08-09T10:05:02.000Z",
+    metadata,
+    expectedVersion: null
+  });
+
+  assert.equal(
+    (
+      await service.reconcileUnconfirmedDelivery({
+        notificationId: candidate.notificationId,
+        reconciledAt: "2026-08-09T10:05:01.000Z",
+        minAttemptAgeMs: 60_000,
+        metadata,
+        expectedVersion: null
+      })
+    ).status,
+    "lease_active"
+  );
+  await assert.rejects(
+    () =>
+      service.recordDeliveryOutcome({
+        notificationId: candidate.notificationId,
+        status: "delivered",
+        completedAt: "2026-08-09T10:05:02.000Z",
+        outcomeCode: "telegram_accepted",
+        metadata,
+        expectedVersion: null
+      }),
+    (error: unknown) => error instanceof PatternNotificationDeliveryValidationError
+  );
+  const reconciled = await service.reconcileUnconfirmedDelivery({
+    notificationId: candidate.notificationId,
+    reconciledAt: "2026-08-09T10:05:02.000Z",
+    minAttemptAgeMs: 60_000,
+    metadata,
+    expectedVersion: null
+  });
+  assert.equal(reconciled.status, "reconciled");
+  if (reconciled.status !== "reconciled") assert.fail("expected lease expiry reconciliation");
+  assert.equal(reconciled.notification.deliveryLeaseId, undefined);
+});
+
 test("does not overwrite a terminal outcome recorded while reconciliation is in progress", async () => {
   const { repository, runtime, service } = createRuntime();
   await runtime.retain({

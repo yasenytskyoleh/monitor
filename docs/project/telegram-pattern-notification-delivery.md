@@ -39,3 +39,7 @@ terminal write fails, leaving the record for reconciliation rather than attempti
 records. Its caller supplies the cadence policy; the dispatch has no background timer or retry
 path. It does not reconcile potentially in-flight Telegram requests until the delivery execution
 has a durable lease or heartbeat.
+
+The delivery service supports a durable lease ID and expiry for a claimed attempt. A future bounded
+Telegram caller must acquire that lease and record its outcome with the same ID before automated
+reconciliation can be enabled.

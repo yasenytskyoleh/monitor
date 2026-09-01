@@ -65,6 +65,10 @@ const hydrate = (row: PrismaPatternNotificationRecord): PatternNotificationRecor
   ...(toTimestampUtc(row.deliveryAttemptedAtUtc)
     ? { deliveryAttemptedAt: toTimestampUtc(row.deliveryAttemptedAtUtc) }
     : {}),
+  ...(row.deliveryLeaseId ? { deliveryLeaseId: row.deliveryLeaseId } : {}),
+  ...(toTimestampUtc(row.deliveryLeaseExpiresAtUtc)
+    ? { deliveryLeaseExpiresAt: toTimestampUtc(row.deliveryLeaseExpiresAtUtc) }
+    : {}),
   ...(toTimestampUtc(row.completedAtUtc) ? { completedAt: toTimestampUtc(row.completedAtUtc) } : {}),
   ...(row.outcomeCode ? { outcomeCode: row.outcomeCode } : {}),
   createdAtUtc: row.createdAtUtc.toISOString(),
@@ -96,6 +100,10 @@ const buildData = (
   aggregateComputedAtUtc: new Date(notification.aggregateComputedAt),
   deliveryAttemptedAtUtc: notification.deliveryAttemptedAt
     ? new Date(notification.deliveryAttemptedAt)
+    : null,
+  deliveryLeaseId: notification.deliveryLeaseId ?? null,
+  deliveryLeaseExpiresAtUtc: notification.deliveryLeaseExpiresAt
+    ? new Date(notification.deliveryLeaseExpiresAt)
     : null,
   completedAtUtc: notification.completedAt ? new Date(notification.completedAt) : null,
   outcomeCode: notification.outcomeCode ?? null,

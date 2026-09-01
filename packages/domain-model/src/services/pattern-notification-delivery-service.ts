@@ -25,6 +25,8 @@ export type RetainPatternNotificationResult =
 export type ClaimPatternNotificationDeliveryRequest = {
   notificationId: string;
   attemptedAt: TimestampUtc;
+  deliveryLeaseId?: string;
+  deliveryLeaseExpiresAt?: TimestampUtc;
   metadata: ProductRecordMetadata;
   expectedVersion: number | null;
 };
@@ -34,6 +36,7 @@ export type RecordPatternNotificationDeliveryOutcomeRequest = {
   status: TerminalDeliveryStatus;
   completedAt: TimestampUtc;
   outcomeCode: string;
+  deliveryLeaseId?: string;
   metadata: ProductRecordMetadata;
   expectedVersion: number | null;
 };
@@ -50,6 +53,7 @@ export type ReconcilePatternNotificationDeliveryResult =
   | { status: "reconciled"; notification: PatternNotificationRecord }
   | { status: "not_found" }
   | { status: "not_stale"; notification: PatternNotificationRecord }
+  | { status: "lease_active"; notification: PatternNotificationRecord }
   | { status: "already_terminal"; notification: PatternNotificationRecord };
 
 export type PatternNotificationDeliveryServiceDependencies = {
@@ -108,6 +112,34 @@ const assertPositiveInteger = (value: unknown, fieldName: string): void => {
   }
 };
 
+const assertLease = (
+  leaseId: string | undefined,
+  leaseExpiresAt: TimestampUtc | undefined,
+  attemptedAt: TimestampUtc
+): void => {
+  if (leaseId === undefined && leaseExpiresAt === undefined) return;
+  if (leaseId === undefined || leaseExpiresAt === undefined) {
+    throw new PatternNotificationDeliveryValidationError(
+      "deliveryLeaseId and deliveryLeaseExpiresAt must be supplied together"
+    );
+  }
+  assertNonEmptyString(leaseId, "deliveryLeaseId");
+  assertTimestamp(leaseExpiresAt, "deliveryLeaseExpiresAt");
+  if (Date.parse(leaseExpiresAt) <= Date.parse(attemptedAt)) {
+    throw new PatternNotificationDeliveryValidationError(
+      "deliveryLeaseExpiresAt must be after attemptedAt"
+    );
+  }
+};
+
+const withoutDeliveryLease = (
+  notification: PatternNotificationRecord
+): PatternNotificationRecord => {
+  const { deliveryLeaseId: _deliveryLeaseId, deliveryLeaseExpiresAt: _deliveryLeaseExpiresAt, ...rest } =
+    notification;
+  return rest;
+};
+
 const assertPersistedNotification = (notification: PatternNotificationRecord): void => {
   const stringFields: (keyof PatternNotificationRecord)[] = [
     "notificationId",
@@ -157,6 +189,11 @@ const assertPersistedNotification = (notification: PatternNotificationRecord): v
   if (notification.deliveryAttemptedAt !== undefined) {
     assertTimestamp(notification.deliveryAttemptedAt, "deliveryAttemptedAt");
   }
+  assertLease(
+    notification.deliveryLeaseId,
+    notification.deliveryLeaseExpiresAt,
+    notification.deliveryAttemptedAt ?? notification.observedAt
+  );
   if (notification.completedAt !== undefined) {
     assertTimestamp(notification.completedAt, "completedAt");
   }
@@ -166,6 +203,8 @@ const assertPersistedNotification = (notification: PatternNotificationRecord): v
   if (
     notification.deliveryStatus === "pending_delivery" &&
     (notification.deliveryAttemptedAt !== undefined ||
+      notification.deliveryLeaseId !== undefined ||
+      notification.deliveryLeaseExpiresAt !== undefined ||
       notification.completedAt !== undefined ||
       notification.outcomeCode !== undefined)
   ) {
@@ -181,6 +220,14 @@ const assertPersistedNotification = (notification: PatternNotificationRecord): v
   ) {
     throw new PatternNotificationDeliveryValidationError(
       "delivery_attempted pattern_notification has invalid outcome evidence"
+    );
+  }
+  if (
+    (notification.deliveryStatus === "delivered" || notification.deliveryStatus === "failed") &&
+    (notification.deliveryLeaseId !== undefined || notification.deliveryLeaseExpiresAt !== undefined)
+  ) {
+    throw new PatternNotificationDeliveryValidationError(
+      "terminal pattern_notification cannot retain a delivery lease"
     );
   }
   if (
@@ -294,6 +341,7 @@ export const createPatternNotificationDeliveryService = (
     async claimDeliveryAttempt(request) {
       assertNonEmptyString(request.notificationId, "notificationId");
       assertTimestamp(request.attemptedAt, "attemptedAt");
+      assertLease(request.deliveryLeaseId, request.deliveryLeaseExpiresAt, request.attemptedAt);
       const current = await patternNotificationRecordRepository.getById(request.notificationId);
       if (!current) return null;
       assertPersistedNotification(current);
@@ -313,6 +361,12 @@ export const createPatternNotificationDeliveryService = (
           ...current,
           deliveryStatus: "delivery_attempted",
           deliveryAttemptedAt: request.attemptedAt,
+          ...(request.deliveryLeaseId
+            ? {
+                deliveryLeaseId: request.deliveryLeaseId,
+                deliveryLeaseExpiresAt: request.deliveryLeaseExpiresAt
+              }
+            : {}),
           updatedAtUtc: buildUpdatedAt(current, request.attemptedAt, request.metadata)
         },
         metadata: request.metadata,
@@ -345,10 +399,15 @@ export const createPatternNotificationDeliveryService = (
           "completedAt must not be before attemptedAt"
         );
       }
+      if (current.deliveryLeaseId !== undefined && request.deliveryLeaseId !== current.deliveryLeaseId) {
+        throw new PatternNotificationDeliveryValidationError(
+          "deliveryLeaseId must match the active delivery lease"
+        );
+      }
 
       return patternNotificationRecordRepository.update({
         notification: {
-          ...current,
+          ...withoutDeliveryLease(current),
           deliveryStatus: request.status,
           completedAt: request.completedAt,
           outcomeCode: request.outcomeCode,
@@ -376,6 +435,12 @@ export const createPatternNotificationDeliveryService = (
           "pattern_notification reconciliation requires a claimed delivery attempt"
         );
       }
+      if (
+        current.deliveryLeaseExpiresAt !== undefined &&
+        Date.parse(request.reconciledAt) < Date.parse(current.deliveryLeaseExpiresAt)
+      ) {
+        return { status: "lease_active", notification: current };
+      }
       const attemptAgeMs = Date.parse(request.reconciledAt) - Date.parse(current.deliveryAttemptedAt);
       if (attemptAgeMs < 0) {
         throw new PatternNotificationDeliveryValidationError(
@@ -389,7 +454,7 @@ export const createPatternNotificationDeliveryService = (
       try {
         const notification = await patternNotificationRecordRepository.update({
           notification: {
-            ...current,
+            ...withoutDeliveryLease(current),
             deliveryStatus: "failed",
             completedAt: request.reconciledAt,
             outcomeCode: "delivery_outcome_unconfirmed",

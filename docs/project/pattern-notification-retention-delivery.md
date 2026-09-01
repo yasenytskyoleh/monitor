@@ -41,5 +41,9 @@ the deployment that invokes it remains responsible for process lifecycle and cad
 restarts. Automatic reconciliation remains out of this run until delivery execution has a durable
 lease or heartbeat that proves the provider call is no longer in flight.
 
+Leased attempts persist a caller-supplied lease ID and expiry. Their terminal outcome must present
+the same ID, and reconciliation waits for lease expiry. Dispatch does not automatically reconcile
+leased or unleased attempts until the Telegram execution lifetime is bounded.
+
 `consider_long` remains decision-support language based only on the currently implemented bullish
 evidence. It is not a buy instruction or automated trade.

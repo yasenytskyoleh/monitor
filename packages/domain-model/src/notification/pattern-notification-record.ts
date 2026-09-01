@@ -33,6 +33,8 @@ export type PatternNotificationRecord = DomainEntityBase & {
   aggregateComputedAt: TimestampUtc;
   deliveryStatus: PatternNotificationDeliveryStatus;
   deliveryAttemptedAt?: TimestampUtc;
+  deliveryLeaseId?: string;
+  deliveryLeaseExpiresAt?: TimestampUtc;
   completedAt?: TimestampUtc;
   outcomeCode?: string;
 };
