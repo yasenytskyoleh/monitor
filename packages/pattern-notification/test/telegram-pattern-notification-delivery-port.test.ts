@@ -60,6 +60,7 @@ test("sends one explicit Telegram request and returns a stable accepted outcome"
     botToken: "123456:secret",
     chatId: "-100123456",
     fetch,
+    timeoutMs: 1_000,
     now: () => (requestCompleted ? completedAt : "2026-08-10T10:00:00.000Z")
   });
 
@@ -68,20 +69,18 @@ test("sends one explicit Telegram request and returns a stable accepted outcome"
     completedAt,
     outcomeCode: "telegram_accepted"
   });
-  assert.deepEqual(calls, [
-    [
-      "https://api.telegram.org/bot123456:secret/sendMessage",
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          chat_id: "-100123456",
-          text: formatTelegramPatternNotification(notification),
-          disable_web_page_preview: true
-        })
-      }
-    ]
-  ]);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0]?.[0], "https://api.telegram.org/bot123456:secret/sendMessage");
+  assert.deepEqual(calls[0]?.[1], {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      chat_id: "-100123456",
+      text: formatTelegramPatternNotification(notification),
+      disable_web_page_preview: true
+    }),
+    signal: calls[0]?.[1].signal
+  });
 });
 
 test("does not call Telegram for unclaimed notifications and maps provider failures to stable codes", async () => {
@@ -94,6 +93,7 @@ test("does not call Telegram for unclaimed notifications and maps provider failu
     botToken: "123456:secret",
     chatId: "-100123456",
     fetch,
+    timeoutMs: 1_000,
     now: () => completedAt
   });
 
@@ -119,7 +119,17 @@ test("does not call Telegram for unclaimed notifications and maps provider failu
 
 test("rejects invalid Telegram configuration and safely classifies network failures", async () => {
   assert.throws(
-    () => createTelegramPatternNotificationDeliveryPort({ botToken: "", chatId: "chat", fetch: async () => ({ ok: true, status: 200, async json() { return { ok: true }; } }) }),
+    () => createTelegramPatternNotificationDeliveryPort({ botToken: "", chatId: "chat", timeoutMs: 1_000, fetch: async () => ({ ok: true, status: 200, async json() { return { ok: true }; } }) }),
+    /botToken, chatId, and fetch are required/
+  );
+  assert.throws(
+    () =>
+      createTelegramPatternNotificationDeliveryPort({
+        botToken: "123456:secret",
+        chatId: "-100123456",
+        timeoutMs: 2_147_483_648,
+        fetch: async () => ({ ok: true, status: 200, async json() { return { ok: true }; } })
+      }),
     /botToken, chatId, and fetch are required/
   );
   const port = createTelegramPatternNotificationDeliveryPort({
@@ -128,6 +138,7 @@ test("rejects invalid Telegram configuration and safely classifies network failu
     fetch: async () => {
       throw new Error("network details must not escape");
     },
+    timeoutMs: 1_000,
     now: () => completedAt
   });
 
@@ -143,6 +154,7 @@ test("does not treat an HTTP-success Telegram rejection as delivered", async () 
     botToken: "123456:secret",
     chatId: "-100123456",
     fetch: async () => ({ ok: true, status: 200, async json() { return { ok: false }; } }),
+    timeoutMs: 1_000,
     now: () => completedAt
   });
 
@@ -150,5 +162,47 @@ test("does not treat an HTTP-success Telegram rejection as delivered", async () 
     status: "failed",
     completedAt,
     outcomeCode: "telegram_rejected"
+  });
+});
+
+test("bounds a Telegram request and reports a stable timeout outcome", async () => {
+  const port = createTelegramPatternNotificationDeliveryPort({
+    botToken: "123456:secret",
+    chatId: "-100123456",
+    timeoutMs: 1,
+    fetch: async (_input, init) =>
+      new Promise((_, reject) => {
+        init.signal.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
+      }),
+    now: () => completedAt
+  });
+
+  assert.deepEqual(await port.deliver({ notification }), {
+    status: "failed",
+    completedAt,
+    outcomeCode: "telegram_timeout"
+  });
+});
+
+test("classifies an aborted Telegram response-body read as a timeout", async () => {
+  const port = createTelegramPatternNotificationDeliveryPort({
+    botToken: "123456:secret",
+    chatId: "-100123456",
+    timeoutMs: 1,
+    fetch: async (_input, init) => ({
+      ok: true,
+      status: 200,
+      json: async () =>
+        new Promise((_, reject) => {
+          init.signal.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
+        })
+    }),
+    now: () => completedAt
+  });
+
+  assert.deepEqual(await port.deliver({ notification }), {
+    status: "failed",
+    completedAt,
+    outcomeCode: "telegram_timeout"
   });
 });

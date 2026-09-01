@@ -18,6 +18,7 @@ export type TelegramFetch = (
     method: "POST";
     headers: { "content-type": "application/json" };
     body: string;
+    signal: AbortSignal;
   }
 ) => Promise<TelegramFetchResponse>;
 
@@ -25,6 +26,7 @@ export type TelegramPatternNotificationDeliveryPortOptions = {
   botToken: string;
   chatId: string;
   fetch: TelegramFetch;
+  timeoutMs: number;
   now?: () => string;
 };
 
@@ -43,7 +45,10 @@ const isSafeTelegramConfig = (
   isNonEmptyString(options.botToken) &&
   !/\s/.test(options.botToken) &&
   isNonEmptyString(options.chatId) &&
-  typeof options.fetch === "function";
+  typeof options.fetch === "function" &&
+  Number.isInteger(options.timeoutMs) &&
+  options.timeoutMs > 0 &&
+  options.timeoutMs <= 2_147_483_647;
 
 const hasDeliverableNotification = (
   value: unknown
@@ -128,6 +133,8 @@ export const createTelegramPatternNotificationDeliveryPort = (
         return failure(completedAt(), "telegram_notification_invalid");
       }
 
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), options.timeoutMs);
       try {
         const response = await options.fetch(endpoint, {
           method: "POST",
@@ -136,7 +143,8 @@ export const createTelegramPatternNotificationDeliveryPort = (
             chat_id: options.chatId,
             text: formatTelegramPatternNotification(request.notification),
             disable_web_page_preview: true
-          })
+          }),
+          signal: controller.signal
         });
         if (!response.ok) {
           return failure(completedAt(), safeHttpOutcomeCode(response.status));
@@ -146,10 +154,15 @@ export const createTelegramPatternNotificationDeliveryPort = (
             ? { status: "delivered", completedAt: completedAt(), outcomeCode: "telegram_accepted" }
             : failure(completedAt(), "telegram_rejected");
         } catch {
-          return failure(completedAt(), "telegram_response_invalid");
+          return failure(
+            completedAt(),
+            controller.signal.aborted ? "telegram_timeout" : "telegram_response_invalid"
+          );
         }
       } catch {
-        return failure(completedAt(), "telegram_network_error");
+        return failure(completedAt(), controller.signal.aborted ? "telegram_timeout" : "telegram_network_error");
+      } finally {
+        clearTimeout(timeout);
       }
     }
   };

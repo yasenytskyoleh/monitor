@@ -18,12 +18,16 @@ The adapter returns only a completion timestamp and stable outcome code:
 - `telegram_http_<status>` or `telegram_http_failure`
 - `telegram_rejected` or `telegram_response_invalid`
 - `telegram_network_error`
+- `telegram_timeout`
 - `telegram_notification_invalid`
 
 It reads only Telegram's boolean response `ok` marker, then discards the response body without
 logging or retaining it. The sent text includes the observed price and historical evidence, states
 that it is decision support rather than financial advice, and explicitly states that no order was
 placed.
+
+The caller must configure a positive request timeout. The adapter aborts the request at that bound
+and returns `telegram_timeout`; it does not retry the potentially ambiguous send.
 
 There is still no scheduler, provider retry, reconciliation worker, exchange access, or automatic
 trading. A caller must claim a retained notification, invoke the port, and record the returned
