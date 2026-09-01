@@ -1,7 +1,7 @@
 # Next Steps
 
 ## Current recommended next step
-### Add an explicit Telegram delivery caller workflow
+### Define delivery and reconciliation ownership for the first runtime caller
 
 Reason:
 - eligible BTC notifications now have a unique durable record, immutable evidence snapshot, and
@@ -12,13 +12,17 @@ Reason:
   reading or persisting response bodies
 - an ambiguous `delivery_attempted` record can now be terminalized after a caller-defined grace
   period as `delivery_outcome_unconfirmed`, without re-queueing or resending the alert
-- the claim, Telegram invocation, and terminal-outcome recording steps are not yet composed in an
-  explicit caller workflow
+- the claim, Telegram invocation, and terminal-outcome recording steps are now composed in one
+  explicit caller workflow with an `outcome_unconfirmed` result for ambiguous completion
+- no runtime caller owns its cadence, the configured reconciliation grace period, or monitoring of
+  unconfirmed delivery records
 
 ## Recommended near-future sequence
-1. add an explicit caller workflow that claims, invokes Telegram, and records a terminal outcome
-2. define caller ownership and cadence for terminalizing stale unconfirmed attempts without retry
-3. add a scheduler/worker only after caller workflow and reconciliation ownership are explicit
+1. define the first runtime caller's cadence, delivery configuration ownership, and reconciliation
+   grace period without adding automatic retries
+2. add a scheduler/worker only after caller workflow and reconciliation ownership are explicit
+3. connect a real monitored BTC market-data ingestion path only after the delivery runtime's
+   operational ownership is explicit
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

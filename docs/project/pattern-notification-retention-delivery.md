@@ -29,5 +29,10 @@ time, and stable outcome code. Telegram is now the first explicit adapter, but r
 configuration and provider response bodies remain outside durable product storage. There is still
 no scheduler, queue, exchange access, or order placement.
 
+`createPatternNotificationDeliveryWorkflow` is the explicit caller composition: it claims the
+record, invokes one delivery port only after that claim, then records the port's terminal outcome.
+If delivery or outcome recording does not complete, it leaves the one claimed record unresolved
+for the no-resend reconciliation path. It does not schedule or retry work itself.
+
 `consider_long` remains decision-support language based only on the currently implemented bullish
 evidence. It is not a buy instruction or automated trade.

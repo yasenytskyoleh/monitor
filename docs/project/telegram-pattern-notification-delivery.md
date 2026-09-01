@@ -30,3 +30,7 @@ trading. A caller must claim a retained notification, invoke the port, and recor
 outcome through the existing delivery service. If the process fails before it records an outcome,
 the caller can later terminalize only a stale claimed record as
 `delivery_outcome_unconfirmed`; it must not retry or resend it.
+
+`createPatternNotificationDeliveryWorkflow` provides that claim → Telegram → record composition
+for one caller invocation. It returns an explicit `outcome_unconfirmed` result if the port or
+terminal write fails, leaving the record for reconciliation rather than attempting a second send.

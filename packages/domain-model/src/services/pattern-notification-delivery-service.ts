@@ -300,7 +300,8 @@ export const createPatternNotificationDeliveryService = (
           updatedAtUtc: buildUpdatedAt(current, request.attemptedAt, request.metadata)
         },
         metadata: request.metadata,
-        expectedVersion: request.expectedVersion
+        expectedVersion: request.expectedVersion,
+        expectedDeliveryStatus: "pending_delivery"
       });
     },
 
@@ -338,7 +339,9 @@ export const createPatternNotificationDeliveryService = (
           updatedAtUtc: buildUpdatedAt(current, request.completedAt, request.metadata)
         },
         metadata: request.metadata,
-        expectedVersion: request.expectedVersion
+        expectedVersion: request.expectedVersion,
+        expectedDeliveryStatus: "delivery_attempted",
+        expectedDeliveryAttemptedAt: current.deliveryAttemptedAt
       });
     },
 

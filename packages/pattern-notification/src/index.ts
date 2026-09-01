@@ -8,6 +8,9 @@ import type {
 export {
   createPatternNotificationRetentionRuntime
 } from "./retention.js";
+export {
+  createPatternNotificationDeliveryWorkflow
+} from "./delivery-workflow.js";
 export type {
   PatternNotificationDeliveryPort,
   PatternNotificationDeliveryPortOutcome,
@@ -17,6 +20,12 @@ export type {
   RetainEligiblePatternNotificationRequest,
   RetainEligiblePatternNotificationResult
 } from "./retention.js";
+export type {
+  DeliverRetainedPatternNotificationRequest,
+  DeliverRetainedPatternNotificationResult,
+  PatternNotificationDeliveryWorkflow,
+  PatternNotificationDeliveryWorkflowOptions
+} from "./delivery-workflow.js";
 export {
   createTelegramPatternNotificationDeliveryPort,
   formatTelegramPatternNotification

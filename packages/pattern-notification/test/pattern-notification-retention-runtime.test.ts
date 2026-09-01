@@ -9,8 +9,10 @@ import {
 } from "@monitor/domain-model";
 
 import {
+  createPatternNotificationDeliveryWorkflow,
   createPatternNotificationRetentionRuntime,
-  type PatternNotificationCandidate
+  type PatternNotificationCandidate,
+  type PatternNotificationDeliveryPort
 } from "../src/index.js";
 
 const metadata: ProductRecordMetadata = {
@@ -255,6 +257,192 @@ test("does not overwrite a terminal outcome recorded while reconciliation is in 
       }
     }
   );
+});
+
+test("delivers a claimed notification once and records the provider-neutral outcome", async () => {
+  const { runtime, service } = createRuntime();
+  await runtime.retain({
+    candidate,
+    retainedAt: "2026-08-09T10:00:01.000Z",
+    metadata
+  });
+  let deliveredNotificationId: string | null = null;
+  const deliveryPort: PatternNotificationDeliveryPort = {
+    async deliver({ notification }) {
+      deliveredNotificationId = notification.notificationId;
+      assert.equal(notification.deliveryStatus, "delivery_attempted");
+      return {
+        status: "delivered",
+        completedAt: "2026-08-09T10:00:03.000Z",
+        outcomeCode: "telegram_accepted"
+      };
+    }
+  };
+  const workflow = createPatternNotificationDeliveryWorkflow({
+    patternNotificationDeliveryService: service,
+    deliveryPort
+  });
+
+  const result = await workflow.deliver({
+    notificationId: candidate.notificationId,
+    attemptedAt: "2026-08-09T10:00:02.000Z",
+    metadata,
+    expectedVersion: 1
+  });
+
+  assert.equal(deliveredNotificationId, candidate.notificationId);
+  assert.equal(result.status, "outcome_recorded");
+  if (result.status !== "outcome_recorded") {
+    assert.fail("expected the delivery outcome to be recorded");
+  }
+  assert.deepEqual(
+    { deliveryStatus: result.notification.deliveryStatus, outcomeCode: result.notification.outcomeCode },
+    { deliveryStatus: "delivered", outcomeCode: "telegram_accepted" }
+  );
+});
+
+test("allows only one concurrent workflow caller to reach the delivery port", async () => {
+  const { runtime, service } = createRuntime();
+  await runtime.retain({
+    candidate,
+    retainedAt: "2026-08-09T10:00:01.000Z",
+    metadata
+  });
+  let deliveries = 0;
+  const workflow = createPatternNotificationDeliveryWorkflow({
+    patternNotificationDeliveryService: service,
+    deliveryPort: {
+      async deliver() {
+        deliveries += 1;
+        return {
+          status: "failed",
+          completedAt: "2026-08-09T10:00:03.000Z",
+          outcomeCode: "telegram_rejected"
+        };
+      }
+    }
+  });
+  const request = {
+    notificationId: candidate.notificationId,
+    attemptedAt: "2026-08-09T10:00:02.000Z",
+    metadata,
+    expectedVersion: null
+  };
+
+  const results = await Promise.all([workflow.deliver(request), workflow.deliver(request)]);
+
+  assert.equal(deliveries, 1);
+  assert.deepEqual(
+    results.map((result) => result.status).sort(),
+    ["not_claimed", "outcome_recorded"]
+  );
+});
+
+test("does not overwrite reconciliation when terminal recording races with it", async () => {
+  const { repository, runtime, service } = createRuntime();
+  await runtime.retain({
+    candidate,
+    retainedAt: "2026-08-09T10:00:01.000Z",
+    metadata
+  });
+  const originalUpdate = repository.update.bind(repository);
+  repository.update = async (request) => {
+    if (request.notification.outcomeCode === "telegram_accepted") {
+      await service.reconcileUnconfirmedDelivery({
+        notificationId: candidate.notificationId,
+        reconciledAt: "2026-08-09T10:05:02.000Z",
+        minAttemptAgeMs: 5 * 60 * 1_000,
+        metadata,
+        expectedVersion: null
+      });
+    }
+    return originalUpdate(request);
+  };
+  const workflow = createPatternNotificationDeliveryWorkflow({
+    patternNotificationDeliveryService: service,
+    deliveryPort: {
+      async deliver() {
+        return {
+          status: "delivered",
+          completedAt: "2026-08-09T10:05:02.000Z",
+          outcomeCode: "telegram_accepted"
+        };
+      }
+    }
+  });
+
+  assert.deepEqual(
+    await workflow.deliver({
+      notificationId: candidate.notificationId,
+      attemptedAt: "2026-08-09T10:00:02.000Z",
+      metadata,
+      expectedVersion: null
+    }),
+    { status: "outcome_unconfirmed" }
+  );
+  assert.deepEqual(
+    {
+      deliveryStatus: (await repository.getById(candidate.notificationId))?.deliveryStatus,
+      outcomeCode: (await repository.getById(candidate.notificationId))?.outcomeCode
+    },
+    { deliveryStatus: "failed", outcomeCode: "delivery_outcome_unconfirmed" }
+  );
+});
+
+test("does not send when a notification cannot be claimed and leaves uncertain outcomes for reconciliation", async () => {
+  const { repository, runtime, service } = createRuntime();
+  await runtime.retain({
+    candidate,
+    retainedAt: "2026-08-09T10:00:01.000Z",
+    metadata
+  });
+  let deliveries = 0;
+  const deliveryPort: PatternNotificationDeliveryPort = {
+    async deliver() {
+      deliveries += 1;
+      throw new Error("simulated provider interruption");
+    }
+  };
+  const workflow = createPatternNotificationDeliveryWorkflow({
+    patternNotificationDeliveryService: service,
+    deliveryPort
+  });
+
+  assert.deepEqual(
+    await workflow.deliver({
+      notificationId: "notification:missing",
+      attemptedAt: "2026-08-09T10:00:02.000Z",
+      metadata,
+      expectedVersion: 1
+    }),
+    { status: "not_found" }
+  );
+  assert.equal(deliveries, 0);
+
+  assert.deepEqual(
+    await workflow.deliver({
+      notificationId: candidate.notificationId,
+      attemptedAt: "2026-08-09T10:00:02.000Z",
+      metadata,
+      expectedVersion: 1
+    }),
+    { status: "outcome_unconfirmed" }
+  );
+  assert.equal(deliveries, 1);
+  assert.equal(
+    (await repository.getById(candidate.notificationId))?.deliveryStatus,
+    "delivery_attempted"
+  );
+  assert.deepEqual(
+    await workflow.deliver({
+      notificationId: candidate.notificationId,
+      attemptedAt: "2026-08-09T10:00:03.000Z",
+      metadata,
+      expectedVersion: 2
+    }),
+    { status: "not_claimed" }
+  );
+  assert.equal(deliveries, 1);
 });
 
 test("rejects malformed notifications and prevents terminal outcomes without a delivery claim", async () => {
