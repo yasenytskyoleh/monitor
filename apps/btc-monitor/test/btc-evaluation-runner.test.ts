@@ -14,6 +14,7 @@ import {
   InMemoryResearchRunRepository,
   InMemorySetupAggregateResultRepository,
   InMemorySetupDefinitionRepository,
+  InMemorySetupDefinitionRevisionRepository,
   InMemorySignalCandidateRepository,
   createSignalCandidateService
 } from "@monitor/domain-model";
@@ -127,6 +128,7 @@ const createFixture = async () => {
   return {
     repositories: {
       setupDefinitionRepository,
+      setupDefinitionRevisionRepository: new InMemorySetupDefinitionRevisionRepository(),
       monitoredSymbolRepository,
       signalCandidateRepository,
       evaluationResultRepository,

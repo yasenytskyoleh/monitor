@@ -5,11 +5,14 @@ import type {
   CandleClosedEvent,
   MonitoredSymbol,
   ProductRecordMetadata,
+  SetupAggregateResult,
   SetupDefinition,
   SetupDefinitionRevision
 } from "@monitor/domain-model";
 import {
   InMemoryMonitoredSymbolRepository,
+  InMemoryPatternNotificationRecordRepository,
+  InMemorySetupAggregateResultRepository,
   InMemorySetupDefinitionRepository,
   InMemorySetupDefinitionRevisionRepository,
   InMemorySetupRevisionActivationRecordRepository,
@@ -83,6 +86,8 @@ class FixtureCandleFeed implements ClosedCandleFeed {
 
 const seedRepositories = async (): Promise<{
   monitoredSymbolRepository: InMemoryMonitoredSymbolRepository;
+  patternNotificationRecordRepository: InMemoryPatternNotificationRecordRepository;
+  setupAggregateResultRepository: InMemorySetupAggregateResultRepository;
   setupDefinitionRepository: InMemorySetupDefinitionRepository;
   setupDefinitionRevisionRepository: InMemorySetupDefinitionRevisionRepository;
   setupRevisionActivationRecordRepository: InMemorySetupRevisionActivationRecordRepository;
@@ -93,6 +98,8 @@ const seedRepositories = async (): Promise<{
   const setupDefinitionRevisionRepository = new InMemorySetupDefinitionRevisionRepository();
   const setupRevisionActivationRecordRepository = new InMemorySetupRevisionActivationRecordRepository();
   const signalCandidateRepository = new InMemorySignalCandidateRepository();
+  const patternNotificationRecordRepository = new InMemoryPatternNotificationRecordRepository();
+  const setupAggregateResultRepository = new InMemorySetupAggregateResultRepository();
   const definition: SetupDefinition = {
     id: "setup-btc-breakout",
     name: "BTC breakout",
@@ -140,6 +147,8 @@ const seedRepositories = async (): Promise<{
   ]);
   return {
     monitoredSymbolRepository,
+    patternNotificationRecordRepository,
+    setupAggregateResultRepository,
     setupDefinitionRepository,
     setupDefinitionRevisionRepository,
     setupRevisionActivationRecordRepository,
@@ -147,8 +156,36 @@ const seedRepositories = async (): Promise<{
   };
 };
 
+const aggregate: SetupAggregateResult = {
+  id: "aggregate-btc-breakout-window-24h",
+  setupDefinitionId: "setup-btc-breakout",
+  aggregationScope: {
+    setupDefinitionId: "setup-btc-breakout",
+    evaluationWindowId: "window-24h",
+    symbolScope: { kind: "single_symbol", symbolIds: ["BTC-USDT"] },
+    timeRange: {
+      startAtUtc: "1970-01-01T00:00:00.000Z",
+      endAtUtc: "9999-12-31T23:59:59.999Z"
+    }
+  },
+  status: "completed",
+  totalCandidates: 40,
+  completedEvaluations: 40,
+  invalidatedEvaluations: 0,
+  averagePercentageMove: 1.25,
+  averageAbsoluteMove: 850,
+  averageFinalOutcome: 0.5,
+  averageMaxFavorableExcursion: 1_200,
+  averageMaxAdverseExcursion: -350,
+  positiveOutcomeCount: 30,
+  computedAt: "2026-09-12T00:00:00.000Z",
+  createdAt: "2026-09-12T00:00:00.000Z",
+  updatedAt: "2026-09-12T00:00:00.000Z"
+};
+
 test("runs the configured candle feed through active setup resolution and durable candidate handoff", async () => {
   const repositories = await seedRepositories();
+  await repositories.setupAggregateResultRepository.create({ aggregate, metadata });
   const feed = new FixtureCandleFeed();
   const detectedEventIds: string[] = [];
   const runtime = createBtcMonitorRuntime({
@@ -174,9 +211,51 @@ test("runs the configured candle feed through active setup resolution and durabl
   assert.deepEqual(feed.range, { startTimeUtc: "2026-09-11T00:00:00.000Z" });
   assert.equal(candidate?.setupRevisionId, "revision-btc-breakout-1");
   assert.deepEqual(detectedEventIds, ["fixture:5m:20"]);
+  const notifications = await repositories.patternNotificationRecordRepository
+    .listByDeliveryStatus(["pending_delivery"], 10);
+  assert.equal(notifications.length, 1);
+  assert.deepEqual(notifications[0] && {
+    signalCandidateId: notifications[0].signalCandidateId,
+    setupAggregateResultId: notifications[0].setupAggregateResultId,
+    currentPrice: notifications[0].currentPrice,
+    deliveryStatus: notifications[0].deliveryStatus
+  }, {
+    signalCandidateId: candidate?.id,
+    setupAggregateResultId: aggregate.id,
+    currentPrice: 101,
+    deliveryStatus: "pending_delivery"
+  });
 
   await subscription.stop();
   assert.equal(feed.stopped, true);
+});
+
+test("does not retain a notification when exact BTC 24-hour evidence is unavailable", async () => {
+  const repositories = await seedRepositories();
+  const feed = new FixtureCandleFeed();
+  const notificationReasons: string[] = [];
+  const runtime = createBtcMonitorRuntime({
+    candleFeed: feed,
+    configuration: {
+      setupDefinitionId: "setup-btc-breakout",
+      monitoredSymbolId: "BTC-USDT",
+      backfillStartTimeUtc: "2026-09-11T00:00:00.000Z"
+    },
+    repositories,
+    onNotification(outcome): void {
+      if (outcome.eligibility.status === "ineligible") notificationReasons.push(outcome.eligibility.reason);
+    }
+  });
+
+  await runtime.start();
+  for (let index = 0; index < 20; index += 1) await feed.emit(candle(index));
+  await feed.emit(candle(20, 101, 102));
+
+  assert.deepEqual(notificationReasons, ["setup_aggregate_result_unavailable"]);
+  assert.equal(
+    (await repositories.patternNotificationRecordRepository.listByDeliveryStatus(["pending_delivery"], 10)).length,
+    0
+  );
 });
 
 test("uses the revision activated for the historical candle rather than the configured revision", async () => {

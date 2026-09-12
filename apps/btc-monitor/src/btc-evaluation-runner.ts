@@ -17,6 +17,8 @@ import {
   type ClosedCandleEvaluationOutcome
 } from "@monitor/candle-evaluation";
 
+import { createBtcAggregateScope } from "./btc-aggregate-scope.js";
+
 const CANDLE_INTERVAL_MS = 5 * 60 * 1_000;
 const DEFAULT_EVALUATION_BATCH_SIZE = 50;
 
@@ -28,6 +30,7 @@ type EvaluationRepositories = Pick<
   | "researchRunRepository"
   | "setupAggregateResultRepository"
   | "setupDefinitionRepository"
+  | "setupDefinitionRevisionRepository"
   | "signalCandidateRepository"
 >;
 
@@ -138,6 +141,10 @@ export const createBtcEvaluationRunner = (
       evaluationResultId,
       signalCandidateId: candidate.id,
       setupDefinitionId: candidate.setupDefinitionId,
+      aggregationScopeDescriptor: createBtcAggregateScope(
+        candidate.setupDefinitionId,
+        candidate.monitoredSymbolId
+      ),
       triggeredAt: observedAt
     }, buildMetadata(observedAt));
     return aggregate.status === "created_and_refreshed" || aggregate.status === "refreshed_existing"
@@ -153,9 +160,17 @@ export const createBtcEvaluationRunner = (
         "evaluated",
         "discarded"
       ]);
+      const configuredRevision = await options.repositories.setupDefinitionRevisionRepository
+        .getBySetupDefinitionId(options.setupDefinitionId);
+      const setupDefinitionIds = new Set([options.setupDefinitionId]);
+      if (configuredRevision) {
+        const familyRevisions = await options.repositories.setupDefinitionRevisionRepository
+          .listBySetupFamilyId(configuredRevision.versionInfo.setupFamilyId);
+        for (const revision of familyRevisions) setupDefinitionIds.add(revision.setupDefinitionId);
+      }
       const scopedCandidates = candidates.filter(
         (candidate) =>
-          candidate.setupDefinitionId === options.setupDefinitionId &&
+          setupDefinitionIds.has(candidate.setupDefinitionId) &&
           candidate.monitoredSymbolId === options.monitoredSymbolId
       );
       const pendingCandidates = scopedCandidates.filter(

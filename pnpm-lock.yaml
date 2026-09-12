@@ -29,6 +29,9 @@ importers:
       '@monitor/pattern-detection':
         specifier: workspace:*
         version: link:../../packages/pattern-detection
+      '@monitor/pattern-notification':
+        specifier: workspace:*
+        version: link:../../packages/pattern-notification
     devDependencies:
       '@types/node':
         specifier: ^24.7.2

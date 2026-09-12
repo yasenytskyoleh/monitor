@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { BtcMonitorConfigurationError, loadBtcMonitorConfiguration } from "../src/config.js";
+import {
+  BtcMonitorConfigurationError,
+  DEFAULT_BTC_NOTIFICATION_POLICY,
+  loadBtcMonitorConfiguration
+} from "../src/config.js";
 
 const NOW = new Date("2026-09-12T12:00:00.000Z");
 
@@ -18,7 +22,30 @@ test("loads the explicit setup selector and a bounded historical warm-up window"
     setupDefinitionId: "setup-btc-breakout",
     monitoredSymbolId: "BTC-USDT",
     backfillStartTimeUtc: "2026-09-12T06:00:00.000Z",
+    notificationPolicy: DEFAULT_BTC_NOTIFICATION_POLICY,
     databaseSchema: "monitoring"
+  });
+});
+
+test("loads conservative, bounded notification policy overrides", () => {
+  const configuration = loadBtcMonitorConfiguration({
+    DATABASE_URL: "postgresql://monitor.example/monitor",
+    BTC_MONITOR_SETUP_DEFINITION_ID: "setup-btc-breakout",
+    BTC_MONITOR_NOTIFICATION_POLICY_ID: "btc-breakout-v2",
+    BTC_MONITOR_NOTIFICATION_MIN_COMPLETED_EVALUATIONS: "50",
+    BTC_MONITOR_NOTIFICATION_MIN_POSITIVE_OUTCOME_RATE: "0.65",
+    BTC_MONITOR_NOTIFICATION_MIN_AVERAGE_PERCENTAGE_MOVE: "0.75",
+    BTC_MONITOR_NOTIFICATION_MAX_SIGNAL_AGE_MINUTES: "10",
+    BTC_MONITOR_NOTIFICATION_MAX_AGGREGATE_AGE_HOURS: "12"
+  }, NOW);
+
+  assert.deepEqual(configuration.notificationPolicy, {
+    policyId: "btc-breakout-v2",
+    minCompletedEvaluations: 50,
+    minPositiveOutcomeRate: 0.65,
+    minAveragePercentageMove: 0.75,
+    maxSignalAgeMs: 10 * 60 * 1_000,
+    maxAggregateAgeMs: 12 * 60 * 60 * 1_000
   });
 });
 
