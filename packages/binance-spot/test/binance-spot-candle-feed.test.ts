@@ -36,6 +36,10 @@ class FakeWebSocket implements BinanceSpotWebSocket {
     this.emit("close");
   }
 
+  emitError(): void {
+    this.emit("error");
+  }
+
   emitMessage(data: unknown): void {
     for (const listener of this.listeners.get("message") ?? []) {
       (listener as (event: { data: unknown }) => void)({ data });
@@ -234,6 +238,40 @@ test("buffers live candles during backfill and emits each closed candle once", a
   assert.equal(socket.closed, true);
 });
 
+test("drops out-of-order live candles within an interval stream", async () => {
+  const sockets: FakeWebSocket[] = [];
+  const delivered: string[] = [];
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: createFetch({ "1m": [], "5m": [] }),
+    createWebSocket: () => {
+      const socket = new FakeWebSocket();
+      sockets.push(socket);
+      return socket;
+    },
+    now: () => NOW
+  });
+  const start = feed.startClosedCandleFeed(
+    { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+    {
+      onCandle: (candle) => {
+        delivered.push(candle.eventId);
+      }
+    }
+  );
+  const socket = sockets[0];
+  assert.ok(socket);
+  socket.emitOpen();
+  const subscription = await start;
+
+  socket.emitMessage(webSocketKline(Date.parse("2026-07-29T00:03:00.000Z"), "1m"));
+  await waitForTimers();
+  socket.emitMessage(webSocketKline(Date.parse("2026-07-29T00:02:00.000Z"), "1m"));
+  await waitForTimers();
+
+  assert.deepEqual(delivered, ["binance-spot:BTCUSDT:1m:1785283380000"]);
+  await subscription.stop();
+});
+
 test("reconnects once after a disconnect, catches up, and reports malformed live payloads", async () => {
   const sockets: FakeWebSocket[] = [];
   const errors: string[] = [];
@@ -281,6 +319,137 @@ test("reconnects once after a disconnect, catches up, and reports malformed live
   assert.ok(delivered.includes("binance-spot:BTCUSDT:1m:1785283260000"));
   assert.deepEqual(errors, ["Binance WebSocket message must contain JSON"]);
 
+  await subscription.stop();
+});
+
+test("queues reconnect backfill behind an in-flight live candle delivery", async () => {
+  const sockets: FakeWebSocket[] = [];
+  const delivered: string[] = [];
+  const startTimeMs = Date.parse("2026-07-29T00:00:00.000Z");
+  let releaseLiveDelivery: (() => void) | undefined;
+  const liveDelivery = new Promise<void>((resolve) => {
+    releaseLiveDelivery = resolve;
+  });
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: async (input) => {
+      const url = new URL(input.toString());
+      const interval = url.searchParams.get("interval");
+      const startTime = url.searchParams.get("startTime");
+      const rows =
+        interval === "1m" && startTime === String(startTimeMs + ONE_MINUTE_MS)
+          ? [restKline(startTimeMs + 2 * ONE_MINUTE_MS, ONE_MINUTE_MS)]
+          : [];
+      return new Response(JSON.stringify(rows), { status: 200 });
+    },
+    createWebSocket: () => {
+      const socket = new FakeWebSocket();
+      sockets.push(socket);
+      return socket;
+    },
+    now: () => NOW,
+    reconnectBaseDelayMs: 0
+  });
+  const start = feed.startClosedCandleFeed(
+    { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+    {
+      onCandle: async (candle) => {
+        delivered.push(candle.eventId);
+        if (candle.eventId.endsWith(":1785283260000")) {
+          await liveDelivery;
+        }
+      }
+    }
+  );
+  sockets[0]?.emitOpen();
+  const subscription = await start;
+  sockets[0]?.emitMessage(webSocketKline(startTimeMs + ONE_MINUTE_MS, "1m"));
+  await waitForTimers();
+  assert.equal(delivered.length, 1);
+
+  sockets[0]?.emitClose();
+  await waitForTimers();
+  sockets[1]?.emitOpen();
+  await waitForTimers();
+  assert.equal(delivered.length, 1);
+
+  releaseLiveDelivery?.();
+  await waitForTimers();
+  assert.deepEqual(delivered, [
+    "binance-spot:BTCUSDT:1m:1785283260000",
+    "binance-spot:BTCUSDT:1m:1785283320000"
+  ]);
+  await subscription.stop();
+});
+
+test("isolates rejecting asynchronous feed error observers", async () => {
+  const sockets: FakeWebSocket[] = [];
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: createFetch({ "1m": [], "5m": [] }),
+    createWebSocket: () => {
+      const socket = new FakeWebSocket();
+      sockets.push(socket);
+      return socket;
+    },
+    now: () => NOW
+  });
+  const start = feed.startClosedCandleFeed(
+    { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+    {
+      onCandle: () => undefined,
+      async onError() {
+        throw new Error("observer unavailable");
+      }
+    }
+  );
+  sockets[0]?.emitOpen();
+  const subscription = await start;
+
+  sockets[0]?.emitError();
+  await waitForTimers();
+  await subscription.stop();
+});
+
+test("does not let a pending error observer block later candles or shutdown", async () => {
+  const sockets: FakeWebSocket[] = [];
+  const delivered: string[] = [];
+  let errorCount = 0;
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: createFetch({ "1m": [], "5m": [] }),
+    createWebSocket: () => {
+      const socket = new FakeWebSocket();
+      sockets.push(socket);
+      return socket;
+    },
+    now: () => NOW
+  });
+  const start = feed.startClosedCandleFeed(
+    { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+    {
+      onCandle: (candle) => {
+        delivered.push(candle.eventId);
+        if (delivered.length === 1) {
+          throw new Error("sink write failed");
+        }
+      },
+      onError: () => {
+        errorCount += 1;
+        return new Promise<void>(() => undefined);
+      }
+    }
+  );
+  sockets[0]?.emitOpen();
+  const subscription = await start;
+
+  sockets[0]?.emitMessage(webSocketKline(Date.parse("2026-07-29T00:01:00.000Z"), "1m"));
+  await waitForTimers();
+  sockets[0]?.emitMessage(webSocketKline(Date.parse("2026-07-29T00:02:00.000Z"), "1m"));
+  await waitForTimers();
+
+  assert.equal(errorCount, 1);
+  assert.deepEqual(delivered, [
+    "binance-spot:BTCUSDT:1m:1785283260000",
+    "binance-spot:BTCUSDT:1m:1785283320000"
+  ]);
   await subscription.stop();
 });
 

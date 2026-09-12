@@ -44,6 +44,8 @@ The product side now proves that the repo can:
   dispatch bounded pending delivery work, and reconcile bounded unconfirmed work without retry or
   resend; Telegram is the explicit adapter, with no scheduler, automatic reconciliation, exchange
   access, or trading.
+- connect a caller-owned historical/live closed-candle feed to deterministic pattern detection
+  without coupling the Binance adapter to product-domain handoffs or adding a background scheduler.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination

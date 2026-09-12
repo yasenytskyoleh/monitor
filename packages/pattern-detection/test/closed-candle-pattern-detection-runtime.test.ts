@@ -24,9 +24,12 @@ import {
 import {
   CLOSED_CANDLE_BREAKOUT_RULE,
   ClosedCandlePatternDetectionConfigurationError,
+  createClosedCandlePatternDetectionFeed,
   createClosedCandlePatternDetectionRuntime,
   type ActiveSetupRevisionResolver,
   type ClosedCandleBreakoutDetectorConfig,
+  type ClosedCandleFeed,
+  type ClosedCandlePatternDetectionRuntime,
   type DetectionCandidateHandoff
 } from "../src/index.js";
 
@@ -414,4 +417,260 @@ test("rejects invalid and duplicate detector configurations", () => {
       }),
     ClosedCandlePatternDetectionConfigurationError
   );
+});
+
+test("forwards closed candles from a feed into pattern detection without stopping on one failure", async () => {
+  const processedEventIds: string[] = [];
+  const errors: string[] = [];
+  let stopped = false;
+  const candleFeed: ClosedCandleFeed = {
+    async startClosedCandleFeed(range, sink) {
+      assert.deepEqual(range, { startTimeUtc: "2026-07-29T00:00:00.000Z" });
+      await sink.onCandle(candle(0));
+      await sink.onCandle(candle(1));
+      await sink.onError?.(new Error("provider reconnect"));
+      return {
+        async stop() {
+          stopped = true;
+        }
+      };
+    }
+  };
+  const detectionRuntime: ClosedCandlePatternDetectionRuntime = {
+    async process(event) {
+      if (event.eventId.endsWith(":1")) {
+        throw new Error("transient detection write failure");
+      }
+      return [{ status: "no_match", eventId: event.eventId, setupDefinitionId: detector.setupDefinitionId }];
+    }
+  };
+  const feed = createClosedCandlePatternDetectionFeed({
+    candleFeed,
+    detectionRuntime,
+    onProcessed: ({ candle: processed }) => {
+      processedEventIds.push(processed.eventId);
+    },
+    onError: (error) => {
+      errors.push(error.message);
+    }
+  });
+
+  const subscription = await feed.start({ startTimeUtc: "2026-07-29T00:00:00.000Z" });
+
+  assert.deepEqual(processedEventIds, ["fixture:5m:0"]);
+  assert.deepEqual(errors, ["transient detection write failure", "provider reconnect"]);
+  await subscription.stop();
+  assert.equal(stopped, true);
+});
+
+test("isolates reporting failures and ignores queued candles after stopping the feed bridge", async () => {
+  let sink: Parameters<ClosedCandleFeed["startClosedCandleFeed"]>[1] | undefined;
+  let processed = 0;
+  const candleFeed: ClosedCandleFeed = {
+    async startClosedCandleFeed(_range, nextSink) {
+      sink = nextSink;
+      return { async stop() {} };
+    }
+  };
+  const detectionRuntime: ClosedCandlePatternDetectionRuntime = {
+    async process() {
+      processed += 1;
+      throw new Error("simulated detection failure");
+    }
+  };
+  const feed = createClosedCandlePatternDetectionFeed({
+    candleFeed,
+    detectionRuntime,
+    onError: () => {
+      throw new Error("observer unavailable");
+    }
+  });
+  const subscription = await feed.start({ startTimeUtc: "2026-07-29T00:00:00.000Z" });
+  assert.ok(sink);
+
+  await assert.doesNotReject(async () => sink?.onCandle(candle(0)));
+  await assert.doesNotReject(async () => sink?.onError?.(new Error("provider failure")));
+  assert.equal(processed, 1);
+
+  await subscription.stop();
+  await sink.onCandle(candle(1));
+  assert.equal(processed, 1);
+});
+
+test("does not let a pending bridge error observer block later detection or shutdown", async () => {
+  let sink: Parameters<ClosedCandleFeed["startClosedCandleFeed"]>[1] | undefined;
+  let processed = 0;
+  let errorCount = 0;
+  const candleFeed: ClosedCandleFeed = {
+    async startClosedCandleFeed(_range, nextSink) {
+      sink = nextSink;
+      return { async stop() {} };
+    }
+  };
+  const detectionRuntime: ClosedCandlePatternDetectionRuntime = {
+    async process(event) {
+      processed += 1;
+      if (event.eventId.endsWith(":0")) {
+        throw new Error("first detection failed");
+      }
+      return [{ status: "no_match", eventId: event.eventId }];
+    }
+  };
+  const feed = createClosedCandlePatternDetectionFeed({
+    candleFeed,
+    detectionRuntime,
+    onError: () => {
+      errorCount += 1;
+      return new Promise<void>(() => undefined);
+    }
+  });
+  const subscription = await feed.start({ startTimeUtc: "2026-07-29T00:00:00.000Z" });
+  assert.ok(sink);
+
+  await sink.onCandle(candle(0));
+  await sink.onCandle(candle(1));
+
+  assert.equal(errorCount, 1);
+  assert.equal(processed, 2);
+  await subscription.stop();
+});
+
+test("serializes concurrent provider callbacks before entering rolling pattern detection", async () => {
+  let sink: Parameters<ClosedCandleFeed["startClosedCandleFeed"]>[1] | undefined;
+  let markFirstStarted: (() => void) | undefined;
+  let releaseFirst: (() => void) | undefined;
+  const firstStarted = new Promise<void>((resolve) => {
+    markFirstStarted = resolve;
+  });
+  const firstCompletion = new Promise<void>((resolve) => {
+    releaseFirst = resolve;
+  });
+  const processingOrder: string[] = [];
+  const candleFeed: ClosedCandleFeed = {
+    async startClosedCandleFeed(_range, nextSink) {
+      sink = nextSink;
+      return { async stop() {} };
+    }
+  };
+  const detectionRuntime: ClosedCandlePatternDetectionRuntime = {
+    async process(event) {
+      processingOrder.push(event.eventId);
+      if (event.eventId.endsWith(":0")) {
+        markFirstStarted?.();
+        await firstCompletion;
+      }
+      return [{ status: "no_match", eventId: event.eventId }];
+    }
+  };
+  const feed = createClosedCandlePatternDetectionFeed({ candleFeed, detectionRuntime });
+  await feed.start({ startTimeUtc: "2026-07-29T00:00:00.000Z" });
+  assert.ok(sink);
+
+  const first = sink.onCandle(candle(0));
+  const second = sink.onCandle(candle(1));
+  await firstStarted;
+  assert.deepEqual(processingOrder, ["fixture:5m:0"]);
+  releaseFirst?.();
+  await Promise.all([first, second]);
+  assert.deepEqual(processingOrder, ["fixture:5m:0", "fixture:5m:1"]);
+});
+
+test("drains in-flight detection and suppresses reporting after a feed bridge stops", async () => {
+  let sink: Parameters<ClosedCandleFeed["startClosedCandleFeed"]>[1] | undefined;
+  let releaseProcessing: (() => void) | undefined;
+  const processingStarted = new Promise<void>((resolve) => {
+    releaseProcessing = resolve;
+  });
+  let finishProcessing: (() => void) | undefined;
+  const processingCompletion = new Promise<void>((resolve) => {
+    finishProcessing = resolve;
+  });
+  const reported: string[] = [];
+  const processed: string[] = [];
+  const candleFeed: ClosedCandleFeed = {
+    async startClosedCandleFeed(_range, nextSink) {
+      sink = nextSink;
+      return { async stop() {} };
+    }
+  };
+  const detectionRuntime: ClosedCandlePatternDetectionRuntime = {
+    async process(event) {
+      processed.push(event.eventId);
+      releaseProcessing?.();
+      await processingCompletion;
+      return [{ status: "no_match", eventId: event.eventId }];
+    }
+  };
+  const feed = createClosedCandlePatternDetectionFeed({
+    candleFeed,
+    detectionRuntime,
+    onProcessed: ({ candle: processedCandle }) => {
+      reported.push(`processed:${processedCandle.eventId}`);
+    },
+    onError: (error) => {
+      reported.push(`error:${error.message}`);
+    }
+  });
+  const subscription = await feed.start({ startTimeUtc: "2026-07-29T00:00:00.000Z" });
+  assert.ok(sink);
+
+  const processing = sink.onCandle(candle(0));
+  const queued = sink.onCandle(candle(1));
+  await processingStarted;
+  const stopping = subscription.stop();
+  let stopped = false;
+  void stopping.then(() => {
+    stopped = true;
+  });
+  await Promise.resolve();
+  assert.equal(stopped, false);
+  finishProcessing?.();
+  await Promise.all([processing, queued, stopping]);
+  await sink.onError?.(new Error("late provider error"));
+
+  assert.deepEqual(processed, ["fixture:5m:0"]);
+  assert.deepEqual(reported, []);
+});
+
+test("drains queued detection before surfacing a provider-stop failure", async () => {
+  let sink: Parameters<ClosedCandleFeed["startClosedCandleFeed"]>[1] | undefined;
+  let finishProcessing: (() => void) | undefined;
+  const processingCompletion = new Promise<void>((resolve) => {
+    finishProcessing = resolve;
+  });
+  let processingStarted = false;
+  const candleFeed: ClosedCandleFeed = {
+    async startClosedCandleFeed(_range, nextSink) {
+      sink = nextSink;
+      return {
+        async stop() {
+          throw new Error("provider stop failed");
+        }
+      };
+    }
+  };
+  const detectionRuntime: ClosedCandlePatternDetectionRuntime = {
+    async process(event) {
+      processingStarted = true;
+      await processingCompletion;
+      return [{ status: "no_match", eventId: event.eventId }];
+    }
+  };
+  const feed = createClosedCandlePatternDetectionFeed({ candleFeed, detectionRuntime });
+  const subscription = await feed.start({ startTimeUtc: "2026-07-29T00:00:00.000Z" });
+  assert.ok(sink);
+
+  const processing = sink.onCandle(candle(0));
+  await Promise.resolve();
+  assert.equal(processingStarted, true);
+  const stopping = subscription.stop();
+  let stopSettled = false;
+  void stopping.catch(() => {
+    stopSettled = true;
+  });
+  await Promise.resolve();
+  assert.equal(stopSettled, false);
+  finishProcessing?.();
+  await processing;
+  await assert.rejects(() => stopping, /provider stop failed/);
 });

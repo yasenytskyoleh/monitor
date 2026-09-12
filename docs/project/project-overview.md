@@ -233,6 +233,9 @@ Current limitation:
     live normalized events without credentials or persistence
   - an exchange-neutral closed-candle breakout runtime now turns normalized 5m candles into
     traceable signal candidates through the existing product-domain handoff
+  - a provider-neutral closed-candle feed bridge now composes historical/live Binance-compatible
+    feeds with that detection runtime while preserving explicit caller-owned lifecycle and error
+    reporting
   - an exchange-neutral batch evaluator now completes 24-hour closed-candle candidate evaluations
   - an explicit provider-neutral aggregation runtime now refreshes setup evidence from completed
     evaluation results
