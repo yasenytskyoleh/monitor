@@ -255,6 +255,22 @@ export const createClosedCandleEvaluationRuntime = (
         };
       }
 
+      if (existingResult?.status === "pending") {
+        const resumed = await options.evaluationService.startEvaluationResult({
+          evaluationResultId,
+          metadata: buildMetadata(request.detectionCandle),
+          expectedVersion: null
+        });
+        if (!resumed) {
+          return {
+            status: "failed",
+            evaluationResultId,
+            reason: "pending evaluation result could not be resumed",
+            warnings: []
+          };
+        }
+      }
+
       const finalizationMetadata = buildMetadata(validated.finalCandle);
       const completed = await options.evaluationService.finalizeEvaluationResult({
         evaluationResultId,

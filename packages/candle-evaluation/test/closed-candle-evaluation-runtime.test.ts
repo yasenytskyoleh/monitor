@@ -210,6 +210,39 @@ test("completes a 24-hour window and transitions the candidate to evaluated", as
   assert.equal(candidate?.status, "evaluated");
 });
 
+test("resumes a pending evaluation after an interrupted trigger", async () => {
+  const fixture = await createFixture();
+  await fixture.evaluationService.createPendingEvaluationResult({
+    result: {
+      id: "result-candidate-evaluation-001-window-24h",
+      signalCandidateId: "candidate-evaluation-001",
+      evaluationWindowId: CANDLE_EVALUATION_WINDOW_ID,
+      status: "pending",
+      referencePrice: null,
+      finalPrice: null,
+      highInWindow: null,
+      lowInWindow: null,
+      absoluteMove: null,
+      percentageMove: null,
+      maxFavorableExcursion: null,
+      maxAdverseExcursion: null,
+      evaluatedAt: null,
+      createdAt: fixture.detectionCandle.eventTimestampUtc,
+      updatedAt: fixture.detectionCandle.eventTimestampUtc
+    },
+    metadata
+  });
+
+  const outcome = await fixture.runtime.evaluate({
+    signalCandidateId: "candidate-evaluation-001",
+    detectionCandle: fixture.detectionCandle,
+    observationCandles: observationsFor(fixture.detectionCandle)
+  });
+
+  assert.equal(outcome.status, "completed");
+  assert.equal((await fixture.evaluationResultRepository.getById(outcome.evaluationResultId ?? ""))?.status, "completed");
+});
+
 test("derives flat and down outcomes from the final close", async () => {
   const flatFixture = await createFixture();
   const flat = await flatFixture.runtime.evaluate({
@@ -336,6 +369,7 @@ test("retries an in-progress evaluation after finalization failure", async () =>
     evaluationResultRepository: fixture.evaluationResultRepository,
     candidateHandoff: fixture.candidateHandoff,
     evaluationService: {
+      startEvaluationResult: fixture.evaluationService.startEvaluationResult,
       async finalizeEvaluationResult(): Promise<null> {
         throw new Error("temporary finalization failure");
       }

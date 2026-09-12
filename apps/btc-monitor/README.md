@@ -15,6 +15,14 @@ It requires Node.js 22 or newer for the native WebSocket client.
 
 The process logs JSON records for startup, detected/rejected/failed outcomes, and feed errors. Stop it with `SIGINT` or `SIGTERM`; it drains the market-data feed before disconnecting from Postgres.
 
+## Evaluate historical outcomes
+
+Run `pnpm btc-evaluate` from the repository root as a bounded job of up to 50 candidates. It only considers candidates
+for this monitor's configured setup and symbol after their complete 24-hour observation window has
+closed. The job reconstructs the exact closed-candle window from Binance, persists the evaluation,
+and refreshes the setup's historical aggregate. It does not send notifications; that remains gated
+on the aggregate meeting a separately configured decision-support policy.
+
 ## Configuration
 
 | Variable | Required | Meaning |

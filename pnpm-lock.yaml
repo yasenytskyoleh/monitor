@@ -20,6 +20,9 @@ importers:
       '@monitor/binance-spot':
         specifier: workspace:*
         version: link:../../packages/binance-spot
+      '@monitor/candle-evaluation':
+        specifier: workspace:*
+        version: link:../../packages/candle-evaluation
       '@monitor/domain-model':
         specifier: workspace:*
         version: link:../../packages/domain-model
