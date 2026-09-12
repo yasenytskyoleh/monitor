@@ -322,6 +322,34 @@ test("reconnects once after a disconnect, catches up, and reports malformed live
   await subscription.stop();
 });
 
+test("cancels a pending reconnect delay during shutdown", async () => {
+  const sockets: FakeWebSocket[] = [];
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: createFetch({ "1m": [], "5m": [] }),
+    createWebSocket: () => {
+      const socket = new FakeWebSocket();
+      sockets.push(socket);
+      return socket;
+    },
+    now: () => NOW,
+    reconnectBaseDelayMs: 10_000
+  });
+  const start = feed.startClosedCandleFeed(
+    { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+    { onCandle: () => undefined }
+  );
+  sockets[0]?.emitOpen();
+  const subscription = await start;
+
+  sockets[0]?.emitClose();
+  await waitForTimers();
+  await Promise.race([
+    subscription.stop(),
+    new Promise<void>((_, reject) => setTimeout(() => reject(new Error("shutdown waited for reconnect delay")), 100))
+  ]);
+  assert.equal(sockets.length, 1);
+});
+
 test("queues reconnect backfill behind an in-flight live candle delivery", async () => {
   const sockets: FakeWebSocket[] = [];
   const delivered: string[] = [];

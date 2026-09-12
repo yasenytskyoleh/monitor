@@ -472,8 +472,9 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- add durable scheduler run ownership around bounded delivery and reconciliation; preserve human
-  decision support and keep exchanges, order placement, and automated trading out of scope
+- operate the read-only `apps/btc-monitor` process against one explicit active BTC setup, then add
+  durable scheduler ownership for evaluation and notification delivery; preserve human decision
+  support and keep exchanges, order placement, and automated trading out of scope
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

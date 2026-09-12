@@ -1,0 +1,31 @@
+{
+  "name": "@monitor/btc-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "prebuild": "pnpm --filter @monitor/binance-spot build && pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/pattern-detection build",
+    "build": "tsc -p tsconfig.json",
+    "pretypecheck": "pnpm --filter @monitor/binance-spot build && pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/pattern-detection build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "pnpm --filter @monitor/binance-spot build && pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/pattern-detection build",
+    "test": "node --import tsx --test ./test/**/*.test.ts",
+    "prestart": "pnpm --filter @monitor/binance-spot build && pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/pattern-detection build",
+    "start": "node --env-file-if-exists=../../.env --import tsx src/index.ts",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@monitor/binance-spot": "workspace:*",
+    "@monitor/domain-model": "workspace:*",
+    "@monitor/pattern-detection": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "tsx": "^4.20.6"
+  }
+}
