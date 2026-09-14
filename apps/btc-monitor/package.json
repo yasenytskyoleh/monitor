@@ -18,6 +18,7 @@
     "prestart": "pnpm --filter @monitor/binance-spot build && pnpm --filter @monitor/candle-evaluation build && pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/pattern-detection build && pnpm --filter @monitor/pattern-notification build",
     "start": "node --env-file-if-exists=../../.env --import tsx src/index.ts",
     "evaluate": "node --env-file-if-exists=../../.env --import tsx src/evaluate.ts",
+    "notify": "node --env-file-if-exists=../../.env --import tsx src/notify.ts",
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

@@ -5,6 +5,8 @@ const DEFAULT_NOTIFICATION_MIN_POSITIVE_OUTCOME_RATE = 0.6;
 const DEFAULT_NOTIFICATION_MIN_AVERAGE_PERCENTAGE_MOVE = 0.5;
 const DEFAULT_NOTIFICATION_MAX_SIGNAL_AGE_MINUTES = 15;
 const DEFAULT_NOTIFICATION_MAX_AGGREGATE_AGE_HOURS = 24;
+const DEFAULT_NOTIFICATION_DELIVERY_BATCH_SIZE = 10;
+const DEFAULT_TELEGRAM_TIMEOUT_MS = 10_000;
 
 export type BtcNotificationPolicyConfiguration = {
   policyId: string;
@@ -31,6 +33,16 @@ export type BtcMonitorConfiguration = {
   monitoredSymbolId: string;
   notificationPolicy: BtcNotificationPolicyConfiguration;
   setupDefinitionId: string;
+};
+
+export type BtcNotificationDeliveryConfiguration = {
+  databaseSchema?: string;
+  databaseUrl: string;
+  maxDeliveriesPerRun: number;
+  maxSignalAgeMs: number;
+  telegramBotToken: string;
+  telegramChatId: string;
+  telegramTimeoutMs: number;
 };
 
 export class BtcMonitorConfigurationError extends Error {
@@ -133,6 +145,36 @@ export const loadBtcMonitorConfiguration = (
     monitoredSymbolId: environment.BTC_MONITOR_MONITORED_SYMBOL_ID?.trim() || "BTC-USDT",
     backfillStartTimeUtc: new Date(now.getTime() - backfillHours * 60 * 60 * 1_000).toISOString(),
     notificationPolicy: loadNotificationPolicy(environment),
+    databaseSchema: databaseSchema || undefined
+  };
+};
+
+export const loadBtcNotificationDeliveryConfiguration = (
+  environment: NodeJS.ProcessEnv
+): BtcNotificationDeliveryConfiguration => {
+  const databaseSchema = environment.BTC_MONITOR_DATABASE_SCHEMA?.trim();
+  return {
+    databaseUrl: requireEnvironmentValue(environment, "DATABASE_URL"),
+    telegramBotToken: requireEnvironmentValue(environment, "BTC_MONITOR_TELEGRAM_BOT_TOKEN"),
+    telegramChatId: requireEnvironmentValue(environment, "BTC_MONITOR_TELEGRAM_CHAT_ID"),
+    maxDeliveriesPerRun: parsePositiveInteger(
+      environment.BTC_MONITOR_NOTIFICATION_MAX_DELIVERIES,
+      DEFAULT_NOTIFICATION_DELIVERY_BATCH_SIZE,
+      "BTC_MONITOR_NOTIFICATION_MAX_DELIVERIES",
+      100
+    ),
+    maxSignalAgeMs: parsePositiveInteger(
+      environment.BTC_MONITOR_NOTIFICATION_MAX_SIGNAL_AGE_MINUTES,
+      DEFAULT_NOTIFICATION_MAX_SIGNAL_AGE_MINUTES,
+      "BTC_MONITOR_NOTIFICATION_MAX_SIGNAL_AGE_MINUTES",
+      24 * 60
+    ) * 60 * 1_000,
+    telegramTimeoutMs: parsePositiveInteger(
+      environment.BTC_MONITOR_TELEGRAM_TIMEOUT_MS,
+      DEFAULT_TELEGRAM_TIMEOUT_MS,
+      "BTC_MONITOR_TELEGRAM_TIMEOUT_MS",
+      60_000
+    ),
     databaseSchema: databaseSchema || undefined
   };
 };

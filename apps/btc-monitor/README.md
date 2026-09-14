@@ -2,7 +2,7 @@
 
 This is a read-only BTC/USDT monitoring process. It warms a five-minute closed-candle detector from Binance Spot history, follows closed candles over WebSocket, validates the configured active setup revision, and persists detected signal candidates in Postgres.
 
-It does not trade and does not make an investment recommendation. A detected candidate is an input to the historical evaluation workflow. A fresh signal is retained as a pending decision-support notification only after the configured historical evidence policy passes; this process does not deliver it to Telegram or any other provider.
+It does not trade and does not make an investment recommendation. A detected candidate is an input to the historical evaluation workflow. A fresh signal is retained as a pending decision-support notification only after the configured historical evidence policy passes; delivery is a separate, explicit command.
 
 It requires Node.js 22 or newer for the native WebSocket client.
 
@@ -22,6 +22,14 @@ for this monitor's configured setup and symbol after their complete 24-hour obse
 closed. The job reconstructs the exact closed-candle window from Binance, persists the evaluation,
 and refreshes the setup's historical aggregate. It does not send notifications; that remains gated
 on the aggregate meeting a separately configured decision-support policy.
+
+## Deliver retained notifications
+
+Run `pnpm btc-notify` to deliver up to 10 pending notifications through Telegram. This is an opt-in,
+one-shot job: it only sends retained decision-support alerts and records each provider outcome before it
+exits. It never places an order. The command requires `BTC_MONITOR_TELEGRAM_BOT_TOKEN` and
+`BTC_MONITOR_TELEGRAM_CHAT_ID`; those values are used only for the Telegram request and are never
+written to its JSON logs.
 
 ## Notification retention policy
 
@@ -49,3 +57,7 @@ conservative decision-support filters, not investment advice.
 | `BTC_MONITOR_NOTIFICATION_MIN_AVERAGE_PERCENTAGE_MOVE` | no | Minimum average 24-hour move percentage; defaults to 0.5. |
 | `BTC_MONITOR_NOTIFICATION_MAX_SIGNAL_AGE_MINUTES` | no | Freshness limit for the detected signal; defaults to 15. |
 | `BTC_MONITOR_NOTIFICATION_MAX_AGGREGATE_AGE_HOURS` | no | Freshness limit for historical evidence; defaults to 24. |
+| `BTC_MONITOR_TELEGRAM_BOT_TOKEN` | `btc-notify` only | Telegram bot token for delivery; never logged. |
+| `BTC_MONITOR_TELEGRAM_CHAT_ID` | `btc-notify` only | Telegram chat ID for delivery; never logged. |
+| `BTC_MONITOR_NOTIFICATION_MAX_DELIVERIES` | no | Maximum pending Telegram alerts sent per `btc-notify` run, from 1 to 100; defaults to 10. |
+| `BTC_MONITOR_TELEGRAM_TIMEOUT_MS` | no | Per-request Telegram timeout in milliseconds, from 1 to 60,000; defaults to 10,000. |

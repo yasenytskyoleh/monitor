@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   BtcMonitorConfigurationError,
   DEFAULT_BTC_NOTIFICATION_POLICY,
+  loadBtcNotificationDeliveryConfiguration,
   loadBtcMonitorConfiguration
 } from "../src/config.js";
 
@@ -57,6 +58,56 @@ test("requires durable persistence and an explicit setup definition", () => {
   assert.throws(
     () => loadBtcMonitorConfiguration({ DATABASE_URL: "postgresql://monitor.example/monitor" }, NOW),
     (error: unknown) => error instanceof BtcMonitorConfigurationError && error.message === "BTC_MONITOR_SETUP_DEFINITION_ID is required"
+  );
+});
+
+test("loads bounded Telegram delivery settings without requiring a setup definition", () => {
+  const configuration = loadBtcNotificationDeliveryConfiguration({
+    DATABASE_URL: "postgresql://monitor.example/monitor",
+    BTC_MONITOR_DATABASE_SCHEMA: "monitoring",
+    BTC_MONITOR_TELEGRAM_BOT_TOKEN: "123456:fixture-token",
+    BTC_MONITOR_TELEGRAM_CHAT_ID: "-100123456",
+    BTC_MONITOR_NOTIFICATION_MAX_DELIVERIES: "3",
+    BTC_MONITOR_TELEGRAM_TIMEOUT_MS: "5000"
+  });
+
+  assert.deepEqual(configuration, {
+    databaseUrl: "postgresql://monitor.example/monitor",
+    databaseSchema: "monitoring",
+    telegramBotToken: "123456:fixture-token",
+    telegramChatId: "-100123456",
+    maxDeliveriesPerRun: 3,
+    maxSignalAgeMs: 15 * 60 * 1_000,
+    telegramTimeoutMs: 5_000
+  });
+});
+
+test("requires Telegram credentials only for the delivery command", () => {
+  assert.doesNotThrow(() =>
+    loadBtcMonitorConfiguration({
+      DATABASE_URL: "postgresql://monitor.example/monitor",
+      BTC_MONITOR_SETUP_DEFINITION_ID: "setup-btc-breakout"
+    }, NOW)
+  );
+  assert.throws(
+    () => loadBtcMonitorConfiguration({
+      BTC_MONITOR_SETUP_DEFINITION_ID: "setup-btc-breakout"
+    }, NOW),
+    (error: unknown) => error instanceof BtcMonitorConfigurationError && error.message === "DATABASE_URL is required"
+  );
+  assert.throws(
+    () => loadBtcNotificationDeliveryConfiguration({
+      DATABASE_URL: "postgresql://monitor.example/monitor",
+      BTC_MONITOR_TELEGRAM_CHAT_ID: "-100123456"
+    }),
+    (error: unknown) => error instanceof BtcMonitorConfigurationError && error.message === "BTC_MONITOR_TELEGRAM_BOT_TOKEN is required"
+  );
+  assert.throws(
+    () => loadBtcNotificationDeliveryConfiguration({
+      DATABASE_URL: "postgresql://monitor.example/monitor",
+      BTC_MONITOR_TELEGRAM_BOT_TOKEN: "123456:fixture-token"
+    }),
+    (error: unknown) => error instanceof BtcMonitorConfigurationError && error.message === "BTC_MONITOR_TELEGRAM_CHAT_ID is required"
   );
 });
 
