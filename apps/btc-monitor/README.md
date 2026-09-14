@@ -60,4 +60,20 @@ conservative decision-support filters, not investment advice.
 | `BTC_MONITOR_TELEGRAM_BOT_TOKEN` | `btc-notify` only | Telegram bot token for delivery; never logged. |
 | `BTC_MONITOR_TELEGRAM_CHAT_ID` | `btc-notify` only | Telegram chat ID for delivery; never logged. |
 | `BTC_MONITOR_NOTIFICATION_MAX_DELIVERIES` | no | Maximum pending Telegram alerts sent per `btc-notify` run, from 1 to 100; defaults to 10. |
+
+## Linux scheduling
+
+Run `pnpm btc-monitor` under a process supervisor such as systemd so the closed-candle feed restarts
+after a host reboot. Schedule the bounded jobs separately; they are idempotent and use their own
+durable records and delivery leases.
+
+```cron
+*/5 * * * * cd /opt/monitor && /usr/bin/pnpm btc-evaluate >> /var/log/btc-evaluate.log 2>&1
+*/5 * * * * cd /opt/monitor && /usr/bin/pnpm btc-notify >> /var/log/btc-notify.log 2>&1
+```
+
+Give the process environment the required database and monitor values. Only the `btc-notify` job
+needs `BTC_MONITOR_TELEGRAM_BOT_TOKEN` and `BTC_MONITOR_TELEGRAM_CHAT_ID`; keep both in the host's
+secret store or protected environment file. The notifier rejects stale alerts and reconciles an
+interrupted attempt before it sends new pending notifications.
 | `BTC_MONITOR_TELEGRAM_TIMEOUT_MS` | no | Per-request Telegram timeout in milliseconds, from 1 to 60,000; defaults to 10,000. |
