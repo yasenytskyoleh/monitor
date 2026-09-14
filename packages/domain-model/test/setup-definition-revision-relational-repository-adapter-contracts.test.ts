@@ -284,6 +284,54 @@ test("exposes setup-definition-revision relational adapter contract constants", 
   );
 });
 
+test("permits only version-one revisions to omit refinement lineage", async () => {
+  const adapter = createAdapter({
+    setupDefinitions: [buildSetupDefinitionRecord("setup-initial", "draft")],
+    refinementRequests: [],
+    approvals: [],
+    feedbackDecisions: []
+  });
+  const initialRecord: SetupDefinitionRevisionDurableRecord = {
+    ...buildSetupDefinitionRevisionRecord(
+      "revision-initial",
+      "setup-initial",
+      "setup-initial",
+      "unused",
+      "unused",
+      "unused",
+      1
+    ),
+    previousSetupDefinitionId: null,
+    sourceSetupRefinementRequestId: null,
+    sourceResearchDecisionApprovalId: null,
+    sourceResearchFeedbackDecisionId: null,
+    identity: {
+      boundary: "product_domain",
+      entityType: "setup_definition_revision",
+      entityId: "revision-initial",
+      version: 1,
+      relatedEntityIds: ["setup-initial"]
+    }
+  };
+
+  await assert.doesNotReject(() => adapter.insertSetupDefinitionRevisionRecord({
+    record: initialRecord,
+    expectedVersion: null
+  }));
+  await assert.rejects(
+    () => adapter.insertSetupDefinitionRevisionRecord({
+      record: {
+        ...initialRecord,
+        setupVersionNumber: 2,
+        identity: { ...initialRecord.identity, entityId: "revision-invalid-v2" }
+      },
+      expectedVersion: null
+    }),
+    (error: unknown) =>
+      error instanceof RepositoryError && error.code === "invalid_reference"
+  );
+});
+
 test("setup-definition-revision relational adapter rejects duplicate ids deterministically", async () => {
   const adapter = createAdapter();
 

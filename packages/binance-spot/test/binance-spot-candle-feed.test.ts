@@ -194,6 +194,45 @@ test("rejects coercible nonnumeric REST candle values", async () => {
   );
 });
 
+test("bounds Binance REST requests", async () => {
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: async (_input, init) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+    }),
+    createWebSocket: () => new FakeWebSocket(),
+    now: () => NOW,
+    restRequestTimeoutMs: 1
+  });
+
+  await assert.rejects(
+    () => feed.backfillClosedCandles({ startTimeUtc: "2026-07-29T00:00:00.000Z" }),
+    (error: unknown) =>
+      error instanceof BinanceSpotCandleFeedError &&
+      error.message === "Binance REST kline request timed out"
+  );
+});
+
+test("bounds the initial Binance WebSocket connection", async () => {
+  const socket = new FakeWebSocket();
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: createFetch({}),
+    createWebSocket: () => socket,
+    now: () => NOW,
+    webSocketOpenTimeoutMs: 1
+  });
+
+  await assert.rejects(
+    () => feed.startClosedCandleFeed(
+      { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+      { onCandle: () => undefined }
+    ),
+    (error: unknown) =>
+      error instanceof BinanceSpotCandleFeedError &&
+      error.message === "Binance WebSocket open timed out"
+  );
+  assert.equal(socket.closed, true);
+});
+
 test("buffers live candles during backfill and emits each closed candle once", async () => {
   const sockets: FakeWebSocket[] = [];
   const delivered: string[] = [];

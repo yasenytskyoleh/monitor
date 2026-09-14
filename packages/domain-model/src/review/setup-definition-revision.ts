@@ -23,7 +23,7 @@ export type SetupDefinitionRevision = {
   createdBy: string;
   createdAt: TimestampUtc;
   notes?: string;
-  sourceSetupRefinementRequestId: string;
+  sourceSetupRefinementRequestId?: string;
   sourceResearchDecisionApprovalId?: string;
   sourceResearchFeedbackDecisionId?: string;
   updatedAt: TimestampUtc;

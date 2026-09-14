@@ -270,11 +270,14 @@ Current limitation:
     dispatch and reconciliation runs process pending and unconfirmed records without retrying or
     resending; Telegram is the first provider adapter with runtime-only credentials, but there is
     no scheduler, automatic reconciliation, or trading implementation
+  - a containerized local pilot packages migration, canonical seed, bounded Binance smoke, and
+    long-running monitor workflows without enabling Telegram delivery or trading
   - no UI yet
 
 Current recommended next step:
-- add durable scheduler run ownership around bounded delivery and reconciliation; keep alerts as
-  explainable human decision support and automated trading outside the current phase
+- add durable scheduler run ownership now that the containerized BTC real-data pilot is available
+  and verified; keep alerts as explainable human decision support and automated trading outside
+  the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
@@ -302,12 +305,12 @@ without losing:
 - and architectural discipline.
 
 The new product-domain contracts are intentionally thin:
-- no ingestion runtime engine yet,
-- no evaluation runtime engine yet,
+- Binance BTC/USDT ingestion is implemented, but generalized multi-provider ingestion is not,
+- bounded 24-hour candidate evaluation is implemented, but unattended scheduling is not,
 - no batch aggregation, scoring, or hypothesis-evidence runtime yet,
 - no statistics/scoring engine yet,
 - durable relational persistence is partially implemented, but later integration/runtime adapters remain pending,
-- no exchange integration yet.
+- the first Binance Spot integration is deliberately limited to public BTC/USDT candle reads.
 
 ## Long-term product idea
 In its fuller form, Monitor is meant to become a **crypto market monitoring, signal research, and decision-support platform**.

@@ -37,7 +37,9 @@ export type BinanceSpotCandleFeedOptions = {
   now?: () => Date;
   reconnectBaseDelayMs?: number;
   maxReconnectDelayMs?: number;
+  restRequestTimeoutMs?: number;
   restBaseUrl?: string;
+  webSocketOpenTimeoutMs?: number;
   webSocketBaseUrl?: string;
 };
 

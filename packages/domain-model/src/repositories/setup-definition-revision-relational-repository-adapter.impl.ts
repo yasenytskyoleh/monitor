@@ -160,6 +160,9 @@ export class InMemorySetupDefinitionRevisionRelationalRepositoryAdapter
       record,
       operation
     );
+    if (!sourceRequest) {
+      return;
+    }
     const approval = await this.assertResearchDecisionApprovalReferenceExists(
       record,
       operation
@@ -206,7 +209,23 @@ export class InMemorySetupDefinitionRevisionRelationalRepositoryAdapter
   private async assertSetupRefinementRequestReferenceExists(
     record: SetupDefinitionRevisionDurableRecord,
     operation: "create" | "update"
-  ): Promise<SetupRefinementRequestDurableRecord> {
+  ): Promise<SetupRefinementRequestDurableRecord | null> {
+    if (!record.sourceSetupRefinementRequestId) {
+      if (
+        record.setupVersionNumber === 1 &&
+        !record.sourceResearchDecisionApprovalId &&
+        !record.sourceResearchFeedbackDecisionId
+      ) {
+        return null;
+      }
+      throw createInvalidReferenceRepositoryError({
+        entityType: "setup_definition_revision",
+        entityId: record.identity.entityId,
+        operation,
+        referenceEntityType: "setup_refinement_request",
+        referenceEntityId: "missing"
+      });
+    }
     const sourceRequest = await this.references.loadSetupRefinementRequestRecord(
       record.sourceSetupRefinementRequestId
     );
@@ -216,7 +235,7 @@ export class InMemorySetupDefinitionRevisionRelationalRepositoryAdapter
         entityId: record.identity.entityId,
         operation,
         referenceEntityType: "setup_refinement_request",
-        referenceEntityId: record.sourceSetupRefinementRequestId
+        referenceEntityId: record.sourceSetupRefinementRequestId ?? "missing"
       });
     }
 
@@ -285,7 +304,7 @@ export class InMemorySetupDefinitionRevisionRelationalRepositoryAdapter
         entityId: record.identity.entityId,
         operation,
         referenceEntityType: "setup_refinement_request",
-        referenceEntityId: record.sourceSetupRefinementRequestId
+        referenceEntityId: record.sourceSetupRefinementRequestId ?? "missing"
       });
     }
   }
@@ -305,7 +324,7 @@ export class InMemorySetupDefinitionRevisionRelationalRepositoryAdapter
         entityId: record.identity.entityId,
         operation,
         referenceEntityType: "setup_refinement_request",
-        referenceEntityId: record.sourceSetupRefinementRequestId
+        referenceEntityId: record.sourceSetupRefinementRequestId ?? "missing"
       });
     }
   }
@@ -325,7 +344,7 @@ export class InMemorySetupDefinitionRevisionRelationalRepositoryAdapter
         entityId: record.identity.entityId,
         operation,
         referenceEntityType: "setup_refinement_request",
-        referenceEntityId: record.sourceSetupRefinementRequestId
+        referenceEntityId: record.sourceSetupRefinementRequestId ?? "missing"
       });
     }
   }

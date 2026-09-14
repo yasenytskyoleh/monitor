@@ -5,7 +5,8 @@ import {
   BtcMonitorConfigurationError,
   DEFAULT_BTC_NOTIFICATION_POLICY,
   loadBtcNotificationDeliveryConfiguration,
-  loadBtcMonitorConfiguration
+  loadBtcMonitorConfiguration,
+  loadBtcSmokeConfiguration
 } from "../src/config.js";
 
 const NOW = new Date("2026-09-12T12:00:00.000Z");
@@ -50,14 +51,39 @@ test("loads conservative, bounded notification policy overrides", () => {
   });
 });
 
-test("requires durable persistence and an explicit setup definition", () => {
+test("requires durable persistence and defaults the local pilot setup", () => {
   assert.throws(
     () => loadBtcMonitorConfiguration({ BTC_MONITOR_SETUP_DEFINITION_ID: "setup-btc-breakout" }, NOW),
     (error: unknown) => error instanceof BtcMonitorConfigurationError && error.message === "DATABASE_URL is required"
   );
+  assert.equal(
+    loadBtcMonitorConfiguration({ DATABASE_URL: "postgresql://monitor.example/monitor" }, NOW)
+      .setupDefinitionId,
+    "setup-btc-breakout"
+  );
+});
+
+test("loads a bounded real-data smoke timeout", () => {
+  assert.equal(
+    loadBtcSmokeConfiguration({ DATABASE_URL: "postgresql://monitor.example/monitor" }, NOW)
+      .smokeTimeoutMs,
+    90_000
+  );
+  assert.equal(
+    loadBtcSmokeConfiguration({
+      DATABASE_URL: "postgresql://monitor.example/monitor",
+      BTC_MONITOR_SMOKE_TIMEOUT_SECONDS: "120"
+    }, NOW).smokeTimeoutMs,
+    120_000
+  );
   assert.throws(
-    () => loadBtcMonitorConfiguration({ DATABASE_URL: "postgresql://monitor.example/monitor" }, NOW),
-    (error: unknown) => error instanceof BtcMonitorConfigurationError && error.message === "BTC_MONITOR_SETUP_DEFINITION_ID is required"
+    () => loadBtcSmokeConfiguration({
+      DATABASE_URL: "postgresql://monitor.example/monitor",
+      BTC_MONITOR_SMOKE_TIMEOUT_SECONDS: "301"
+    }, NOW),
+    (error: unknown) =>
+      error instanceof BtcMonitorConfigurationError &&
+      error.message === "BTC_MONITOR_SMOKE_TIMEOUT_SECONDS must be an integer between 1 and 300"
   );
 });
 

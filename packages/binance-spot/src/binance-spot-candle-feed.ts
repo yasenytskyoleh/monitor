@@ -17,6 +17,7 @@ import {
 } from "./types.js";
 
 const BINANCE_KLINES_PAGE_SIZE = 1_000;
+const DEFAULT_NETWORK_TIMEOUT_MS = 15_000;
 const MAX_RECENT_EVENT_IDS = 4_096;
 const INTERVAL_MS: Record<BinanceSpotBtcUsdtCandleInterval, number> = {
   "1m": 60_000,
@@ -54,11 +55,28 @@ const parseMessage = (data: unknown): unknown => {
   }
 };
 
-const waitForOpen = (socket: BinanceSpotWebSocket): Promise<void> =>
+const waitForOpen = (socket: BinanceSpotWebSocket, timeoutMs: number): Promise<void> =>
   new Promise((resolve, reject) => {
-    socket.addEventListener("open", resolve);
-    socket.addEventListener("close", () => reject(new BinanceSpotCandleFeedError("Binance WebSocket closed before opening")));
-    socket.addEventListener("error", () => reject(new BinanceSpotCandleFeedError("Binance WebSocket failed before opening")));
+    let settled = false;
+    const settle = (callback: () => void): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      callback();
+    };
+    const timer = setTimeout(() => {
+      settle(() => {
+        socket.close();
+        reject(new BinanceSpotCandleFeedError("Binance WebSocket open timed out"));
+      });
+    }, timeoutMs);
+    socket.addEventListener("open", () => settle(resolve));
+    socket.addEventListener("close", () => settle(() => reject(
+      new BinanceSpotCandleFeedError("Binance WebSocket closed before opening")
+    )));
+    socket.addEventListener("error", () => settle(() => reject(
+      new BinanceSpotCandleFeedError("Binance WebSocket failed before opening")
+    )));
   });
 
 export const createBinanceSpotCandleFeed = (
@@ -69,6 +87,8 @@ export const createBinanceSpotCandleFeed = (
   const webSocketBaseUrl = options.webSocketBaseUrl ?? "wss://stream.binance.com:9443";
   const reconnectBaseDelayMs = options.reconnectBaseDelayMs ?? 1_000;
   const maxReconnectDelayMs = options.maxReconnectDelayMs ?? 30_000;
+  const restRequestTimeoutMs = options.restRequestTimeoutMs ?? DEFAULT_NETWORK_TIMEOUT_MS;
+  const webSocketOpenTimeoutMs = options.webSocketOpenTimeoutMs ?? DEFAULT_NETWORK_TIMEOUT_MS;
 
   const backfillClosedCandles = async (
     range: BinanceSpotCandleBackfillRange
@@ -92,7 +112,16 @@ export const createBinanceSpotCandleFeed = (
           url.searchParams.set("endTime", String(endTimeMs));
           url.searchParams.set("limit", String(BINANCE_KLINES_PAGE_SIZE));
 
-          const response = await options.fetchImpl(url);
+          const signal = AbortSignal.timeout(restRequestTimeoutMs);
+          let response: Response;
+          try {
+            response = await options.fetchImpl(url, { signal });
+          } catch (error: unknown) {
+            if (signal.aborted) {
+              throw new BinanceSpotCandleFeedError("Binance REST kline request timed out");
+            }
+            throw error;
+          }
           if (!response.ok) {
             throw new BinanceSpotCandleFeedError(`Binance REST kline request failed: ${response.status}`);
           }
@@ -246,7 +275,7 @@ export const createBinanceSpotCandleFeed = (
           }
         });
 
-        await waitForOpen(nextSocket);
+        await waitForOpen(nextSocket, webSocketOpenTimeoutMs);
         if (stopped || socket !== nextSocket) {
           return;
         }

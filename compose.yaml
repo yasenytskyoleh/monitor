@@ -17,5 +17,65 @@ services:
       timeout: 5s
       retries: 12
 
+  btc-migrate:
+    profiles: ["pilot"]
+    image: monitor-btc-migrate:local
+    build:
+      context: .
+      target: migrate
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-monitor}"
+      DIRECT_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-monitor}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  btc-seed:
+    profiles: ["pilot"]
+    image: monitor-btc:local
+    build:
+      context: .
+      target: runtime
+    init: true
+    command: ["node", "dist/src/seed.js"]
+    environment: &btc-environment
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-monitor}"
+      BTC_MONITOR_BACKFILL_HOURS: "${BTC_MONITOR_BACKFILL_HOURS:-24}"
+      BTC_MONITOR_DATABASE_SCHEMA: "${BTC_MONITOR_DATABASE_SCHEMA:-}"
+      BTC_MONITOR_MONITORED_SYMBOL_ID: "${BTC_MONITOR_MONITORED_SYMBOL_ID:-BTC-USDT}"
+      BTC_MONITOR_SETUP_DEFINITION_ID: "${BTC_MONITOR_SETUP_DEFINITION_ID:-setup-btc-breakout}"
+      BTC_MONITOR_SMOKE_TIMEOUT_SECONDS: "${BTC_MONITOR_SMOKE_TIMEOUT_SECONDS:-90}"
+    depends_on:
+      btc-migrate:
+        condition: service_completed_successfully
+
+  btc-smoke:
+    profiles: ["pilot"]
+    image: monitor-btc:local
+    build:
+      context: .
+      target: runtime
+    init: true
+    command: ["node", "dist/src/smoke.js"]
+    environment: *btc-environment
+    depends_on:
+      btc-seed:
+        condition: service_completed_successfully
+
+  btc-monitor:
+    profiles: ["pilot"]
+    image: monitor-btc:local
+    build:
+      context: .
+      target: runtime
+    init: true
+    command: ["node", "dist/src/index.js"]
+    environment: *btc-environment
+    depends_on:
+      btc-seed:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    stop_grace_period: 30s
+
 volumes:
   postgres-data:

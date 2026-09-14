@@ -1,31 +1,20 @@
 # Next Steps
 
 ## Current recommended next step
-### Add durable scheduler run ownership around the bounded delivery runs
+### Add durable scheduler run ownership after the BTC pilot
 
 Reason:
-- eligible BTC notifications now have a unique durable record, immutable evidence snapshot, and
-  at-most-once delivery claim
-- a provider-neutral contract records stable delivered/failed outcomes without storing provider
-  payloads
-- Telegram is the first explicit configured delivery adapter; it returns stable outcomes without
-  reading or persisting response bodies
-- an ambiguous `delivery_attempted` record can now be terminalized after a caller-defined grace
-  period as `delivery_outcome_unconfirmed`, without re-queueing or resending the alert
-- the claim, Telegram invocation, and terminal-outcome recording steps are now composed in one
-  explicit caller workflow with an `outcome_unconfirmed` result for ambiguous completion
-- a caller-invoked dispatch now declares an in-process cadence guard and bounded delivery work
-- leased delivery attempts now persist an owner ID and expiry; terminal recording requires that
-  owner and reconciliation waits for expiry
-- the Telegram workflow now acquires a durable lease at claim time, bounds Telegram execution,
-  and reserves positive terminal-recording grace before expiry
-- a bounded reconciliation runner observes lease expiry plus clock-skew tolerance and only
-  terminalizes unresolved attempts; it cannot send or re-queue alerts
+- Binance REST backfill and WebSocket ingestion are connected to the real product persistence path
+- the canonical BTC setup can now be migrated and seeded reproducibly without destructive resets
+- the bounded pilot proves Postgres, historical ingestion, live ingestion, idempotency, and graceful cleanup
+- evaluation and Telegram delivery already exist as explicit bounded host commands
+- unattended ownership is now the missing boundary; feature expansion remains deferred
 
 ## Recommended near-future sequence
-1. add durable scheduler run ownership around the bounded delivery and reconciliation runs
-2. connect a real monitored BTC market-data ingestion path after the delivery runtime's process
-   ownership is explicit
+1. continue a longer local soak with `pnpm btc-monitor:docker` and inspect its structured logs
+2. define durable scheduler ownership and overlap prevention for bounded jobs
+3. schedule evaluation, notification delivery, and reconciliation only after that ownership exists
+4. keep Telegram delivery opt-in and keep trading out of scope
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

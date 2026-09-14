@@ -56,3 +56,27 @@ test("setup-definition-revision mapper round-trips revision lineage and optional
   assert.equal(hydrated.versionInfo.revisionId, "revision-001");
   assert.deepEqual(hydrated, revision);
 });
+
+test("setup-definition-revision mapper supports an initial revision without fabricated refinement evidence", () => {
+  const revision: SetupDefinitionRevision = {
+    id: "revision-initial",
+    setupDefinitionId: "setup-initial",
+    versionInfo: {
+      setupFamilyId: "setup-family-initial",
+      revisionId: "revision-initial",
+      version: 1
+    },
+    revisionReason: "Initial setup definition.",
+    revisionStatus: "accepted",
+    changedFieldsSummary: "Initial version.",
+    createdBy: "manual-curator",
+    createdAt: "2026-07-09T10:00:00.000Z",
+    updatedAt: "2026-07-09T10:00:00.000Z"
+  };
+
+  const record = dehydrateSetupDefinitionRevisionToDurableRecord(revision, metadata, 1);
+
+  assert.equal(record.sourceSetupRefinementRequestId, null);
+  assert.deepEqual(record.identity.relatedEntityIds, ["setup-initial"]);
+  assert.deepEqual(hydrateSetupDefinitionRevisionFromDurableRecord(record), revision);
+});

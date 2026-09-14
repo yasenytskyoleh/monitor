@@ -119,7 +119,7 @@ export const createSetupDefinitionRevisionHandoff = (
         return {
           status: "created",
           setupDefinitionRevisionId: created.revision.id,
-          setupRefinementRequestId: created.revision.sourceSetupRefinementRequestId,
+          setupRefinementRequestId: command.setupRefinementRequestId,
           previousSetupDefinitionId: created.previousSetupDefinitionId,
           newSetupDefinitionId: created.newSetupDefinition.id,
           setupFamilyId: created.revision.versionInfo.setupFamilyId,
