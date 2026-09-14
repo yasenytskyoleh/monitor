@@ -25,7 +25,7 @@ import {
 import { createBtcAggregateScope } from "./btc-aggregate-scope.js";
 import { DEFAULT_BTC_NOTIFICATION_POLICY, type BtcMonitorConfiguration } from "./config.js";
 
-type BtcMonitorRepositories = Pick<
+export type BtcMonitorRepositories = Pick<
   ImplementedProductRelationalRepositories,
   | "monitoredSymbolRepository"
   | "setupDefinitionRepository"
@@ -52,6 +52,7 @@ export type BtcMonitorRuntimeOptions = {
   onDetection?(event: ClosedCandlePatternDetectionFeedEvent): Promise<void> | void;
   onError?(error: Error): Promise<void> | void;
   onNotification?(outcome: BtcNotificationRetentionOutcome): Promise<void> | void;
+  onProcessed?(event: ClosedCandlePatternDetectionFeedEvent): Promise<void> | void;
   repositories: BtcMonitorRepositories;
 };
 
@@ -185,6 +186,7 @@ export const createBtcMonitorRuntime = (options: BtcMonitorRuntimeOptions): BtcM
     onError: options.onError,
     async onProcessed(event): Promise<void> {
       await retainEligibleNotifications(event);
+      await options.onProcessed?.(event);
       if (event.outcomes.some(hasMeaningfulOutcome)) await options.onDetection?.(event);
     }
   });

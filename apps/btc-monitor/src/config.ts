@@ -1,4 +1,6 @@
 const DEFAULT_BACKFILL_HOURS = 24;
+const DEFAULT_SETUP_DEFINITION_ID = "setup-btc-breakout";
+const DEFAULT_SMOKE_TIMEOUT_SECONDS = 90;
 const MAX_BACKFILL_HOURS = 24 * 30;
 const DEFAULT_NOTIFICATION_MIN_COMPLETED_EVALUATIONS = 30;
 const DEFAULT_NOTIFICATION_MIN_POSITIVE_OUTCOME_RATE = 0.6;
@@ -43,6 +45,10 @@ export type BtcNotificationDeliveryConfiguration = {
   telegramBotToken: string;
   telegramChatId: string;
   telegramTimeoutMs: number;
+};
+
+export type BtcSmokeConfiguration = BtcMonitorConfiguration & {
+  smokeTimeoutMs: number;
 };
 
 export class BtcMonitorConfigurationError extends Error {
@@ -141,13 +147,27 @@ export const loadBtcMonitorConfiguration = (
   const databaseSchema = environment.BTC_MONITOR_DATABASE_SCHEMA?.trim();
   return {
     databaseUrl: requireEnvironmentValue(environment, "DATABASE_URL"),
-    setupDefinitionId: requireEnvironmentValue(environment, "BTC_MONITOR_SETUP_DEFINITION_ID"),
+    setupDefinitionId:
+      environment.BTC_MONITOR_SETUP_DEFINITION_ID?.trim() || DEFAULT_SETUP_DEFINITION_ID,
     monitoredSymbolId: environment.BTC_MONITOR_MONITORED_SYMBOL_ID?.trim() || "BTC-USDT",
     backfillStartTimeUtc: new Date(now.getTime() - backfillHours * 60 * 60 * 1_000).toISOString(),
     notificationPolicy: loadNotificationPolicy(environment),
     databaseSchema: databaseSchema || undefined
   };
 };
+
+export const loadBtcSmokeConfiguration = (
+  environment: NodeJS.ProcessEnv,
+  now: Date = new Date()
+): BtcSmokeConfiguration => ({
+  ...loadBtcMonitorConfiguration(environment, now),
+  smokeTimeoutMs: parsePositiveInteger(
+    environment.BTC_MONITOR_SMOKE_TIMEOUT_SECONDS,
+    DEFAULT_SMOKE_TIMEOUT_SECONDS,
+    "BTC_MONITOR_SMOKE_TIMEOUT_SECONDS",
+    300
+  ) * 1_000
+});
 
 export const loadBtcNotificationDeliveryConfiguration = (
   environment: NodeJS.ProcessEnv

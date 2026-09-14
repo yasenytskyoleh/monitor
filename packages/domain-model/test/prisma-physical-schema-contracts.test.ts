@@ -150,6 +150,13 @@ const setupDefinitionRevisionMigrationPath = join(
   "20260708101500_product_domain_setup_definition_revision_relational_v1",
   "migration.sql"
 );
+const initialSetupRevisionSourceMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  "20260914120000_product_domain_initial_setup_revision_source",
+  "migration.sql"
+);
 const setupRevisionActivationRecordMigrationPath = join(
   packageRoot,
   "prisma",
@@ -1225,6 +1232,19 @@ test("migration creates the setup-definition-revision relational table, indexes,
   );
   assert.match(migration, /length\(trim\("changed_fields_summary"\)\) > 0/);
   assert.match(migration, /"setup_version_number" > 0/);
+});
+
+test("migration permits missing refinement lineage only for an initial setup revision", async () => {
+  const migration = await readFile(initialSetupRevisionSourceMigrationPath, "utf8");
+
+  assert.match(
+    migration,
+    /ALTER COLUMN "source_setup_refinement_request_id" DROP NOT NULL/
+  );
+  assert.match(
+    migration,
+    /"setup_version_number" = 1 OR\s+"source_setup_refinement_request_id" IS NOT NULL/
+  );
 });
 
 test("exposes setup-revision-activation-record physical schema constants", () => {

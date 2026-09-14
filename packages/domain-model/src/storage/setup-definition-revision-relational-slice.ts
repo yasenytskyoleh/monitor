@@ -19,7 +19,7 @@ export type SetupDefinitionRevisionDurableRecord =
     changedFieldsSummary: string;
     createdBy: string;
     notes: string | null;
-    sourceSetupRefinementRequestId: string;
+    sourceSetupRefinementRequestId: string | null;
     sourceResearchDecisionApprovalId: string | null;
     sourceResearchFeedbackDecisionId: string | null;
   };

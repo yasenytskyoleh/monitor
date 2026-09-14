@@ -125,8 +125,9 @@ type ReferenceContext = {
   entityId: string;
   operation: "create" | "update";
   setupDefinitionId: string;
+  setupVersionNumber: number;
   previousSetupDefinitionId: string | null;
-  sourceSetupRefinementRequestId: string;
+  sourceSetupRefinementRequestId: string | null;
   sourceResearchDecisionApprovalId: string | null;
   sourceResearchFeedbackDecisionId: string | null;
 };
@@ -364,6 +365,23 @@ const findReferenceValidationError = async (
     }
   }
 
+  if (!context.sourceSetupRefinementRequestId) {
+    if (
+      context.setupVersionNumber !== 1 ||
+      context.sourceResearchDecisionApprovalId ||
+      context.sourceResearchFeedbackDecisionId
+    ) {
+      return createInvalidReferenceRepositoryError({
+        entityType: "setup_definition_revision",
+        entityId: context.entityId,
+        operation: context.operation,
+        referenceEntityType: "setup_refinement_request",
+        referenceEntityId: "missing"
+      });
+    }
+    return null;
+  }
+
   const sourceRequest = await prisma.setupRefinementRequestRecord.findUnique({
     where: { setupRefinementRequestId: context.sourceSetupRefinementRequestId }
   });
@@ -513,7 +531,7 @@ const resolveInvalidReferenceRepositoryError = async (
         entityId: context.entityId,
         operation: context.operation,
         referenceEntityType: "setup_refinement_request",
-        referenceEntityId: context.sourceSetupRefinementRequestId
+        referenceEntityId: context.sourceSetupRefinementRequestId ?? "missing"
       })
     );
   } catch {
@@ -532,7 +550,7 @@ const resolveInvalidReferenceRepositoryError = async (
         context.sourceResearchFeedbackDecisionId ??
         context.sourceResearchDecisionApprovalId ??
         context.previousSetupDefinitionId ??
-        context.sourceSetupRefinementRequestId
+        context.sourceSetupRefinementRequestId ?? "missing"
     });
   }
 };
@@ -619,6 +637,7 @@ export class PrismaSetupDefinitionRevisionRelationalRepositoryAdapter
       entityId: request.record.identity.entityId,
       operation: "create",
       setupDefinitionId: request.record.setupDefinitionId,
+      setupVersionNumber: request.record.setupVersionNumber,
       previousSetupDefinitionId: request.record.previousSetupDefinitionId,
       sourceSetupRefinementRequestId: request.record.sourceSetupRefinementRequestId,
       sourceResearchDecisionApprovalId: request.record.sourceResearchDecisionApprovalId,
@@ -662,6 +681,7 @@ export class PrismaSetupDefinitionRevisionRelationalRepositoryAdapter
       entityId: setupDefinitionRevisionId,
       operation: "update",
       setupDefinitionId: request.record.setupDefinitionId,
+      setupVersionNumber: request.record.setupVersionNumber,
       previousSetupDefinitionId: request.record.previousSetupDefinitionId,
       sourceSetupRefinementRequestId: request.record.sourceSetupRefinementRequestId,
       sourceResearchDecisionApprovalId: request.record.sourceResearchDecisionApprovalId,

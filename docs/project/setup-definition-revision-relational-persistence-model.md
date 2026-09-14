@@ -16,6 +16,7 @@ The repository adapter contract, executable repository rollout, shared-bundle ex
 - `packages/domain-model/src/storage/setup-definition-revision-relational-physical-schema.ts`
 - `packages/domain-model/prisma/schema.prisma`
 - `packages/domain-model/prisma/migrations/20260708101500_product_domain_setup_definition_revision_relational_v1/migration.sql`
+- `packages/domain-model/prisma/migrations/20260914120000_product_domain_initial_setup_revision_source/migration.sql`
 - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
 - `packages/domain-model/test/prisma-physical-schema-contracts.test.ts`
 - `docs/project/setup-definition-revision-relational-adapter-model.md`
@@ -28,6 +29,7 @@ The repository adapter contract, executable repository rollout, shared-bundle ex
 - `docs/project/implemented-product-setup-definition-revision-integration-model.md`
 - `docs/architecture/adr/ADR-072-implemented-product-setup-definition-revision-composition.md`
 - `docs/architecture/adr/ADR-073-implemented-product-setup-definition-revision-integration-coverage.md`
+- `docs/architecture/adr/ADR-103-initial-setup-revision-bootstrap-lineage.md`
 
 ## Durable record shape
 `SetupDefinitionRevisionDurableRecord` keeps:
@@ -42,7 +44,7 @@ The repository adapter contract, executable repository rollout, shared-bundle ex
 - required `changedFieldsSummary`
 - required `createdBy`
 - nullable `notes`
-- required `sourceSetupRefinementRequestId`
+- nullable `sourceSetupRefinementRequestId` for the first setup-family revision only
 - nullable `sourceResearchDecisionApprovalId`
 - nullable `sourceResearchFeedbackDecisionId`
 
@@ -54,7 +56,7 @@ The repository adapter contract, executable repository rollout, shared-bundle ex
 - `setupFamilyId` groups all revisions in one immutable setup lineage
 - `setupVersionNumber` maps directly to `SetupDefinitionRevision.versionInfo.version`
 - `previousRevisionId` maps directly to `SetupDefinitionRevision.versionInfo.previousRevisionId`
-- `sourceSetupRefinementRequestId` is required because the current revision path is explicitly refinement-driven
+- `sourceSetupRefinementRequestId` is omitted only when bootstrapping version 1 of a setup family; later revisions remain explicitly refinement-driven and require it
 - `sourceResearchDecisionApprovalId` and `sourceResearchFeedbackDecisionId` stay nullable in storage because the domain contract keeps them optional, even though the current service path usually populates both
 
 ## Versioning and write semantics
@@ -67,7 +69,8 @@ The repository adapter contract, executable repository rollout, shared-bundle ex
 ## Physical schema rules
 The migration now enforces:
 - positive repository version
-- non-empty setup ids, setup family id, revision reason, changed-fields summary, created-by, and source refinement-request id
+- non-empty setup ids, setup family id, revision reason, changed-fields summary, and created-by
+- a non-empty source refinement-request id for every revision after version 1
 - positive `setup_version_number`
 - non-empty optional previous/setup-lineage ids when present
 - `previous_setup_definition_id <> setup_definition_id` when a previous setup exists
@@ -80,7 +83,7 @@ The migration now enforces:
 Physical FKs are enforced for:
 - `setup_definition_id`
 - `previous_setup_definition_id`
-- `source_setup_refinement_request_id`
+- `source_setup_refinement_request_id` when present
 - `source_research_decision_approval_id` when present
 - `source_research_feedback_decision_id` when present
 
@@ -93,4 +96,4 @@ Still service-owned rather than encoded as compound relational constraints in th
 ## What remains pending
 - later downstream `setup_revision_activation_record` repository/shared-bundle/integration rollout, with durable contract/schema documented in `docs/project/setup-revision-activation-relational-persistence-model.md` and adapter contract documented in `docs/project/setup-revision-activation-relational-adapter-model.md`
 - subsequent downstream execution/mutation durable slices after `setup_revision_activation_record`
-- exchange ingestion, runtime engines, and UI
+- UI and additional runtime operating surfaces

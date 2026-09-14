@@ -298,7 +298,7 @@ const createFakePrismaClient = (): SetupDefinitionRevisionRelationalPrismaClient
           changedFieldsSummary: args.data.changedFieldsSummary,
           createdBy: args.data.createdBy,
           notes: args.data.notes ?? null,
-          sourceSetupRefinementRequestId: args.data.sourceSetupRefinementRequestId,
+          sourceSetupRefinementRequestId: args.data.sourceSetupRefinementRequestId ?? null,
           sourceResearchDecisionApprovalId:
             args.data.sourceResearchDecisionApprovalId ?? null,
           sourceResearchFeedbackDecisionId:
@@ -425,11 +425,10 @@ const createFakePrismaClient = (): SetupDefinitionRevisionRelationalPrismaClient
             pickString(data.changedFieldsSummary, current.changedFieldsSummary),
           createdBy: pickString(data.createdBy, current.createdBy),
           notes: pickNullableString(data.notes, current.notes),
-          sourceSetupRefinementRequestId:
-            pickString(
-              data.sourceSetupRefinementRequestId,
-              current.sourceSetupRefinementRequestId
-            ),
+          sourceSetupRefinementRequestId: pickNullableString(
+            data.sourceSetupRefinementRequestId,
+            current.sourceSetupRefinementRequestId
+          ),
           sourceResearchDecisionApprovalId:
             pickNullableString(
               data.sourceResearchDecisionApprovalId,

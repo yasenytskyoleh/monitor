@@ -913,7 +913,7 @@ model SetupDefinitionRevisionRecord {
   changedFieldsSummary              String                          @map("changed_fields_summary") @db.Text
   createdBy                         String                          @map("created_by") @db.Text
   notes                             String?                         @map("notes") @db.Text
-  sourceSetupRefinementRequestId    String                          @map("source_setup_refinement_request_id") @db.Text
+  sourceSetupRefinementRequestId    String?                         @map("source_setup_refinement_request_id") @db.Text
   sourceResearchDecisionApprovalId  String?                         @map("source_research_decision_approval_id") @db.Text
   sourceResearchFeedbackDecisionId  String?                         @map("source_research_feedback_decision_id") @db.Text
   originRunId                       String?                         @map("origin_run_id") @db.Text
@@ -928,7 +928,7 @@ model SetupDefinitionRevisionRecord {
   archivedAtUtc                     DateTime?                       @map("archived_at_utc") @db.Timestamptz(3)
   setupDefinition                   SetupDefinitionRecord           @relation("SetupDefinitionRevisionCurrentSetup", fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
   previousSetupDefinition           SetupDefinitionRecord?          @relation("SetupDefinitionRevisionPreviousSetup", fields: [previousSetupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
-  sourceSetupRefinementRequest      SetupRefinementRequestRecord    @relation(fields: [sourceSetupRefinementRequestId], references: [setupRefinementRequestId], onDelete: Restrict, onUpdate: Cascade)
+  sourceSetupRefinementRequest      SetupRefinementRequestRecord?   @relation(fields: [sourceSetupRefinementRequestId], references: [setupRefinementRequestId], onDelete: Restrict, onUpdate: Cascade)
   sourceResearchDecisionApproval    ResearchDecisionApprovalRecord? @relation("SetupDefinitionRevisionApproval", fields: [sourceResearchDecisionApprovalId], references: [researchDecisionApprovalId], onDelete: Restrict, onUpdate: Cascade)
   sourceResearchFeedbackDecision    ResearchFeedbackDecisionRecord? @relation("SetupDefinitionRevisionFeedback", fields: [sourceResearchFeedbackDecisionId], references: [researchFeedbackDecisionId], onDelete: Restrict, onUpdate: Cascade)
   targetSetupRevisionActivationRecords   SetupRevisionActivationRecordRecord[] @relation("SetupRevisionActivationRecordTargetRevision")

@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+.git
+.github
+.idea
+.claude
+.agents
+.codex
+**/node_modules
+**/dist
+**/.turbo
+.pnpm-store
+runtime
+coverage
+*.log

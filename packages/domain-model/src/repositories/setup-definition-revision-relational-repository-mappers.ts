@@ -52,7 +52,9 @@ export const hydrateSetupDefinitionRevisionFromDurableRecord = (
   createdBy: record.createdBy,
   createdAt: record.createdAtUtc,
   ...(record.notes ? { notes: record.notes } : {}),
-  sourceSetupRefinementRequestId: record.sourceSetupRefinementRequestId,
+  ...(record.sourceSetupRefinementRequestId
+    ? { sourceSetupRefinementRequestId: record.sourceSetupRefinementRequestId }
+    : {}),
   ...(record.sourceResearchDecisionApprovalId
     ? { sourceResearchDecisionApprovalId: record.sourceResearchDecisionApprovalId }
     : {}),
@@ -90,7 +92,7 @@ export const dehydrateSetupDefinitionRevisionToDurableRecord = (
   changedFieldsSummary: revision.changedFieldsSummary,
   createdBy: revision.createdBy,
   notes: revision.notes ?? null,
-  sourceSetupRefinementRequestId: revision.sourceSetupRefinementRequestId,
+  sourceSetupRefinementRequestId: revision.sourceSetupRefinementRequestId ?? null,
   sourceResearchDecisionApprovalId: revision.sourceResearchDecisionApprovalId ?? null,
   sourceResearchFeedbackDecisionId: revision.sourceResearchFeedbackDecisionId ?? null
 });

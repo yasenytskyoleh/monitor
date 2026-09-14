@@ -74,6 +74,19 @@ implements SetupDefinitionRevisionRepository {
       throw new Error("setup_definition_revision version must be a positive integer");
     }
 
+    if (
+      !request.revision.sourceSetupRefinementRequestId &&
+      (
+        request.revision.versionInfo.version !== 1 ||
+        request.revision.sourceResearchDecisionApprovalId ||
+        request.revision.sourceResearchFeedbackDecisionId
+      )
+    ) {
+      throw new Error(
+        "setup_definition_revision may omit refinement lineage only for an initial revision"
+      );
+    }
+
     const latest = await this.getLatestBySetupFamilyId(request.revision.versionInfo.setupFamilyId);
     if (latest && request.revision.versionInfo.version <= latest.versionInfo.version) {
       throw new Error(
