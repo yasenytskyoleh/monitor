@@ -25,7 +25,16 @@ const routingResult: ReviewDecisionRoutingResult = {
 
 const request = {
   reviewDecisionRoutingResultId: "route-001",
-  targetEntityRefs: { setupDefinitionId: "setup-001" },
+  targetEntityRefs: {
+    setupDefinitionId: "setup-001",
+    researchDecisionApprovalId: "approval-001"
+  },
+  refinementInput: {
+    requestedBy: "reviewer",
+    requestedAt: "2026-08-01T01:05:00.000Z",
+    refinementRationaleSummary: "Evidence indicates the setup needs revision.",
+    requestedChangesSummary: "Review the breakout confirmation condition."
+  },
   preparedBy: "reviewer",
   preparedAt: "2026-08-01T01:05:00.000Z",
 };
@@ -58,6 +67,7 @@ test("derives an envelope command and audit metadata from a persisted route", as
     targetEntityRefs: { setupFamilyId: routingResult.setupFamilyId, ...request.targetEntityRefs },
     preparedBy: request.preparedBy,
     preparedAt: request.preparedAt,
+    refinementInput: request.refinementInput,
     routeMetadataSnapshot: {
       routeStatus: routingResult.status,
       routedAt: routingResult.routedAt,

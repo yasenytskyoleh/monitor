@@ -63,26 +63,27 @@ const createFixture = () => {
     evaluationResultRepository,
     signalCandidateRepository,
     setupAggregateResultRepository,
+    researchAggregationService,
     refreshHandoff
   };
 };
 
-test("valid aggregation-refresh trigger shape", async () => {
-  const {
-    setupDefinitionRepository,
-    evaluationResultRepository,
-    signalCandidateRepository,
-    refreshHandoff
-  } = createFixture();
-  await setupDefinitionRepository.create({
-    definition: buildSetupDefinition("setup-agg-refresh-001"),
+const seedCompletedEvaluation = async (
+  fixture: ReturnType<typeof createFixture>,
+  suffix: string
+): Promise<{ candidateId: string; evaluationResultId: string; setupDefinitionId: string }> => {
+  const setupDefinitionId = `setup-agg-refresh-${suffix}`;
+  const candidateId = `candidate-agg-refresh-${suffix}`;
+  const evaluationResultId = `result-agg-refresh-${suffix}`;
+  await fixture.setupDefinitionRepository.create({
+    definition: buildSetupDefinition(setupDefinitionId),
     metadata
   });
-  await signalCandidateRepository.create({
+  await fixture.signalCandidateRepository.create({
     candidate: {
-      id: "candidate-agg-refresh-001",
-      setupDefinitionId: "setup-agg-refresh-001",
-      setupRevisionId: "revision-agg-refresh-001",
+      id: candidateId,
+      setupDefinitionId,
+      setupRevisionId: `revision-agg-refresh-${suffix}`,
       monitoredSymbolId: "BTC-USDT",
       status: "evaluated",
       detectedAt: "2026-04-21T11:00:00.000Z",
@@ -92,10 +93,10 @@ test("valid aggregation-refresh trigger shape", async () => {
     },
     metadata
   });
-  await evaluationResultRepository.create({
+  await fixture.evaluationResultRepository.create({
     result: {
-      id: "result-agg-refresh-001",
-      signalCandidateId: "candidate-agg-refresh-001",
+      id: evaluationResultId,
+      signalCandidateId: candidateId,
       evaluationWindowId: "window-24h",
       status: "completed",
       referencePrice: 100,
@@ -112,12 +113,18 @@ test("valid aggregation-refresh trigger shape", async () => {
     },
     metadata
   });
+  return { candidateId, evaluationResultId, setupDefinitionId };
+};
 
-  const result = await refreshHandoff.refresh(
+test("valid aggregation-refresh trigger shape", async () => {
+  const fixture = createFixture();
+  const { candidateId, evaluationResultId, setupDefinitionId } = await seedCompletedEvaluation(fixture, "001");
+
+  const result = await fixture.refreshHandoff.refresh(
     {
-      evaluationResultId: "result-agg-refresh-001",
-      signalCandidateId: "candidate-agg-refresh-001",
-      setupDefinitionId: "setup-agg-refresh-001",
+      evaluationResultId,
+      signalCandidateId: candidateId,
+      setupDefinitionId,
       triggeredAt: "2026-04-21T12:05:00.000Z"
     },
     metadata
@@ -125,6 +132,64 @@ test("valid aggregation-refresh trigger shape", async () => {
 
   assert.equal(result.status, "created_and_refreshed");
   assert.equal(typeof result.setupAggregateResultId, "string");
+});
+
+test("fails when a newly created aggregate cannot be recomputed", async () => {
+  const fixture = createFixture();
+  const { candidateId, evaluationResultId, setupDefinitionId } = await seedCompletedEvaluation(fixture, "null-created");
+  const refreshHandoff = createEvaluationToAggregationRefreshHandoff({
+    researchAggregationService: {
+      ...fixture.researchAggregationService,
+      async recomputeSetupAggregateResult() {
+        return null;
+      }
+    },
+    evaluationResultRepository: fixture.evaluationResultRepository,
+    signalCandidateRepository: fixture.signalCandidateRepository,
+    setupAggregateResultRepository: fixture.setupAggregateResultRepository
+  });
+
+  const result = await refreshHandoff.refresh({
+    evaluationResultId,
+    signalCandidateId: candidateId,
+    setupDefinitionId,
+    triggeredAt: "2026-04-21T12:05:00.000Z"
+  }, metadata);
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.reason?.includes("recompute returned null"), true);
+});
+
+test("fails when an existing aggregate cannot be recomputed", async () => {
+  const fixture = createFixture();
+  const { candidateId, evaluationResultId, setupDefinitionId } = await seedCompletedEvaluation(fixture, "null-existing");
+  await fixture.refreshHandoff.refresh({
+    evaluationResultId,
+    signalCandidateId: candidateId,
+    setupDefinitionId,
+    triggeredAt: "2026-04-21T12:05:00.000Z"
+  }, metadata);
+  const refreshHandoff = createEvaluationToAggregationRefreshHandoff({
+    researchAggregationService: {
+      ...fixture.researchAggregationService,
+      async recomputeSetupAggregateResult() {
+        return null;
+      }
+    },
+    evaluationResultRepository: fixture.evaluationResultRepository,
+    signalCandidateRepository: fixture.signalCandidateRepository,
+    setupAggregateResultRepository: fixture.setupAggregateResultRepository
+  });
+
+  const result = await refreshHandoff.refresh({
+    evaluationResultId,
+    signalCandidateId: candidateId,
+    setupDefinitionId,
+    triggeredAt: "2026-04-21T12:06:00.000Z"
+  }, metadata);
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.reason?.includes("recompute returned null"), true);
 });
 
 test("missing evaluation result reference rejected", async () => {

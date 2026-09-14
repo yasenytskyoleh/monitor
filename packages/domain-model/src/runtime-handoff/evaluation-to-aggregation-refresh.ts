@@ -201,12 +201,15 @@ export const createEvaluationToAggregationRefreshHandoff = (
             metadata
           });
 
-          await researchAggregationService.recomputeSetupAggregateResult({
+          const recomputedAggregate = await researchAggregationService.recomputeSetupAggregateResult({
             setupAggregateResultId: pendingAggregate.id,
             evaluationResultIds: relevantEvaluationResultIds,
             metadata,
             expectedVersion: null
           });
+          if (!recomputedAggregate) {
+            throw new Error(`setup aggregate recompute returned null: ${pendingAggregate.id}`);
+          }
 
           return {
             status: "created_and_refreshed",
@@ -216,12 +219,15 @@ export const createEvaluationToAggregationRefreshHandoff = (
           };
         }
 
-        await researchAggregationService.recomputeSetupAggregateResult({
+        const recomputedAggregate = await researchAggregationService.recomputeSetupAggregateResult({
           setupAggregateResultId: existingAggregate.id,
           evaluationResultIds: relevantEvaluationResultIds,
           metadata,
           expectedVersion: null
         });
+        if (!recomputedAggregate) {
+          throw new Error(`setup aggregate recompute returned null: ${existingAggregate.id}`);
+        }
 
         return {
           status: "refreshed_existing",

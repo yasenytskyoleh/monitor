@@ -42,9 +42,6 @@ const sortCandles = (candles: CandleClosedEvent[]): CandleClosedEvent[] =>
 const toError = (error: unknown): Error =>
   error instanceof Error ? error : new BinanceSpotCandleFeedError("unexpected Binance candle feed failure");
 
-const delay = (milliseconds: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, milliseconds));
-
 const parseMessage = (data: unknown): unknown => {
   if (typeof data !== "string") {
     throw new BinanceSpotCandleFeedError("Binance WebSocket message must be text");
@@ -141,22 +138,34 @@ export const createBinanceSpotCandleFeed = (
       let socket: BinanceSpotWebSocket | undefined;
       let reconnectAttempts = 0;
       let reconnectPending = false;
+      let reconnectTask: Promise<void> | undefined;
+      let cancelReconnectDelay: (() => void) | undefined;
       let startResolved = false;
       let bootstrapping = true;
       let bufferedCandles: CandleClosedEvent[] = [];
       let messageQueue: Promise<void> = Promise.resolve();
+      let emissionTail: Promise<void> = Promise.resolve();
       const recentEventIds = new Set<string>();
       const recentEventIdOrder: string[] = [];
       const latestOpenTimeByInterval = new Map<BinanceSpotBtcUsdtCandleInterval, string>();
 
-      const reportError = async (error: unknown): Promise<void> => {
-        if (sink.onError) {
-          await sink.onError(toError(error));
+      const reportError = (error: unknown): void => {
+        try {
+          const reported = sink.onError?.(toError(error));
+          void Promise.resolve(reported).catch(() => undefined);
+        } catch {
+          // Error observers must not interrupt feed processing.
         }
       };
 
-      const emit = async (candle: CandleClosedEvent): Promise<void> => {
+      const emitOne = async (candle: CandleClosedEvent): Promise<void> => {
+        if (stopped) return;
         if (recentEventIds.has(candle.eventId)) {
+          return;
+        }
+        const timeframe = candle.payload.timeframe as BinanceSpotBtcUsdtCandleInterval;
+        const latestOpenTime = latestOpenTimeByInterval.get(timeframe);
+        if (latestOpenTime && candle.payload.openTimeUtc <= latestOpenTime) {
           return;
         }
 
@@ -168,8 +177,16 @@ export const createBinanceSpotCandleFeed = (
             recentEventIds.delete(expiredEventId);
           }
         }
-        latestOpenTimeByInterval.set(candle.payload.timeframe as BinanceSpotBtcUsdtCandleInterval, candle.payload.openTimeUtc);
+        latestOpenTimeByInterval.set(timeframe, candle.payload.openTimeUtc);
         await sink.onCandle(candle);
+      };
+
+      const emit = (candle: CandleClosedEvent): Promise<void> => {
+        const emitted = emissionTail.then(() => emitOne(candle));
+        emissionTail = emitted.catch((error: unknown) => {
+          reportError(error);
+        });
+        return emissionTail;
       };
 
       const emitBackfill = async (backfillRange: BinanceSpotCandleBackfillRange): Promise<void> => {
@@ -190,6 +207,7 @@ export const createBinanceSpotCandleFeed = (
       };
 
       const processMessage = async (data: unknown): Promise<void> => {
+        if (stopped) return;
         const candle = normalizeBinanceWebSocketKline(parseMessage(data), now().toISOString());
         if (!candle) {
           return;
@@ -214,15 +232,17 @@ export const createBinanceSpotCandleFeed = (
         nextSocket.addEventListener("message", (event) => {
           messageQueue = messageQueue
             .then(() => processMessage(event.data))
-            .catch((error: unknown) => reportError(error).catch(() => undefined));
+            .catch((error: unknown) => reportError(error));
         });
         nextSocket.addEventListener("error", () => {
-          void reportError(new BinanceSpotCandleFeedError("Binance WebSocket error"));
+          if (!stopped) {
+            void reportError(new BinanceSpotCandleFeedError("Binance WebSocket error"));
+          }
         });
         nextSocket.addEventListener("close", () => {
           socketClosed = true;
           if (!stopped && socket === nextSocket && (isReconnect || startResolved)) {
-            void reconnect();
+            reconnectTask = reconnect();
           }
         });
 
@@ -256,22 +276,31 @@ export const createBinanceSpotCandleFeed = (
         }
         reconnectPending = true;
         bootstrapping = true;
-        const reconnectDelayMs = Math.min(
-          reconnectBaseDelayMs * 2 ** reconnectAttempts,
-          maxReconnectDelayMs
-        );
-        reconnectAttempts += 1;
-        await delay(reconnectDelayMs);
-        if (stopped) {
-          return;
-        }
         try {
-          await connect(true);
+          while (!stopped) {
+            const reconnectDelayMs = Math.min(
+              reconnectBaseDelayMs * 2 ** reconnectAttempts,
+              maxReconnectDelayMs
+            );
+            reconnectAttempts += 1;
+            await new Promise<void>((resolve) => {
+              const timer = setTimeout(resolve, reconnectDelayMs);
+              cancelReconnectDelay = () => {
+                clearTimeout(timer);
+                resolve();
+              };
+            });
+            cancelReconnectDelay = undefined;
+            if (stopped) return;
+            try {
+              await connect(true);
+              return;
+            } catch (error) {
+              reportError(error);
+            }
+          }
+        } finally {
           reconnectPending = false;
-        } catch (error) {
-          await reportError(error);
-          reconnectPending = false;
-          void reconnect();
         }
       };
 
@@ -289,6 +318,10 @@ export const createBinanceSpotCandleFeed = (
         async stop(): Promise<void> {
           stopped = true;
           socket?.close();
+          cancelReconnectDelay?.();
+          await reconnectTask;
+          await messageQueue;
+          await emissionTail;
         }
       };
     }

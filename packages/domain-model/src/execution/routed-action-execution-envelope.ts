@@ -27,6 +27,11 @@ export type RoutedActionExecutionPayloadSnapshot =
         setupFamilyId: string;
         sourceReviewDecisionId: string;
         sourceRoutingResultId: string;
+        requestedBy: string;
+        requestedAt: TimestampUtc;
+        refinementRationaleSummary: string;
+        requestedChangesSummary: string;
+        evidenceReferences?: string[];
       };
     }
   | {

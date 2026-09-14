@@ -31,7 +31,7 @@ export type ClosedCandleEvaluationRuntimeOptions = {
   candidateRepository: Pick<SignalCandidateRepository, "getById">;
   evaluationResultRepository: Pick<EvaluationResultRepository, "getBySignalCandidateAndWindow">;
   candidateHandoff: CandidateEvaluationHandoff;
-  evaluationService: Pick<EvaluationService, "finalizeEvaluationResult">;
+  evaluationService: Pick<EvaluationService, "finalizeEvaluationResult" | "startEvaluationResult">;
   signalCandidateService: Pick<SignalCandidateService, "updateSignalCandidateStatus">;
 };
 

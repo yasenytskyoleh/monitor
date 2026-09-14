@@ -233,6 +233,9 @@ Current limitation:
     live normalized events without credentials or persistence
   - an exchange-neutral closed-candle breakout runtime now turns normalized 5m candles into
     traceable signal candidates through the existing product-domain handoff
+  - a provider-neutral closed-candle feed bridge now composes historical/live Binance-compatible
+    feeds with that detection runtime while preserving explicit caller-owned lifecycle and error
+    reporting
   - an exchange-neutral batch evaluator now completes 24-hour closed-candle candidate evaluations
   - an explicit provider-neutral aggregation runtime now refreshes setup evidence from completed
     evaluation results
@@ -255,11 +258,23 @@ Current limitation:
   - a routed-action preparation runtime now creates auditable envelopes without dispatching them
   - an execution-attempt runtime now delegates prepared envelopes through the audited executor boundary
   - an activation-envelope executor now applies only validated non-trading revision activations
+  - a lifecycle-envelope executor now applies only validated lifecycle actions from persisted
+    approvals carried by prepared envelopes
+  - a refinement-envelope executor now creates only approval-authorized refinement requests from
+    immutable reviewer-supplied envelope input
+  - a pattern-notification eligibility runtime now combines a fresh BTC signal candidate with
+    compatible historical aggregate evidence into a deduplicated, explainable decision-support
+    candidate; eligible candidates retain an immutable PostgreSQL/Prisma record and one
+    provider-neutral delivery lifecycle; an explicit caller workflow claims, sends once, and
+    records outcomes under a durable bounded execution lease, while bounded caller-invoked
+    dispatch and reconciliation runs process pending and unconfirmed records without retrying or
+    resending; Telegram is the first provider adapter with runtime-only credentials, but there is
+    no scheduler, automatic reconciliation, or trading implementation
   - no UI yet
 
 Current recommended next step:
-- add a concrete executor for one remaining non-trading envelope type; keep scheduling and
-  automated trading outside the current phase
+- add durable scheduler run ownership around bounded delivery and reconciliation; keep alerts as
+  explainable human decision support and automated trading outside the current phase
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

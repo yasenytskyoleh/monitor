@@ -162,6 +162,17 @@ export const FIRST_CLASS_PERSISTED_ENTITY_PROFILES: PersistedEntityProfile[] = [
     }
   },
   {
+    entityType: "pattern_notification",
+    firstClassPersisted: true,
+    timing: {
+      createdWhen: "created when eligible pattern evidence is retained for decision support",
+      updatedWhen: "updated once to claim delivery and once to record its terminal outcome",
+      immutableFields: ["identity.entityId", "deduplicationKey", "eligibilityEvidence"],
+      mutableFields: ["deliveryStatus", "deliveryOutcome", "metadata", "updatedAtUtc"],
+      canBeArchived: true
+    }
+  },
+  {
     entityType: "setup_lifecycle_mutation_record",
     firstClassPersisted: true,
     timing: {

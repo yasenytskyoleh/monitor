@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.45 — Codex-first workflow, bounded autonomous mode, and completed review-decision-routing-result persistence rollout**
+**Phase 1.50 — Codex-first workflow, explainable BTC notification retention, and explicit Telegram delivery**
 
 ## What this phase is about
 This phase is focused on:
@@ -36,7 +36,16 @@ The product side now proves that the repo can:
 - extend one opt-in real-database integration path through `setup_revision_activation_record`,
 - complete the review-decision-routing-result durable relational contract, Prisma schema, adapter, shared-composition, and integration rollout,
 - classify `routed_action_execution_result` as product-ephemeral rather than inferring a durable record from a service response,
-- and keep later hypothesis-evidence, review, and execution runtime engines pending.
+- complete all current non-trading envelope executors while keeping scheduling and automated
+  trading pending, and
+- derive explainable BTC notification eligibility from fresh signal candidates and historical
+  aggregate evidence, retain that immutable decision-support snapshot, record one
+  provider-neutral delivery lifecycle through an explicit one-send, durable-lease workflow,
+  dispatch bounded pending delivery work, and reconcile bounded unconfirmed work without retry or
+  resend; Telegram is the explicit adapter, with no scheduler, automatic reconciliation, exchange
+  access, or trading.
+- connect a caller-owned historical/live closed-candle feed to deterministic pattern detection
+  without coupling the Binance adapter to product-domain handoffs or adding a background scheduler.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -463,8 +472,10 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- add a concrete executor for one remaining non-trading envelope type; keep scheduling and
-  automated trading outside the current phase
+- operate the read-only `apps/btc-monitor` process against one explicit active BTC setup, then add
+  durable scheduler ownership for its now-implemented bounded 24-hour evaluation/aggregate run and
+  for notification delivery; preserve human decision support and keep exchanges, order placement,
+  and automated trading out of scope
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

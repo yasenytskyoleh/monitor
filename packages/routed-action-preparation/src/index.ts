@@ -1,6 +1,7 @@
 import type {
   DownstreamActionExecutionPreparationService,
   ProductRecordMetadata,
+  RefinementExecutionInput,
   ReviewDecisionRoutingResult,
   ReviewDecisionRoutingResultRepository,
   RoutedActionExecutionResult,
@@ -10,6 +11,7 @@ import type {
 export type PrepareRoutedActionRequest = {
   reviewDecisionRoutingResultId: string;
   targetEntityRefs: Omit<RoutedActionTargetEntityRefs, "setupFamilyId">;
+  refinementInput?: RefinementExecutionInput;
   preparedBy: string;
   preparedAt: string;
   originRunId?: string;
@@ -97,6 +99,7 @@ const buildCommand = (
     preparedBy: request.preparedBy,
     preparedAt: request.preparedAt,
     ...(request.originRunId ? { originRunId: request.originRunId } : {}),
+    ...(request.refinementInput ? { refinementInput: request.refinementInput } : {}),
     routeMetadataSnapshot: {
       routeStatus: routingResult.status,
       ...(routingResult.routedAt ? { routedAt: routingResult.routedAt } : {}),

@@ -3,6 +3,7 @@ import type { ReviewDecisionRoutingResultRepository } from "../repositories/revi
 import type { RoutedActionExecutionEnvelopeRepository } from "../repositories/routed-action-execution-envelope-repository.js";
 import type {
   BuildRoutedActionExecutionEnvelopeCommand,
+  RefinementExecutionInput,
   RouteMetadataSnapshot
 } from "./build-routed-action-execution-envelope-command.js";
 import type {
@@ -30,6 +31,26 @@ export type DownstreamActionExecutionPreparationService = {
 
 const asErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "unexpected routed action execution envelope failure";
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === "string" && value.trim().length > 0;
+
+const isValidRefinementInput = (value: unknown): value is RefinementExecutionInput => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const input = value as Record<string, unknown>;
+  return (
+    isNonEmptyString(input.requestedBy) &&
+    isNonEmptyString(input.requestedAt) &&
+    Number.isFinite(Date.parse(input.requestedAt)) &&
+    isNonEmptyString(input.refinementRationaleSummary) &&
+    isNonEmptyString(input.requestedChangesSummary) &&
+    (input.evidenceReferences === undefined ||
+      (Array.isArray(input.evidenceReferences) && input.evidenceReferences.every(isNonEmptyString)))
+  );
+};
 
 const expectedCommandType = (
   target: DownstreamActionTarget
@@ -101,6 +122,9 @@ const buildPayloadSnapshot = (
 
   if (command.downstreamActionTarget === "create_setup_refinement_request") {
     const setupDefinitionId = command.targetEntityRefs.setupDefinitionId as string;
+    const refinementInput = command.refinementInput as NonNullable<
+      BuildRoutedActionExecutionEnvelopeCommand["refinementInput"]
+    >;
     return {
       commandType: "CreateSetupRefinementRequestCommand",
       target: "create_setup_refinement_request",
@@ -108,7 +132,8 @@ const buildPayloadSnapshot = (
         setupDefinitionId,
         setupFamilyId: command.targetEntityRefs.setupFamilyId,
         sourceReviewDecisionId: command.researchReviewDecisionId,
-        sourceRoutingResultId: command.reviewDecisionRoutingResultId
+        sourceRoutingResultId: command.reviewDecisionRoutingResultId,
+        ...refinementInput
       }
     };
   }
@@ -298,6 +323,21 @@ export const createDownstreamActionExecutionPreparationService = (
             researchReviewDecisionId: command.researchReviewDecisionId,
             actionTarget: command.downstreamActionTarget,
             reason: "setupDefinitionId is required for lifecycle-mutation/refinement execution envelopes",
+            warnings: []
+          };
+        }
+
+        if (
+          command.downstreamActionTarget === "create_setup_refinement_request" &&
+          (!isNonEmptyString(command.targetEntityRefs.researchDecisionApprovalId) ||
+            !isValidRefinementInput(command.refinementInput))
+        ) {
+          return {
+            status: "rejected_validation",
+            reviewDecisionRoutingResultId: command.reviewDecisionRoutingResultId,
+            researchReviewDecisionId: command.researchReviewDecisionId,
+            actionTarget: command.downstreamActionTarget,
+            reason: "refinement execution envelopes require approval and complete immutable refinement input",
             warnings: []
           };
         }

@@ -22,6 +22,14 @@ export type RouteMetadataSnapshot = {
   downstreamCommandType?: ReviewDecisionDownstreamCommandType;
 };
 
+export type RefinementExecutionInput = {
+  requestedBy: string;
+  requestedAt: TimestampUtc;
+  refinementRationaleSummary: string;
+  requestedChangesSummary: string;
+  evidenceReferences?: string[];
+};
+
 export type BuildRoutedActionExecutionEnvelopeCommand = {
   reviewDecisionRoutingResultId: string;
   researchReviewDecisionId: string;
@@ -31,4 +39,5 @@ export type BuildRoutedActionExecutionEnvelopeCommand = {
   preparedAt: TimestampUtc;
   originRunId?: string;
   routeMetadataSnapshot?: RouteMetadataSnapshot;
+  refinementInput?: RefinementExecutionInput;
 };

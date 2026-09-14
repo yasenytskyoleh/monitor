@@ -328,6 +328,7 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "review_decision_routing_result",
     "routed_action_execution_envelope",
     "execution_attempt_audit",
+    "pattern_notification",
     "setup_lifecycle_mutation_record",
     "setup_refinement_request",
     "setup_definition_revision",
@@ -344,6 +345,7 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "detection_pipeline",
     "evaluation_pipeline",
     "research_aggregation_pipeline",
+    "notification_pipeline",
     "manual_curation",
     "migration_backfill"
   ]);
@@ -355,13 +357,14 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "research_service",
     "research_run_service",
     "research_aggregation_service",
-    "execution_attempt_audit_service"
+    "execution_attempt_audit_service",
+    "pattern_notification_delivery_service"
   ]);
   assert.deepEqual(FIRST_PERSISTED_PRODUCT_SLICE, ["setup_definition", "research_hypothesis"]);
-  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 16);
+  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 17);
   assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
   assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
-  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 16);
+  assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 17);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
   assert.deepEqual(MARKET_DATA_PROVIDER_KINDS, ["exchange_adapter"]);
   assert.deepEqual(MARKET_DATA_SOURCE_STATUSES, ["active", "degraded", "paused"]);

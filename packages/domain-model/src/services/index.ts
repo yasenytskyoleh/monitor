@@ -125,3 +125,17 @@ export {
   ExecutionAttemptAuditValidationError,
   createExecutionAttemptAuditService
 } from "./execution-attempt-audit-service.js";
+export type {
+  ClaimPatternNotificationDeliveryRequest,
+  PatternNotificationDeliveryService,
+  PatternNotificationDeliveryServiceDependencies,
+  ReconcilePatternNotificationDeliveryRequest,
+  ReconcilePatternNotificationDeliveryResult,
+  RecordPatternNotificationDeliveryOutcomeRequest,
+  RetainPatternNotificationRequest,
+  RetainPatternNotificationResult
+} from "./pattern-notification-delivery-service.js";
+export {
+  PatternNotificationDeliveryValidationError,
+  createPatternNotificationDeliveryService
+} from "./pattern-notification-delivery-service.js";

@@ -44,7 +44,11 @@ test("routed-action-execution-envelope mapper round-trips target refs and payloa
         setupDefinitionId: "setup-definition-001",
         setupFamilyId: "setup-family-001",
         sourceReviewDecisionId: "review-decision-001",
-        sourceRoutingResultId: "routing-result-001"
+        sourceRoutingResultId: "routing-result-001",
+        requestedBy: "review-operator-001",
+        requestedAt: "2026-07-02T10:05:00.000Z",
+        refinementRationaleSummary: "The setup needs a revised confirmation rule.",
+        requestedChangesSummary: "Add a stronger confirmation condition."
       }
     },
     executionStatus: "prepared",

@@ -228,12 +228,18 @@ Current product-domain scope includes:
 - `review_decision_routing_result` now also has its durable contract, committed Prisma schema/migration, relational adapter contract, mappers, adapter-backed repository, concrete Prisma adapter, shared-bundle composition, and opt-in real-Postgres integration coverage
 - `routed_action_execution_result` is product-ephemeral; `execution_attempt_audit` is the dedicated
   retained audit entity, and the generic runtime records received and terminal sanitized outcomes
+- all current non-trading routed-action targets execute through audited activation, lifecycle, and
+  refinement envelope executors; refinement requests use immutable reviewer-supplied input
+- a pattern-notification eligibility runtime now combines fresh BTC signal candidates with explicit
+  compatible aggregate evidence using caller-configured quality thresholds; eligible records are
+  retained immutably with a unique deduplication key and one provider-neutral delivery lifecycle;
+  Telegram is the first explicit adapter with runtime-supplied credentials and stable outcomes
 - no UI yet
 - no automated trading logic
 
 ## Recommended next step
-- define a provider-specific downstream executor and its authorization and retry policy only when an
-  external action is explicitly approved
+- define reconciliation for ambiguous Telegram delivery attempts; keep alerts as explainable human
+  decision support and automated trading out of scope
 
 ## Behavioral instructions for future assistants
 When continuing this project:

@@ -1,27 +1,40 @@
 # Next Steps
 
 ## Current recommended next step
-### Run the research-run real-Postgres integration rollout
+### Add durable scheduler run ownership around the bounded delivery runs
 
 Reason:
-- `research_run` now has relational mappers, a repository adapter, a Prisma adapter, and shared Prisma composition coverage
-- the shared integration suite now also executes the repository-composed setup-to-aggregate flow
-  and verifies its completed durable run and aggregate
-- the real-Postgres test remains environment-gated and should run against the deployment target before durable run writes are enabled
-- the research-run migration must be applied through the production migration workflow
+- eligible BTC notifications now have a unique durable record, immutable evidence snapshot, and
+  at-most-once delivery claim
+- a provider-neutral contract records stable delivered/failed outcomes without storing provider
+  payloads
+- Telegram is the first explicit configured delivery adapter; it returns stable outcomes without
+  reading or persisting response bodies
+- an ambiguous `delivery_attempted` record can now be terminalized after a caller-defined grace
+  period as `delivery_outcome_unconfirmed`, without re-queueing or resending the alert
+- the claim, Telegram invocation, and terminal-outcome recording steps are now composed in one
+  explicit caller workflow with an `outcome_unconfirmed` result for ambiguous completion
+- a caller-invoked dispatch now declares an in-process cadence guard and bounded delivery work
+- leased delivery attempts now persist an owner ID and expiry; terminal recording requires that
+  owner and reconciliation waits for expiry
+- the Telegram workflow now acquires a durable lease at claim time, bounds Telegram execution,
+  and reserves positive terminal-recording grace before expiry
+- a bounded reconciliation runner observes lease expiry plus clock-skew tolerance and only
+  terminalizes unresolved attempts; it cannot send or re-queue alerts
 
 ## Recommended near-future sequence
-1. run `pnpm --filter @monitor/domain-model test:integration` with `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL` configured
-   and a reachable disposable Postgres database
-2. apply `20260727103000_product_domain_research_run_relational_v1` through the deployment migration workflow
-3. enable durable research-run writes in the target runtime composition
+1. add durable scheduler run ownership around the bounded delivery and reconciliation runs
+2. connect a real monitored BTC market-data ingestion path after the delivery runtime's process
+   ownership is explicit
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
-- expanding into runtime review/execution workflow logic prematurely
-- mixing activation workflow semantics or later mutation/refinement runtime behavior into downstream durable-slice planning and rollout work
+- inferring manual-approval or reviewer-supplied command fields from routing metadata
+- adding provider retries, an unbounded queue, automatic reconciliation, or trading integration
+  before the lease and scheduler contracts are explicit
+- presenting an alert as investment advice or using it to place an order automatically
 
 ## Baseline verification commands
 Use these commands before and after implementation work:

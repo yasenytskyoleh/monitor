@@ -107,11 +107,12 @@ const rememberEventId = (eventId: string, eventIds: Set<string>, eventIdOrder: s
 const buildCommand = (
   detector: ClosedCandleBreakoutDetectorConfig,
   candle: CandleClosedEvent,
+  setupDefinitionId: string,
   setupRevisionId: string,
   detectionHitId: string,
   threshold: number
 ): DetectionToCandidateCommand => ({
-  setupDefinitionId: detector.setupDefinitionId,
+  setupDefinitionId,
   setupRevisionId,
   monitoredSymbolId: detector.monitoredSymbolId,
   detectedAt: candle.eventTimestampUtc,
@@ -228,6 +229,7 @@ export const createClosedCandlePatternDetectionRuntime = (
               buildCommand(
                 detector,
                 candle,
+                resolution.resolution.revisionRef.setupDefinitionId,
                 resolution.resolution.revisionRef.setupRevisionId,
                 detectionHitId,
                 threshold

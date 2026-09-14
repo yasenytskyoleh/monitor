@@ -64,17 +64,49 @@ export const createActivationEnvelopeExecutor = (
   },
 });
 
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === "string" && value.trim().length > 0;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 const activationPayload = (envelope: RoutedActionExecutionEnvelope) => {
   if (
     envelope.executionStatus !== "prepared" ||
     envelope.actionTarget !== "activate_setup_revision" ||
     envelope.actionCommandType !== "ActivateSetupDefinitionRevisionCommand" ||
+    envelope.executionPayloadSnapshot.commandType !== "ActivateSetupDefinitionRevisionCommand" ||
     envelope.executionPayloadSnapshot.target !== "activate_setup_revision"
   ) {
     return null;
   }
 
-  return envelope.executionPayloadSnapshot.commandInput;
+  const payload = envelope.executionPayloadSnapshot.commandInput as unknown;
+  if (
+    !isRecord(payload) ||
+    !isNonEmptyString(payload.setupRevisionId) ||
+    !isNonEmptyString(payload.setupFamilyId) ||
+    !isNonEmptyString(payload.sourceReviewDecisionId) ||
+    !isNonEmptyString(payload.sourceRoutingResultId)
+  ) {
+    return null;
+  }
+
+  if (
+    payload.setupRevisionId !== envelope.targetEntityRefs.setupRevisionId ||
+    payload.setupFamilyId !== envelope.targetEntityRefs.setupFamilyId ||
+    payload.sourceReviewDecisionId !== envelope.sourceReviewDecisionId ||
+    payload.sourceRoutingResultId !== envelope.sourceRoutingResultId
+  ) {
+    return null;
+  }
+
+  return {
+    setupRevisionId: payload.setupRevisionId,
+    setupFamilyId: payload.setupFamilyId,
+    sourceReviewDecisionId: payload.sourceReviewDecisionId,
+    sourceRoutingResultId: payload.sourceRoutingResultId
+  };
 };
 
 const metadataFor = (envelope: RoutedActionExecutionEnvelope, activatedAt: string): ProductRecordMetadata => ({

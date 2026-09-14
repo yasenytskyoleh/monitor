@@ -15,6 +15,31 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  apps/btc-monitor:
+    dependencies:
+      '@monitor/binance-spot':
+        specifier: workspace:*
+        version: link:../../packages/binance-spot
+      '@monitor/candle-evaluation':
+        specifier: workspace:*
+        version: link:../../packages/candle-evaluation
+      '@monitor/domain-model':
+        specifier: workspace:*
+        version: link:../../packages/domain-model
+      '@monitor/pattern-detection':
+        specifier: workspace:*
+        version: link:../../packages/pattern-detection
+      '@monitor/pattern-notification':
+        specifier: workspace:*
+        version: link:../../packages/pattern-notification
+    devDependencies:
+      '@types/node':
+        specifier: ^24.7.2
+        version: 24.12.2
+      tsx:
+        specifier: ^4.20.6
+        version: 4.21.0
+
   apps/orchestrator-runner:
     dependencies:
       '@monitor/agent-config':
@@ -153,6 +178,19 @@ importers:
         specifier: ^4.20.6
         version: 4.21.0
 
+  packages/lifecycle-envelope-executor:
+    dependencies:
+      '@monitor/domain-model':
+        specifier: workspace:*
+        version: link:../domain-model
+    devDependencies:
+      '@types/node':
+        specifier: ^24.7.2
+        version: 24.12.2
+      tsx:
+        specifier: ^4.20.6
+        version: 4.21.0
+
   packages/orchestrator-core:
     dependencies:
       '@monitor/agent-config':
@@ -167,6 +205,32 @@ importers:
         version: 4.21.0
 
   packages/pattern-detection:
+    dependencies:
+      '@monitor/domain-model':
+        specifier: workspace:*
+        version: link:../domain-model
+    devDependencies:
+      '@types/node':
+        specifier: ^24.7.2
+        version: 24.12.2
+      tsx:
+        specifier: ^4.20.6
+        version: 4.21.0
+
+  packages/pattern-notification:
+    dependencies:
+      '@monitor/domain-model':
+        specifier: workspace:*
+        version: link:../domain-model
+    devDependencies:
+      '@types/node':
+        specifier: ^24.7.2
+        version: 24.12.2
+      tsx:
+        specifier: ^4.20.6
+        version: 4.21.0
+
+  packages/refinement-envelope-executor:
     dependencies:
       '@monitor/domain-model':
         specifier: workspace:*

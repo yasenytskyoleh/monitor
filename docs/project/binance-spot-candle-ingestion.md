@@ -16,6 +16,8 @@ Only normalized events cross into `@monitor/domain-model`.
   buffers closed stream messages during backfill, then emits the deduplicated history and buffer.
 - A live session emits only candles whose provider payload marks them closed. It reconnects with a
   bounded exponential delay and backfills from the earliest in-memory candle after a disconnect.
+- Within each source/symbol/timeframe stream, the feed emits only strictly increasing candle open
+  times; late or out-of-order live candles are ignored before they can reach rolling detection.
 
 Each normalized event has a deterministic ID based on provider symbol, interval, and candle open
 time. Malformed payloads and payloads for an unconfigured symbol are reported to the optional sink
@@ -31,6 +33,12 @@ error handler and are never emitted as domain events.
   must provide a fresh historical range before relying on live events.
 - No scheduler, worker lifecycle, persistence/replay store, alerting, or pattern-detection policy
   is part of this package.
+
+`@monitor/pattern-detection` provides a separate, provider-neutral feed bridge that accepts this
+feed's closed-candle contract and forwards every candle to the deterministic detection runtime.
+The bridge reports source and detection errors without making either package depend on the other.
+It has no checkpoint, retry queue, or timer; its caller still supplies the historical range and
+owns the lifetime of the returned subscription.
 
 ## Verification
 

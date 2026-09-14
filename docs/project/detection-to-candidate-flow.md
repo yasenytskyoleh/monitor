@@ -13,6 +13,7 @@
 ## Ownership boundaries
 - detection/runtime side:
   - event normalization
+  - feed-to-detector composition for closed historical and live candles
   - deterministic rule evaluation
   - active revision resolution
   - hit payload construction
@@ -35,7 +36,7 @@
 - handoff may include origin metadata but does not store product records in runtime artifact folders
 
 ## Postponed work
-- live event ingestion runtime implementation
+- durable candle checkpoints and replay after a process restart
 - background retries/queues
 - scheduled detection jobs
 - full event bus and worker topology

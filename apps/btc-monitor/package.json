@@ -1,0 +1,35 @@
+{
+  "name": "@monitor/btc-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "prebuild": "pnpm --filter @monitor/binance-spot build && pnpm --filter @monitor/candle-evaluation build && pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/pattern-detection build && pnpm --filter @monitor/pattern-notification build",
+    "build": "tsc -p tsconfig.json",
+    "pretypecheck": "pnpm --filter @monitor/binance-spot build && pnpm --filter @monitor/candle-evaluation build && pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/pattern-detection build && pnpm --filter @monitor/pattern-notification build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "pnpm --filter @monitor/binance-spot build && pnpm --filter @monitor/candle-evaluation build && pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/pattern-detection build && pnpm --filter @monitor/pattern-notification build",
+    "test": "node --import tsx --test ./test/**/*.test.ts",
+    "prestart": "pnpm --filter @monitor/binance-spot build && pnpm --filter @monitor/candle-evaluation build && pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/pattern-detection build && pnpm --filter @monitor/pattern-notification build",
+    "start": "node --env-file-if-exists=../../.env --import tsx src/index.ts",
+    "evaluate": "node --env-file-if-exists=../../.env --import tsx src/evaluate.ts",
+    "notify": "node --env-file-if-exists=../../.env --import tsx src/notify.ts",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@monitor/binance-spot": "workspace:*",
+    "@monitor/candle-evaluation": "workspace:*",
+    "@monitor/domain-model": "workspace:*",
+    "@monitor/pattern-detection": "workspace:*",
+    "@monitor/pattern-notification": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "tsx": "^4.20.6"
+  }
+}

@@ -1,5 +1,6 @@
 export type {
   BuildRoutedActionExecutionEnvelopeCommand,
+  RefinementExecutionInput,
   RouteMetadataSnapshot,
   RoutedActionTargetEntityRefs
 } from "./build-routed-action-execution-envelope-command.js";
