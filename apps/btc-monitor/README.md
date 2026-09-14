@@ -23,7 +23,10 @@ Start the long-running container with `pnpm btc-monitor:docker`. Stop it and the
 3. Add any desired overrides to `.env`.
 4. Run `pnpm btc-monitor` from the repository root.
 
-The process logs JSON records for startup, detected/rejected/failed outcomes, and feed errors. Stop it with `SIGINT` or `SIGTERM`; it drains the market-data feed before disconnecting from Postgres.
+The process logs JSON records for startup, detected/rejected/failed outcomes, feed errors, and each
+live five-minute candle. The `btc_monitor_progress` record carries cumulative live 1m/5m counts so
+a soak can distinguish an idle market from a stalled feed. Backfill progress is suppressed. Stop the
+process with `SIGINT` or `SIGTERM`; it drains the market-data feed before disconnecting from Postgres.
 
 ## Evaluate historical outcomes
 
@@ -89,3 +92,11 @@ Give the process environment the required database and monitor values. Only the 
 needs `BTC_MONITOR_TELEGRAM_BOT_TOKEN` and `BTC_MONITOR_TELEGRAM_CHAT_ID`; keep both in the host's
 secret store or protected environment file. The notifier rejects stale alerts and reconciles an
 interrupted attempt before it sends new pending notifications.
+
+Both bounded commands acquire a Postgres-owned run before processing. `btc-evaluate` is owned per
+setup definition and monitored symbol; `btc-notify` is owned globally because it scans the shared
+pending-delivery set. Ownership uses a 120-second lease renewed every 30 seconds. A concurrent
+invocation emits a structured `already_running` result and exits successfully. After a crash, the
+next invocation can replace an expired lease and records the previous run as `abandoned`; stale
+owners cannot renew or write terminal evidence. Run summaries contain counts only and never retain
+Telegram credentials or provider response bodies.

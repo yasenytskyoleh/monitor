@@ -55,7 +55,12 @@ export type BtcEvaluationRunnerOptions = {
   monitoredSymbolId: string;
   now?: () => Date;
   repositories: EvaluationRepositories;
+  signal?: AbortSignal;
   setupDefinitionId: string;
+};
+
+const throwIfAborted = (signal: AbortSignal | undefined): void => {
+  if (signal?.aborted) throw signal.reason ?? new Error("BTC evaluation aborted");
 };
 
 const buildMetadata = (observedAt: string) => ({
@@ -154,6 +159,7 @@ export const createBtcEvaluationRunner = (
 
   return {
     async run(): Promise<BtcEvaluationRunResult[]> {
+      throwIfAborted(options.signal);
       const candidates = await options.repositories.signalCandidateRepository.listByStatus([
         "detected",
         "under_review",
@@ -181,6 +187,7 @@ export const createBtcEvaluationRunner = (
       );
       const results: BtcEvaluationRunResult[] = [];
       for (const candidate of [...pendingCandidates, ...recoveryCandidates].slice(0, maxCandidates)) {
+        throwIfAborted(options.signal);
         if (!isDue(candidate, now())) {
           results.push({ candidateId: candidate.id, status: "not_due" });
           continue;
@@ -213,6 +220,7 @@ export const createBtcEvaluationRunner = (
             startTimeUtc: new Date(detectionOpenMs).toISOString(),
             endTimeUtc: new Date(windowEndMs).toISOString()
           });
+          throwIfAborted(options.signal);
           const window = selectWindow(candidate, candles);
           if (!window) {
             results.push({ candidateId: candidate.id, status: "skipped", reason: "detection candle unavailable" });
@@ -233,6 +241,7 @@ export const createBtcEvaluationRunner = (
             ? { candidateId: candidate.id, status: "failed", evaluation, reason }
             : { candidateId: candidate.id, status: "completed", evaluation });
         } catch (error: unknown) {
+          throwIfAborted(options.signal);
           results.push({
             candidateId: candidate.id,
             status: "failed",

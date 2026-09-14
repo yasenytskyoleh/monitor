@@ -52,6 +52,8 @@ Identity contracts:
   created when evidence is converted into a setup recommendation, updated on review-status changes, archive-capable
 - runtime `run.json` and related files:
   orchestration evidence only, not product-domain records
+- `runtime_control.scheduled_job_run`:
+  operational ownership and terminal run counts only, not product-domain or research evidence
 
 ## Orchestration-to-product linkage
 Allowed:

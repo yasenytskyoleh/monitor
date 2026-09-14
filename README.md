@@ -42,3 +42,6 @@ pnpm btc-monitor
 ```
 
 See `apps/btc-monitor/README.md` for evaluation, notification, configuration, and scheduling details.
+
+The bounded evaluation and notification commands acquire renewable ownership in Postgres before
+work begins. Concurrent invocations for the same scope exit successfully without duplicating work.

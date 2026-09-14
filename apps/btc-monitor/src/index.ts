@@ -13,6 +13,41 @@ import { loadBtcMonitorConfiguration } from "./config.js";
 
 type ConsoleLogger = Pick<Console, "error" | "info">;
 
+export type BtcMonitorProgressReporter = {
+  markLive(): void;
+  onProcessed(event: ClosedCandlePatternDetectionFeedEvent): void;
+};
+
+export const createBtcMonitorProgressReporter = (
+  logger: ConsoleLogger
+): BtcMonitorProgressReporter => {
+  let live = false;
+  const candleCounts = { "1m": 0, "5m": 0 };
+  return {
+    markLive(): void {
+      live = true;
+    },
+    onProcessed(event): void {
+      if (!live) return;
+      const timeframe = event.candle.payload.timeframe;
+      if (timeframe !== "1m" && timeframe !== "5m") return;
+      candleCounts[timeframe] += 1;
+      if (timeframe !== "5m") return;
+      const outcomeCounts: Record<string, number> = {};
+      for (const outcome of event.outcomes) {
+        outcomeCounts[outcome.status] = (outcomeCounts[outcome.status] ?? 0) + 1;
+      }
+      logger.info(JSON.stringify({
+        kind: "btc_monitor_progress",
+        observedAt: event.candle.eventTimestampUtc,
+        lastEventId: event.candle.eventId,
+        liveCandleCounts: candleCounts,
+        outcomeCounts
+      }));
+    }
+  };
+};
+
 const createWebSocket = (url: string): BinanceSpotWebSocket => {
   if (!globalThis.WebSocket) throw new Error("This Node.js runtime does not provide a global WebSocket implementation");
   return new globalThis.WebSocket(url);
@@ -41,6 +76,7 @@ export const runBtcMonitor = async (
     databaseSchema: configuration.databaseSchema
   };
   const repositories = createImplementedProductRelationalPrismaRepositories(persistenceOptions);
+  const progressReporter = createBtcMonitorProgressReporter(logger);
   let subscription: { stop(): Promise<void> } | undefined;
   let shutdownRequested = false;
   let shutdown: Promise<void> | undefined;
@@ -82,6 +118,7 @@ export const runBtcMonitor = async (
       onNotification(outcome): void {
         logger.info(JSON.stringify({ kind: "btc_monitor_notification", ...outcome }));
       },
+      onProcessed: progressReporter.onProcessed,
       onError(error): void { logError(logger, error); }
     });
     subscription = await runtime.start();
@@ -90,6 +127,7 @@ export const runBtcMonitor = async (
       await shutdown;
       return;
     }
+    progressReporter.markLive();
     logger.info(JSON.stringify({
       kind: "btc_monitor_started",
       setupDefinitionId: configuration.setupDefinitionId,

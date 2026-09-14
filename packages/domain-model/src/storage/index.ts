@@ -2,12 +2,14 @@ export {
   DEFAULT_STORAGE_TECHNOLOGY_DIRECTION,
   PRODUCT_EPHEMERAL_ENTITY_TYPES,
   PRODUCT_PERSISTED_ENTITY_TYPES,
+  RUNTIME_CONTROL_ENTITY_TYPES,
   RUNTIME_EVIDENCE_ARTIFACT_TYPES,
   STORAGE_BOUNDARIES
 } from "./storage-boundary.js";
 export type {
   ProductEphemeralEntityType,
   ProductPersistedEntityType,
+  RuntimeControlEntityType,
   RuntimeEvidenceArtifactType,
   StorageBoundary,
   StorageTechnologyDirection

@@ -269,13 +269,13 @@ Current limitation:
     records outcomes under a durable bounded execution lease, while bounded caller-invoked
     dispatch and reconciliation runs process pending and unconfirmed records without retrying or
     resending; Telegram is the first provider adapter with runtime-only credentials, but there is
-    no scheduler, automatic reconciliation, or trading implementation
+    no background scheduler, automatic retry, or trading implementation
   - a containerized local pilot packages migration, canonical seed, bounded Binance smoke, and
     long-running monitor workflows without enabling Telegram delivery or trading
   - no UI yet
 
 Current recommended next step:
-- add durable scheduler run ownership now that the containerized BTC real-data pilot is available
+- complete the instrumented 24-hour BTC soak, then configure external cadence for the owned bounded jobs
   and verified; keep alerts as explainable human decision support and automated trading outside
   the current phase
 

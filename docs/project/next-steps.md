@@ -1,19 +1,19 @@
 # Next Steps
 
 ## Current recommended next step
-### Add durable scheduler run ownership after the BTC pilot
+### Complete the 24-hour BTC soak, then wire external cadence
 
 Reason:
 - Binance REST backfill and WebSocket ingestion are connected to the real product persistence path
 - the canonical BTC setup can now be migrated and seeded reproducibly without destructive resets
 - the bounded pilot proves Postgres, historical ingestion, live ingestion, idempotency, and graceful cleanup
-- evaluation and Telegram delivery already exist as explicit bounded host commands
-- unattended ownership is now the missing boundary; feature expansion remains deferred
+- evaluation and Telegram delivery are bounded commands with durable cross-process run ownership
+- external cadence and operational observation are now the remaining deployment boundary
 
 ## Recommended near-future sequence
-1. continue a longer local soak with `pnpm btc-monitor:docker` and inspect its structured logs
-2. define durable scheduler ownership and overlap prevention for bounded jobs
-3. schedule evaluation, notification delivery, and reconciliation only after that ownership exists
+1. complete the 24-hour local soak and verify advancing `btc_monitor_progress` events
+2. configure an external cadence for the owned evaluation and composite notification jobs
+3. observe run history, overlap skips, and expired-lease takeover before any retry policy is considered
 4. keep Telegram delivery opt-in and keep trading out of scope
 
 ## Things to avoid while moving forward
@@ -21,8 +21,7 @@ Reason:
 - treating implemented in-memory persistence as durable product storage
 - changing service-owned business rules while adding persistence infrastructure
 - inferring manual-approval or reviewer-supplied command fields from routing metadata
-- adding provider retries, an unbounded queue, automatic reconciliation, or trading integration
-  before the lease and scheduler contracts are explicit
+- adding provider retries, an unbounded queue, a scheduler daemon, or trading integration
 - presenting an alert as investment advice or using it to place an order automatically
 
 ## Baseline verification commands
