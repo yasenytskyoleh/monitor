@@ -562,3 +562,194 @@ test("serializes live candle delivery while a sink is still processing", async (
 
   await subscription.stop();
 });
+
+test("reconnects when only the one-minute stream goes stale", async () => {
+  const sockets: FakeWebSocket[] = [];
+  const recoveries: string[] = [];
+  let currentTimeMs = NOW.getTime();
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: createFetch({}),
+    createWebSocket: () => {
+      const socket = new FakeWebSocket();
+      sockets.push(socket);
+      return socket;
+    },
+    now: () => new Date(currentTimeMs),
+    reconnectBaseDelayMs: 0,
+    livenessCheckIntervalMs: 1,
+    staleAfterMsByInterval: { "1m": 180_000, "5m": 600_000 },
+    onRecoveryEvent: ({ kind, interval }) => recoveries.push(`${kind}:${interval ?? "all"}`)
+  });
+  const start = feed.startClosedCandleFeed(
+    { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+    { onCandle: () => undefined }
+  );
+  sockets[0]?.emitOpen();
+  const subscription = await start;
+
+  currentTimeMs += 181_000;
+  sockets[0]?.emitMessage(webSocketKline(NOW.getTime(), "5m"));
+  await waitForTimers();
+  await new Promise<void>((resolve) => setTimeout(resolve, 5));
+  assert.equal(sockets[0]?.closed, true);
+  assert.equal(sockets.length, 2);
+  assert.ok(recoveries.includes("stream_stale:1m"));
+  sockets[1]?.emitOpen();
+  await waitForTimers();
+  assert.ok(recoveries.includes("reconnected:all"));
+  await subscription.stop();
+});
+
+test("reconnects once when both streams go stale", async () => {
+  const sockets: FakeWebSocket[] = [];
+  let currentTimeMs = NOW.getTime();
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: createFetch({}),
+    createWebSocket: () => {
+      const socket = new FakeWebSocket();
+      sockets.push(socket);
+      return socket;
+    },
+    now: () => new Date(currentTimeMs),
+    reconnectBaseDelayMs: 0,
+    livenessCheckIntervalMs: 1
+  });
+  const start = feed.startClosedCandleFeed(
+    { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+    { onCandle: () => undefined }
+  );
+  sockets[0]?.emitOpen();
+  const subscription = await start;
+  currentTimeMs += 601_000;
+  await new Promise<void>((resolve) => setTimeout(resolve, 5));
+  assert.equal(sockets.length, 2);
+  sockets[1]?.emitOpen();
+  await waitForTimers();
+  await subscription.stop();
+});
+
+test("reconnects when only the five-minute stream goes stale", async () => {
+  const sockets: FakeWebSocket[] = [];
+  const recoveries: string[] = [];
+  let currentTimeMs = NOW.getTime();
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: createFetch({}),
+    createWebSocket: () => {
+      const socket = new FakeWebSocket();
+      sockets.push(socket);
+      return socket;
+    },
+    now: () => new Date(currentTimeMs),
+    reconnectBaseDelayMs: 0,
+    livenessCheckIntervalMs: 1,
+    onRecoveryEvent: ({ kind, interval }) => recoveries.push(`${kind}:${interval ?? "all"}`)
+  });
+  const start = feed.startClosedCandleFeed(
+    { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+    { onCandle: () => undefined }
+  );
+  sockets[0]?.emitOpen();
+  const subscription = await start;
+  currentTimeMs += 601_000;
+  sockets[0]?.emitMessage(webSocketKline(NOW.getTime(), "1m"));
+  await waitForTimers();
+  await new Promise<void>((resolve) => setTimeout(resolve, 5));
+  assert.equal(sockets.length, 2);
+  assert.ok(recoveries.includes("stream_stale:5m"));
+  sockets[1]?.emitOpen();
+  await waitForTimers();
+  await subscription.stop();
+});
+
+test("detects a live gap and fills it before buffered candles without duplicates", async () => {
+  const sockets: FakeWebSocket[] = [];
+  const delivered: string[] = [];
+  const recoveries: string[] = [];
+  const startTimeMs = Date.parse("2026-07-29T00:00:00.000Z");
+  let oneMinuteRequests = 0;
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: async (input) => {
+      const interval = new URL(input.toString()).searchParams.get("interval");
+      if (interval !== "1m") return new Response("[]", { status: 200 });
+      oneMinuteRequests += 1;
+      const rows = [restKline(startTimeMs, ONE_MINUTE_MS)];
+      if (oneMinuteRequests > 1) {
+        rows.push(restKline(startTimeMs + ONE_MINUTE_MS, ONE_MINUTE_MS));
+        rows.push(restKline(startTimeMs + 2 * ONE_MINUTE_MS, ONE_MINUTE_MS));
+      }
+      return new Response(JSON.stringify(rows), { status: 200 });
+    },
+    createWebSocket: () => {
+      const socket = new FakeWebSocket();
+      sockets.push(socket);
+      return socket;
+    },
+    now: () => NOW,
+    reconnectBaseDelayMs: 0,
+    onRecoveryEvent: ({ kind }) => recoveries.push(kind)
+  });
+  const start = feed.startClosedCandleFeed(
+    { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+    { onCandle: (event) => { delivered.push(event.eventId); } }
+  );
+  sockets[0]?.emitOpen();
+  const subscription = await start;
+  sockets[0]?.emitMessage(webSocketKline(startTimeMs + 2 * ONE_MINUTE_MS, "1m"));
+  await waitForTimers();
+  assert.equal(sockets[0]?.closed, true);
+  await waitForTimers();
+  assert.equal(sockets.length, 2);
+  sockets[1]?.emitOpen();
+  await waitForTimers();
+  await waitForTimers();
+
+  assert.deepEqual(delivered, [
+    `binance-spot:BTCUSDT:1m:${startTimeMs}`,
+    `binance-spot:BTCUSDT:1m:${startTimeMs + ONE_MINUTE_MS}`,
+    `binance-spot:BTCUSDT:1m:${startTimeMs + 2 * ONE_MINUTE_MS}`
+  ]);
+  assert.deepEqual(recoveries, ["gap_detected", "reconnected"]);
+  await subscription.stop();
+});
+
+test("retries REST catch-up after a reconnect failure", async () => {
+  const sockets: FakeWebSocket[] = [];
+  const errors: string[] = [];
+  const startTimeMs = Date.parse("2026-07-29T00:00:00.000Z");
+  let oneMinuteRequests = 0;
+  const feed = createBinanceSpotCandleFeed({
+    fetchImpl: async (input) => {
+      if (new URL(input.toString()).searchParams.get("interval") !== "1m") {
+        return new Response("[]", { status: 200 });
+      }
+      oneMinuteRequests += 1;
+      if (oneMinuteRequests === 2) return new Response("unavailable", { status: 503 });
+      return new Response(JSON.stringify([restKline(startTimeMs, ONE_MINUTE_MS)]), { status: 200 });
+    },
+    createWebSocket: () => {
+      const socket = new FakeWebSocket();
+      sockets.push(socket);
+      return socket;
+    },
+    now: () => NOW,
+    reconnectBaseDelayMs: 0
+  });
+  const start = feed.startClosedCandleFeed(
+    { startTimeUtc: "2026-07-29T00:00:00.000Z" },
+    { onCandle: () => undefined, onError: (error) => { errors.push(error.message); } }
+  );
+  sockets[0]?.emitOpen();
+  const subscription = await start;
+  sockets[0]?.emitClose();
+  await waitForTimers();
+  sockets[1]?.emitOpen();
+  await waitForTimers();
+  await waitForTimers();
+  assert.equal(sockets[1]?.closed, true);
+  assert.equal(sockets.length, 3);
+  sockets[2]?.emitOpen();
+  await waitForTimers();
+  assert.ok(errors.includes("Binance REST kline request failed: 503"));
+  assert.equal(oneMinuteRequests, 3);
+  await subscription.stop();
+});

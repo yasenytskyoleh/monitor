@@ -1,7 +1,7 @@
 # Next Steps
 
 ## Current recommended next step
-### Complete the 24-hour BTC soak, then wire external cadence
+### Complete the six-hour BTC reliability soak, then wire external cadence
 
 Reason:
 - Binance REST backfill and WebSocket ingestion are connected to the real product persistence path
@@ -11,7 +11,7 @@ Reason:
 - external cadence and operational observation are now the remaining deployment boundary
 
 ## Recommended near-future sequence
-1. complete the 24-hour local soak and verify advancing `btc_monitor_progress` events
+1. complete six uninterrupted hours with advancing 1m/5m progress, recovered feed gaps, and no unresolved processing failures
 2. configure an external cadence for the owned evaluation and composite notification jobs
 3. observe run history, overlap skips, and expired-lease takeover before any retry policy is considered
 4. keep Telegram delivery opt-in and keep trading out of scope

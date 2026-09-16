@@ -12,3 +12,4 @@ export type {
   BinanceSpotCandleFeedOptions,
   BinanceSpotWebSocket
 } from "./types.js";
+export type { BinanceSpotFeedRecoveryEvent } from "./types.js";

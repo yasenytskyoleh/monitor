@@ -25,8 +25,24 @@ Start the long-running container with `pnpm btc-monitor:docker`. Stop it and the
 
 The process logs JSON records for startup, detected/rejected/failed outcomes, feed errors, and each
 live five-minute candle. The `btc_monitor_progress` record carries cumulative live 1m/5m counts so
-a soak can distinguish an idle market from a stalled feed. Backfill progress is suppressed. Stop the
+a soak can distinguish an idle market from a stalled feed. It also carries the last event ID and open
+time for each interval. `btc_monitor_feed_recovery` records a detected gap, stale stream, or completed
+REST catch-up without credentials. Backfill progress is suppressed. Stop the
 process with `SIGINT` or `SIGTERM`; it drains the market-data feed before disconnecting from Postgres.
+
+The feed checks both streams every 30 seconds. A missing closed 1m candle for three minutes or 5m
+candle for ten minutes, or a gap in either stream, closes the socket and reconnects. REST catch-up
+for both intervals completes before buffered live candles are released. A failed detector outcome
+stops the monitor with a non-zero exit code; Compose restarts it and the 24-hour startup backfill
+replays missed candles through the existing candidate deduplication. This automatic recovery covers
+database outages shorter than 24 hours. For a longer outage, set `BTC_MONITOR_BACKFILL_HOURS` to a
+sufficient value (maximum 720), run `pnpm btc-pilot` to verify the range, then restart the monitor.
+Do not reset the Postgres volume or invoke `btc-notify` as part of recovery.
+
+For the local acceptance soak, keep the PC and Postgres running for six uninterrupted hours. Check
+that the container has no unexplained restart, the 1m and 5m counters advance, the last event times
+remain contiguous after any recovery event, and no `btc_monitor_processing_failed` event remains.
+Stop with Compose and verify exit code 0. Power loss or sleep invalidates the six-hour window.
 
 ## Evaluate historical outcomes
 

@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.52 — Durable bounded-job ownership and BTC soak validation**
+**Phase 1.53 — BTC feed recovery and six-hour soak validation**
 
 ## What this phase is about
 This phase is focused on:
@@ -474,7 +474,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- complete the 24-hour instrumented BTC soak, then wire an external cadence for the durably owned
+- complete the six-hour instrumented BTC soak, then wire an external cadence for the durably owned
   evaluation and composite notification commands; preserve human decision support and keep order
   placement and automated trading out of scope
 

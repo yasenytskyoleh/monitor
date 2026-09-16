@@ -328,3 +328,42 @@ test("uses the revision activated for the historical candle rather than the conf
   assert.equal(candidate?.setupDefinitionId, activatedDefinition.id);
   assert.equal(candidate?.setupRevisionId, activatedRevision.id);
 });
+
+test("reports a persistence failure and safely replays the breakout after restart", async () => {
+  const repositories = await seedRepositories();
+  const originalLookup = repositories.setupDefinitionRevisionRepository.getBySetupDefinitionId.bind(
+    repositories.setupDefinitionRevisionRepository
+  );
+  const failures: string[] = [];
+  const firstFeed = new FixtureCandleFeed();
+  repositories.setupDefinitionRevisionRepository.getBySetupDefinitionId = async () => {
+    throw new Error("database unavailable");
+  };
+  const configuration = {
+    setupDefinitionId: "setup-btc-breakout",
+    monitoredSymbolId: "BTC-USDT",
+    backfillStartTimeUtc: "2026-09-11T00:00:00.000Z"
+  };
+  const firstRuntime = createBtcMonitorRuntime({
+    candleFeed: firstFeed,
+    configuration,
+    repositories,
+    onProcessingFailure(event): void { failures.push(event.candle.eventId); }
+  });
+  const firstSubscription = await firstRuntime.start();
+  for (let index = 0; index < 20; index += 1) await firstFeed.emit(candle(index));
+  await firstFeed.emit(candle(20, 101, 102));
+  assert.deepEqual(failures, ["fixture:5m:20"]);
+  assert.equal((await repositories.signalCandidateRepository.listBySetupDefinitionId("setup-btc-breakout")).length, 0);
+  await firstSubscription.stop();
+
+  repositories.setupDefinitionRevisionRepository.getBySetupDefinitionId = originalLookup;
+  const replayFeed = new FixtureCandleFeed();
+  const replayRuntime = createBtcMonitorRuntime({ candleFeed: replayFeed, configuration, repositories });
+  const replaySubscription = await replayRuntime.start();
+  for (let index = 0; index < 20; index += 1) await replayFeed.emit(candle(index));
+  await replayFeed.emit(candle(20, 101, 102));
+  await replayFeed.emit(candle(20, 101, 102));
+  assert.equal((await repositories.signalCandidateRepository.listBySetupDefinitionId("setup-btc-breakout")).length, 1);
+  await replaySubscription.stop();
+});
