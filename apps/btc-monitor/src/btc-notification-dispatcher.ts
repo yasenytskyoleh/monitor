@@ -23,6 +23,7 @@ export type BtcNotificationDispatcherOptions = {
   fetchImpl: TelegramFetch;
   now?: () => string;
   patternNotificationRecordRepository: PatternNotificationRecordRepository;
+  signal?: AbortSignal;
 };
 
 export type BtcNotificationDispatcher = {
@@ -46,6 +47,10 @@ const buildMetadata = (observedAt: string): ProductRecordMetadata => ({
 
 const isStaleAtDelivery = (observedAt: string, deliveredAt: string, maxSignalAgeMs: number): boolean =>
   Date.parse(deliveredAt) - Date.parse(observedAt) > maxSignalAgeMs;
+
+const throwIfAborted = (signal: AbortSignal | undefined): void => {
+  if (signal?.aborted) throw signal.reason ?? new Error("BTC notification dispatch aborted");
+};
 
 const createFreshTelegramDeliveryPort = (
   options: Pick<BtcNotificationDispatcherOptions, "configuration" | "fetchImpl"> & {
@@ -114,9 +119,11 @@ export const createBtcNotificationDispatcher = (
 
   return {
     async dispatch(): Promise<BtcNotificationDispatchResult> {
+      throwIfAborted(options.signal);
       const runAt = now();
       const metadata = buildMetadata(runAt);
       const reconciliation = await deliveryReconciliation.reconcile({ metadata });
+      throwIfAborted(options.signal);
       const dispatch = await deliveryDispatch.dispatch({ runAt, metadata });
       return { reconciliation, dispatch };
     }

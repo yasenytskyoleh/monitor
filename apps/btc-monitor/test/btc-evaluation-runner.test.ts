@@ -184,6 +184,23 @@ test("leaves candidates with an incomplete observation window untouched", async 
   assert.equal((await fixture.repositories.signalCandidateRepository.getById("candidate-due"))?.status, "detected");
 });
 
+test("does not begin evaluation work after ownership cancellation", async () => {
+  const fixture = await createFixture();
+  const controller = new AbortController();
+  controller.abort(new Error("ownership lost"));
+
+  await assert.rejects(
+    () => createBtcEvaluationRunner({
+      repositories: fixture.repositories,
+      setupDefinitionId: "setup-btc-evaluation",
+      monitoredSymbolId: "BTC-USDT",
+      signal: controller.signal,
+      candleSource: { async backfillClosedCandles() { throw new Error("must not fetch"); } }
+    }).run(),
+    /ownership lost/
+  );
+});
+
 test("limits a one-shot evaluation run to its configured batch size", async () => {
   const fixture = await createFixture();
   await fixture.repositories.signalCandidateRepository.create({

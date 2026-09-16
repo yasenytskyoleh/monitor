@@ -198,6 +198,7 @@ Rule: orchestration executes workflows; product domain defines market/research m
 ## Storage direction (initial)
 Storage boundaries are now explicitly defined:
 - `runtime_evidence` (orchestrator file-based evidence)
+- `runtime_control` (PostgreSQL-backed scheduled-job ownership and compact run evidence)
 - `product_domain` (implemented in-memory persistence today; durable relational contracts, committed Prisma schema/migrations, repository adapter contracts, executable adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now exist for every current durable product entity; one shared implemented-product bundle spans the full chain through `setup_revision_activation_record`)
 - `derived_analytics` (deferred)
 

@@ -21,6 +21,15 @@ Examples:
 - `artifacts.json`
 - backend execution evidence (`patch`, `verification`, `rollback`, `promotion`)
 
+### Runtime control — scheduled job ownership
+Purpose:
+- durable cross-process ownership and credential-free terminal evidence for bounded operational jobs
+
+Current direction:
+- PostgreSQL records in the separate `runtime_control` schema
+- renewable leases acquired and fenced through a dedicated service/repository boundary
+- orchestration artifacts remain filesystem-backed and product records remain in `product_domain`
+
 ### Layer B — Product-domain storage
 Purpose:
 - first-class persisted product records
@@ -53,11 +62,13 @@ Examples:
 
 ## Boundary rules
 1. runtime evidence and product-domain records must remain separate storage layers
-2. product records may carry trace metadata (for example `originRunId`) but are not stored inside runtime evidence folders
-3. derived analytics outputs must not be treated as source-of-truth product records
+2. runtime-control records must not be modeled as product entities
+3. product records may carry trace metadata (for example `originRunId`) but are not stored inside runtime evidence folders
+4. derived analytics outputs must not be treated as source-of-truth product records
 
 ## Technology direction
 - runtime evidence: file-based artifacts (already implemented)
+- runtime control: PostgreSQL + Prisma for scheduled-job ownership
 - product domain: implemented in-memory persistence plus committed first physical PostgreSQL + Prisma schema artifacts
 - derived analytics: deferred until aggregation/scoring architecture matures
 

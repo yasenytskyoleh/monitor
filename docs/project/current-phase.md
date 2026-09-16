@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.51 — Containerized BTC real-data pilot and explicit bounded delivery**
+**Phase 1.52 — Durable bounded-job ownership and BTC soak validation**
 
 ## What this phase is about
 This phase is focused on:
@@ -42,7 +42,7 @@ The product side now proves that the repo can:
   aggregate evidence, retain that immutable decision-support snapshot, record one
   provider-neutral delivery lifecycle through an explicit one-send, durable-lease workflow,
   dispatch bounded pending delivery work, and reconcile bounded unconfirmed work without retry or
-  resend; Telegram is the explicit adapter, with no scheduler, automatic reconciliation,
+  resend; Telegram is the explicit adapter, with no background scheduler, automatic retry,
   authenticated exchange writes, or trading.
 - connect a caller-owned historical/live closed-candle feed to deterministic pattern detection
   without coupling the Binance adapter to product-domain handoffs or adding a background scheduler.
@@ -474,9 +474,9 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- add durable scheduler ownership for bounded evaluation, notification delivery, and reconciliation
-  now that the containerized read-only `apps/btc-monitor` pilot is verified; continue local soaking,
-  preserve human decision support, and keep order placement and automated trading out of scope
+- complete the 24-hour instrumented BTC soak, then wire an external cadence for the durably owned
+  evaluation and composite notification commands; preserve human decision support and keep order
+  placement and automated trading out of scope
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

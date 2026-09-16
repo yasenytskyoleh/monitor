@@ -96,6 +96,34 @@ test("sends a bounded pending set and records Telegram delivery without exposing
   assert.equal((await repository.getById("notification:002"))?.deliveryStatus, "pending_delivery");
 });
 
+test("does not reconcile or deliver after ownership cancellation", async () => {
+  const repository = new InMemoryPatternNotificationRecordRepository();
+  const controller = new AbortController();
+  controller.abort(new Error("ownership lost"));
+  let calls = 0;
+
+  await assert.rejects(
+    () => createBtcNotificationDispatcher({
+      configuration: {
+        databaseUrl: "postgresql://monitor.example/monitor",
+        telegramBotToken: "fixture-token",
+        telegramChatId: "fixture-chat",
+        maxDeliveriesPerRun: 1,
+        maxSignalAgeMs: 15 * 60 * 1_000,
+        telegramTimeoutMs: 1_000
+      },
+      fetchImpl: async () => {
+        calls += 1;
+        return { ok: true, status: 200, async json() { return { ok: true }; } };
+      },
+      patternNotificationRecordRepository: repository,
+      signal: controller.signal
+    }).dispatch(),
+    /ownership lost/
+  );
+  assert.equal(calls, 0);
+});
+
 test("records a terminal stale outcome without calling Telegram at delivery time", async () => {
   const repository = new InMemoryPatternNotificationRecordRepository();
   const service = createPatternNotificationDeliveryService({ patternNotificationRecordRepository: repository });

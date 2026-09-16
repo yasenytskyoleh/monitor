@@ -243,7 +243,7 @@ test("migration creates the monitored-symbol relational table and constraints", 
 test("prisma schema defines the first durable relational models in product_domain", async () => {
   const schema = await readFile(schemaPath, "utf8");
 
-  assert.match(schema, /schemas\s+=\s+\["product_domain"\]/);
+  assert.match(schema, /schemas\s+=\s+\["product_domain", "runtime_control"\]/);
   assert.match(schema, /model SetupDefinitionRecord \{/);
   assert.match(schema, /model ResearchHypothesisRecord \{/);
   assert.match(schema, /model ResearchHypothesisSetupDefinitionLinkRecord \{/);

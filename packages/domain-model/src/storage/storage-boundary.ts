@@ -1,5 +1,6 @@
 export const STORAGE_BOUNDARIES = [
   "runtime_evidence",
+  "runtime_control",
   "product_domain",
   "derived_analytics"
 ] as const;
@@ -13,6 +14,9 @@ export const RUNTIME_EVIDENCE_ARTIFACT_TYPES = [
   "backend_execution_evidence"
 ] as const;
 export type RuntimeEvidenceArtifactType = (typeof RUNTIME_EVIDENCE_ARTIFACT_TYPES)[number];
+
+export const RUNTIME_CONTROL_ENTITY_TYPES = ["scheduled_job_run"] as const;
+export type RuntimeControlEntityType = (typeof RUNTIME_CONTROL_ENTITY_TYPES)[number];
 
 export const PRODUCT_PERSISTED_ENTITY_TYPES = [
   "monitored_symbol",
@@ -46,6 +50,7 @@ export type ProductEphemeralEntityType = (typeof PRODUCT_EPHEMERAL_ENTITY_TYPES)
 
 export type StorageTechnologyDirection = {
   runtimeEvidence: "filesystem_artifacts";
+  runtimeControl: "postgresql_prisma";
   productDomain: "relational_planned";
   derivedAnalytics: "deferred";
   targetRelationalStack: "postgresql_prisma_planned";
@@ -53,6 +58,7 @@ export type StorageTechnologyDirection = {
 
 export const DEFAULT_STORAGE_TECHNOLOGY_DIRECTION: StorageTechnologyDirection = {
   runtimeEvidence: "filesystem_artifacts",
+  runtimeControl: "postgresql_prisma",
   productDomain: "relational_planned",
   derivedAnalytics: "deferred",
   targetRelationalStack: "postgresql_prisma_planned"

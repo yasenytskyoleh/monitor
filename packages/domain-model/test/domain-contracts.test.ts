@@ -52,6 +52,7 @@ import {
   REVISION_HISTORY_QUERY_STATUSES,
   REVISION_IMPACT_CLASSIFICATIONS,
   REVISION_IMPACT_SUMMARY_RESULT_STATUSES,
+  RUNTIME_CONTROL_ENTITY_TYPES,
   RUNTIME_EVIDENCE_ARTIFACT_TYPES,
   SETUP_DEFINITION_STATUSES,
   SETUP_DEFINITION_REVISION_RESULT_STATUSES,
@@ -306,7 +307,12 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "failed"
   ]);
   assert.deepEqual(AGGREGATION_SYMBOL_SCOPE_KINDS, ["single_symbol", "symbol_set", "all_monitored"]);
-  assert.deepEqual(STORAGE_BOUNDARIES, ["runtime_evidence", "product_domain", "derived_analytics"]);
+  assert.deepEqual(STORAGE_BOUNDARIES, [
+    "runtime_evidence",
+    "runtime_control",
+    "product_domain",
+    "derived_analytics"
+  ]);
   assert.deepEqual(RUNTIME_EVIDENCE_ARTIFACT_TYPES, [
     "run_record",
     "transition_record",
@@ -314,6 +320,7 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "artifact_record",
     "backend_execution_evidence"
   ]);
+  assert.deepEqual(RUNTIME_CONTROL_ENTITY_TYPES, ["scheduled_job_run"]);
   assert.deepEqual(PRODUCT_PERSISTED_ENTITY_TYPES, [
     "monitored_symbol",
     "setup_definition",
@@ -364,6 +371,7 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
   assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 17);
   assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
   assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
+  assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.runtimeControl, "postgresql_prisma");
   assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 17);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
   assert.deepEqual(MARKET_DATA_PROVIDER_KINDS, ["exchange_adapter"]);

@@ -342,6 +342,7 @@ export {
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_REQUIRED_COLUMNS,
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_TABLES,
   SETUP_LIFECYCLE_MUTATION_RECORD_RELATIONAL_ENTITY_TYPES,
+  RUNTIME_CONTROL_ENTITY_TYPES,
   RUNTIME_EVIDENCE_ARTIFACT_TYPES,
   STORAGE_BOUNDARIES,
   buildSetupAggregateScopeKey,
@@ -432,6 +433,7 @@ export type {
   ResearchFeedbackDecisionRelationalTableName,
   ResearchHypothesisDurableRecord,
   ResearchHypothesisSetupDefinitionLinkRecord,
+  RuntimeControlEntityType,
   RuntimeEvidenceArtifactType,
   RuntimeEvidenceIdentity,
   SignalCandidateDurableRecord,
@@ -1544,6 +1546,30 @@ export {
   SETUP_REVISION_HISTORY_QUERY_MODES,
   createRevisionHistoryQueryService
 } from "./query/index.js";
+export {
+  SCHEDULED_JOB_NAMES,
+  SCHEDULED_JOB_RUN_STATUSES
+} from "./runtime-control/scheduled-job-run.js";
+export type {
+  ScheduledJobName,
+  ScheduledJobRun,
+  ScheduledJobRunStatus
+} from "./runtime-control/scheduled-job-run.js";
+export { InMemoryScheduledJobRunRepository } from "./runtime-control/scheduled-job-run-repository.js";
+export type {
+  AcquireScheduledJobRunRequest,
+  AcquireScheduledJobRunResult,
+  FinishScheduledJobRunRequest,
+  RenewScheduledJobRunRequest,
+  ScheduledJobRunMutationResult,
+  ScheduledJobRunRepository
+} from "./runtime-control/scheduled-job-run-repository.js";
+export {
+  ScheduledJobRunValidationError,
+  createScheduledJobRunService
+} from "./runtime-control/scheduled-job-run-service.js";
+export type { ScheduledJobRunService } from "./runtime-control/scheduled-job-run-service.js";
+export { PrismaScheduledJobRunRepository } from "./runtime-control/scheduled-job-run-prisma-repository.js";
 export type {
   AggregateEvidenceQueryService,
   BuildResearchReviewPacketCommand,
