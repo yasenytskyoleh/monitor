@@ -53,6 +53,7 @@ export type BtcMonitorRuntimeOptions = {
   onError?(error: Error): Promise<void> | void;
   onNotification?(outcome: BtcNotificationRetentionOutcome): Promise<void> | void;
   onProcessed?(event: ClosedCandlePatternDetectionFeedEvent): Promise<void> | void;
+  onProcessingFailure?(event: ClosedCandlePatternDetectionFeedEvent): Promise<void> | void;
   repositories: BtcMonitorRepositories;
 };
 
@@ -188,6 +189,9 @@ export const createBtcMonitorRuntime = (options: BtcMonitorRuntimeOptions): BtcM
       await retainEligibleNotifications(event);
       await options.onProcessed?.(event);
       if (event.outcomes.some(hasMeaningfulOutcome)) await options.onDetection?.(event);
+      if (event.outcomes.some((outcome) => outcome.status === "failed")) {
+        await options.onProcessingFailure?.(event);
+      }
     }
   });
 

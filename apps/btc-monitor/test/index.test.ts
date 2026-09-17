@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
+import { EventEmitter } from "node:events";
 import test from "node:test";
 
 import type { ClosedCandlePatternDetectionFeedEvent } from "@monitor/pattern-detection";
 
-import { createBtcMonitorProgressReporter } from "../src/index.js";
+import { createBtcMonitorProgressReporter, runBtcMonitorLifecycle } from "../src/index.js";
 
 const event = (timeframe: "1m" | "5m", index: number): ClosedCandlePatternDetectionFeedEvent => ({
   candle: {
@@ -53,6 +54,90 @@ test("suppresses backfill progress and reports cumulative live counts on five-mi
     observedAt: "2026-09-14T12:05:59.999Z",
     lastEventId: "binance:BTC-USDT:5m:5",
     liveCandleCounts: { "1m": 2, "5m": 1 },
+    lastCandles: {
+      "1m": { eventId: "binance:BTC-USDT:1m:2", openTimeUtc: "2026-09-14T12:02:00.000Z" },
+      "5m": { eventId: "binance:BTC-USDT:5m:5", openTimeUtc: "2026-09-14T12:05:00.000Z" }
+    },
     outcomeCounts: { no_match: 1 }
   });
+});
+
+const logger = { info() {}, error() {} };
+
+test("fails and disconnects when processing fails during startup backfill", async () => {
+  const signals = new EventEmitter();
+  let stopped = 0;
+  let disconnected = 0;
+  let started = 0;
+  await assert.rejects(
+    () => runBtcMonitorLifecycle({
+      logger,
+      signals,
+      async start(onFailure) {
+        onFailure("fixture:5m:20");
+        return { async stop() { stopped += 1; } };
+      },
+      async disconnect() { disconnected += 1; },
+      onStarted() { started += 1; }
+    }),
+    /BTC candle processing failed/
+  );
+  assert.deepEqual({ stopped, disconnected, started }, { stopped: 1, disconnected: 1, started: 0 });
+  assert.equal(signals.listenerCount("SIGTERM"), 0);
+});
+
+test("fails and disconnects when processing fails after startup", async () => {
+  const signals = new EventEmitter();
+  let notifyFailure: ((candleEventId: string) => void) | undefined;
+  let stopped = 0;
+  let disconnected = 0;
+  const running = runBtcMonitorLifecycle({
+    logger,
+    signals,
+    async start(onFailure) {
+      notifyFailure = onFailure;
+      return { async stop() { stopped += 1; } };
+    },
+    async disconnect() { disconnected += 1; },
+    onStarted() {}
+  });
+  await Promise.resolve();
+  notifyFailure?.("fixture:5m:21");
+  await assert.rejects(() => running, /BTC candle processing failed/);
+  assert.deepEqual({ stopped, disconnected }, { stopped: 1, disconnected: 1 });
+});
+
+test("SIGTERM stops and disconnects without a processing failure", async () => {
+  const signals = new EventEmitter();
+  let stopped = 0;
+  let disconnected = 0;
+  const running = runBtcMonitorLifecycle({
+    logger,
+    signals,
+    async start() { return { async stop() { stopped += 1; } }; },
+    async disconnect() { disconnected += 1; },
+    onStarted() {}
+  });
+  await Promise.resolve();
+  signals.emit("SIGTERM");
+  await running;
+  assert.deepEqual({ stopped, disconnected }, { stopped: 1, disconnected: 1 });
+  assert.equal(signals.listenerCount("SIGTERM"), 0);
+});
+
+test("startup failure disconnects and removes signal handlers", async () => {
+  const signals = new EventEmitter();
+  let disconnected = 0;
+  await assert.rejects(
+    () => runBtcMonitorLifecycle({
+      logger,
+      signals,
+      async start() { throw new Error("startup failed"); },
+      async disconnect() { disconnected += 1; },
+      onStarted() {}
+    }),
+    /startup failed/
+  );
+  assert.equal(disconnected, 1);
+  assert.equal(signals.listenerCount("SIGTERM"), 0);
 });

@@ -22,6 +22,12 @@ export type BinanceSpotCandleEventSink = {
   onError?(error: Error): Promise<void> | void;
 };
 
+export type BinanceSpotFeedRecoveryEvent = {
+  kind: "gap_detected" | "stream_stale" | "reconnected";
+  interval?: BinanceSpotBtcUsdtCandleInterval;
+  observedAtUtc: string;
+};
+
 export type BinanceSpotWebSocket = {
   close(): void;
   addEventListener(
@@ -41,6 +47,9 @@ export type BinanceSpotCandleFeedOptions = {
   restBaseUrl?: string;
   webSocketOpenTimeoutMs?: number;
   webSocketBaseUrl?: string;
+  livenessCheckIntervalMs?: number;
+  staleAfterMsByInterval?: Partial<Record<BinanceSpotBtcUsdtCandleInterval, number>>;
+  onRecoveryEvent?: (event: BinanceSpotFeedRecoveryEvent) => void;
 };
 
 export type BinanceSpotCandleFeed = {

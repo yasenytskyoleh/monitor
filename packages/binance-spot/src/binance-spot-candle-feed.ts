@@ -18,10 +18,15 @@ import {
 
 const BINANCE_KLINES_PAGE_SIZE = 1_000;
 const DEFAULT_NETWORK_TIMEOUT_MS = 15_000;
+const DEFAULT_LIVENESS_CHECK_INTERVAL_MS = 30_000;
 const MAX_RECENT_EVENT_IDS = 4_096;
 const INTERVAL_MS: Record<BinanceSpotBtcUsdtCandleInterval, number> = {
   "1m": 60_000,
   "5m": 300_000
+};
+const STALE_AFTER_MS: Record<BinanceSpotBtcUsdtCandleInterval, number> = {
+  "1m": 180_000,
+  "5m": 600_000
 };
 
 const asTimestamp = (value: string, fieldName: string): number => {
@@ -89,6 +94,8 @@ export const createBinanceSpotCandleFeed = (
   const maxReconnectDelayMs = options.maxReconnectDelayMs ?? 30_000;
   const restRequestTimeoutMs = options.restRequestTimeoutMs ?? DEFAULT_NETWORK_TIMEOUT_MS;
   const webSocketOpenTimeoutMs = options.webSocketOpenTimeoutMs ?? DEFAULT_NETWORK_TIMEOUT_MS;
+  const livenessCheckIntervalMs = options.livenessCheckIntervalMs ?? DEFAULT_LIVENESS_CHECK_INTERVAL_MS;
+  const staleAfterMsByInterval = { ...STALE_AFTER_MS, ...options.staleAfterMsByInterval };
 
   const backfillClosedCandles = async (
     range: BinanceSpotCandleBackfillRange
@@ -174,9 +181,23 @@ export const createBinanceSpotCandleFeed = (
       let bufferedCandles: CandleClosedEvent[] = [];
       let messageQueue: Promise<void> = Promise.resolve();
       let emissionTail: Promise<void> = Promise.resolve();
+      let livenessTimer: ReturnType<typeof setInterval> | undefined;
       const recentEventIds = new Set<string>();
       const recentEventIdOrder: string[] = [];
       const latestOpenTimeByInterval = new Map<BinanceSpotBtcUsdtCandleInterval, string>();
+      const latestLiveOpenTimeByInterval = new Map<BinanceSpotBtcUsdtCandleInterval, string>();
+      const lastLiveAtMs = new Map<BinanceSpotBtcUsdtCandleInterval, number>();
+
+      const reportRecovery = (
+        kind: "gap_detected" | "stream_stale" | "reconnected",
+        interval?: BinanceSpotBtcUsdtCandleInterval
+      ): void => {
+        try {
+          options.onRecoveryEvent?.({ kind, interval, observedAtUtc: now().toISOString() });
+        } catch {
+          // Observability must not interrupt recovery.
+        }
+      };
 
       const reportError = (error: unknown): void => {
         try {
@@ -198,6 +219,7 @@ export const createBinanceSpotCandleFeed = (
           return;
         }
 
+        await sink.onCandle(candle);
         recentEventIds.add(candle.eventId);
         recentEventIdOrder.push(candle.eventId);
         if (recentEventIdOrder.length > MAX_RECENT_EVENT_IDS) {
@@ -207,7 +229,6 @@ export const createBinanceSpotCandleFeed = (
           }
         }
         latestOpenTimeByInterval.set(timeframe, candle.payload.openTimeUtc);
-        await sink.onCandle(candle);
       };
 
       const emit = (candle: CandleClosedEvent): Promise<void> => {
@@ -226,6 +247,7 @@ export const createBinanceSpotCandleFeed = (
       };
 
       const reconnectFromLatest = async (): Promise<void> => {
+        await emissionTail;
         const starts = [...latestOpenTimeByInterval.values()];
         if (starts.length === 0) {
           await emitBackfill(range);
@@ -245,7 +267,40 @@ export const createBinanceSpotCandleFeed = (
           bufferedCandles.push(candle);
           return;
         }
+        const interval = candle.payload.timeframe as BinanceSpotBtcUsdtCandleInterval;
+        const latestOpenTime = latestOpenTimeByInterval.get(interval);
+        if (latestOpenTime && Date.parse(candle.payload.openTimeUtc) > Date.parse(latestOpenTime) + INTERVAL_MS[interval]) {
+          bufferedCandles.push(candle);
+          bootstrapping = true;
+          reportRecovery("gap_detected", interval);
+          socket?.close();
+          beginReconnect();
+          return;
+        }
+        const latestLiveOpenTime = latestLiveOpenTimeByInterval.get(interval);
+        if (!latestLiveOpenTime || candle.payload.openTimeUtc > latestLiveOpenTime) {
+          latestLiveOpenTimeByInterval.set(interval, candle.payload.openTimeUtc);
+          lastLiveAtMs.set(interval, now().getTime());
+        }
         await emit(candle);
+      };
+
+      const beginReconnect = (): void => {
+        if (!stopped && !reconnectPending) reconnectTask = reconnect();
+      };
+
+      const checkLiveness = (): void => {
+        if (stopped || bootstrapping || reconnectPending) return;
+        const checkedAtMs = now().getTime();
+        for (const interval of BINANCE_SPOT_BTCUSDT_CANDLE_INTERVALS) {
+          const lastLiveAt = lastLiveAtMs.get(interval);
+          if (lastLiveAt === undefined || checkedAtMs - lastLiveAt < staleAfterMsByInterval[interval]) continue;
+          bootstrapping = true;
+          reportRecovery("stream_stale", interval);
+          socket?.close();
+          beginReconnect();
+          return;
+        }
       };
 
       const connect = async (isReconnect: boolean): Promise<void> => {
@@ -259,6 +314,7 @@ export const createBinanceSpotCandleFeed = (
         let socketClosed = false;
 
         nextSocket.addEventListener("message", (event) => {
+          if (socket !== nextSocket) return;
           messageQueue = messageQueue
             .then(() => processMessage(event.data))
             .catch((error: unknown) => reportError(error));
@@ -271,7 +327,7 @@ export const createBinanceSpotCandleFeed = (
         nextSocket.addEventListener("close", () => {
           socketClosed = true;
           if (!stopped && socket === nextSocket && (isReconnect || startResolved)) {
-            reconnectTask = reconnect();
+            beginReconnect();
           }
         });
 
@@ -297,6 +353,12 @@ export const createBinanceSpotCandleFeed = (
         }
         bootstrapping = false;
         reconnectAttempts = 0;
+        for (const interval of BINANCE_SPOT_BTCUSDT_CANDLE_INTERVALS) {
+          lastLiveAtMs.set(interval, now().getTime());
+          const latest = latestOpenTimeByInterval.get(interval);
+          if (latest) latestLiveOpenTimeByInterval.set(interval, latest);
+        }
+        if (isReconnect) reportRecovery("reconnected");
       };
 
       const reconnect = async (): Promise<void> => {
@@ -325,6 +387,7 @@ export const createBinanceSpotCandleFeed = (
               await connect(true);
               return;
             } catch (error) {
+              socket?.close();
               reportError(error);
             }
           }
@@ -336,8 +399,10 @@ export const createBinanceSpotCandleFeed = (
       try {
         await connect(false);
         startResolved = true;
+        livenessTimer = setInterval(checkLiveness, livenessCheckIntervalMs);
       } catch (error) {
         stopped = true;
+        if (livenessTimer) clearInterval(livenessTimer);
         socket?.close();
         await reportError(error);
         throw toError(error);
@@ -346,6 +411,7 @@ export const createBinanceSpotCandleFeed = (
       return {
         async stop(): Promise<void> {
           stopped = true;
+          if (livenessTimer) clearInterval(livenessTimer);
           socket?.close();
           cancelReconnectDelay?.();
           await reconnectTask;
