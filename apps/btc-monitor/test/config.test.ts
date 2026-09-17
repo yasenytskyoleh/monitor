@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 
 import {
@@ -135,6 +138,59 @@ test("requires Telegram credentials only for the delivery command", () => {
     }),
     (error: unknown) => error instanceof BtcMonitorConfigurationError && error.message === "BTC_MONITOR_TELEGRAM_CHAT_ID is required"
   );
+});
+
+test("reads Telegram credentials from files without changing direct environment support", () => {
+  const directory = mkdtempSync(join(tmpdir(), "btc-telegram-config-"));
+  try {
+    const tokenFile = join(directory, "token");
+    const chatFile = join(directory, "chat");
+    writeFileSync(tokenFile, "123456:fixture-token\n");
+    writeFileSync(chatFile, "-100123456\n");
+
+    const configuration = loadBtcNotificationDeliveryConfiguration({
+      DATABASE_URL: "postgresql://monitor.example/monitor",
+      BTC_MONITOR_TELEGRAM_BOT_TOKEN_FILE: tokenFile,
+      BTC_MONITOR_TELEGRAM_CHAT_ID_FILE: chatFile
+    });
+    assert.equal(configuration.telegramBotToken, "123456:fixture-token");
+    assert.equal(configuration.telegramChatId, "-100123456");
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("rejects missing, empty, and conflicting Telegram credential files", () => {
+  const directory = mkdtempSync(join(tmpdir(), "btc-telegram-config-"));
+  try {
+    const emptyFile = join(directory, "empty");
+    writeFileSync(emptyFile, " \n");
+    const base = {
+      DATABASE_URL: "postgresql://monitor.example/monitor",
+      BTC_MONITOR_TELEGRAM_CHAT_ID: "-100123456"
+    };
+    for (const path of [join(directory, "missing"), emptyFile]) {
+      assert.throws(
+        () => loadBtcNotificationDeliveryConfiguration({
+          ...base,
+          BTC_MONITOR_TELEGRAM_BOT_TOKEN_FILE: path
+        }),
+        (error: unknown) => error instanceof BtcMonitorConfigurationError &&
+          error.message === "BTC_MONITOR_TELEGRAM_BOT_TOKEN_FILE must point to a readable non-empty file"
+      );
+    }
+    assert.throws(
+      () => loadBtcNotificationDeliveryConfiguration({
+        ...base,
+        BTC_MONITOR_TELEGRAM_BOT_TOKEN: "123456:fixture-token",
+        BTC_MONITOR_TELEGRAM_BOT_TOKEN_FILE: emptyFile
+      }),
+      (error: unknown) => error instanceof BtcMonitorConfigurationError &&
+        error.message === "BTC_MONITOR_TELEGRAM_BOT_TOKEN and BTC_MONITOR_TELEGRAM_BOT_TOKEN_FILE cannot both be set"
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 test("rejects an unsafe or malformed historical warm-up range", () => {

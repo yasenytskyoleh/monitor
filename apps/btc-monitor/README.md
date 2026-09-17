@@ -52,6 +52,10 @@ closed. The job reconstructs the exact closed-candle window from Binance, persis
 and refreshes the setup's historical aggregate. It does not send notifications; that remains gated
 on the aggregate meeting a separately configured decision-support policy.
 
+After `pnpm btc-pilot:prepare`, run `pnpm btc-evaluate:docker` for the same one-shot job in the
+runtime image. Optional macOS and Linux five-minute timer templates, plus run-history checks, are
+documented in `docs/project/btc-job-cadence-runbook.md`. They are not installed automatically.
+
 ## Deliver retained notifications
 
 Run `pnpm btc-notify` to deliver up to 10 pending notifications through Telegram. This is an opt-in,
@@ -59,6 +63,9 @@ one-shot job: it only sends retained decision-support alerts and records each pr
 exits. It never places an order. The command requires `BTC_MONITOR_TELEGRAM_BOT_TOKEN` and
 `BTC_MONITOR_TELEGRAM_CHAT_ID`; those values are used only for the Telegram request and are never
 written to its JSON logs.
+
+`pnpm btc-notify:docker` is a separate manual opt-in using `compose.telegram.yaml` and protected
+secret files outside the repository. It is never part of the evaluator timer.
 
 ## Notification retention policy
 
@@ -89,22 +96,28 @@ conservative decision-support filters, not investment advice.
 | `BTC_MONITOR_NOTIFICATION_MAX_AGGREGATE_AGE_HOURS` | no | Freshness limit for historical evidence; defaults to 24. |
 | `BTC_MONITOR_TELEGRAM_BOT_TOKEN` | `btc-notify` only | Telegram bot token for delivery; never logged. |
 | `BTC_MONITOR_TELEGRAM_CHAT_ID` | `btc-notify` only | Telegram chat ID for delivery; never logged. |
+| `BTC_MONITOR_TELEGRAM_BOT_TOKEN_FILE` | alternative to token | Read the bot token from a mounted file; cannot be combined with the direct value. |
+| `BTC_MONITOR_TELEGRAM_CHAT_ID_FILE` | alternative to chat ID | Read the chat ID from a mounted file; cannot be combined with the direct value. |
 | `BTC_MONITOR_NOTIFICATION_MAX_DELIVERIES` | no | Maximum pending Telegram alerts sent per `btc-notify` run, from 1 to 100; defaults to 10. |
 | `BTC_MONITOR_TELEGRAM_TIMEOUT_MS` | no | Per-request Telegram timeout in milliseconds, from 1 to 60,000; defaults to 10,000. |
 
 ## Linux scheduling
 
+For the prepared Docker path, use the disabled-by-default systemd timer template in
+`docs/project/btc-job-cadence-runbook.md`; the local macOS launchd path is described there too.
+The host-only cron examples below remain available for non-container deployments.
+
 Run `pnpm btc-monitor:docker` for the local supervised container. For a non-container Linux host,
 run `pnpm btc-monitor` under a process supervisor such as systemd so the closed-candle feed restarts
-after a reboot. Schedule the bounded jobs separately; they are idempotent and use durable records
-and delivery leases.
+after a reboot. Schedule the bounded evaluator separately; it is idempotent and uses durable run
+ownership.
 
 ```cron
 */5 * * * * cd /opt/monitor && /usr/bin/pnpm btc-evaluate >> /var/log/btc-evaluate.log 2>&1
-*/5 * * * * cd /opt/monitor && /usr/bin/pnpm btc-notify >> /var/log/btc-notify.log 2>&1
 ```
 
-Give the process environment the required database and monitor values. Only the `btc-notify` job
+Give the process environment the required database and monitor values. Keep `btc-notify` manual
+until Telegram delivery is explicitly approved. Only the `btc-notify` job
 needs `BTC_MONITOR_TELEGRAM_BOT_TOKEN` and `BTC_MONITOR_TELEGRAM_CHAT_ID`; keep both in the host's
 secret store or protected environment file. The notifier rejects stale alerts and reconciles an
 interrupted attempt before it sends new pending notifications.

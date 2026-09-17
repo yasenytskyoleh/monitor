@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.53 — BTC feed recovery and six-hour soak validation**
+**Phase 1.54 — External BTC job cadence preparation**
 
 ## What this phase is about
 This phase is focused on:
@@ -48,6 +48,8 @@ The product side now proves that the repo can:
   without coupling the Binance adapter to product-domain handoffs or adding a background scheduler.
 - package the BTC runtime as a non-root Node 24 image with migration, canonical seed, bounded
   real-data smoke, and long-running Compose workflows.
+- prepare external five-minute evaluator cadence for macOS and Linux without enabling timers or
+  scheduled Telegram delivery by default.
 
 ## Implemented in this phase (current baseline)
 - Codex-first workflow for planning, implementation, and repo coordination
@@ -474,9 +476,8 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- complete the six-hour instrumented BTC soak, then wire an external cadence for the durably owned
-  evaluation and composite notification commands; preserve human decision support and keep order
-  placement and automated trading out of scope
+- validate the prepared Docker evaluator cadence, then explicitly enable the macOS or Linux timer
+  when the host is ready; keep Telegram delivery manual and opt-in, and keep trading out of scope
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

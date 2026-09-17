@@ -1,0 +1,20 @@
+services:
+  btc-notify:
+    profiles: ["delivery"]
+    image: monitor-btc:local
+    init: true
+    command: ["node", "dist/src/notify.js"]
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-monitor}"
+      BTC_MONITOR_DATABASE_SCHEMA: "${BTC_MONITOR_DATABASE_SCHEMA:-}"
+      BTC_MONITOR_TELEGRAM_BOT_TOKEN_FILE: /run/secrets/btc_telegram_bot_token
+      BTC_MONITOR_TELEGRAM_CHAT_ID_FILE: /run/secrets/btc_telegram_chat_id
+    secrets:
+      - btc_telegram_bot_token
+      - btc_telegram_chat_id
+
+secrets:
+  btc_telegram_bot_token:
+    file: ${BTC_MONITOR_TELEGRAM_BOT_TOKEN_SECRET_PATH:?Set an absolute path to the Telegram bot token file}
+  btc_telegram_chat_id:
+    file: ${BTC_MONITOR_TELEGRAM_CHAT_ID_SECRET_PATH:?Set an absolute path to the Telegram chat ID file}

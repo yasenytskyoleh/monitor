@@ -275,7 +275,7 @@ Current limitation:
   - no UI yet
 
 Current recommended next step:
-- complete the instrumented 24-hour BTC soak, then configure external cadence for the owned bounded jobs
+- the six-hour instrumented BTC soak passed; prepare external evaluator cadence before explicitly enabling it on a chosen host
   and verified; keep alerts as explainable human decision support and automated trading outside
   the current phase
 

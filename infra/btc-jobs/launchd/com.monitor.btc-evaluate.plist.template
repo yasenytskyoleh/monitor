@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.monitor.btc-evaluate</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__MONITOR_REPO__/infra/btc-jobs/run-evaluate.sh</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartInterval</key>
+  <integer>300</integer>
+  <key>StandardOutPath</key>
+  <string>__MONITOR_LOG_DIR__/btc-evaluate.stdout.jsonl</string>
+  <key>StandardErrorPath</key>
+  <string>__MONITOR_LOG_DIR__/btc-evaluate.stderr.jsonl</string>
+</dict>
+</plist>

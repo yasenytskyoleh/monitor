@@ -1,20 +1,21 @@
 # Next Steps
 
 ## Current recommended next step
-### Complete the six-hour BTC reliability soak, then wire external cadence
+### Validate and explicitly enable external BTC evaluation cadence
 
 Reason:
 - Binance REST backfill and WebSocket ingestion are connected to the real product persistence path
 - the canonical BTC setup can now be migrated and seeded reproducibly without destructive resets
 - the bounded pilot proves Postgres, historical ingestion, live ingestion, idempotency, and graceful cleanup
 - evaluation and Telegram delivery are bounded commands with durable cross-process run ownership
-- external cadence and operational observation are now the remaining deployment boundary
+- the six-hour reliability soak completed successfully
+- external evaluator cadence is prepared for macOS and Linux but remains disabled by default
 
 ## Recommended near-future sequence
-1. complete six uninterrupted hours with advancing 1m/5m progress, recovered feed gaps, and no unresolved processing failures
-2. configure an external cadence for the owned evaluation and composite notification jobs
+1. verify two sequential Docker evaluator runs and their durable run history
+2. explicitly enable the appropriate five-minute external evaluator timer on the chosen host
 3. observe run history, overlap skips, and expired-lease takeover before any retry policy is considered
-4. keep Telegram delivery opt-in and keep trading out of scope
+4. decide separately whether to enable Telegram delivery; keep trading out of scope
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

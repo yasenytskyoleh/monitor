@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 const DEFAULT_BACKFILL_HOURS = 24;
 const DEFAULT_SETUP_DEFINITION_ID = "setup-btc-breakout";
 const DEFAULT_SMOKE_TIMEOUT_SECONDS = 90;
@@ -60,6 +62,26 @@ export class BtcMonitorConfigurationError extends Error {
 
 const requireEnvironmentValue = (environment: NodeJS.ProcessEnv, key: string): string => {
   const value = environment[key]?.trim();
+  if (!value) throw new BtcMonitorConfigurationError(`${key} is required`);
+  return value;
+};
+
+const requireCredential = (environment: NodeJS.ProcessEnv, key: string): string => {
+  const value = environment[key]?.trim();
+  const fileKey = `${key}_FILE`;
+  const filePath = environment[fileKey]?.trim();
+  if (value && filePath) {
+    throw new BtcMonitorConfigurationError(`${key} and ${fileKey} cannot both be set`);
+  }
+  if (filePath) {
+    try {
+      const fileValue = readFileSync(filePath, "utf8").trim();
+      if (fileValue) return fileValue;
+    } catch {
+      // Do not include file contents or OS error details in credential errors.
+    }
+    throw new BtcMonitorConfigurationError(`${fileKey} must point to a readable non-empty file`);
+  }
   if (!value) throw new BtcMonitorConfigurationError(`${key} is required`);
   return value;
 };
@@ -175,8 +197,8 @@ export const loadBtcNotificationDeliveryConfiguration = (
   const databaseSchema = environment.BTC_MONITOR_DATABASE_SCHEMA?.trim();
   return {
     databaseUrl: requireEnvironmentValue(environment, "DATABASE_URL"),
-    telegramBotToken: requireEnvironmentValue(environment, "BTC_MONITOR_TELEGRAM_BOT_TOKEN"),
-    telegramChatId: requireEnvironmentValue(environment, "BTC_MONITOR_TELEGRAM_CHAT_ID"),
+    telegramBotToken: requireCredential(environment, "BTC_MONITOR_TELEGRAM_BOT_TOKEN"),
+    telegramChatId: requireCredential(environment, "BTC_MONITOR_TELEGRAM_CHAT_ID"),
     maxDeliveriesPerRun: parsePositiveInteger(
       environment.BTC_MONITOR_NOTIFICATION_MAX_DELIVERIES,
       DEFAULT_NOTIFICATION_DELIVERY_BATCH_SIZE,

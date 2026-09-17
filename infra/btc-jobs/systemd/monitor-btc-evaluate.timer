@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Monitor BTC evaluation every five minutes
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+AccuracySec=1s
+Unit=monitor-btc-evaluate.service
+
+[Install]
+WantedBy=timers.target
