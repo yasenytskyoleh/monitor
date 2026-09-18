@@ -543,6 +543,25 @@ export {
   isSetupDefinitionRevisionRelationalDeterministicErrorCode
 } from "./repositories/setup-definition-revision-relational-repository-adapter.js";
 export {
+  PATTERN_NOTIFICATION_REFERENCE_KINDS,
+  PATTERN_NOTIFICATION_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  PATTERN_NOTIFICATION_RELATIONAL_ADAPTER_OPERATIONS,
+  PATTERN_NOTIFICATION_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  PATTERN_NOTIFICATION_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isPatternNotificationRelationalDeterministicErrorCode
+} from "./repositories/pattern-notification-relational-repository-adapter.js";
+export type {
+  PatternNotificationDeliveryStatusQuery,
+  PatternNotificationInsertRequest,
+  PatternNotificationRelationalAdapterErrorMapping,
+  PatternNotificationRelationalAdapterOperation,
+  PatternNotificationReferenceKind,
+  PatternNotificationRelationalDeterministicErrorCode,
+  PatternNotificationRelationalRepositoryAdapter,
+  PatternNotificationRelationalRetryableErrorCode,
+  PatternNotificationUpdateRequest
+} from "./repositories/pattern-notification-relational-repository-adapter.js";
+export {
   SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ADAPTER_ERROR_MAPPING,
   SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ADAPTER_OPERATIONS,
   SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_DETERMINISTIC_ERROR_CODES,
@@ -886,6 +905,12 @@ export type {
 export {
   InMemorySetupDefinitionRevisionRelationalRepositoryAdapter
 } from "./repositories/setup-definition-revision-relational-repository-adapter.impl.js";
+export type {
+  PatternNotificationRelationalReferenceReader
+} from "./repositories/pattern-notification-relational-repository-adapter.impl.js";
+export {
+  InMemoryPatternNotificationRelationalRepositoryAdapter
+} from "./repositories/pattern-notification-relational-repository-adapter.impl.js";
 export type {
   SetupRevisionActivationRecordRelationalReferenceReader
 } from "./repositories/setup-revision-activation-record-relational-repository-adapter.impl.js";
