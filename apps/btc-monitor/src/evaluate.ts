@@ -30,7 +30,7 @@ const summarizeResults = (results: EvaluationResults) => {
   };
 };
 
-const run = async (): Promise<void> => {
+export const run = async (): Promise<void> => {
   const configuration = loadBtcMonitorConfiguration(process.env);
   const jobName = "btc_evaluate" as const;
   const scopeKey = `${configuration.setupDefinitionId}:${configuration.monitoredSymbolId}`;
@@ -84,14 +84,16 @@ const run = async (): Promise<void> => {
   }
 };
 
-void run().catch((error: unknown) => {
-  process.stderr.write(`${JSON.stringify({
-    kind: "btc_evaluation_error",
-    message: error instanceof Error ? error.message : "evaluation failed",
-    jobName: "btc_evaluate",
-    ...(error instanceof OwnedJobExecutionError
-      ? { runId: error.runId, outcomeCode: error.outcomeCode }
-      : { outcomeCode: "startup_failed" })
-  })}\n`);
-  process.exitCode = 1;
-});
+if (process.argv[1] === new URL(import.meta.url).pathname) {
+    void run().catch((error: unknown) => {
+    process.stderr.write(`${JSON.stringify({
+      kind: "btc_evaluation_error",
+      message: error instanceof Error ? error.message : "evaluation failed",
+      jobName: "btc_evaluate",
+      ...(error instanceof OwnedJobExecutionError
+        ? { runId: error.runId, outcomeCode: error.outcomeCode }
+        : { outcomeCode: "startup_failed" })
+    })}\n`);
+    process.exitCode = 1;
+  });
+}

@@ -43,7 +43,7 @@ const summarizeResult = (result: NotificationResult) => {
   };
 };
 
-const run = async (): Promise<void> => {
+export const run = async (): Promise<void> => {
   const configuration = loadBtcNotificationDeliveryConfiguration(process.env);
   const jobName = "btc_notify" as const;
   const scopeKey = "global";
@@ -96,15 +96,17 @@ const run = async (): Promise<void> => {
   }
 };
 
-void run().catch((error: unknown) => {
-  process.stderr.write(`${JSON.stringify({
-    kind: "btc_notification_dispatch_error",
-    message: error instanceof Error ? error.message : "notification dispatch failed",
-    jobName: "btc_notify",
-    scopeKey: "global",
-    ...(error instanceof OwnedJobExecutionError
-      ? { runId: error.runId, outcomeCode: error.outcomeCode }
-      : { outcomeCode: "startup_failed" })
-  })}\n`);
-  process.exitCode = 1;
-});
+if (process.argv[1] === new URL(import.meta.url).pathname) {
+    void run().catch((error: unknown) => {
+    process.stderr.write(`${JSON.stringify({
+      kind: "btc_notification_dispatch_error",
+      message: error instanceof Error ? error.message : "notification dispatch failed",
+      jobName: "btc_notify",
+      scopeKey: "global",
+      ...(error instanceof OwnedJobExecutionError
+        ? { runId: error.runId, outcomeCode: error.outcomeCode }
+        : { outcomeCode: "startup_failed" })
+    })}\n`);
+    process.exitCode = 1;
+  });
+}

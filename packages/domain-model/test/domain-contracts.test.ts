@@ -368,9 +368,15 @@ test("exposes expected lifecycle enums for the first product-domain slice", () =
     "pattern_notification_delivery_service"
   ]);
   assert.deepEqual(FIRST_PERSISTED_PRODUCT_SLICE, ["setup_definition", "research_hypothesis"]);
-  assert.equal(PRODUCT_WRITE_PATH_OWNERSHIP.length, 17);
+  const ownedEntityTypes = PRODUCT_WRITE_PATH_OWNERSHIP.map((entry) => entry.entityType);
+  assert.deepEqual(
+    [...ownedEntityTypes].sort(),
+    [...PRODUCT_PERSISTED_ENTITY_TYPES].sort(),
+    "every persisted product entity needs exactly one declared write-path owner"
+  );
+  assert.equal(new Set(ownedEntityTypes).size, ownedEntityTypes.length);
   assert.deepEqual(PERSISTED_ENTITY_LIFECYCLE_STATUSES, ["active", "archived"]);
-  assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "relational_planned");
+  assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.productDomain, "postgresql_prisma");
   assert.equal(DEFAULT_STORAGE_TECHNOLOGY_DIRECTION.runtimeControl, "postgresql_prisma");
   assert.equal(FIRST_CLASS_PERSISTED_ENTITY_PROFILES.length, 17);
   assert.deepEqual(RESEARCH_HYPOTHESIS_STATUSES, ["draft", "active", "paused", "closed"]);
