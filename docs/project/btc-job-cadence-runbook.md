@@ -23,7 +23,13 @@ docker compose --profile pilot up -d --no-deps btc-monitor
 
 Once prepared, `pnpm btc-evaluate:docker` or `infra/btc-jobs/run-evaluate.sh` runs one evaluator
 without rebuilding or starting dependencies. A missing database is an error, not a silent skip.
-Run the evaluator twice manually before enabling a timer. The command retains its JSON result
+Run the evaluator twice manually before enabling a timer.
+
+This sequence has been validated end to end: sequential runs are idempotent, a concurrent
+invocation skips with `already_running` and exits zero, a run killed mid-flight leaves a `running`
+row that blocks duplicate work until its lease expires, and the next invocation then terminalizes
+the orphan as `abandoned` / `lease_expired` and takes over. See
+`docs/project/next-steps.md` for the recorded results. The command retains its JSON result
 output and exits non-zero on startup or ownership failure; item-level failures remain a completed
 run with `completed_with_item_failures` in Postgres.
 

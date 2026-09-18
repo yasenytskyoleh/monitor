@@ -16,18 +16,51 @@ Reason:
 - external evaluator cadence is prepared for macOS and Linux but remains installed on neither
 
 ## Recommended near-future sequence
-1. verify two sequential Docker evaluator runs and their durable run history
-2. verify a concurrent invocation skips with `already_running` and still exits zero
-3. verify an interrupted run is taken over as `abandoned` after its lease expires
-4. only then choose a host and explicitly enable the five-minute evaluator timer
+1. ~~verify two sequential Docker evaluator runs and their durable run history~~ — **done**
+2. ~~verify a concurrent invocation skips with `already_running` and still exits zero~~ — **done**
+3. ~~verify an interrupted run is taken over as `abandoned` after its lease expires~~ — **done**
+4. **enable the macOS launchd timer** — the agent is prepared but deliberately not loaded (below)
 5. observe run history for at least a day before any retry policy is considered
 6. decide separately whether to enable Telegram delivery; keep trading out of scope
+
+### Cadence validation results
+All four checks passed against the containerized evaluator:
+
+| Check | Observed |
+|---|---|
+| two sequential runs | two `completed` rows with distinct run IDs; the second found every candidate already evaluated |
+| concurrent invocations | one acquired and completed; the other emitted `btc_evaluation_run_skipped` / `already_running` naming the active run ID, and exited zero |
+| run killed mid-flight | the row stayed `running` under a live lease, and a re-run inside that lease skipped instead of duplicating work |
+| lease expiry | the next invocation took over, terminalized the orphan as `abandoned` / `lease_expired`, and completed its own run |
+
+`infra/btc-jobs/run-evaluate.sh` was also verified under a minimal environment
+(`env -i`) because launchd does not provide a login shell's `PATH`.
+
+### Enabling the macOS timer
+The agent is written to `~/Library/LaunchAgents/com.monitor.btc-evaluate.plist` (repo path and
+`~/Library/Logs/monitor` substituted, `plutil -lint` clean) but is **deliberately not loaded**.
+Enabling it is an explicit operator action:
+
+```bash
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.monitor.btc-evaluate.plist
+```
+
+Disable with `launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.monitor.btc-evaluate.plist`.
+Docker Desktop and the prepared Postgres stack must be running; sleep or power-off does not queue
+missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
 
 ## Known gaps to schedule after the cadence work
 - `pattern_notification` is the only persisted entity outside the shared ports-and-adapters
   composition; it has a direct Prisma repository, no in-memory adapter, and no domain-model tests
 - `review_decision_routing_result` is persisted with no `PRODUCT_WRITE_PATH_OWNERSHIP` entry
-- `packages/evaluation-aggregation` is not wired into `apps/btc-monitor`; either wire it or remove it
+- **the review/execution chain has no composition root.** 15 of the 23 packages have zero workspace
+  dependents — `evaluation-aggregation`, `hypothesis-evidence`, `setup-feedback`,
+  `research-decision-approval`, `review-packet`, `review-decision`, `review-decision-routing`,
+  `routed-action-preparation`, `execution-attempt`, the three envelope executors, `setup-revision`,
+  `setup-activation`, `setup-lifecycle`, `setup-refinement`. Each depends on `domain-model` and is
+  covered by its own tests, but nothing composes them into a running workflow; `apps/btc-monitor`
+  wires only the market-data path. This is deliberate contract-first sequencing, **not** dead code —
+  do not delete these packages. The open question is what application service should assemble them.
 - `apps/btc-monitor/src/{evaluate,notify}.ts` run on import, so they cannot be unit-tested
 - there is no CI; every baseline verification is manual
 - ADR-089 and ADR-090 name follow-up ADRs that were never written. The **code** for monitored-symbol

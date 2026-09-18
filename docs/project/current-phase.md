@@ -110,8 +110,8 @@ The product side now proves that the repo can:
 ### Known gaps carried into the next step
 - `pattern_notification` bypasses the hexagonal pattern described above
 - `review_decision_routing_result` is persisted but has no `PRODUCT_WRITE_PATH_OWNERSHIP` entry
-- `packages/evaluation-aggregation` is not wired into `apps/btc-monitor`; the evaluator calls the
-  domain-model handoff directly
+- the review/execution chain has no composition root: 15 of 23 packages have no workspace consumer
+  (deliberate contract-first sequencing, not dead code — see `next-steps.md`)
 - there is no CI; every baseline verification is manual
 
 ## What this phase is not
