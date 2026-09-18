@@ -31,6 +31,13 @@
 - first relational adapter rollout design exists before Prisma implementation work
 - first physical Prisma schema and migration layout exists before runtime adapter wiring
 - adapter-backed relational repositories exist before concrete Prisma adapter wiring
+- operational scheduling state belongs in a separate `runtime_control` schema, never in `product_domain`
+- a service response is not automatically a durable record: `routed_action_execution_result` is
+  classified product-ephemeral, with `execution_attempt_audit` as the dedicated retained audit entity
+- user-facing alerts are **at-most-once**: an ambiguous delivery is terminalized as failed, never
+  retried or resent
+- job cadence is owned externally (launchd/systemd/cron), not by an in-repo scheduler daemon
+- bounded jobs take durable, owner-fenced leases so concurrent invocations skip instead of duplicating
 
 ## Agent/workflow decisions
 - current core agents:
@@ -46,132 +53,25 @@
 - no silent downgrade from live to mock
 
 ## Progress decisions already realized
-- mocked workflow runner exists
-- first live Product Agent path exists
-- live Architect Agent path exists
-- live Quant Pattern Agent path exists
-- live Docs Reviewer Agent path exists
-- first constrained live Backend Agent path exists
-- backend isolated apply + verification + cleanup flow exists
-- backend controlled promotion flow exists (`promote_verified`)
-- narrow helper-file creation constraints exist (including json helper fixtures)
-- backend stability reassessment artifact exists for dedicated runs (`stability-reassessment.json`)
-- first product-domain entity contracts exist:
-  - `MonitoredSymbol`
-  - `MarketDataSource`
-  - `NormalizedMarketEvent` (`PriceTickEvent`, `CandleClosedEvent`, `VolumeUpdateEvent`, `MonitoringHeartbeatEvent`)
-  - `SetupDefinition`
-  - `SignalCandidate`
-  - `EvaluationInput`
-  - `EvaluationWindow`
-  - `EvaluationResult`
-  - `EvaluationMetrics`
-  - `SetupAggregateResult`
-  - `SetupComparison`
-  - `ResearchHypothesisEvidenceLink`
-  - `ResearchHypothesis`
-  - `ResearchRun`
-- first product-domain ADR exists (`docs/architecture/adr/ADR-001-first-product-domain-slice.md`)
-- first monitoring-ingestion ADR exists (`docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`)
-- first evaluation-model ADR exists (`docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`)
-- first research-aggregation ADR exists (`docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`)
-- first storage-architecture ADR exists (`docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`)
-- first storage-boundary contracts exist (`packages/domain-model/src/storage/*`)
-- first repository/service architecture ADR exists (`docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`)
-- first repository/service contracts exist (`packages/domain-model/src/repositories/*`, `packages/domain-model/src/services/*`)
-- first persisted implementation slice chosen (`setup_definition`, `research_hypothesis`)
-- implemented in-memory persistence now exists for:
-  - `SetupDefinition`
-  - `ResearchHypothesis`
-  - `SignalCandidate`
-  - `EvaluationResult`
-  - `SetupAggregateResult`
-  - `ResearchFeedbackDecision`
-  - `ResearchDecisionApproval`
-  - `ResearchReviewDecision`
-  - `RoutedActionExecutionEnvelope`
-  - `SetupLifecycleMutationRecord`
-  - `SetupRefinementRequest`
-- first durable relational persistence contract now exists for:
-  - `setup_definition`
-  - `research_hypothesis`
-- first relational adapter rollout design now exists for:
-  - `setup_definition`
-  - `research_hypothesis`
-- first physical Prisma schema and initial migration now exist for:
-  - `setup_definition`
-  - `research_hypothesis`
-- first adapter-backed relational repositories and in-memory adapter harness now exist for:
-  - `setup_definition`
-  - `research_hypothesis`
-- second durable relational slice now exists for:
-  - `signal_candidate`
-  - `evaluation_result`
-- setup-aggregate durable relational contract, adapter-backed repository, and concrete Prisma adapter now exist
-- shared Prisma-backed composition now exists and later extends through the full implemented research chain
-- research-feedback-decision durable relational contract now exists
-- research-feedback-decision Prisma physical schema and migration layout now exist
-- research-feedback-decision adapter-backed relational repository and concrete Prisma adapter now exist
-- shared implemented-product composition now extends through research-feedback-decision
-- research-decision-approval durable relational contract now exists
-- research-decision-approval Prisma physical schema and migration layout now exist
-- research-decision-approval relational adapter contract now exists
-- research-decision-approval adapter-backed relational repository and concrete Prisma adapter now exist
-- shared implemented-product composition now extends through research-decision-approval
-- shared implemented-product real-Postgres integration now extends through research-decision-approval
-- research-review-decision durable relational contract now exists
-- research-review-decision Prisma physical schema and migration layout now exist
-- research-review-decision relational adapter contract now exists
-- research-review-decision adapter-backed relational repository and concrete Prisma adapter now exist
-- shared implemented-product composition now extends through research-review-decision
-- shared implemented-product real-Postgres integration now extends through research-review-decision
-- routed-action-execution-envelope durable relational contract now exists
-- routed-action-execution-envelope Prisma physical schema and migration layout now exists
-- routed-action-execution-envelope relational adapter contract now exists
-- routed-action-execution-envelope adapter-backed relational repository and concrete Prisma adapter now exist
-- shared implemented-product composition now extends through routed-action-execution-envelope
-- shared implemented-product real-Postgres integration now extends through routed-action-execution-envelope
-- setup-lifecycle-mutation-record durable relational contract now exists
-- setup-lifecycle-mutation-record Prisma physical schema and migration layout now exist
-- setup-lifecycle-mutation-record relational adapter contract now exists
-- setup-lifecycle-mutation-record adapter-backed relational repository and concrete Prisma adapter now exist
-- shared implemented-product composition now extends through setup-lifecycle-mutation-record
-- shared implemented-product real-Postgres integration now extends through setup-lifecycle-mutation-record
-- `setup_refinement_request` is now the selected first later downstream execution/mutation durable slice
-- setup-refinement-request durable relational contract now exists
-- setup-refinement-request Prisma physical schema and migration layout now exist
-- setup-refinement-request relational adapter contract now exists
-- setup-refinement-request adapter-backed relational repository and concrete Prisma adapter now exist
-- shared implemented-product composition now extends through setup-refinement-request
-- shared implemented-product real-Postgres integration now extends through setup-refinement-request
-- `setup_definition_revision` durable relational contract now exists
-- `setup_definition_revision` Prisma physical schema and migration layout now exist
-- `setup_definition_revision` relational adapter contract now exists
-- `setup_definition_revision` adapter-backed relational repository and concrete Prisma adapter now exist
-- shared implemented-product composition now extends through setup-definition-revision
-- shared implemented-product real-Postgres integration now extends through setup-definition-revision
-- setup-revision-activation-record durable relational contract now exists
-- setup-revision-activation-record Prisma physical schema and migration layout now exist
-- setup-revision-activation-record relational adapter contract now exists
-- setup-revision-activation-record adapter-backed relational repository and concrete Prisma adapter now exist
-- shared implemented-product composition now extends through setup-revision-activation-record
-- shared implemented-product real-Postgres integration now extends through setup-revision-activation-record
-- `review_decision_routing_result` is selected as the next downstream execution-handoff persistence slice
-- review-decision-routing-result durable relational contract now exists
-- review-decision-routing-result Prisma schema and migration now exist
-- review-decision-routing-result relational adapter contract now exists
-- review-decision-routing-result adapter-backed repository and Prisma adapter now exist
-- shared implemented-product composition now extends through review-decision-routing-result
-- shared implemented-product real-Postgres integration now extends through review-decision-routing-result
-- routed-action-execution-result is explicitly classified as product-ephemeral
-- persisted run artifacts exist
-- per-agent mode selection exists
-- approval registry and transition-bound approval validation exist
-- approval expiry and revocation checks are enforced
-- artifact registry and role-based artifact allowlists exist
-- shared live-adapter execution pipeline exists
-- per-run approvals are persisted (`approvals.json`)
+
+> This section used to restate every shipped slice and went stale. Current status lives in
+> `docs/project/current-phase.md`; the decision trail lives in `docs/architecture/adr/`
+> (ADR-001 … ADR-104). Only genuinely decision-shaped milestones are kept here.
+
+- the orchestration foundation shipped first and remains constrained
+- product-domain contracts were defined before any runtime engine was built
+- in-memory persistence landed before durable relational persistence, per entity
+- durable relational persistence completed for all 18 product entities via the fixed 6-step rollout
+- one shared Prisma bundle and one real-Postgres integration flow span that chain
+- the human-in-the-loop review and execution chain shipped before any automated action
+- public Binance Spot BTC/USDT ingestion, detection, evaluation and aggregation shipped as the
+  first real-data loop
+- evidence-gated, at-most-once decision-support delivery shipped with Telegram as the only adapter
+- durable cross-process run ownership shipped before any external cadence was enabled
 
 ## Current next-step decision
-- the currently recommended next step is: **define a provider-specific downstream executor and its
-  authorization and retry policy only when an external action is explicitly approved**
+- the currently recommended next step is: **validate and explicitly enable the external BTC
+  evaluation cadence**, matching `docs/project/next-steps.md`
+- the previous entry here ("define a provider-specific downstream executor and its authorization
+  and retry policy") is **superseded**: those executors shipped, and provider retries are now
+  explicitly out of scope
