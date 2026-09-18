@@ -38,6 +38,8 @@ import { type PrismaSetupDefinitionRevisionRelationalRepositoryAdapter } from ".
 import { createSetupRefinementRequestRelationalPrismaRepositoryAdapter } from "./setup-refinement-request-relational-prisma-client.js";
 import { type PrismaSetupRefinementRequestRelationalRepositoryAdapter } from "./setup-refinement-request-relational-prisma-adapter.js";
 import { createSetupRevisionActivationRecordRelationalPrismaRepositoryAdapter } from "./setup-revision-activation-record-relational-prisma-client.js";
+import { type PrismaPatternNotificationRelationalRepositoryAdapter } from "./pattern-notification-relational-prisma-adapter.js";
+import { createPatternNotificationRelationalPrismaRepositoryAdapter } from "./pattern-notification-relational-prisma-client.js";
 import { type PrismaSetupRevisionActivationRecordRelationalRepositoryAdapter } from "./setup-revision-activation-record-relational-prisma-adapter.js";
 import { createSetupAggregateRelationalPrismaRepositoryAdapter } from "./setup-aggregate-relational-prisma-client.js";
 import { type PrismaSetupAggregateRelationalRepositoryAdapter } from "./setup-aggregate-relational-prisma-adapter.js";
@@ -65,6 +67,7 @@ export type ImplementedProductRelationalPrismaAdapters = ImplementedProductRelat
     PrismaSetupRefinementRequestRelationalRepositoryAdapter;
   setupRevisionActivationRecordAdapter:
     PrismaSetupRevisionActivationRecordRelationalRepositoryAdapter;
+  patternNotificationAdapter: PrismaPatternNotificationRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalPrismaRepositories =
@@ -100,7 +103,8 @@ export const createImplementedProductRelationalPrismaAdapters = (
   setupRefinementRequestAdapter:
     createSetupRefinementRequestRelationalPrismaRepositoryAdapter(client),
   setupRevisionActivationRecordAdapter:
-    createSetupRevisionActivationRecordRelationalPrismaRepositoryAdapter(client)
+    createSetupRevisionActivationRecordRelationalPrismaRepositoryAdapter(client),
+  patternNotificationAdapter: createPatternNotificationRelationalPrismaRepositoryAdapter(client)
 });
 
 export const createImplementedProductRelationalPrismaRepositories = (

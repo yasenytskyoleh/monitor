@@ -22,8 +22,7 @@ pnpm test:integration     # domain-model integration tests
 pnpm verify:persistence   # domain-model typecheck + test + test:integration
 pnpm runner -- <args>     # run the app (apps/orchestrator-runner)
 
-# Per package (@monitor/agent-config, @monitor/orchestrator-core,
-#              @monitor/domain-model, @monitor/orchestrator-runner)
+# Per package — 23 packages + 2 apps; see the package map under Architecture
 pnpm --filter @monitor/domain-model <script>
 ```
 
@@ -47,13 +46,24 @@ pnpm --filter @monitor/domain-model exec prisma migrate dev --config prisma.conf
 
 Integration tests are **opt-in**: they skip cleanly unless a Postgres URL is provided (`PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL`). DB config comes from `.env` (`DATABASE_URL` / `DIRECT_URL`).
 
+When that URL *is* set the suite connects instead of skipping, so it fails with `ECONNREFUSED` unless Postgres is up **and** that disposable database has the migrations applied. Prepare it with `pnpm infra:up`, then run `prisma migrate deploy` with `DATABASE_URL`/`DIRECT_URL` pointed at the integration database.
+
 **Baseline verification** (narrowest first): domain-model `typecheck` → `test` → `test:integration`, then root `pnpm typecheck` → `pnpm test`.
 
 ## Architecture
 
-**Two domains, kept separate deliberately.** The *orchestration* domain (`packages/agent-config`, `packages/orchestrator-core`, `apps/orchestrator-runner`) executes workflows. The *product* domain (`packages/domain-model`) defines market/research meaning and owns durable persistence. Never mix orchestrator runtime evidence with product-domain persistence.
+**Two domains, kept separate deliberately.** The *orchestration* domain (`packages/agent-config`, `packages/orchestrator-core`, `apps/orchestrator-runner`) executes workflows. The *product* domain (everything else) defines market/research meaning and owns durable persistence. Never mix orchestrator runtime evidence with product-domain persistence.
 
 `packages/domain-model` is the pure domain + persistence package. **Its public API is entirely `src/index.ts`, a barrel of re-exports — new exports must be added there.**
+
+### Package map (23 packages, 2 apps)
+
+- **Orchestration**: `agent-config` (config + JSON-schema validation), `orchestrator-core` (workflow engine, transition/approval/artifact guardrails), `apps/orchestrator-runner` (CLI).
+- **Product domain**: `domain-model` — entities, services, repositories, Prisma persistence. Every runtime package below depends on it and writes **only** through its services.
+- **Market runtime**: `binance-spot` (REST backfill + WebSocket closed-candle feed, with gap/stale recovery), `pattern-detection` (closed-candle breakout → signal candidates), `candle-evaluation` (bounded 24h evaluation), `evaluation-aggregation` (completed evaluations → setup aggregates), `hypothesis-evidence` (aggregates → hypothesis evidence links).
+- **Review / execution chain**, in flow order: `setup-feedback` → `research-decision-approval` → `review-packet` → `review-decision` → `review-decision-routing` → `routed-action-preparation` → `execution-attempt`, which dispatches to `activation-envelope-executor`, `lifecycle-envelope-executor`, `refinement-envelope-executor`. Supporting runtimes: `setup-revision`, `setup-activation`, `setup-lifecycle`, `setup-refinement`.
+- **Delivery**: `pattern-notification` — eligibility, immutable retention, lease-based at-most-once delivery, reconciliation, Telegram adapter.
+- **App**: `apps/btc-monitor` — the runnable BTC/USDT pilot. `start` is long-running; `evaluate`, `notify`, `seed`, `smoke` are bounded. The bounded jobs take durable cross-process ownership in `runtime_control.scheduled_job_run` before doing any work.
 
 ### Persistence: ports & adapters (hexagonal), repeated per entity
 
@@ -109,8 +119,10 @@ This repo runs a strict, documented process. Follow it.
 
 - **Contract-first, fail-closed, one narrow PR-sized slice at a time.** In-memory persistence lands before durable relational persistence.
 - **Fixed 6-step persistence rollout** — one ADR and one commit per step: durable relational contract → Prisma schema + migration → relational adapter contract → adapter-backed repositories + Prisma adapter → shared implemented-product composition → opt-in integration coverage.
-- **ADRs**: `docs/architecture/adr/ADR-NNN-kebab-title.md`, zero-padded sequential (currently through ADR-078). Fixed sections: Status / Context / Decision / Consequences (Positive + Tradeoffs) / Explicitly not included / Follow-up (names the next ADR). Write one per slice.
+- **ADRs**: `docs/architecture/adr/ADR-NNN-kebab-title.md`, zero-padded sequential (currently through ADR-104). Fixed sections: **Context / Decision / Consequences / Follow-up**. Follow-up names the next ADR for this entity, or states the rollout is complete and what comes next — an ADR without it is incomplete. Write one per slice.
+  - Two older formats are grandfathered: ADR-001–090 add Status / Consequences split into Positive + Tradeoffs / Explicitly not included; ADR-091–104 omit Follow-up. **Do not retro-edit them.**
 - **Canonical status docs are the source of truth**; read in order and update them when repo state changes: `docs/project/next-steps.md` → `current-phase.md` → `project-overview.md` → `chat-briefing.md` → `decisions-log.md`. If sources disagree, align docs before continuing feature work.
-- **Out of scope — keep it that way**: runtime review/execution engines, exchange/market ingestion, evaluation/aggregation runtimes, UI, live trading.
+- **Out of scope — keep it that way**: UI, live trading and order placement, a scheduler daemon, provider retries, unbounded queues, and market-data ingestion beyond public Binance Spot BTC/USDT candle reads. Cadence stays externally owned; Telegram delivery stays manual and opt-in.
+  - Runtime review/execution engines, exchange ingestion, and evaluation/aggregation runtimes were previously listed here. They have since shipped — see the package map. Do not re-add them as constraints.
 - **Commit style**: capitalized imperative one-liners naming the entity + rollout stage (e.g. `Add setup-lifecycle mutation adapter contract`). Not Conventional Commits — no `feat:`/`fix:` prefixes, no trailers, no ticket refs.
 - The repo adopts `skills/karpathy-guidelines/SKILL.md`: state assumptions, minimum code, surgical changes touching only what the task needs, test-first goal-driven execution.

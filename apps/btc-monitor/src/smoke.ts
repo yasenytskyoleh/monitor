@@ -3,7 +3,6 @@ import process from "node:process";
 import { createBinanceSpotCandleFeed, type BinanceSpotWebSocket } from "@monitor/binance-spot";
 import {
   createImplementedProductRelationalPrismaRepositories,
-  PrismaPatternNotificationRecordRepository,
   type FirstDurableRelationalPrismaClientOptions
 } from "@monitor/domain-model";
 import {
@@ -17,6 +16,7 @@ import {
   type BtcMonitorRepositories
 } from "./btc-monitor-runtime.js";
 import { loadBtcSmokeConfiguration, type BtcSmokeConfiguration } from "./config.js";
+import { isDirectExecution } from "./direct-execution.js";
 
 const NETWORK_TIMEOUT_MS = 15_000;
 
@@ -151,12 +151,7 @@ export const runBtcSmokeCommand = async (
   try {
     const result = await runBtcSmoke({
       configuration,
-      repositories: {
-        ...repositories,
-        patternNotificationRecordRepository: new PrismaPatternNotificationRecordRepository(
-          repositories.prismaClient
-        )
-      },
+      repositories,
       candleFeed: createBinanceSpotCandleFeed({
         fetchImpl: fetch,
         createWebSocket,
@@ -170,7 +165,7 @@ export const runBtcSmokeCommand = async (
   }
 };
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (isDirectExecution(import.meta.url)) {
   void runBtcSmokeCommand().catch((error: unknown) => {
     console.error(JSON.stringify({
       kind: "btc_monitor_smoke_failed",

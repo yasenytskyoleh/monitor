@@ -1,0 +1,75 @@
+name: verify
+
+on:
+  pull_request:
+    branches: [develop]
+  push:
+    branches: [develop]
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      # Throwaway database for this run only. These are not secrets.
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: monitor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username postgres --dbname monitor"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Activate the pinned pnpm
+        run: corepack enable && corepack prepare pnpm@10.18.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create the disposable integration database
+        env:
+          PGPASSWORD: postgres
+        run: psql --host 127.0.0.1 --username postgres --command 'CREATE DATABASE monitor_test'
+
+      - name: Write the .env the integration suite requires
+        # test:integration runs node --env-file (not --env-file-if-exists), so a missing
+        # .env fails the run outright. The integration suite rebuilds product_domain itself.
+        run: |
+          cat > .env <<'ENV'
+          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/monitor
+          DIRECT_URL=postgresql://postgres:postgres@127.0.0.1:5432/monitor
+          PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/monitor_test
+          ENV
+
+      # Baseline verification, narrowest first, in the order CLAUDE.md documents.
+      - name: domain-model typecheck
+        run: pnpm --filter @monitor/domain-model typecheck
+
+      - name: domain-model test
+        run: pnpm --filter @monitor/domain-model test
+
+      - name: domain-model integration test
+        run: pnpm --filter @monitor/domain-model test:integration
+
+      - name: workspace typecheck
+        run: pnpm typecheck
+
+      - name: workspace test
+        run: pnpm test

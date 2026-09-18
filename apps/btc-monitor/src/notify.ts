@@ -3,13 +3,13 @@ import process from "node:process";
 import {
   createImplementedProductRelationalPrismaRepositories,
   createScheduledJobRunService,
-  PrismaScheduledJobRunRepository,
-  PrismaPatternNotificationRecordRepository
+  PrismaScheduledJobRunRepository
 } from "@monitor/domain-model";
 import type { TelegramFetch } from "@monitor/pattern-notification";
 
 import { createBtcNotificationDispatcher } from "./btc-notification-dispatcher.js";
 import { loadBtcNotificationDeliveryConfiguration } from "./config.js";
+import { isDirectExecution } from "./direct-execution.js";
 import { executeOwnedJob, OwnedJobExecutionError } from "./owned-job-executor.js";
 import { createProcessTermination } from "./process-termination.js";
 
@@ -44,7 +44,7 @@ const summarizeResult = (result: NotificationResult) => {
   };
 };
 
-const run = async (): Promise<void> => {
+export const run = async (): Promise<void> => {
   const configuration = loadBtcNotificationDeliveryConfiguration(process.env);
   const jobName = "btc_notify" as const;
   const scopeKey = "global";
@@ -66,9 +66,7 @@ const run = async (): Promise<void> => {
         configuration,
         fetchImpl: telegramFetch,
         signal,
-        patternNotificationRecordRepository: new PrismaPatternNotificationRecordRepository(
-          repositories.prismaClient
-        )
+        patternNotificationRecordRepository: repositories.patternNotificationRecordRepository
       }).dispatch()
     });
     if (outcome.status === "already_running") {
@@ -99,15 +97,17 @@ const run = async (): Promise<void> => {
   }
 };
 
-void run().catch((error: unknown) => {
-  process.stderr.write(`${JSON.stringify({
-    kind: "btc_notification_dispatch_error",
-    message: error instanceof Error ? error.message : "notification dispatch failed",
-    jobName: "btc_notify",
-    scopeKey: "global",
-    ...(error instanceof OwnedJobExecutionError
-      ? { runId: error.runId, outcomeCode: error.outcomeCode }
-      : { outcomeCode: "startup_failed" })
-  })}\n`);
-  process.exitCode = 1;
-});
+if (isDirectExecution(import.meta.url)) {
+  void run().catch((error: unknown) => {
+    process.stderr.write(`${JSON.stringify({
+      kind: "btc_notification_dispatch_error",
+      message: error instanceof Error ? error.message : "notification dispatch failed",
+      jobName: "btc_notify",
+      scopeKey: "global",
+      ...(error instanceof OwnedJobExecutionError
+        ? { runId: error.runId, outcomeCode: error.outcomeCode }
+        : { outcomeCode: "startup_failed" })
+    })}\n`);
+    process.exitCode = 1;
+  });
+}

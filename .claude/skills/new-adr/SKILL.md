@@ -30,16 +30,14 @@ Note: steps 5–6 use the `implemented-product-` prefix and often a shortened en
 
 1. **Find the next number.** List `docs/architecture/adr/`, take the highest `ADR-NNN`, add 1, zero-pad to 3 digits.
 2. **Pattern-match the entity.** `grep` existing ADRs for `<entity>` to copy the exact title casing, the short-entity form for steps 5–6, and the Follow-up wording style.
-3. **Pick the section heading for the 5th section.** The **`relational-adapter-contract` stage** uses `## Explicitly postponed at this contract step`. **Every other stage** uses `## Explicitly not included`.
-4. **Write the Follow-up chain.** List the remaining later steps for this entity, each naming the ADR number it will land in (compute them as consecutive numbers after this one). The final integration-coverage ADR instead points forward to the next entity's end-to-end integration work — copy that style from the most recent step-6 ADR.
-5. **Write the file** `ADR-<NNN>-<slug>.md` using the template below. Fill Context/Decision with `TODO` bullets tailored to the stage; keep Status as `Accepted` only if the author confirms — otherwise `Proposed`.
+3. **Write the Follow-up chain.** List the remaining later steps for this entity, each naming the ADR number it will land in (compute them as consecutive numbers after this one). The final integration-coverage ADR instead points forward to the next entity's end-to-end integration work — copy that style from the most recent step-6 ADR. Follow-up is **required**: an ADR without it is incomplete.
+4. **Write the file** `ADR-<NNN>-<slug>.md` using the template below. Fill Context/Decision with `TODO` bullets tailored to the stage.
+
+Note: ADR-001–090 carry extra `Status` / `Explicitly not included` sections and ADR-091–104 omit `Follow-up`. Both are grandfathered — copy their **wording style**, not their section list.
 
 ## Template
 ```markdown
 # ADR-<NNN>: <Entity Title> <Title suffix>
-
-## Status
-Proposed
 
 ## Context
 <TODO: what already exists (prior steps), and the specific gap this step closes.>
@@ -48,17 +46,12 @@ Proposed
 <TODO: the contract/decision rules for this step.>
 
 ## Consequences
-Positive:
-- <TODO>
-
-Tradeoffs:
-- <TODO>
-
-## <Explicitly not included | Explicitly postponed at this contract step>
-- <TODO: later steps deliberately out of scope here.>
+<TODO: what this enables, what it costs, and what deliberately remains impossible
+after this step — including the later rollout steps still out of scope here.>
 
 ## Follow-up
-- <TODO: each remaining step for this entity → the ADR number it lands in.>
+- <TODO: each remaining step for this entity → the ADR number it lands in.
+  If this is the final step, say the rollout is complete and name what comes next.>
 ```
 
 After writing, print the path and remind the author this is one slice = one commit (capitalized imperative one-liner naming entity + stage, e.g. "Add setup-revision-activation-record durable relational contract").

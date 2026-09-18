@@ -329,6 +329,17 @@ export {
   SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_PRISMA_MODELS,
   SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_REQUIRED_COLUMNS,
   SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_TABLES,
+  PATTERN_NOTIFICATION_DELIVERY_LEASE_MIGRATION_SLUG,
+  PATTERN_NOTIFICATION_DURABLE_DELIVERY_FIELDS,
+  PATTERN_NOTIFICATION_DURABLE_EVIDENCE_FIELDS,
+  PATTERN_NOTIFICATION_RELATIONAL_CHECK_CONSTRAINTS,
+  PATTERN_NOTIFICATION_RELATIONAL_ENTITY_TYPES,
+  PATTERN_NOTIFICATION_RELATIONAL_INDEXES,
+  PATTERN_NOTIFICATION_RELATIONAL_MIGRATION_SLUG,
+  PATTERN_NOTIFICATION_RELATIONAL_PRISMA_MODELS,
+  PATTERN_NOTIFICATION_RELATIONAL_REQUIRED_COLUMNS,
+  PATTERN_NOTIFICATION_RELATIONAL_TABLES,
+  PATTERN_NOTIFICATION_RELATIONAL_UNIQUE_CONSTRAINTS,
   SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ENTITY_TYPES,
   SETUP_REFINEMENT_REQUEST_RELATIONAL_INDEXES,
   SETUP_REFINEMENT_REQUEST_RELATIONAL_MIGRATION_SLUG,
@@ -401,6 +412,13 @@ export type {
   SetupDefinitionRevisionRelationalEntityType,
   SetupDefinitionRevisionRelationalTableName,
   SetupDefinitionRevisionRelationalUniqueConstraintName,
+  PatternNotificationDurableRecord,
+  PatternNotificationRelationalCheckConstraintName,
+  PatternNotificationRelationalEntityType,
+  PatternNotificationRelationalIndexName,
+  PatternNotificationRelationalPrismaModelName,
+  PatternNotificationRelationalTableName,
+  PatternNotificationRelationalUniqueConstraintName,
   SetupRevisionActivationRecordDurableRecord,
   SetupRevisionActivationRecordRelationalIndexName,
   SetupRevisionActivationRecordRelationalPrismaModelName,
@@ -524,6 +542,25 @@ export {
   SETUP_DEFINITION_REVISION_RELATIONAL_RETRYABLE_ERROR_CODES,
   isSetupDefinitionRevisionRelationalDeterministicErrorCode
 } from "./repositories/setup-definition-revision-relational-repository-adapter.js";
+export {
+  PATTERN_NOTIFICATION_REFERENCE_KINDS,
+  PATTERN_NOTIFICATION_RELATIONAL_ADAPTER_ERROR_MAPPING,
+  PATTERN_NOTIFICATION_RELATIONAL_ADAPTER_OPERATIONS,
+  PATTERN_NOTIFICATION_RELATIONAL_DETERMINISTIC_ERROR_CODES,
+  PATTERN_NOTIFICATION_RELATIONAL_RETRYABLE_ERROR_CODES,
+  isPatternNotificationRelationalDeterministicErrorCode
+} from "./repositories/pattern-notification-relational-repository-adapter.js";
+export type {
+  PatternNotificationDeliveryStatusQuery,
+  PatternNotificationInsertRequest,
+  PatternNotificationRelationalAdapterErrorMapping,
+  PatternNotificationRelationalAdapterOperation,
+  PatternNotificationReferenceKind,
+  PatternNotificationRelationalDeterministicErrorCode,
+  PatternNotificationRelationalRepositoryAdapter,
+  PatternNotificationRelationalRetryableErrorCode,
+  PatternNotificationUpdateRequest
+} from "./repositories/pattern-notification-relational-repository-adapter.js";
 export {
   SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ADAPTER_ERROR_MAPPING,
   SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ADAPTER_OPERATIONS,
@@ -748,6 +785,10 @@ export {
   hydrateSetupDefinitionRevisionFromDurableRecord
 } from "./repositories/setup-definition-revision-relational-repository-mappers.js";
 export {
+  dehydratePatternNotificationToDurableRecord,
+  hydratePatternNotificationFromDurableRecord
+} from "./repositories/pattern-notification-relational-repository-mappers.js";
+export {
   dehydrateSetupRevisionActivationRecordToDurableRecord,
   hydrateSetupRevisionActivationRecordFromDurableRecord
 } from "./repositories/setup-revision-activation-record-relational-repository-mappers.js";
@@ -868,6 +909,12 @@ export type {
 export {
   InMemorySetupDefinitionRevisionRelationalRepositoryAdapter
 } from "./repositories/setup-definition-revision-relational-repository-adapter.impl.js";
+export type {
+  PatternNotificationRelationalReferenceReader
+} from "./repositories/pattern-notification-relational-repository-adapter.impl.js";
+export {
+  InMemoryPatternNotificationRelationalRepositoryAdapter
+} from "./repositories/pattern-notification-relational-repository-adapter.impl.js";
 export type {
   SetupRevisionActivationRecordRelationalReferenceReader
 } from "./repositories/setup-revision-activation-record-relational-repository-adapter.impl.js";
@@ -1023,6 +1070,12 @@ export type {
 export {
   PrismaSetupDefinitionRevisionRelationalRepositoryAdapter
 } from "./repositories/setup-definition-revision-relational-prisma-adapter.js";
+export type {
+  PatternNotificationRelationalPrismaClient
+} from "./repositories/pattern-notification-relational-prisma-adapter.js";
+export {
+  PrismaPatternNotificationRelationalRepositoryAdapter
+} from "./repositories/pattern-notification-relational-prisma-adapter.js";
 export type {
   SetupRevisionActivationRecordRelationalPrismaClient
 } from "./repositories/setup-revision-activation-record-relational-prisma-adapter.js";
@@ -1204,18 +1257,6 @@ export {
 export {
   InMemoryPatternNotificationRecordRepository
 } from "./repositories/pattern-notification-record-repository.impl.js";
-export {
-  PrismaPatternNotificationRecordRepository
-} from "./repositories/pattern-notification-record-repository.prisma.js";
-export type {
-  PatternNotificationRecordPrismaClient
-} from "./repositories/pattern-notification-record-repository.prisma.js";
-export {
-  createPatternNotificationRecordPrismaRepositories
-} from "./repositories/pattern-notification-record-repository.prisma-client.js";
-export type {
-  PatternNotificationRecordPrismaRepositories
-} from "./repositories/pattern-notification-record-repository.prisma-client.js";
 export type {
   ExecutionAttemptAuditRecordWriteRequest,
   ExecutionAttemptAuditRelationalAdapterOperation,
@@ -1280,6 +1321,9 @@ export type {
 export {
   InMemorySetupRevisionActivationRecordRepository
 } from "./repositories/setup-revision-activation-record-repository.impl.js";
+export {
+  RelationalPatternNotificationRecordRepository
+} from "./repositories/pattern-notification-relational-repository.impl.js";
 export {
   RelationalSetupRevisionActivationRecordRepository
 } from "./repositories/setup-revision-activation-record-relational-repository.impl.js";

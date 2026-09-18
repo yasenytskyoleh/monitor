@@ -18,6 +18,7 @@ import {
   InMemorySetupLifecycleMutationRecordRelationalRepositoryAdapter,
   InMemorySignalEvaluationRelationalRepositoryAdapter,
   InMemorySetupRefinementRequestRelationalRepositoryAdapter,
+  InMemoryPatternNotificationRelationalRepositoryAdapter,
   InMemorySetupRevisionActivationRecordRelationalRepositoryAdapter,
   type EvaluationResult,
   type MonitoredSymbol,
@@ -441,8 +442,14 @@ test(
             setupDefinitionRevisionAdapter
           )
       });
+    // Reference validation has its own contract test; this bundle only checks composition.
+    const patternNotificationAdapter =
+      new InMemoryPatternNotificationRelationalRepositoryAdapter({
+        referenceExists: async () => true
+      });
     const repositories = composeImplementedProductRelationalRepositories({
       firstDurableAdapter,
+      patternNotificationAdapter,
       monitoredSymbolAdapter,
       signalEvaluationAdapter: new InMemorySignalEvaluationRelationalRepositoryAdapter(
         firstDurableAdapter
@@ -696,5 +703,10 @@ test(
     assert.equal(storedActivation?.targetSetupDefinitionId, "setup-003");
     assert.equal(activationsForFamily.length, 1);
     assert.equal(activationsForFamily[0]?.id, "activation-001");
+    assert.equal(
+      typeof repositories.patternNotificationRecordRepository.getByDeduplicationKey,
+      "function",
+      "the shared bundle must expose the pattern-notification repository"
+    );
   }
 );

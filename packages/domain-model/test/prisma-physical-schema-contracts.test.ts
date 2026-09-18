@@ -11,6 +11,14 @@ import {
   FIRST_DURABLE_RELATIONAL_PRISMA_MODELS,
   FIRST_DURABLE_RELATIONAL_REQUIRED_COLUMNS,
   FIRST_DURABLE_RELATIONAL_TABLES,
+  PATTERN_NOTIFICATION_DELIVERY_LEASE_MIGRATION_SLUG,
+  PATTERN_NOTIFICATION_RELATIONAL_CHECK_CONSTRAINTS,
+  PATTERN_NOTIFICATION_RELATIONAL_INDEXES,
+  PATTERN_NOTIFICATION_RELATIONAL_MIGRATION_SLUG,
+  PATTERN_NOTIFICATION_RELATIONAL_PRISMA_MODELS,
+  PATTERN_NOTIFICATION_RELATIONAL_REQUIRED_COLUMNS,
+  PATTERN_NOTIFICATION_RELATIONAL_TABLES,
+  PATTERN_NOTIFICATION_RELATIONAL_UNIQUE_CONSTRAINTS,
   MONITORED_SYMBOL_RELATIONAL_INDEXES,
   MONITORED_SYMBOL_RELATIONAL_MIGRATION_SLUG,
   MONITORED_SYMBOL_RELATIONAL_PRISMA_MODELS,
@@ -155,6 +163,20 @@ const initialSetupRevisionSourceMigrationPath = join(
   "prisma",
   "migrations",
   "20260914120000_product_domain_initial_setup_revision_source",
+  "migration.sql"
+);
+const patternNotificationMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  `20260809103000_${PATTERN_NOTIFICATION_RELATIONAL_MIGRATION_SLUG}`,
+  "migration.sql"
+);
+const patternNotificationDeliveryLeaseMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  `20260901103000_${PATTERN_NOTIFICATION_DELIVERY_LEASE_MIGRATION_SLUG}`,
   "migration.sql"
 );
 const setupRevisionActivationRecordMigrationPath = join(
@@ -1349,4 +1371,99 @@ test("migration creates the setup-revision-activation-record relational table, i
     migration,
     /"created_at_utc" <= "activated_at_utc" AND\s+"updated_at_utc" >= "activated_at_utc"/
   );
+});
+
+test("exposes pattern-notification physical schema constants", () => {
+  assert.equal(
+    PATTERN_NOTIFICATION_RELATIONAL_MIGRATION_SLUG,
+    "product_domain_pattern_notification_relational_v1"
+  );
+  assert.equal(
+    PATTERN_NOTIFICATION_DELIVERY_LEASE_MIGRATION_SLUG,
+    "product_domain_pattern_notification_delivery_lease_v1"
+  );
+  assert.equal(
+    PATTERN_NOTIFICATION_RELATIONAL_PRISMA_MODELS.patternNotification,
+    "PatternNotificationRecord"
+  );
+  assert.equal(
+    PATTERN_NOTIFICATION_RELATIONAL_TABLES.patternNotification,
+    "pattern_notification"
+  );
+});
+
+test("prisma schema defines the pattern-notification model with every required column", async () => {
+  const schema = await readFile(schemaPath, "utf8");
+
+  assert.match(schema, /model PatternNotificationRecord \{/);
+  assert.match(schema, /@@map\("pattern_notification"\)/);
+  assert.match(schema, /enum PatternNotificationDeliveryStatus \{/);
+
+  for (const columnName of PATTERN_NOTIFICATION_RELATIONAL_REQUIRED_COLUMNS.pattern_notification) {
+    assert.equal(
+      schema.includes(`@map("${columnName}")`),
+      true,
+      `schema.prisma is missing @map("${columnName}")`
+    );
+  }
+
+  for (const indexName of PATTERN_NOTIFICATION_RELATIONAL_INDEXES) {
+    assert.equal(
+      schema.includes(`map: "${indexName}"`),
+      true,
+      `schema.prisma is missing index ${indexName}`
+    );
+  }
+});
+
+test("pattern-notification migrations define every required column, index and constraint", async () => {
+  const [base, deliveryLease] = await Promise.all([
+    readFile(patternNotificationMigrationPath, "utf8"),
+    readFile(patternNotificationDeliveryLeaseMigrationPath, "utf8")
+  ]);
+  const migrations = `${base}\n${deliveryLease}`;
+
+  assert.equal(
+    base.includes(`CREATE TABLE "product_domain"."${PATTERN_NOTIFICATION_RELATIONAL_TABLES.patternNotification}"`),
+    true
+  );
+
+  for (const columnName of PATTERN_NOTIFICATION_RELATIONAL_REQUIRED_COLUMNS.pattern_notification) {
+    assert.equal(
+      migrations.includes(`"${columnName}"`),
+      true,
+      `pattern_notification migrations are missing ${columnName}`
+    );
+  }
+
+  for (const indexName of PATTERN_NOTIFICATION_RELATIONAL_INDEXES) {
+    assert.equal(
+      migrations.includes(`CREATE INDEX "${indexName}"`),
+      true,
+      `pattern_notification migrations are missing index ${indexName}`
+    );
+  }
+
+  for (const constraintName of PATTERN_NOTIFICATION_RELATIONAL_UNIQUE_CONSTRAINTS) {
+    assert.equal(
+      migrations.includes(`CONSTRAINT "${constraintName}" UNIQUE`),
+      true,
+      `pattern_notification migrations are missing unique constraint ${constraintName}`
+    );
+  }
+
+  for (const constraintName of PATTERN_NOTIFICATION_RELATIONAL_CHECK_CONSTRAINTS) {
+    assert.equal(
+      migrations.includes(`CONSTRAINT "${constraintName}" CHECK`),
+      true,
+      `pattern_notification migrations are missing check constraint ${constraintName}`
+    );
+  }
+});
+
+test("the pattern-notification delivery lease is fenced to an attempted delivery", async () => {
+  const deliveryLease = await readFile(patternNotificationDeliveryLeaseMigrationPath, "utf8");
+
+  assert.match(deliveryLease, /"delivery_status" = 'delivery_attempted'/);
+  assert.match(deliveryLease, /"delivery_lease_expires_at_utc" > "delivery_attempted_at_utc"/);
 });

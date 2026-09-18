@@ -1,245 +1,57 @@
 # Chat Briefing
 
 ## Reusable project briefing
-I am working on **Monitor**, a monorepo TypeScript project that combines:
-- a controlled agent orchestration foundation, and
-- product-domain contracts for monitoring, evaluation, research evidence, storage, and persistence implementation boundaries.
 
-The primary working model is a **Codex-first workflow**:
-- Codex is the main operator for planning, implementation, and repo coordination
-- bounded autonomous execution is allowed when it follows `docs/project/autonomous-mode-policy.md`
-- the internal orchestration subsystem remains an in-repo supporting subsystem for constrained, auditable workflow automation
+I am working on **Monitor**, a pnpm + Turborepo TypeScript monorepo (ESM, `strict`) that combines a
+controlled agent-orchestration foundation with a product domain for crypto monitoring, evaluation,
+research evidence, and durable persistence. It is decision support, **not** a trading bot.
 
-Current foundation scope includes:
-- docs + configs + schemas + runtime guardrails
-- orchestrated workflow execution with approvals and artifact enforcement
-- constrained backend live mode with isolated apply/verify/rollback/promotion
+The working model is **Codex-first**: Codex is the main operator for planning, implementation, and
+repo coordination; bounded autonomous execution follows `docs/project/autonomous-mode-policy.md`;
+the in-repo orchestration subsystem is a constrained supporting tool, not the required interface.
 
-Current product-domain scope includes:
-- `packages/domain-model` with:
-  - monitoring contracts (`MonitoredSymbol`, `MarketDataSource`, `NormalizedMarketEvent`)
-  - setup/signal contracts (`SetupDefinition`, `SignalCandidate`)
-  - evaluation contracts (`EvaluationInput`, `EvaluationWindow`, `EvaluationResult`, `EvaluationMetrics`, `EvaluationStatus`)
-  - research evidence contracts (`AggregationScope`, `SetupAggregateResult`, `SetupComparison`, `ResearchHypothesisEvidenceLink`)
-  - research feedback contracts (`ResearchFeedbackDecision`)
-  - research review/execution contracts (`ResearchDecisionApproval`, `ResearchReviewDecision`, `ReviewDecisionRoutingResult`, `RoutedActionExecutionEnvelope`, `SetupLifecycleMutationRecord`, `SetupRefinementRequest`, `SetupDefinitionRevision`, `SetupRevisionActivationRecord`)
-  - storage contracts (`StorageBoundary`, `EntityIdentity`, `PersistedEntity`, `ProductRecordMetadata`)
-  - repository contracts (`*Repository` interfaces)
-  - service contracts (`*Service` interfaces + write-path ownership)
-  - implemented in-memory persistence for `SetupDefinition`, `ResearchHypothesis`, `SignalCandidate`, `EvaluationResult`, `SetupAggregateResult`, `ResearchFeedbackDecision`, `ResearchDecisionApproval`, `ResearchReviewDecision`, `ReviewDecisionRoutingResult`, `RoutedActionExecutionEnvelope`, `SetupLifecycleMutationRecord`, `SetupRefinementRequest`, `SetupDefinitionRevision`, and `SetupRevisionActivationRecord`
-  - hypothesis/run contracts (`ResearchHypothesis`, `ResearchRun`)
-- docs and ADRs:
-  - `docs/project/domain-model.md`
-  - `docs/project/monitoring-model.md`
-  - `docs/project/normalized-events.md`
-  - `docs/project/evaluation-model.md`
-  - `docs/project/outcome-metrics.md`
-  - `docs/project/research-aggregation-model.md`
-  - `docs/project/setup-comparison-model.md`
-  - `docs/project/storage-architecture.md`
-  - `docs/project/persistence-boundaries.md`
-  - `docs/project/persistence-implementation-architecture.md`
-  - `docs/project/first-persisted-slice.md`
-  - `docs/project/durable-relational-persistence-model.md`
-  - `docs/project/relational-adapter-rollout-model.md`
-  - `docs/project/prisma-schema-implementation-model.md`
-  - `docs/project/relational-repository-implementation-model.md`
-  - `docs/project/signal-evaluation-relational-rollout-model.md`
-  - `docs/project/setup-aggregate-relational-persistence-model.md`
-  - `docs/project/setup-aggregate-relational-rollout-model.md`
-  - `docs/project/implemented-product-relational-composition-model.md`
-  - `docs/project/implemented-product-feedback-decision-composition-model.md`
-  - `docs/project/implemented-product-approval-composition-model.md`
-  - `docs/project/implemented-product-approval-integration-model.md`
-  - `docs/project/research-feedback-decision-relational-persistence-model.md`
-  - `docs/project/research-feedback-decision-relational-rollout-model.md`
-  - `docs/project/research-decision-approval-relational-persistence-model.md`
-  - `docs/project/research-decision-approval-relational-adapter-model.md`
-  - `docs/project/research-decision-approval-relational-rollout-model.md`
-  - `docs/project/research-review-decision-relational-persistence-model.md`
-  - `docs/project/research-review-decision-relational-adapter-model.md`
-  - `docs/project/research-review-decision-relational-rollout-model.md`
-  - `docs/project/implemented-product-review-decision-composition-model.md`
-  - `docs/project/implemented-product-review-decision-integration-model.md`
-  - `docs/project/routed-action-execution-envelope-relational-persistence-model.md`
-  - `docs/project/routed-action-execution-envelope-relational-adapter-model.md`
-  - `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
-  - `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
-  - `docs/project/implemented-product-routed-action-execution-envelope-integration-model.md`
-  - `docs/project/setup-lifecycle-mutation-relational-persistence-model.md`
-  - `docs/project/setup-lifecycle-mutation-relational-adapter-model.md`
-  - `docs/project/setup-lifecycle-mutation-relational-rollout-model.md`
-  - `docs/project/implemented-product-setup-lifecycle-mutation-composition-model.md`
-  - `docs/project/implemented-product-setup-lifecycle-mutation-integration-model.md`
-  - `docs/project/implemented-product-setup-refinement-request-composition-model.md`
-  - `docs/project/implemented-product-setup-refinement-request-integration-model.md`
-  - `docs/project/setup-refinement-request-relational-persistence-model.md`
-  - `docs/project/setup-definition-revision-relational-persistence-model.md`
-  - `docs/project/setup-definition-revision-relational-adapter-model.md`
-  - `docs/project/setup-definition-revision-relational-rollout-model.md`
-  - `docs/project/implemented-product-setup-definition-revision-composition-model.md`
-  - `docs/project/implemented-product-setup-definition-revision-integration-model.md`
-  - `docs/project/setup-revision-activation-relational-adapter-model.md`
-  - `docs/project/setup-revision-activation-relational-rollout-model.md`
-  - `docs/project/setup-revision-activation-relational-persistence-model.md`
-  - `docs/project/implemented-product-setup-revision-activation-composition-model.md`
-  - `docs/project/implemented-product-setup-revision-activation-integration-model.md`
-  - `docs/project/setup-refinement-request-relational-adapter-model.md`
-  - `docs/project/setup-refinement-request-relational-rollout-model.md`
-  - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
-  - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
-  - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
-  - `docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`
-  - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
-  - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
-  - `docs/architecture/adr/ADR-026-first-durable-relational-persistence-contract.md`
-  - `docs/architecture/adr/ADR-027-first-relational-adapter-rollout-design.md`
-  - `docs/architecture/adr/ADR-028-first-prisma-schema-and-migration-layout.md`
-  - `docs/architecture/adr/ADR-029-first-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-030-signal-evaluation-durable-relational-rollout.md`
-  - `docs/architecture/adr/ADR-031-setup-aggregate-durable-relational-contract-and-schema.md`
-  - `docs/architecture/adr/ADR-032-setup-aggregate-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-033-shared-implemented-product-relational-composition.md`
-  - `docs/architecture/adr/ADR-034-research-feedback-decision-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-035-research-feedback-decision-prisma-schema-layout.md`
-  - `docs/architecture/adr/ADR-036-research-feedback-decision-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-037-implemented-product-feedback-decision-composition.md`
-  - `docs/architecture/adr/ADR-038-research-decision-approval-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-039-research-decision-approval-prisma-schema-layout.md`
-  - `docs/architecture/adr/ADR-040-research-decision-approval-relational-adapter-contract.md`
-  - `docs/architecture/adr/ADR-041-research-decision-approval-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-042-implemented-product-approval-composition.md`
-  - `docs/architecture/adr/ADR-043-implemented-product-approval-integration-coverage.md`
-  - `docs/architecture/adr/ADR-044-research-review-decision-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-045-research-review-decision-prisma-schema-layout.md`
-  - `docs/architecture/adr/ADR-046-research-review-decision-relational-adapter-contract.md`
-  - `docs/architecture/adr/ADR-047-research-review-decision-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-048-implemented-product-review-decision-composition.md`
-  - `docs/architecture/adr/ADR-049-implemented-product-review-decision-integration-coverage.md`
-  - `docs/architecture/adr/ADR-050-routed-action-execution-envelope-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-051-routed-action-execution-envelope-prisma-schema-layout.md`
-  - `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
-  - `docs/architecture/adr/ADR-053-routed-action-execution-envelope-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-054-implemented-product-routed-action-execution-envelope-composition.md`
-  - `docs/architecture/adr/ADR-055-implemented-product-routed-action-execution-envelope-integration-coverage.md`
-  - `docs/architecture/adr/ADR-056-setup-lifecycle-mutation-record-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-057-setup-lifecycle-mutation-record-prisma-schema-layout.md`
-  - `docs/architecture/adr/ADR-058-setup-lifecycle-mutation-record-relational-adapter-contract.md`
-  - `docs/architecture/adr/ADR-059-setup-lifecycle-mutation-record-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-060-implemented-product-setup-lifecycle-mutation-composition.md`
-  - `docs/architecture/adr/ADR-061-implemented-product-setup-lifecycle-mutation-integration-coverage.md`
-  - `docs/architecture/adr/ADR-062-setup-refinement-request-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-063-setup-refinement-request-prisma-schema-layout.md`
-  - `docs/architecture/adr/ADR-064-setup-refinement-request-relational-adapter-contract.md`
-  - `docs/architecture/adr/ADR-065-setup-refinement-request-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-066-implemented-product-setup-refinement-request-composition.md`
-  - `docs/architecture/adr/ADR-067-implemented-product-setup-refinement-request-integration-coverage.md`
-  - `docs/architecture/adr/ADR-068-setup-definition-revision-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-069-setup-definition-revision-prisma-schema-layout.md`
-  - `docs/architecture/adr/ADR-070-setup-definition-revision-relational-adapter-contract.md`
-  - `docs/architecture/adr/ADR-071-setup-definition-revision-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-072-implemented-product-setup-definition-revision-composition.md`
-  - `docs/architecture/adr/ADR-073-implemented-product-setup-definition-revision-integration-coverage.md`
-  - `docs/architecture/adr/ADR-074-setup-revision-activation-record-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-075-setup-revision-activation-record-prisma-schema-layout.md`
-  - `docs/architecture/adr/ADR-076-setup-revision-activation-record-relational-adapter-contract.md`
-  - `docs/architecture/adr/ADR-077-setup-revision-activation-record-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-078-implemented-product-setup-revision-activation-composition.md`
-  - `docs/architecture/adr/ADR-079-implemented-product-setup-revision-activation-integration-coverage.md`
-  - `docs/architecture/adr/ADR-080-review-decision-routing-result-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-081-review-decision-routing-result-prisma-schema-layout.md`
-  - `docs/architecture/adr/ADR-082-review-decision-routing-result-relational-adapter-contract.md`
-  - `docs/architecture/adr/ADR-083-review-decision-routing-result-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-084-implemented-product-review-decision-routing-result-composition.md`
-  - `docs/architecture/adr/ADR-085-implemented-product-review-decision-routing-result-integration-coverage.md`
-  - `docs/architecture/adr/ADR-086-routed-action-execution-result-storage-boundary.md`
+### What exists
+
+- **Orchestration** — `packages/agent-config`, `packages/orchestrator-core`,
+  `apps/orchestrator-runner`: config/schema validation, immutable runtime snapshots, workflow
+  execution with approval-gated transitions, artifact enforcement, persisted run evidence, and a
+  constrained live backend mode with isolated apply/verify/rollback/promotion.
+- **Product domain** — `packages/domain-model`: monitoring, setup/signal, evaluation,
+  research-evidence, review/execution, storage, repository, and service contracts. 18 entities have
+  durable Prisma/Postgres persistence behind service-owned write paths, composed through one shared
+  bundle with real-Postgres integration coverage.
+- **Market and research runtimes** — `binance-spot` (public BTC/USDT closed candles, REST backfill +
+  live WebSocket with gap/stale recovery), `pattern-detection`, `candle-evaluation`,
+  `evaluation-aggregation`, `hypothesis-evidence`.
+- **Review and execution chain** — `setup-feedback`, `research-decision-approval`, `review-packet`,
+  `review-decision`, `review-decision-routing`, `routed-action-preparation`, `execution-attempt`,
+  and the `activation-`/`lifecycle-`/`refinement-envelope-executor` packages, plus `setup-revision`,
+  `setup-activation`, `setup-lifecycle`, `setup-refinement`.
+- **Delivery** — `pattern-notification`: eligibility, immutable retention, lease-based at-most-once
+  delivery, no-resend reconciliation, Telegram adapter.
+- **App** — `apps/btc-monitor`: the runnable pilot. `start` is long-running; `evaluate`, `notify`,
+  `seed`, `smoke` are bounded. Only `evaluate` and `notify` take durable ownership in
+  `runtime_control.scheduled_job_run`.
+
+Full inventories live in the directories themselves — `docs/architecture/adr/`
+and `docs/project/`. Do not re-create hand-maintained copies of those lists here; doing so is what
+made this file drift in the first place.
 
 ## Current constraints
-- spot-only scope
-- no exchange connector runtime implementation yet
-- no setup-detection runtime engine yet
-- no evaluation runtime engine yet
-- no aggregation/scoring runtime engine yet
-- durable relational contracts now exist for:
-  - `setup_definition`
-  - `research_hypothesis`
-  - `signal_candidate`
-  - `evaluation_result`
-  - `setup_aggregate_result`
-  - `research_feedback_decision`
-  - `research_decision_approval`
-  - `research_review_decision`
-  - `review_decision_routing_result`
-  - `routed_action_execution_envelope`
-  - `setup_lifecycle_mutation_record`
-  - `setup_refinement_request`
-  - `setup_definition_revision`
-  - `setup_revision_activation_record`
-- committed Prisma schema/migrations now exist for:
-  - `setup_definition`
-  - `research_hypothesis`
-  - `signal_candidate`
-  - `evaluation_result`
-  - `setup_aggregate_result`
-  - `research_feedback_decision`
-  - `research_decision_approval`
-  - `research_review_decision`
-  - `review_decision_routing_result`
-  - `routed_action_execution_envelope`
-  - `setup_lifecycle_mutation_record`
-  - `setup_refinement_request`
-  - `setup_definition_revision`
-  - `setup_revision_activation_record`
-  - `review_decision_routing_result`
-- repository adapter contracts now also exist through:
-  - `setup_definition`
-  - `research_hypothesis`
-  - `signal_candidate`
-  - `evaluation_result`
-  - `setup_aggregate_result`
-  - `research_feedback_decision`
-  - `research_decision_approval`
-  - `research_review_decision`
-  - `review_decision_routing_result`
-  - `routed_action_execution_envelope`
-  - `setup_lifecycle_mutation_record`
-  - `setup_refinement_request`
-  - `setup_definition_revision`
-  - `setup_revision_activation_record`
-- adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now exist for:
-  - `setup_definition`
-  - `research_hypothesis`
-  - `signal_candidate`
-  - `evaluation_result`
-  - `setup_aggregate_result`
-  - `research_feedback_decision`
-- adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition now also exist for:
-  - `research_decision_approval`
-  - `research_review_decision`
-- `setup_refinement_request` now also has adapter-backed repositories, concrete Prisma adapters, and slice-level shared composition
-- adapter-backed repositories, concrete Prisma adapters, slice-level shared composition, and opt-in real-database integration coverage now also exist for:
-  - `routed_action_execution_envelope`
-  - `setup_lifecycle_mutation_record`
-- `setup_refinement_request` now also has opt-in real-database integration coverage
-- `setup_revision_activation_record` now already has implemented in-memory persistence, a service-owned write path, a durable relational contract, committed Prisma schema/migrations, a repository adapter contract, domain/durable mappers, an adapter-backed relational repository, a concrete Prisma adapter, slice-level shared composition, shared implemented-product bundle coverage, and opt-in real-database integration coverage
-- one shared Prisma-backed repository bundle now spans the full implemented product chain through `setup_revision_activation_record`
-- one end-to-end real-database integration flow now also spans the full implemented product chain through `setup_revision_activation_record`
-- `setup_definition_revision` now also has shared-bundle and opt-in real-database integration coverage
-- `review_decision_routing_result` now also has its durable contract, committed Prisma schema/migration, relational adapter contract, mappers, adapter-backed repository, concrete Prisma adapter, shared-bundle composition, and opt-in real-Postgres integration coverage
-- `routed_action_execution_result` is product-ephemeral; `execution_attempt_audit` is the dedicated
-  retained audit entity, and the generic runtime records received and terminal sanitized outcomes
-- all current non-trading routed-action targets execute through audited activation, lifecycle, and
-  refinement envelope executors; refinement requests use immutable reviewer-supplied input
-- a pattern-notification eligibility runtime now combines fresh BTC signal candidates with explicit
-  compatible aggregate evidence using caller-configured quality thresholds; eligible records are
-  retained immutably with a unique deduplication key and one provider-neutral delivery lifecycle;
-  Telegram is the first explicit adapter with runtime-supplied credentials and stable outcomes
-- no UI yet
-- no automated trading logic
+
+- spot only; public BTC/USDT candle reads only — no credentialed or multi-provider ingestion
+- no statistics or scoring engine
+- no UI
+- no automated trading, order placement, or investment advice
+- no scheduler daemon, provider retry, or unbounded queue — cadence is externally owned
+- Telegram delivery is manual and opt-in; alerts are explainable decision support only
+- external evaluator cadence is prepared for macOS and Linux but enabled on neither
+- baseline verification runs in CI; no UI is implemented
 
 ## Recommended next step
-- define reconciliation for ambiguous Telegram delivery attempts; keep alerts as explainable human
-  decision support and automated trading out of scope
+
+**Validate and explicitly enable the external BTC evaluation cadence** — see
+`docs/project/next-steps.md`, which is the authoritative source for this.
 
 ## Behavioral instructions for future assistants
 When continuing this project:

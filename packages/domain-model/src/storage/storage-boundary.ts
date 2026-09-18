@@ -51,15 +51,15 @@ export type ProductEphemeralEntityType = (typeof PRODUCT_EPHEMERAL_ENTITY_TYPES)
 export type StorageTechnologyDirection = {
   runtimeEvidence: "filesystem_artifacts";
   runtimeControl: "postgresql_prisma";
-  productDomain: "relational_planned";
+  productDomain: "postgresql_prisma";
   derivedAnalytics: "deferred";
-  targetRelationalStack: "postgresql_prisma_planned";
+  targetRelationalStack: "postgresql_prisma";
 };
 
 export const DEFAULT_STORAGE_TECHNOLOGY_DIRECTION: StorageTechnologyDirection = {
   runtimeEvidence: "filesystem_artifacts",
   runtimeControl: "postgresql_prisma",
-  productDomain: "relational_planned",
+  productDomain: "postgresql_prisma",
   derivedAnalytics: "deferred",
-  targetRelationalStack: "postgresql_prisma_planned"
+  targetRelationalStack: "postgresql_prisma"
 };

@@ -8,6 +8,10 @@ import {
   FIRST_DURABLE_RELATIONAL_ENTITY_TYPES,
   MONITORED_SYMBOL_RELATIONAL_ENTITY_TYPES,
   type MonitoredSymbolDurableRecord,
+  PATTERN_NOTIFICATION_DURABLE_DELIVERY_FIELDS,
+  PATTERN_NOTIFICATION_DURABLE_EVIDENCE_FIELDS,
+  PATTERN_NOTIFICATION_RELATIONAL_ENTITY_TYPES,
+  type PatternNotificationDurableRecord,
   type ProductRecordMetadata,
   RESEARCH_DECISION_APPROVAL_RELATIONAL_ENTITY_TYPES,
   type ResearchDecisionApprovalDurableRecord,
@@ -729,4 +733,66 @@ test("supports typed setup-revision-activation-record durable records", () => {
   assert.equal(setupRevisionActivationRecord.identity.version, 1);
   assert.equal(setupRevisionActivationRecord.targetRevisionId, "revision-002");
   assert.equal(setupRevisionActivationRecord.activationOutcome, "superseded_previous");
+});
+
+test("exposes pattern-notification durable relational storage planning constants", () => {
+  assert.deepEqual(PATTERN_NOTIFICATION_RELATIONAL_ENTITY_TYPES, ["pattern_notification"]);
+});
+
+test("separates immutable pattern-notification evidence from mutable delivery state", () => {
+  const overlap = PATTERN_NOTIFICATION_DURABLE_EVIDENCE_FIELDS.filter((field) =>
+    (PATTERN_NOTIFICATION_DURABLE_DELIVERY_FIELDS as readonly string[]).includes(field)
+  );
+
+  assert.deepEqual(overlap, []);
+  assert.ok(PATTERN_NOTIFICATION_DURABLE_EVIDENCE_FIELDS.includes("deduplicationKey"));
+  assert.ok(PATTERN_NOTIFICATION_DURABLE_DELIVERY_FIELDS.includes("deliveryStatus"));
+});
+
+test("supports typed pattern-notification durable records", () => {
+  const patternNotification: PatternNotificationDurableRecord = {
+    storageSchemaVersion: "product_domain.relational.v1",
+    identity: {
+      boundary: "product_domain",
+      entityType: "pattern_notification",
+      entityId: "notification-candidate-btc-001",
+      version: 1,
+      relatedEntityIds: [
+        "candidate-btc-001",
+        "setup-btc-breakout",
+        "revision-btc-breakout-1",
+        "BTC-USDT",
+        "aggregate-btc-window-24h"
+      ]
+    },
+    lifecycleStatus: "active",
+    createdAtUtc: "2026-09-01T10:30:00.000Z",
+    updatedAtUtc: "2026-09-01T10:30:00.000Z",
+    archivedAtUtc: null,
+    metadata,
+    deduplicationKey: "signal_candidate:candidate-btc-001",
+    signalCandidateId: "candidate-btc-001",
+    setupDefinitionId: "setup-btc-breakout",
+    setupRevisionId: "revision-btc-breakout-1",
+    monitoredSymbolId: "BTC-USDT",
+    setupAggregateResultId: "aggregate-btc-window-24h",
+    direction: "consider_long",
+    observedAtUtc: "2026-09-01T10:30:00.000Z",
+    currentPrice: 64250.5,
+    policyId: "btc-breakout-conservative-v1",
+    completedEvaluations: 42,
+    positiveOutcomeRate: 0.67,
+    averagePercentageMove: 0.82,
+    aggregateComputedAtUtc: "2026-09-01T06:00:00.000Z",
+    deliveryStatus: "pending_delivery",
+    deliveryAttemptedAtUtc: null,
+    deliveryLeaseId: null,
+    deliveryLeaseExpiresAtUtc: null,
+    completedAtUtc: null,
+    outcomeCode: null
+  };
+
+  assert.equal(patternNotification.identity.version, 1);
+  assert.equal(patternNotification.deduplicationKey, "signal_candidate:candidate-btc-001");
+  assert.equal(patternNotification.deliveryStatus, "pending_delivery");
 });

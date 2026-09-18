@@ -82,6 +82,12 @@ export const PRODUCT_WRITE_PATH_OWNERSHIP: ProductWritePathOwnership[] = [
     updatePath: "review decision audit metadata corrections in controlled review path"
   },
   {
+    entityType: "review_decision_routing_result",
+    ownerService: "research_service",
+    createPath: "review-decision routing flow, keyed by its deterministic routing id",
+    updatePath: "none; a routing result is retained as written and superseded by a new routing id"
+  },
+  {
     entityType: "routed_action_execution_envelope",
     ownerService: "research_service",
     createPath: "review-decision downstream action execution envelope preparation flow",

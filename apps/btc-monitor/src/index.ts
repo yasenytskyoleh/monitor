@@ -3,13 +3,13 @@ import process from "node:process";
 import { createBinanceSpotCandleFeed, type BinanceSpotWebSocket } from "@monitor/binance-spot";
 import {
   createImplementedProductRelationalPrismaRepositories,
-  PrismaPatternNotificationRecordRepository,
   type FirstDurableRelationalPrismaClientOptions
 } from "@monitor/domain-model";
 import type { ClosedCandlePatternDetectionFeedEvent } from "@monitor/pattern-detection";
 
 import { createBtcMonitorRuntime } from "./btc-monitor-runtime.js";
 import { loadBtcMonitorConfiguration } from "./config.js";
+import { isDirectExecution } from "./direct-execution.js";
 
 type ConsoleLogger = Pick<Console, "error" | "info">;
 
@@ -162,12 +162,7 @@ export const runBtcMonitor = async (
     start(onFailure) {
       const runtime = createBtcMonitorRuntime({
         configuration,
-        repositories: {
-          ...repositories,
-          patternNotificationRecordRepository: new PrismaPatternNotificationRecordRepository(
-            repositories.prismaClient
-          )
-        },
+        repositories,
         candleFeed: createBinanceSpotCandleFeed({
           fetchImpl: fetch,
           createWebSocket,
@@ -193,7 +188,7 @@ export const runBtcMonitor = async (
   });
 };
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (isDirectExecution(import.meta.url)) {
   void runBtcMonitor().catch((error: unknown) => {
     logError(console, error instanceof Error ? error : new Error("BTC monitor failed to start"));
     process.exitCode = 1;

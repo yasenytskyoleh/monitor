@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -18,6 +18,7 @@ import {
   type EvaluationResult,
   type ImplementedProductRelationalPrismaRepositories,
   type MonitoredSymbol,
+  type PatternNotificationRecord,
   type ProductRecordMetadata,
   RepositoryError,
   type ResearchDecisionApproval,
@@ -107,8 +108,30 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260728100000_product_domain_execution_attempt_envelope_single_dispatch_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260809103000_product_domain_pattern_notification_relational_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260901103000_product_domain_pattern_notification_delivery_lease_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260914120000_product_domain_initial_setup_revision_source/migration.sql"
   )
 ];
+
+test("shared integration schema includes every product-domain migration", async () => {
+  const migrations = await readdir(migrationsDirectory, { withFileTypes: true });
+  const productMigrationPaths = migrations
+    .filter((entry) => entry.isDirectory() && entry.name.includes("product_domain"))
+    .map((entry) => resolve(migrationsDirectory, entry.name, "migration.sql"))
+    .sort();
+
+  assert.deepEqual([...migrationSqlPaths].sort(), productMigrationPaths);
+});
 
 const metadata: ProductRecordMetadata = {
   originRunId: "run-002",
@@ -586,6 +609,30 @@ const resetProductDomainSchema = async (connectionString: string): Promise<void>
   });
 };
 
+const buildPatternNotification = (
+  notificationId: string,
+  signalCandidateId: string
+): PatternNotificationRecord => ({
+  notificationId,
+  deduplicationKey: `signal_candidate:${signalCandidateId}`,
+  signalCandidateId,
+  setupDefinitionId: "setup-003",
+  setupRevisionId: "revision-001",
+  monitoredSymbolId: "BTC-USDT",
+  setupAggregateResultId: "aggregate-001",
+  direction: "consider_long",
+  observedAt: "2026-05-24T12:00:00.000Z",
+  currentPrice: 64250.5,
+  policyId: "btc-breakout-conservative-v1",
+  completedEvaluations: 42,
+  positiveOutcomeRate: 0.67,
+  averagePercentageMove: 0.82,
+  aggregateComputedAt: "2026-05-24T10:00:00.000Z",
+  deliveryStatus: "pending_delivery",
+  createdAtUtc: "2026-05-24T12:00:00.000Z",
+  updatedAtUtc: "2026-05-24T12:00:00.000Z"
+});
+
 const withIntegrationRepositories = async <T>(
   connectionString: string,
   work: (repositories: ImplementedProductRelationalPrismaRepositories) => Promise<T>
@@ -861,6 +908,59 @@ integrationTest(
         await repositories.setupDefinitionRevisionRepository.getById("revision-001");
       const storedActivation =
         await repositories.setupRevisionActivationRecordRepository.getById("activation-001");
+      await repositories.patternNotificationRecordRepository.create({
+        notification: buildPatternNotification("notification-001", "candidate-001"),
+        metadata
+      });
+      // The deduplication key is a unique constraint: one candidate, at most one alert.
+      await assert.rejects(
+        async () =>
+          repositories.patternNotificationRecordRepository.create({
+            notification: buildPatternNotification("notification-002", "candidate-001"),
+            metadata
+          }),
+        (error: unknown) =>
+          error instanceof RepositoryError && error.code === "already_exists"
+      );
+      const claimedNotification =
+        await repositories.patternNotificationRecordRepository.update({
+          notification: {
+            ...buildPatternNotification("notification-001", "candidate-001"),
+            deliveryStatus: "delivery_attempted",
+            deliveryAttemptedAt: "2026-05-24T12:00:30.000Z",
+            deliveryLeaseId: "lease-001",
+            deliveryLeaseExpiresAt: "2026-05-24T12:02:30.000Z",
+            updatedAtUtc: "2026-05-24T12:00:30.000Z"
+          },
+          metadata,
+          expectedVersion: 1,
+          expectedDeliveryStatus: "pending_delivery"
+        });
+      const deliveredNotification =
+        await repositories.patternNotificationRecordRepository.update({
+          notification: {
+            ...claimedNotification,
+            deliveryStatus: "delivered",
+            // A terminal outcome must drop the lease; Postgres enforces this.
+            deliveryLeaseId: undefined,
+            deliveryLeaseExpiresAt: undefined,
+            completedAt: "2026-05-24T12:00:35.000Z",
+            outcomeCode: "telegram_delivered",
+            updatedAtUtc: "2026-05-24T12:00:35.000Z"
+          },
+          metadata,
+          expectedVersion: 2,
+          expectedDeliveryStatus: "delivery_attempted",
+          expectedDeliveryAttemptedAt: "2026-05-24T12:00:30.000Z"
+        });
+      const notificationByDeduplicationKey =
+        await repositories.patternNotificationRecordRepository.getByDeduplicationKey(
+          "signal_candidate:candidate-001"
+        );
+      const notificationRows =
+        await repositories.prismaClient.patternNotificationRecord.findMany({
+          orderBy: { notificationId: "asc" }
+        });
       const envelopesForReviewDecision =
         await repositories.routedActionExecutionEnvelopeRepository.listByReviewDecisionId(
           "review-decision-001"
@@ -985,6 +1085,15 @@ integrationTest(
       );
       assert.equal(activationsForFamily.length, 1);
       assert.equal(activationsForFamily[0]?.id, "activation-001");
+      assert.equal(claimedNotification.deliveryStatus, "delivery_attempted");
+      assert.equal(claimedNotification.deliveryLeaseId, "lease-001");
+      assert.equal(deliveredNotification.deliveryStatus, "delivered");
+      assert.equal(deliveredNotification.outcomeCode, "telegram_delivered");
+      assert.equal(notificationByDeduplicationKey?.notificationId, "notification-001");
+      assert.equal(notificationRows.length, 1);
+      assert.equal(notificationRows[0]?.version, 3);
+      assert.equal(notificationRows[0]?.deliveryStatus, "delivered");
+      assert.equal(notificationRows[0]?.deliveryLeaseId, null);
       assert.equal(activationsForTarget.length, 1);
       assert.equal(monitoredSymbolRows.length, 1);
       assert.equal(monitoredSymbolRows[0]?.baseAsset, "BTC");
@@ -1641,6 +1750,50 @@ integrationTest(
           }),
         (error: unknown) => error instanceof RepositoryError && error.code === "already_exists"
       );
+    });
+  }
+);
+
+integrationTest(
+  "shared implemented-product bundle rejects a pattern notification with dangling evidence from real Postgres",
+  async () => {
+    await withIntegrationRepositories(INTEGRATION_DATABASE_URL, async (repositories) => {
+      await repositories.monitoredSymbolRepository.create({
+        symbol: buildMonitoredSymbol(),
+        metadata
+      });
+      await repositories.setupDefinitionRepository.create({
+        definition: buildSetupDefinition("setup-001"),
+        metadata
+      });
+      await repositories.signalCandidateRepository.create({
+        candidate: buildSignalCandidate("candidate-001", "setup-001"),
+        metadata
+      });
+
+      // pattern_notification carries no foreign keys, so this has to be caught by the adapter.
+      await assert.rejects(
+        async () =>
+          repositories.patternNotificationRecordRepository.create({
+            notification: {
+              ...buildPatternNotification("notification-dangling", "candidate-001"),
+              setupDefinitionId: "setup-001",
+              setupRevisionId: "revision-missing"
+            },
+            metadata
+          }),
+        (error: unknown) =>
+          error instanceof RepositoryError &&
+          error.code === "invalid_reference" &&
+          error.entityType === "pattern_notification" &&
+          error.referenceEntityType === "setup_definition_revision" &&
+          error.referenceEntityId === "revision-missing"
+      );
+
+      const rows = await repositories.prismaClient.patternNotificationRecord.findMany({
+        orderBy: { notificationId: "asc" }
+      });
+      assert.equal(rows.length, 0, "no row may be written when evidence does not resolve");
     });
   }
 );

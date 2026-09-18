@@ -52,410 +52,62 @@ The product side now proves that the repo can:
   scheduled Telegram delivery by default.
 
 ## Implemented in this phase (current baseline)
-- Codex-first workflow for planning, implementation, and repo coordination
-- bounded autonomous mode policy with explicit step-by-step execution flow:
-  - `docs/project/autonomous-mode-policy.md`
-- config-driven orchestration foundation (`docs/agents`, `configs/agents`, `packages/agent-config`)
-- compiled immutable runtime snapshots with checksum and version metadata
-- runner execution modes:
-  - `mock` (deterministic scenarios)
-  - `live` (OpenAI-backed where implemented)
-  - per-agent overrides via `--agent-mode`
-- live-capable agent chain:
-  - Product Agent
-  - Architect Agent
-  - Quant Pattern Agent
-  - Backend Agent (constrained patch mode)
-  - Docs Reviewer Agent
-- strict transition guardrails:
-  - allowlisted transitions only
-  - approval-gated edges enforced
-  - missing/invalid/expired/revoked approvals blocked
-  - transition-to-approval binding validated
-- strict artifact enforcement:
-  - explicit artifact registry per run
-  - role-to-artifact allowlists
-  - required artifact checks before advancement
-  - reference continuity checks
-- persisted run evidence:
-  - `run.json`
-  - `transitions.json`
-  - `terminal-outcome.json`
-  - `artifacts.json`
-  - `approvals.json`
-- backend constrained implementation safety (current baseline):
-  - isolated apply + verification in temp workspace
-  - rollback plan/result persistence
-  - controlled promotion to main workspace (`promote_verified`)
-  - narrow helper-file creation constraints (including json helper fixtures)
-  - dedicated stability reassessment artifact for audit runs (`stability-reassessment.json`)
-- standardized shared live-adapter pipeline for all current live agents
-- first product-domain slice contracts (no runtime engines yet):
-  - `packages/domain-model`
-  - `docs/project/domain-model.md`
-  - `docs/project/research-model.md`
-  - `docs/architecture/adr/ADR-001-first-product-domain-slice.md`
-- first monitoring-ingestion architecture contracts (still no runtime ingestion):
-  - `docs/project/monitoring-model.md`
-  - `docs/project/normalized-events.md`
-  - `docs/architecture/adr/ADR-002-market-monitoring-ingestion-architecture.md`
-  - `packages/domain-model/src/monitoring/*`
-- first evaluation/outcome architecture contracts (still no runtime evaluation engine):
-  - `docs/project/evaluation-model.md`
-  - `docs/project/outcome-metrics.md`
-  - `docs/architecture/adr/ADR-003-signal-evaluation-outcome-model.md`
-  - `packages/domain-model/src/evaluation/*`
-- first research-aggregation/comparison contracts (still no runtime analytics engine):
-  - `docs/project/research-aggregation-model.md`
-  - `docs/project/setup-comparison-model.md`
-  - `docs/architecture/adr/ADR-004-evaluation-aggregation-and-research-model.md`
-  - `packages/domain-model/src/research/*`
-- first persistence/storage architecture contracts (before later durable relational expansion):
-  - `docs/project/storage-architecture.md`
-  - `docs/project/persistence-boundaries.md`
-  - `docs/architecture/adr/ADR-005-product-domain-storage-architecture.md`
-  - `packages/domain-model/src/storage/*`
-- first durable relational persistence contract for the first durable slice:
-  - `docs/project/durable-relational-persistence-model.md`
-  - `docs/architecture/adr/ADR-026-first-durable-relational-persistence-contract.md`
-  - `packages/domain-model/src/storage/first-durable-relational-slice.ts`
-- first relational adapter rollout design for the first durable slice:
-  - `docs/project/relational-adapter-rollout-model.md`
-  - `docs/architecture/adr/ADR-027-first-relational-adapter-rollout-design.md`
-  - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/repository-error.ts`
-- first physical Prisma schema and initial migration for the first durable slice:
-  - `docs/project/prisma-schema-implementation-model.md`
-  - `docs/architecture/adr/ADR-028-first-prisma-schema-and-migration-layout.md`
-  - `packages/domain-model/src/storage/first-durable-relational-physical-schema.ts`
-  - `packages/domain-model/prisma/schema.prisma`
-  - `packages/domain-model/prisma/migrations/20260512235500_product_domain_relational_v1_init/migration.sql`
-- first adapter-backed relational repositories for the first durable slice:
-  - `docs/project/relational-repository-implementation-model.md`
-  - `docs/architecture/adr/ADR-029-first-adapter-backed-relational-repositories.md`
-  - `packages/domain-model/src/repositories/first-durable-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/first-durable-relational-repository-adapter.impl.ts`
-  - `packages/domain-model/src/repositories/setup-definition-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/research-hypothesis-relational-repository.impl.ts`
-- second durable relational slice for signal/evaluation:
-  - `docs/project/signal-evaluation-relational-rollout-model.md`
-  - `docs/architecture/adr/ADR-030-signal-evaluation-durable-relational-rollout.md`
-  - `packages/domain-model/src/storage/signal-evaluation-relational-slice.ts`
-  - `packages/domain-model/src/storage/signal-evaluation-relational-physical-schema.ts`
-  - `packages/domain-model/prisma/migrations/20260522101500_product_domain_signal_evaluation_relational_v1/migration.sql`
-  - `packages/domain-model/src/repositories/signal-evaluation-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/signal-evaluation-relational-repository-adapter.impl.ts`
-  - `packages/domain-model/src/repositories/signal-evaluation-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/signal-candidate-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/evaluation-result-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/signal-evaluation-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/signal-evaluation-relational-prisma-adapter.ts`
-  - `packages/domain-model/src/repositories/signal-evaluation-relational-prisma-client.ts`
-- setup-aggregate durable relational contract and physical schema:
-  - `docs/project/setup-aggregate-relational-persistence-model.md`
-  - `docs/architecture/adr/ADR-031-setup-aggregate-durable-relational-contract-and-schema.md`
-  - `packages/domain-model/src/storage/setup-aggregate-relational-slice.ts`
-  - `packages/domain-model/src/storage/setup-aggregate-relational-physical-schema.ts`
-  - `packages/domain-model/prisma/migrations/20260522153000_product_domain_setup_aggregate_relational_v1/migration.sql`
-- setup-aggregate adapter-backed relational repository and Prisma adapter:
-  - `docs/project/setup-aggregate-relational-rollout-model.md`
-  - `docs/architecture/adr/ADR-032-setup-aggregate-adapter-backed-relational-repositories.md`
-  - `packages/domain-model/src/repositories/setup-aggregate-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/setup-aggregate-relational-repository-adapter.impl.ts`
-  - `packages/domain-model/src/repositories/setup-aggregate-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/setup-aggregate-result-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/setup-aggregate-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/setup-aggregate-relational-prisma-adapter.ts`
-  - `packages/domain-model/src/repositories/setup-aggregate-relational-prisma-client.ts`
-- shared Prisma-backed composition for the implemented product chain:
-  - `docs/project/implemented-product-relational-composition-model.md`
-  - `docs/architecture/adr/ADR-033-shared-implemented-product-relational-composition.md`
-  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
-- shared Prisma-backed composition extended through feedback decisions:
-  - `docs/project/implemented-product-feedback-decision-composition-model.md`
-  - `docs/architecture/adr/ADR-037-implemented-product-feedback-decision-composition.md`
-  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
-- shared Prisma-backed composition extended through approvals:
-  - `docs/project/implemented-product-approval-composition-model.md`
-  - `docs/architecture/adr/ADR-042-implemented-product-approval-composition.md`
-  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
-- shared real-Postgres integration extended through approvals:
-  - `docs/project/implemented-product-approval-integration-model.md`
-  - `docs/architecture/adr/ADR-043-implemented-product-approval-integration-coverage.md`
-  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
-- research-feedback-decision durable relational contract and physical schema:
-  - `docs/project/research-feedback-decision-relational-persistence-model.md`
-  - `docs/architecture/adr/ADR-034-research-feedback-decision-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-035-research-feedback-decision-prisma-schema-layout.md`
-  - `packages/domain-model/src/storage/research-feedback-decision-relational-slice.ts`
-  - `packages/domain-model/src/storage/research-feedback-decision-relational-physical-schema.ts`
-  - `packages/domain-model/prisma/schema.prisma`
-  - `packages/domain-model/prisma/migrations/20260523091500_product_domain_research_feedback_decision_relational_v1/migration.sql`
-- research-feedback-decision adapter-backed relational repository and Prisma adapter:
-  - `docs/project/research-feedback-decision-relational-rollout-model.md`
-  - `docs/architecture/adr/ADR-036-research-feedback-decision-adapter-backed-relational-repositories.md`
-  - `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-adapter.impl.ts`
-  - `packages/domain-model/src/repositories/research-feedback-decision-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/research-feedback-decision-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/research-feedback-decision-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/research-feedback-decision-relational-prisma-adapter.ts`
-  - `packages/domain-model/src/repositories/research-feedback-decision-relational-prisma-client.ts`
-- research-decision-approval durable relational contract and physical schema:
-  - `docs/project/research-decision-approval-relational-persistence-model.md`
-  - `docs/architecture/adr/ADR-038-research-decision-approval-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-039-research-decision-approval-prisma-schema-layout.md`
-  - `packages/domain-model/src/storage/research-decision-approval-relational-slice.ts`
-  - `packages/domain-model/src/storage/research-decision-approval-relational-physical-schema.ts`
-  - `packages/domain-model/prisma/migrations/20260527103000_product_domain_research_decision_approval_relational_v1/migration.sql`
-- research-decision-approval relational adapter contract:
-  - `docs/project/research-decision-approval-relational-adapter-model.md`
-  - `docs/architecture/adr/ADR-040-research-decision-approval-relational-adapter-contract.md`
-  - `packages/domain-model/src/repositories/research-decision-approval-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/research-decision-approval-relational-repository-adapter.impl.ts`
-- research-decision-approval adapter-backed relational repository and Prisma adapter:
-  - `docs/project/research-decision-approval-relational-rollout-model.md`
-  - `docs/architecture/adr/ADR-041-research-decision-approval-adapter-backed-relational-repositories.md`
-  - `packages/domain-model/src/repositories/research-decision-approval-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/research-decision-approval-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/research-decision-approval-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/research-decision-approval-relational-prisma-adapter.ts`
-  - `packages/domain-model/src/repositories/research-decision-approval-relational-prisma-client.ts`
-- approval-path atomic persistence hardening and safer verification:
-  - `packages/domain-model/src/repositories/feedback-decision-approval-review-persistence.ts`
-  - `packages/domain-model/src/repositories/feedback-decision-approval-review-persistence.impl.ts`
-  - `packages/domain-model/src/repositories/feedback-decision-approval-review-persistence.prisma.ts`
-  - `packages/domain-model/test/feedback-decision-approval-review-persistence.test.ts`
-  - `packages/domain-model/test/integration-test-helpers.ts`
-- research-review-decision durable relational contract and physical schema:
-  - `docs/project/research-review-decision-relational-persistence-model.md`
-  - `docs/architecture/adr/ADR-044-research-review-decision-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-045-research-review-decision-prisma-schema-layout.md`
-  - `packages/domain-model/src/storage/research-review-decision-relational-slice.ts`
-  - `packages/domain-model/src/storage/research-review-decision-relational-physical-schema.ts`
-  - `packages/domain-model/prisma/migrations/20260630113000_product_domain_research_review_decision_relational_v1/migration.sql`
-- research-review-decision relational adapter contract:
-  - `docs/project/research-review-decision-relational-adapter-model.md`
-  - `docs/architecture/adr/ADR-046-research-review-decision-relational-adapter-contract.md`
-  - `packages/domain-model/src/repositories/research-review-decision-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/research-review-decision-relational-repository-adapter.impl.ts`
-- research-review-decision adapter-backed relational repository and Prisma adapter:
-  - `docs/project/research-review-decision-relational-rollout-model.md`
-  - `docs/architecture/adr/ADR-047-research-review-decision-adapter-backed-relational-repositories.md`
-  - `packages/domain-model/src/repositories/research-review-decision-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/research-review-decision-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/research-review-decision-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/research-review-decision-relational-prisma-adapter.ts`
-  - `packages/domain-model/src/repositories/research-review-decision-relational-prisma-client.ts`
-- shared Prisma-backed composition extended through review decisions:
-  - `docs/project/implemented-product-review-decision-composition-model.md`
-  - `docs/architecture/adr/ADR-048-implemented-product-review-decision-composition.md`
-  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
-- shared real-Postgres integration extended through review decisions:
-  - `docs/project/implemented-product-review-decision-integration-model.md`
-  - `docs/architecture/adr/ADR-049-implemented-product-review-decision-integration-coverage.md`
-  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
-- routed-action-execution-envelope durable relational contract and physical schema:
-  - `docs/project/routed-action-execution-envelope-relational-persistence-model.md`
-  - `docs/architecture/adr/ADR-050-routed-action-execution-envelope-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-051-routed-action-execution-envelope-prisma-schema-layout.md`
-  - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-slice.ts`
-  - `packages/domain-model/src/storage/routed-action-execution-envelope-relational-physical-schema.ts`
-  - `packages/domain-model/prisma/migrations/20260702103000_product_domain_routed_action_execution_envelope_relational_v1/migration.sql`
-- routed-action-execution-envelope relational adapter contract:
-  - `docs/project/routed-action-execution-envelope-relational-adapter-model.md`
-  - `docs/architecture/adr/ADR-052-routed-action-execution-envelope-relational-adapter-contract.md`
-  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-adapter.impl.ts`
-- routed-action-execution-envelope adapter-backed relational repository and Prisma adapter:
-  - `docs/project/routed-action-execution-envelope-relational-rollout-model.md`
-  - `docs/architecture/adr/ADR-053-routed-action-execution-envelope-adapter-backed-relational-repositories.md`
-  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-adapter.ts`
-  - `packages/domain-model/src/repositories/routed-action-execution-envelope-relational-prisma-client.ts`
-- shared Prisma-backed composition extended through routed-action execution envelopes:
-  - `docs/project/implemented-product-routed-action-execution-envelope-composition-model.md`
-  - `docs/architecture/adr/ADR-054-implemented-product-routed-action-execution-envelope-composition.md`
-  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
-- shared real-Postgres integration extended through routed-action execution envelopes:
-  - `docs/project/implemented-product-routed-action-execution-envelope-integration-model.md`
-  - `docs/architecture/adr/ADR-055-implemented-product-routed-action-execution-envelope-integration-coverage.md`
-  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
-- setup-lifecycle-mutation-record durable relational contract and physical schema:
-  - `docs/project/setup-lifecycle-mutation-relational-persistence-model.md`
-  - `docs/architecture/adr/ADR-056-setup-lifecycle-mutation-record-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-057-setup-lifecycle-mutation-record-prisma-schema-layout.md`
-  - `packages/domain-model/src/storage/setup-lifecycle-mutation-record-relational-slice.ts`
-  - `packages/domain-model/src/storage/setup-lifecycle-mutation-record-relational-physical-schema.ts`
-  - `packages/domain-model/prisma/migrations/20260706113000_product_domain_setup_lifecycle_mutation_record_relational_v1/migration.sql`
-- setup-lifecycle-mutation-record relational adapter contract:
-  - `docs/project/setup-lifecycle-mutation-relational-adapter-model.md`
-  - `docs/architecture/adr/ADR-058-setup-lifecycle-mutation-record-relational-adapter-contract.md`
-  - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-repository-adapter.impl.ts`
-- setup-lifecycle-mutation-record adapter-backed relational repository and Prisma adapter:
-  - `docs/project/setup-lifecycle-mutation-relational-rollout-model.md`
-  - `docs/architecture/adr/ADR-059-setup-lifecycle-mutation-record-adapter-backed-relational-repositories.md`
-  - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-prisma-adapter.ts`
-  - `packages/domain-model/src/repositories/setup-lifecycle-mutation-record-relational-prisma-client.ts`
-- shared Prisma-backed composition extended through setup-lifecycle mutation records:
-  - `docs/project/implemented-product-setup-lifecycle-mutation-composition-model.md`
-  - `docs/architecture/adr/ADR-060-implemented-product-setup-lifecycle-mutation-composition.md`
-  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
-- shared real-Postgres integration extended through setup-lifecycle mutation records:
-  - `docs/project/implemented-product-setup-lifecycle-mutation-integration-model.md`
-  - `docs/architecture/adr/ADR-061-implemented-product-setup-lifecycle-mutation-integration-coverage.md`
-  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
-- setup-refinement-request durable relational contract and physical schema:
-  - `docs/project/setup-refinement-request-relational-persistence-model.md`
-  - `docs/architecture/adr/ADR-062-setup-refinement-request-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-063-setup-refinement-request-prisma-schema-layout.md`
-  - `packages/domain-model/src/storage/setup-refinement-request-relational-slice.ts`
-  - `packages/domain-model/src/storage/setup-refinement-request-relational-physical-schema.ts`
-  - `packages/domain-model/prisma/migrations/20260706143000_product_domain_setup_refinement_request_relational_v1/migration.sql`
-- setup-definition-revision durable relational contract and physical schema:
-  - `docs/project/setup-definition-revision-relational-persistence-model.md`
-  - `docs/architecture/adr/ADR-068-setup-definition-revision-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-069-setup-definition-revision-prisma-schema-layout.md`
-  - `packages/domain-model/src/storage/setup-definition-revision-relational-slice.ts`
-  - `packages/domain-model/src/storage/setup-definition-revision-relational-physical-schema.ts`
-  - `packages/domain-model/prisma/migrations/20260708101500_product_domain_setup_definition_revision_relational_v1/migration.sql`
-- setup-definition-revision relational adapter contract:
-  - `docs/project/setup-definition-revision-relational-adapter-model.md`
-  - `docs/architecture/adr/ADR-070-setup-definition-revision-relational-adapter-contract.md`
-  - `packages/domain-model/src/repositories/setup-definition-revision-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/setup-definition-revision-relational-repository-adapter.impl.ts`
-  - `packages/domain-model/test/setup-definition-revision-relational-repository-adapter-contracts.test.ts`
-- setup-definition-revision adapter-backed relational repository and Prisma adapter:
-  - `docs/project/setup-definition-revision-relational-rollout-model.md`
-  - `docs/architecture/adr/ADR-071-setup-definition-revision-adapter-backed-relational-repositories.md`
-  - `packages/domain-model/src/repositories/setup-definition-revision-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/setup-definition-revision-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/setup-definition-revision-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/setup-definition-revision-relational-prisma-adapter.ts`
-  - `packages/domain-model/src/repositories/setup-definition-revision-relational-prisma-client.ts`
-  - `packages/domain-model/test/setup-definition-revision-relational-repository-mappers.test.ts`
-  - `packages/domain-model/test/setup-definition-revision-relational-repositories.test.ts`
-  - `packages/domain-model/test/setup-definition-revision-relational-prisma-adapter.test.ts`
-- setup-refinement-request relational adapter contract:
-  - `docs/project/setup-refinement-request-relational-adapter-model.md`
-  - `docs/architecture/adr/ADR-064-setup-refinement-request-relational-adapter-contract.md`
-  - `packages/domain-model/src/repositories/setup-refinement-request-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/setup-refinement-request-relational-repository-adapter.impl.ts`
-  - `packages/domain-model/test/setup-refinement-request-relational-repository-adapter-contracts.test.ts`
-- setup-refinement-request adapter-backed relational repository and Prisma adapter:
-  - `docs/project/setup-refinement-request-relational-rollout-model.md`
-  - `docs/architecture/adr/ADR-065-setup-refinement-request-adapter-backed-relational-repositories.md`
-  - `packages/domain-model/src/repositories/setup-refinement-request-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/setup-refinement-request-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/setup-refinement-request-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/setup-refinement-request-relational-prisma-adapter.ts`
-  - `packages/domain-model/src/repositories/setup-refinement-request-relational-prisma-client.ts`
-  - `packages/domain-model/test/setup-refinement-request-relational-repository-mappers.test.ts`
-  - `packages/domain-model/test/setup-refinement-request-relational-repositories.test.ts`
-  - `packages/domain-model/test/setup-refinement-request-relational-prisma-adapter.test.ts`
-- shared Prisma-backed composition extended through setup-refinement requests:
-  - `docs/project/implemented-product-setup-refinement-request-composition-model.md`
-  - `docs/architecture/adr/ADR-066-implemented-product-setup-refinement-request-composition.md`
-  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
-  - `packages/domain-model/test/implemented-product-relational-repositories.test.ts`
-- shared real-Postgres integration extended through setup-refinement requests:
-  - `docs/project/implemented-product-setup-refinement-request-integration-model.md`
-  - `docs/architecture/adr/ADR-067-implemented-product-setup-refinement-request-integration-coverage.md`
-  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
-- shared Prisma-backed composition extended through setup-definition revisions:
-  - `docs/project/implemented-product-setup-definition-revision-composition-model.md`
-  - `docs/architecture/adr/ADR-072-implemented-product-setup-definition-revision-composition.md`
-  - `packages/domain-model/src/repositories/implemented-product-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/implemented-product-relational-prisma-client.ts`
-  - `packages/domain-model/test/implemented-product-relational-repositories.test.ts`
-- shared real-Postgres integration extended through setup-definition revisions:
-  - `docs/project/implemented-product-setup-definition-revision-integration-model.md`
-  - `docs/architecture/adr/ADR-073-implemented-product-setup-definition-revision-integration-coverage.md`
-  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
-- setup-revision-activation durable relational contract, physical schema, relational adapter contract, and executable repository rollout:
-  - `docs/project/setup-revision-activation-relational-persistence-model.md`
-  - `docs/project/setup-revision-activation-relational-adapter-model.md`
-  - `docs/project/setup-revision-activation-relational-rollout-model.md`
-  - `docs/architecture/adr/ADR-074-setup-revision-activation-record-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-075-setup-revision-activation-record-prisma-schema-layout.md`
-  - `docs/architecture/adr/ADR-076-setup-revision-activation-record-relational-adapter-contract.md`
-  - `docs/architecture/adr/ADR-077-setup-revision-activation-record-adapter-backed-relational-repositories.md`
-  - `packages/domain-model/src/storage/setup-revision-activation-record-relational-slice.ts`
-  - `packages/domain-model/src/storage/setup-revision-activation-record-relational-physical-schema.ts`
-  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-repository-adapter.impl.ts`
-  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-prisma-adapter.ts`
-  - `packages/domain-model/src/repositories/setup-revision-activation-record-relational-prisma-client.ts`
-  - `packages/domain-model/prisma/migrations/20260711103000_product_domain_setup_revision_activation_record_relational_v1/migration.sql`
-  - `packages/domain-model/test/setup-revision-activation-record-relational-repository-adapter-contracts.test.ts`
-  - `packages/domain-model/test/setup-revision-activation-record-relational-repository-mappers.test.ts`
-  - `packages/domain-model/test/setup-revision-activation-record-relational-repositories.test.ts`
-  - `packages/domain-model/test/setup-revision-activation-record-relational-prisma-adapter.test.ts`
-- review-decision-routing-result full durable relational rollout:
-  - `docs/project/review-decision-routing-result-relational-persistence-model.md`
-  - `docs/architecture/adr/ADR-080-review-decision-routing-result-durable-relational-contract.md`
-  - `docs/architecture/adr/ADR-081-review-decision-routing-result-prisma-schema-layout.md`
-  - `docs/architecture/adr/ADR-082-review-decision-routing-result-relational-adapter-contract.md`
-  - `docs/architecture/adr/ADR-083-review-decision-routing-result-adapter-backed-relational-repositories.md`
-  - `docs/architecture/adr/ADR-084-implemented-product-review-decision-routing-result-composition.md`
-  - `docs/architecture/adr/ADR-085-implemented-product-review-decision-routing-result-integration-coverage.md`
-  - `packages/domain-model/src/storage/review-decision-routing-result-relational-slice.ts`
-  - `packages/domain-model/src/storage/review-decision-routing-result-relational-physical-schema.ts`
-  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-repository-adapter.ts`
-  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-repository-adapter.impl.ts`
-  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-repository-mappers.ts`
-  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-repository.impl.ts`
-  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-repositories.ts`
-  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-prisma-adapter.ts`
-  - `packages/domain-model/src/repositories/review-decision-routing-result-relational-prisma-client.ts`
-  - `packages/domain-model/prisma/migrations/20260723103000_product_domain_review_decision_routing_result_relational_v1/migration.sql`
-  - `packages/domain-model/test/durable-relational-storage-contracts.test.ts`
-  - `packages/domain-model/test/prisma-physical-schema-contracts.test.ts`
-  - `packages/domain-model/test/review-decision-routing-result-relational-repository-adapter-contracts.test.ts`
-  - `packages/domain-model/test/review-decision-routing-result-relational-repositories.test.ts`
-  - `packages/domain-model/test/review-decision-routing-result-relational-prisma-adapter.test.ts`
-  - `packages/domain-model/test/implemented-product-relational-repositories.integration.test.ts`
-- routed-action-execution-result storage classification:
-  - `docs/architecture/adr/ADR-086-routed-action-execution-result-storage-boundary.md`
-  - `docs/project/routed-action-execution-result-storage-model.md`
-  - `packages/domain-model/src/storage/storage-boundary.ts`
-- implemented in-memory persistence for:
-  - `SetupDefinition`
-  - `ResearchHypothesis`
-  - `SignalCandidate`
-  - `EvaluationResult`
-  - `SetupAggregateResult`
-  - `ResearchFeedbackDecision`
-  - `ResearchDecisionApproval`
-  - `ResearchReviewDecision`
-  - `ReviewDecisionRoutingResult`
-  - `RoutedActionExecutionEnvelope`
-  - `SetupLifecycleMutationRecord`
-  - `SetupRefinementRequest`
-  - `SetupDefinitionRevision`
-  - `SetupRevisionActivationRecord`
-- repository/service implementation architecture with later durable relational expansion still pending:
-  - `docs/project/persistence-implementation-architecture.md`
-  - `docs/project/first-persisted-slice.md`
-  - `docs/architecture/adr/ADR-006-product-domain-repository-and-service-architecture.md`
-  - `packages/domain-model/src/repositories/*`
-  - `packages/domain-model/src/services/*`
+
+> A per-file inventory used to live here and was the single largest source of doc drift.
+> It is gone on purpose. For file-level detail read the code and `docs/architecture/adr/`;
+> this section records only what is true, not where it lives.
+
+### Orchestration foundation
+- config + JSON-schema validation platform (`packages/agent-config`); compiled immutable runtime
+  snapshots carrying checksum and version metadata
+- workflow runner with `mock` and `live` modes plus per-agent overrides (`--agent-mode`)
+- live-capable agent chain: Product, Architect, Quant Pattern, Backend (constrained patch mode),
+  Docs Reviewer
+- strict transition guardrails (allowlisted transitions, approval-gated edges, expiry and
+  revocation checks, transition-to-approval binding)
+- strict artifact enforcement (per-run registry, role allowlists, required-artifact checks,
+  reference continuity)
+- persisted run evidence: `run.json`, `transitions.json`, `terminal-outcome.json`,
+  `artifacts.json`, `approvals.json`
+- backend constrained implementation safety: isolated apply + verification in a temp workspace,
+  rollback plan/result persistence, controlled promotion (`promote_verified`)
+- bounded autonomous execution policy: `docs/project/autonomous-mode-policy.md`
+
+### Product-domain persistence
+- 18 durable product entities, including `pattern_notification`, have relational contracts,
+  adapters, repository composition, and Prisma-backed persistence.
+- one shared Prisma-backed bundle (`createImplementedProductRelationalPrismaRepositories`) wiring
+  16 adapters across all 18 entities
+- one end-to-end opt-in real-Postgres integration flow across that bundle
+- service-owned write paths (`PRODUCT_WRITE_PATH_OWNERSHIP`), optimistic concurrency via
+  `expectedVersion` / `version`
+- `routed_action_execution_result` is classified product-ephemeral; `execution_attempt_audit` is
+  the dedicated retained audit entity
+- operational scheduling state lives in a separate `runtime_control` schema, never in
+  `product_domain`
+
+### Market and research runtimes
+- Binance Spot BTC/USDT public closed-candle adapter: REST backfill plus WebSocket live feed, gap
+  and stale-stream detection, REST catch-up before buffered candles are released, no credentials
+- deterministic closed-candle breakout detection producing traceable signal candidates
+- bounded 24-hour closed-candle evaluation, aggregate refresh, and hypothesis-evidence updates
+- the full human-in-the-loop review chain: feedback decision → manual approval → review packet →
+  review decision → routing → routed-action preparation → audited execution attempt, dispatching
+  to the activation, lifecycle, and refinement envelope executors
+- explainable BTC notification eligibility derived from a fresh signal candidate plus compatible
+  historical aggregate evidence, retained immutably under a deduplication key
+- one provider-neutral delivery lifecycle: durable lease, at-most-once send, and no-resend
+  reconciliation of unconfirmed attempts. Telegram is the only adapter and stays manual.
+- durable cross-process ownership for bounded jobs (`runtime_control.scheduled_job_run`):
+  120-second lease, 30-second heartbeat, owner-fenced renewal and terminal writes
+- containerized runtime (non-root Node 24) with migration, canonical seed, bounded real-data
+  smoke, and long-running Compose workflows
+- external five-minute evaluator cadence prepared for macOS launchd and Linux systemd —
+  **not enabled on either host**
+
+### Known gaps carried into the next step
+- the review/execution chain has no composition root: 15 of 23 packages have no workspace consumer
+  (deliberate contract-first sequencing, not dead code — see `next-steps.md`)
 
 ## What this phase is not
 This phase is **not** about building a full crypto trading platform.
@@ -476,8 +128,12 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-- validate the prepared Docker evaluator cadence, then explicitly enable the macOS or Linux timer
-  when the host is ready; keep Telegram delivery manual and opt-in, and keep trading out of scope
+**Validate and explicitly enable the external BTC evaluation cadence.** This is the same step named
+in `docs/project/next-steps.md`, which is authoritative if the two ever disagree.
+
+Sequential runs, concurrent-skip, and expired-lease takeover have been validated. The macOS
+launchd agent is prepared but not loaded; the Linux timer remains a template. Keep Telegram
+delivery manual and opt-in; keep trading out of scope.
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
@@ -493,4 +149,9 @@ the future market and signal layers would become chaotic very quickly.
 
 This phase is therefore not a distraction from the real product.
 
-It is the **foundation plus implemented in-memory persistence, bounded autonomous execution policy, fifteen committed durable relational contracts, committed Prisma schema/migrations, repository adapter contracts, and adapter-backed repository/Prisma parity for every current durable product entity, one shared implemented-product bundle spanning the full implemented product chain through `setup_revision_activation_record`, and one shared full-chain real-database integration flow through `setup_revision_activation_record`**.
+It is the **foundation plus a working, persisted, end-to-end BTC research loop**: eighteen durable
+product entities behind service-owned write paths, a shared Prisma bundle with real-Postgres
+integration coverage, live public market ingestion, deterministic detection, bounded evaluation and
+aggregation, a complete human-in-the-loop review and execution chain, and at-most-once
+decision-support delivery under durable run ownership — with cadence still externally owned and
+trading still absent.

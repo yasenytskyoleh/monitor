@@ -2,6 +2,9 @@ services:
   btc-notify:
     profiles: ["delivery"]
     image: monitor-btc:local
+    build:
+      context: .
+      target: runtime
     init: true
     command: ["node", "dist/src/notify.js"]
     environment:
