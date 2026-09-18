@@ -162,6 +162,23 @@ export type {
   SetupDefinitionRevisionRelationalEntityType
 } from "./setup-definition-revision-relational-slice.js";
 export {
+  PATTERN_NOTIFICATION_DELIVERY_LEASE_MIGRATION_SLUG,
+  PATTERN_NOTIFICATION_RELATIONAL_CHECK_CONSTRAINTS,
+  PATTERN_NOTIFICATION_RELATIONAL_INDEXES,
+  PATTERN_NOTIFICATION_RELATIONAL_MIGRATION_SLUG,
+  PATTERN_NOTIFICATION_RELATIONAL_PRISMA_MODELS,
+  PATTERN_NOTIFICATION_RELATIONAL_REQUIRED_COLUMNS,
+  PATTERN_NOTIFICATION_RELATIONAL_TABLES,
+  PATTERN_NOTIFICATION_RELATIONAL_UNIQUE_CONSTRAINTS
+} from "./pattern-notification-relational-physical-schema.js";
+export type {
+  PatternNotificationRelationalCheckConstraintName,
+  PatternNotificationRelationalIndexName,
+  PatternNotificationRelationalPrismaModelName,
+  PatternNotificationRelationalTableName,
+  PatternNotificationRelationalUniqueConstraintName
+} from "./pattern-notification-relational-physical-schema.js";
+export {
   PATTERN_NOTIFICATION_DURABLE_DELIVERY_FIELDS,
   PATTERN_NOTIFICATION_DURABLE_EVIDENCE_FIELDS,
   PATTERN_NOTIFICATION_RELATIONAL_ENTITY_TYPES
