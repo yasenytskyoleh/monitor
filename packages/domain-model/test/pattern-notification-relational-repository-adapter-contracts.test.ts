@@ -352,3 +352,38 @@ test("applies a guarded terminal delivery outcome", async () => {
   assert.equal(delivered.deliveryStatus, "delivered");
   assert.equal(delivered.outcomeCode, "telegram_delivered");
 });
+
+test("a terminal outcome may not keep its delivery lease", async () => {
+  const adapter = createAdapter();
+  await adapter.insertPatternNotification({ record: buildNotification() });
+  await adapter.updatePatternNotification({
+    record: buildNotification({
+      identity: { ...buildNotification().identity, version: 2 },
+      deliveryStatus: "delivery_attempted",
+      deliveryAttemptedAtUtc: "2026-09-01T10:31:00.000Z",
+      deliveryLeaseId: "lease-001",
+      deliveryLeaseExpiresAtUtc: "2026-09-01T10:33:00.000Z"
+    }),
+    expectedVersion: 1,
+    expectedDeliveryStatus: "pending_delivery"
+  });
+
+  // Postgres rejects this via pattern_notification_delivery_lease_consistent; so must we.
+  await expectRepositoryError(
+    () =>
+      adapter.updatePatternNotification({
+        record: buildNotification({
+          identity: { ...buildNotification().identity, version: 3 },
+          deliveryStatus: "delivered",
+          deliveryAttemptedAtUtc: "2026-09-01T10:31:00.000Z",
+          deliveryLeaseId: "lease-001",
+          deliveryLeaseExpiresAtUtc: "2026-09-01T10:33:00.000Z",
+          completedAtUtc: "2026-09-01T10:31:05.000Z",
+          outcomeCode: "telegram_delivered"
+        }),
+        expectedVersion: 2,
+        expectedDeliveryStatus: "delivery_attempted"
+      }),
+    "version_mismatch"
+  );
+});

@@ -183,6 +183,9 @@ test("records a terminal delivery outcome fenced to its own attempt", async () =
     notification: {
       ...claimed,
       deliveryStatus: "delivered",
+      // The lease only exists while a delivery is in flight.
+      deliveryLeaseId: undefined,
+      deliveryLeaseExpiresAt: undefined,
       completedAt: "2026-09-01T10:31:05.000Z",
       outcomeCode: "telegram_delivered"
     },
@@ -194,5 +197,5 @@ test("records a terminal delivery outcome fenced to its own attempt", async () =
 
   assert.equal(delivered.deliveryStatus, "delivered");
   assert.equal(delivered.outcomeCode, "telegram_delivered");
-  assert.equal(delivered.deliveryLeaseId, "lease-001");
+  assert.equal(delivered.deliveryLeaseId, undefined);
 });

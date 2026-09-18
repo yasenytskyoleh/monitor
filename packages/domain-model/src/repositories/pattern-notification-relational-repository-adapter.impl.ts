@@ -10,7 +10,8 @@ import {
   createAlreadyExistsRepositoryError,
   createInvalidReferenceRepositoryError,
   createNotFoundRepositoryError,
-  createVersionMismatchRepositoryError
+  createVersionMismatchRepositoryError,
+  RepositoryError
 } from "./repository-error.js";
 
 /**
@@ -20,6 +21,39 @@ import {
  */
 export type PatternNotificationRelationalReferenceReader = {
   referenceExists(kind: PatternNotificationReferenceKind, entityId: string): Promise<boolean>;
+};
+
+/**
+ * Mirrors the pattern_notification_delivery_lease_consistent CHECK constraint: a lease may only
+ * exist while a delivery is in flight, so a terminal outcome has to drop it. Enforcing it here too
+ * keeps the in-memory adapter from accepting rows Postgres would reject.
+ */
+const assertDeliveryLeaseIsConsistent = (record: PatternNotificationDurableRecord): void => {
+  const hasLease =
+    record.deliveryLeaseId !== null || record.deliveryLeaseExpiresAtUtc !== null;
+  if (!hasLease) {
+    return;
+  }
+
+  const leaseIsHeldByAnInFlightAttempt =
+    record.deliveryStatus === "delivery_attempted" &&
+    (record.deliveryLeaseId?.trim().length ?? 0) > 0 &&
+    record.deliveryLeaseExpiresAtUtc !== null &&
+    record.deliveryAttemptedAtUtc !== null &&
+    record.deliveryLeaseExpiresAtUtc > record.deliveryAttemptedAtUtc;
+
+  if (!leaseIsHeldByAnInFlightAttempt) {
+    throw new RepositoryError(
+      "pattern_notification delivery lease must be dropped once delivery is terminal",
+      {
+        code: "version_mismatch",
+        operation: "update",
+        entityType: "pattern_notification",
+        entityId: record.identity.entityId,
+        retryDisposition: "do_not_retry"
+      }
+    );
+  }
 };
 
 const clonePatternNotification = (
@@ -85,6 +119,7 @@ export class InMemoryPatternNotificationRelationalRepositoryAdapter
     }
 
     await this.assertReferencesExist(request.record);
+    assertDeliveryLeaseIsConsistent(request.record);
 
     this.recordsById.set(notificationId, clonePatternNotification(request.record));
     return clonePatternNotification(request.record);
@@ -117,6 +152,7 @@ export class InMemoryPatternNotificationRelationalRepositoryAdapter
     }
 
     this.assertDeliveryGuardsHold(request, existing);
+    assertDeliveryLeaseIsConsistent(request.record);
 
     this.recordsById.set(notificationId, clonePatternNotification(request.record));
     return clonePatternNotification(request.record);

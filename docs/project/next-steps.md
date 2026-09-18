@@ -68,6 +68,11 @@ missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
   aggregate exists, so no `P2003` can be raised for that table. The Prisma adapter checks the five
   references explicitly as a stopgap, but the constraints should be added in their own slice, after
   verifying existing rows satisfy them.
+- the shared integration test rebuilds its schema from a **hand-maintained list of migration paths**
+  in `implemented-product-relational-repositories.integration.test.ts`. That list silently omitted
+  both `pattern_notification` migrations, which is why the entity had no real-database coverage.
+  Reading the migrations directory in sorted order would remove the class of bug, but the
+  `runtime_control` migration is not idempotent against an existing schema and needs handling first.
 - ADR-089 and ADR-090 name follow-up ADRs that were never written. The **code** for monitored-symbol
   and research-run is complete — only the ADR trail is partial. Do not re-open that work.
 
