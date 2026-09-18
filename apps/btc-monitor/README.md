@@ -101,16 +101,20 @@ conservative decision-support filters, not investment advice.
 | `BTC_MONITOR_NOTIFICATION_MAX_DELIVERIES` | no | Maximum pending Telegram alerts sent per `btc-notify` run, from 1 to 100; defaults to 10. |
 | `BTC_MONITOR_TELEGRAM_TIMEOUT_MS` | no | Per-request Telegram timeout in milliseconds, from 1 to 60,000; defaults to 10,000. |
 
-## Linux scheduling
+## Scheduling
 
-For the prepared Docker path, use the disabled-by-default systemd timer template in
-`docs/project/btc-job-cadence-runbook.md`; the local macOS launchd path is described there too.
-The host-only cron examples below remain available for non-container deployments.
+**`docs/project/btc-job-cadence-runbook.md` is the authoritative scheduling guide.** It covers the
+disabled-by-default macOS launchd and Linux systemd templates for the prepared Docker path, plus the
+run-history checks to perform before and after enabling a timer. Validate the evaluator manually
+before installing any timer.
 
-Run `pnpm btc-monitor:docker` for the local supervised container. For a non-container Linux host,
-run `pnpm btc-monitor` under a process supervisor such as systemd so the closed-candle feed restarts
+Run `pnpm btc-monitor:docker` for the local supervised container. For a non-container host, run
+`pnpm btc-monitor` under a process supervisor such as systemd so the closed-candle feed restarts
 after a reboot. Schedule the bounded evaluator separately; it is idempotent and uses durable run
 ownership.
+
+Only if you are not using the Docker path, a host cron entry is an alternative to the systemd
+timer:
 
 ```cron
 */5 * * * * cd /opt/monitor && /usr/bin/pnpm btc-evaluate >> /var/log/btc-evaluate.log 2>&1
