@@ -112,7 +112,6 @@ The product side now proves that the repo can:
 - `review_decision_routing_result` is persisted but has no `PRODUCT_WRITE_PATH_OWNERSHIP` entry
 - the review/execution chain has no composition root: 15 of 23 packages have no workspace consumer
   (deliberate contract-first sequencing, not dead code — see `next-steps.md`)
-- there is no CI; every baseline verification is manual
 
 ## What this phase is not
 This phase is **not** about building a full crypto trading platform.

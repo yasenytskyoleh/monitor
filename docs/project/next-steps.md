@@ -62,7 +62,6 @@ missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
   wires only the market-data path. This is deliberate contract-first sequencing, **not** dead code —
   do not delete these packages. The open question is what application service should assemble them.
 - `apps/btc-monitor/src/{evaluate,notify}.ts` run on import, so they cannot be unit-tested
-- there is no CI; every baseline verification is manual
 - **`pattern_notification` has no foreign keys**, unlike its peers (`setup_revision_activation_record`
   has four). Postgres does not enforce that a notification's candidate, setup, revision, symbol, or
   aggregate exists, so no `P2003` can be raised for that table. The Prisma adapter checks the five
@@ -95,6 +94,9 @@ pnpm --filter @monitor/domain-model test:integration
 pnpm typecheck
 pnpm test
 ```
+
+CI runs this same sequence on every pull request to `develop`
+(`.github/workflows/verify.yml`), against a throwaway Postgres service container.
 
 `test:integration` needs Postgres running (`pnpm infra:up`) **and** the disposable integration
 database migrated. Once `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL` is set the suite connects rather
