@@ -3,8 +3,7 @@ import process from "node:process";
 import {
   createImplementedProductRelationalPrismaRepositories,
   createScheduledJobRunService,
-  PrismaScheduledJobRunRepository,
-  PrismaPatternNotificationRecordRepository
+  PrismaScheduledJobRunRepository
 } from "@monitor/domain-model";
 import type { TelegramFetch } from "@monitor/pattern-notification";
 
@@ -66,9 +65,7 @@ const run = async (): Promise<void> => {
         configuration,
         fetchImpl: telegramFetch,
         signal,
-        patternNotificationRecordRepository: new PrismaPatternNotificationRecordRepository(
-          repositories.prismaClient
-        )
+        patternNotificationRecordRepository: repositories.patternNotificationRecordRepository
       }).dispatch()
     });
     if (outcome.status === "already_running") {

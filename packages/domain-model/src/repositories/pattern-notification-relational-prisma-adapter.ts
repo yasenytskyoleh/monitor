@@ -18,11 +18,8 @@ import {
 
 type PrismaPatternNotificationRow = Prisma.PatternNotificationRecordGetPayload<object>;
 
-type ExistenceDelegate = {
-  findUnique(args: {
-    where: Record<string, string>;
-    select: Record<string, true>;
-  }): Promise<unknown | null>;
+type ExistenceDelegate<TWhere, TSelect> = {
+  findUnique(args: { where: TWhere; select: TSelect }): Promise<unknown | null>;
 };
 
 export type PatternNotificationRelationalPrismaClient = {
@@ -50,11 +47,26 @@ export type PatternNotificationRelationalPrismaClient = {
       data: Prisma.PatternNotificationRecordUncheckedUpdateManyInput;
     }): Promise<Prisma.BatchPayload>;
   };
-  signalCandidateRecord: ExistenceDelegate;
-  setupDefinitionRecord: ExistenceDelegate;
-  setupDefinitionRevisionRecord: ExistenceDelegate;
-  monitoredSymbolRecord: ExistenceDelegate;
-  setupAggregateResultRecord: ExistenceDelegate;
+  signalCandidateRecord: ExistenceDelegate<
+    { signalCandidateId: string },
+    { signalCandidateId: true }
+  >;
+  setupDefinitionRecord: ExistenceDelegate<
+    { setupDefinitionId: string },
+    { setupDefinitionId: true }
+  >;
+  setupDefinitionRevisionRecord: ExistenceDelegate<
+    { setupDefinitionRevisionId: string },
+    { setupDefinitionRevisionId: true }
+  >;
+  monitoredSymbolRecord: ExistenceDelegate<
+    { monitoredSymbolId: string },
+    { monitoredSymbolId: true }
+  >;
+  setupAggregateResultRecord: ExistenceDelegate<
+    { setupAggregateResultId: string },
+    { setupAggregateResultId: true }
+  >;
 };
 
 const TRANSIENT_PRISMA_ERROR_CODES = new Set([
@@ -347,46 +359,56 @@ export class PrismaPatternNotificationRelationalRepositoryAdapter
   private async assertReferencesExist(
     record: PatternNotificationDurableRecord
   ): Promise<void> {
-    const checks: [PatternNotificationReferenceKind, string, ExistenceDelegate, string][] = [
+    const checks: [PatternNotificationReferenceKind, string, () => Promise<unknown | null>][] = [
       [
         "signal_candidate",
         record.signalCandidateId,
-        this.prisma.signalCandidateRecord,
-        "signalCandidateId"
+        () =>
+          this.prisma.signalCandidateRecord.findUnique({
+            where: { signalCandidateId: record.signalCandidateId },
+            select: { signalCandidateId: true }
+          })
       ],
       [
         "setup_definition",
         record.setupDefinitionId,
-        this.prisma.setupDefinitionRecord,
-        "setupDefinitionId"
+        () =>
+          this.prisma.setupDefinitionRecord.findUnique({
+            where: { setupDefinitionId: record.setupDefinitionId },
+            select: { setupDefinitionId: true }
+          })
       ],
       [
         "setup_definition_revision",
         record.setupRevisionId,
-        this.prisma.setupDefinitionRevisionRecord,
-        "setupDefinitionRevisionId"
+        () =>
+          this.prisma.setupDefinitionRevisionRecord.findUnique({
+            where: { setupDefinitionRevisionId: record.setupRevisionId },
+            select: { setupDefinitionRevisionId: true }
+          })
       ],
       [
         "monitored_symbol",
         record.monitoredSymbolId,
-        this.prisma.monitoredSymbolRecord,
-        "monitoredSymbolId"
+        () =>
+          this.prisma.monitoredSymbolRecord.findUnique({
+            where: { monitoredSymbolId: record.monitoredSymbolId },
+            select: { monitoredSymbolId: true }
+          })
       ],
       [
         "setup_aggregate_result",
         record.setupAggregateResultId,
-        this.prisma.setupAggregateResultRecord,
-        "setupAggregateResultId"
+        () =>
+          this.prisma.setupAggregateResultRecord.findUnique({
+            where: { setupAggregateResultId: record.setupAggregateResultId },
+            select: { setupAggregateResultId: true }
+          })
       ]
     ];
 
-    for (const [referenceEntityType, referenceEntityId, delegate, idField] of checks) {
-      const found = await delegate.findUnique({
-        where: { [idField]: referenceEntityId },
-        select: { [idField]: true }
-      });
-
-      if (found) {
+    for (const [referenceEntityType, referenceEntityId, loadReference] of checks) {
+      if (await loadReference()) {
         continue;
       }
 

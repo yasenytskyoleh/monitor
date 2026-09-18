@@ -61,6 +61,11 @@ import {
   composeSetupDefinitionRevisionRelationalRepositories,
   type SetupDefinitionRevisionRelationalRepositories
 } from "./setup-definition-revision-relational-repositories.js";
+import type { PatternNotificationRelationalRepositoryAdapter } from "./pattern-notification-relational-repository-adapter.js";
+import {
+  composePatternNotificationRelationalRepositories,
+  type PatternNotificationRelationalRepositories
+} from "./pattern-notification-relational-repositories.js";
 import type {
   SetupRevisionActivationRecordRelationalRepositoryAdapter
 } from "./setup-revision-activation-record-relational-repository-adapter.js";
@@ -121,6 +126,7 @@ export type ImplementedProductRelationalAdapters = {
   setupRefinementRequestAdapter: SetupRefinementRequestRelationalRepositoryAdapter;
   setupRevisionActivationRecordAdapter:
     SetupRevisionActivationRecordRelationalRepositoryAdapter;
+  patternNotificationAdapter: PatternNotificationRelationalRepositoryAdapter;
 };
 
 export type ImplementedProductRelationalRepositories =
@@ -138,7 +144,8 @@ export type ImplementedProductRelationalRepositories =
   SetupLifecycleMutationRecordRelationalRepositories &
   SetupDefinitionRevisionRelationalRepositories &
   SetupRefinementRequestRelationalRepositories &
-  SetupRevisionActivationRecordRelationalRepositories;
+  SetupRevisionActivationRecordRelationalRepositories &
+  PatternNotificationRelationalRepositories;
 
 export const composeImplementedProductRelationalRepositories = (
   adapters: ImplementedProductRelationalAdapters
@@ -167,5 +174,6 @@ export const composeImplementedProductRelationalRepositories = (
   ),
   ...composeSetupRevisionActivationRecordRelationalRepositories(
     adapters.setupRevisionActivationRecordAdapter
-  )
+  ),
+  ...composePatternNotificationRelationalRepositories(adapters.patternNotificationAdapter)
 });

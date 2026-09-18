@@ -785,18 +785,6 @@ export {
 export {
   InMemoryPatternNotificationRecordRepository
 } from "./pattern-notification-record-repository.impl.js";
-export {
-  PrismaPatternNotificationRecordRepository
-} from "./pattern-notification-record-repository.prisma.js";
-export type {
-  PatternNotificationRecordPrismaClient
-} from "./pattern-notification-record-repository.prisma.js";
-export {
-  createPatternNotificationRecordPrismaRepositories
-} from "./pattern-notification-record-repository.prisma-client.js";
-export type {
-  PatternNotificationRecordPrismaRepositories
-} from "./pattern-notification-record-repository.prisma-client.js";
 export type {
   ExecutionAttemptAuditRecordWriteRequest,
   ExecutionAttemptAuditRelationalAdapterOperation,

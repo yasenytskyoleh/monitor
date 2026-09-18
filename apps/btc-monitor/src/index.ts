@@ -3,7 +3,6 @@ import process from "node:process";
 import { createBinanceSpotCandleFeed, type BinanceSpotWebSocket } from "@monitor/binance-spot";
 import {
   createImplementedProductRelationalPrismaRepositories,
-  PrismaPatternNotificationRecordRepository,
   type FirstDurableRelationalPrismaClientOptions
 } from "@monitor/domain-model";
 import type { ClosedCandlePatternDetectionFeedEvent } from "@monitor/pattern-detection";
@@ -162,12 +161,7 @@ export const runBtcMonitor = async (
     start(onFailure) {
       const runtime = createBtcMonitorRuntime({
         configuration,
-        repositories: {
-          ...repositories,
-          patternNotificationRecordRepository: new PrismaPatternNotificationRecordRepository(
-            repositories.prismaClient
-          )
-        },
+        repositories,
         candleFeed: createBinanceSpotCandleFeed({
           fetchImpl: fetch,
           createWebSocket,

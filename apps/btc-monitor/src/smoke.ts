@@ -3,7 +3,6 @@ import process from "node:process";
 import { createBinanceSpotCandleFeed, type BinanceSpotWebSocket } from "@monitor/binance-spot";
 import {
   createImplementedProductRelationalPrismaRepositories,
-  PrismaPatternNotificationRecordRepository,
   type FirstDurableRelationalPrismaClientOptions
 } from "@monitor/domain-model";
 import {
@@ -151,12 +150,7 @@ export const runBtcSmokeCommand = async (
   try {
     const result = await runBtcSmoke({
       configuration,
-      repositories: {
-        ...repositories,
-        patternNotificationRecordRepository: new PrismaPatternNotificationRecordRepository(
-          repositories.prismaClient
-        )
-      },
+      repositories,
       candleFeed: createBinanceSpotCandleFeed({
         fetchImpl: fetch,
         createWebSocket,
