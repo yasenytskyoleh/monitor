@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -116,8 +116,22 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260901103000_product_domain_pattern_notification_delivery_lease_v1/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260914120000_product_domain_initial_setup_revision_source/migration.sql"
   )
 ];
+
+test("shared integration schema includes every product-domain migration", async () => {
+  const migrations = await readdir(migrationsDirectory, { withFileTypes: true });
+  const productMigrationPaths = migrations
+    .filter((entry) => entry.isDirectory() && entry.name.includes("product_domain"))
+    .map((entry) => resolve(migrationsDirectory, entry.name, "migration.sql"))
+    .sort();
+
+  assert.deepEqual([...migrationSqlPaths].sort(), productMigrationPaths);
+});
 
 const metadata: ProductRecordMetadata = {
   originRunId: "run-002",

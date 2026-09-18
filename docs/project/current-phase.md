@@ -54,8 +54,8 @@ The product side now proves that the repo can:
 ## Implemented in this phase (current baseline)
 
 > A per-file inventory used to live here and was the single largest source of doc drift.
-> It is gone on purpose. For file-level detail read the code and `docs/architecture/adr/`
-> (ADR-001 through ADR-104); this section records only what is true, not where it lives.
+> It is gone on purpose. For file-level detail read the code and `docs/architecture/adr/`;
+> this section records only what is true, not where it lives.
 
 ### Orchestration foundation
 - config + JSON-schema validation platform (`packages/agent-config`); compiled immutable runtime
@@ -74,12 +74,10 @@ The product side now proves that the repo can:
 - bounded autonomous execution policy: `docs/project/autonomous-mode-policy.md`
 
 ### Product-domain persistence
-- 18 durable product entities. Each has the full hexagonal family — durable relational contract,
-  physical schema, adapter port, in-memory adapter, mappers, adapter-backed repository, Prisma
-  adapter, slice composition — **except `pattern_notification`**, which has only a direct Prisma
-  repository and is not in the shared bundle. That is the one known architectural gap.
+- 18 durable product entities, including `pattern_notification`, have relational contracts,
+  adapters, repository composition, and Prisma-backed persistence.
 - one shared Prisma-backed bundle (`createImplementedProductRelationalPrismaRepositories`) wiring
-  15 adapters across 17 of the 18 entities
+  16 adapters across all 18 entities
 - one end-to-end opt-in real-Postgres integration flow across that bundle
 - service-owned write paths (`PRODUCT_WRITE_PATH_OWNERSHIP`), optimistic concurrency via
   `expectedVersion` / `version`
@@ -105,11 +103,9 @@ The product side now proves that the repo can:
 - containerized runtime (non-root Node 24) with migration, canonical seed, bounded real-data
   smoke, and long-running Compose workflows
 - external five-minute evaluator cadence prepared for macOS launchd and Linux systemd —
-  **templates only; this repository installs neither**
+  **not enabled on either host**
 
 ### Known gaps carried into the next step
-- `pattern_notification` bypasses the hexagonal pattern described above
-- `review_decision_routing_result` is persisted but has no `PRODUCT_WRITE_PATH_OWNERSHIP` entry
 - the review/execution chain has no composition root: 15 of 23 packages have no workspace consumer
   (deliberate contract-first sequencing, not dead code — see `next-steps.md`)
 
@@ -135,9 +131,9 @@ This scope was chosen to keep the domain simple while the orchestration layer is
 **Validate and explicitly enable the external BTC evaluation cadence.** This is the same step named
 in `docs/project/next-steps.md`, which is authoritative if the two ever disagree.
 
-Validate the prepared Docker evaluator first — sequential runs, concurrent-skip, expired-lease
-takeover — before installing any timer. The host is not yet chosen. Keep Telegram delivery manual
-and opt-in; keep trading out of scope.
+Sequential runs, concurrent-skip, and expired-lease takeover have been validated. The macOS
+launchd agent is prepared but not loaded; the Linux timer remains a template. Keep Telegram
+delivery manual and opt-in; keep trading out of scope.
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

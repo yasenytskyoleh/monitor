@@ -9,6 +9,7 @@ import type { TelegramFetch } from "@monitor/pattern-notification";
 
 import { createBtcNotificationDispatcher } from "./btc-notification-dispatcher.js";
 import { loadBtcNotificationDeliveryConfiguration } from "./config.js";
+import { isDirectExecution } from "./direct-execution.js";
 import { executeOwnedJob, OwnedJobExecutionError } from "./owned-job-executor.js";
 import { createProcessTermination } from "./process-termination.js";
 
@@ -96,8 +97,8 @@ export const run = async (): Promise<void> => {
   }
 };
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
-    void run().catch((error: unknown) => {
+if (isDirectExecution(import.meta.url)) {
+  void run().catch((error: unknown) => {
     process.stderr.write(`${JSON.stringify({
       kind: "btc_notification_dispatch_error",
       message: error instanceof Error ? error.message : "notification dispatch failed",

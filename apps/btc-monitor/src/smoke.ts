@@ -16,6 +16,7 @@ import {
   type BtcMonitorRepositories
 } from "./btc-monitor-runtime.js";
 import { loadBtcSmokeConfiguration, type BtcSmokeConfiguration } from "./config.js";
+import { isDirectExecution } from "./direct-execution.js";
 
 const NETWORK_TIMEOUT_MS = 15_000;
 
@@ -164,7 +165,7 @@ export const runBtcSmokeCommand = async (
   }
 };
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (isDirectExecution(import.meta.url)) {
   void runBtcSmokeCommand().catch((error: unknown) => {
     console.error(JSON.stringify({
       kind: "btc_monitor_smoke_failed",

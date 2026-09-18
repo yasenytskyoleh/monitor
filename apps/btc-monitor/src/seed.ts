@@ -7,6 +7,7 @@ import {
 
 import { seedBtcPilot } from "./btc-pilot-seed.js";
 import { loadBtcMonitorConfiguration } from "./config.js";
+import { isDirectExecution } from "./direct-execution.js";
 
 export const runBtcPilotSeed = async (
   environment: NodeJS.ProcessEnv = process.env,
@@ -30,7 +31,7 @@ export const runBtcPilotSeed = async (
   }
 };
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (isDirectExecution(import.meta.url)) {
   void runBtcPilotSeed().catch((error: unknown) => {
     console.error(JSON.stringify({
       kind: "btc_pilot_seed_failed",

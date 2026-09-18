@@ -28,7 +28,7 @@ It is **not yet**:
 
 > This section previously carried an exhaustive list of every doc and ADR path. That list went
 > stale on almost every commit, so it has been removed. The authoritative inventories are the
-> directories themselves: `docs/architecture/adr/` (ADR-001 … ADR-104) and `docs/project/`.
+> directories themselves: `docs/architecture/adr/` and `docs/project/`.
 
 The repo is usable through a **Codex-first workflow**: Codex is the primary day-to-day operator for
 planning, implementation, and repo coordination; bounded autonomous mode follows
@@ -62,11 +62,8 @@ test-backed supporting subsystem.
 - Backend live mode stays constrained to allowlisted patch mode: isolated apply, verification,
   rollback, controlled promotion, narrow helper-file creation. No broad refactors, schema or
   architecture changes, or cross-package scope.
-- `pattern_notification` is the one persisted entity that bypasses the ports-and-adapters pattern —
-  it has a direct Prisma repository only, and is not in the shared bundle.
-- `review_decision_routing_result` is persisted without a declared write-path owner.
-- External evaluator cadence is prepared for macOS and Linux but **installed on neither host**.
-- There is no CI, and no UI.
+- External evaluator cadence is prepared for macOS and Linux but **enabled on neither host**.
+- Baseline verification runs in CI, but there is no UI.
 
 Current recommended next step: **validate and explicitly enable the external BTC evaluation
 cadence** (see `docs/project/next-steps.md`). Keep alerts as explainable human decision support;
@@ -101,8 +98,8 @@ The product-domain scope is deliberately narrow:
 - Binance BTC/USDT ingestion is implemented; generalized multi-provider ingestion is not,
 - bounded 24-hour candidate evaluation is implemented; unattended scheduling is not,
 - aggregation and hypothesis-evidence runtimes exist, but there is no statistics or scoring engine,
-- durable relational persistence is implemented for all 18 product entities, with
-  `pattern_notification` still outside the shared ports-and-adapters composition,
+- durable relational persistence is implemented for all 18 product entities, including
+  `pattern_notification` in the shared ports-and-adapters composition,
 - the Binance Spot integration is deliberately limited to public BTC/USDT candle reads.
 
 ## Long-term product idea

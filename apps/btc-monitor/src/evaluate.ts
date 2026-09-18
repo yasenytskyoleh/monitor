@@ -9,6 +9,7 @@ import {
 
 import { createBtcEvaluationRunner } from "./btc-evaluation-runner.js";
 import { loadBtcMonitorConfiguration } from "./config.js";
+import { isDirectExecution } from "./direct-execution.js";
 import { executeOwnedJob, OwnedJobExecutionError } from "./owned-job-executor.js";
 import { createProcessTermination } from "./process-termination.js";
 
@@ -84,8 +85,8 @@ export const run = async (): Promise<void> => {
   }
 };
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
-    void run().catch((error: unknown) => {
+if (isDirectExecution(import.meta.url)) {
+  void run().catch((error: unknown) => {
     process.stderr.write(`${JSON.stringify({
       kind: "btc_evaluation_error",
       message: error instanceof Error ? error.message : "evaluation failed",

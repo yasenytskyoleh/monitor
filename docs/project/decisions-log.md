@@ -55,8 +55,8 @@
 ## Progress decisions already realized
 
 > This section used to restate every shipped slice and went stale. Current status lives in
-> `docs/project/current-phase.md`; the decision trail lives in `docs/architecture/adr/`
-> (ADR-001 … ADR-104). Only genuinely decision-shaped milestones are kept here.
+> `docs/project/current-phase.md`; the decision trail lives in `docs/architecture/adr/`.
+> Only genuinely decision-shaped milestones are kept here.
 
 - the orchestration foundation shipped first and remains constrained
 - product-domain contracts were defined before any runtime engine was built

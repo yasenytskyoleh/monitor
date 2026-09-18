@@ -9,6 +9,7 @@ import type { ClosedCandlePatternDetectionFeedEvent } from "@monitor/pattern-det
 
 import { createBtcMonitorRuntime } from "./btc-monitor-runtime.js";
 import { loadBtcMonitorConfiguration } from "./config.js";
+import { isDirectExecution } from "./direct-execution.js";
 
 type ConsoleLogger = Pick<Console, "error" | "info">;
 
@@ -187,7 +188,7 @@ export const runBtcMonitor = async (
   });
 };
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (isDirectExecution(import.meta.url)) {
   void runBtcMonitor().catch((error: unknown) => {
     logError(console, error instanceof Error ? error : new Error("BTC monitor failed to start"));
     process.exitCode = 1;

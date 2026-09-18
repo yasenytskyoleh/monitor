@@ -30,9 +30,10 @@ the in-repo orchestration subsystem is a constrained supporting tool, not the re
 - **Delivery** — `pattern-notification`: eligibility, immutable retention, lease-based at-most-once
   delivery, no-resend reconciliation, Telegram adapter.
 - **App** — `apps/btc-monitor`: the runnable pilot. `start` is long-running; `evaluate`, `notify`,
-  `seed`, `smoke` are bounded and take durable ownership in `runtime_control.scheduled_job_run`.
+  `seed`, `smoke` are bounded. Only `evaluate` and `notify` take durable ownership in
+  `runtime_control.scheduled_job_run`.
 
-Full inventories live in the directories themselves — `docs/architecture/adr/` (ADR-001 … ADR-104)
+Full inventories live in the directories themselves — `docs/architecture/adr/`
 and `docs/project/`. Do not re-create hand-maintained copies of those lists here; doing so is what
 made this file drift in the first place.
 
@@ -44,11 +45,8 @@ made this file drift in the first place.
 - no automated trading, order placement, or investment advice
 - no scheduler daemon, provider retry, or unbounded queue — cadence is externally owned
 - Telegram delivery is manual and opt-in; alerts are explainable decision support only
-- `pattern_notification` is the one persisted entity outside the shared ports-and-adapters
-  composition (direct Prisma repository only)
-- `review_decision_routing_result` is persisted with no declared write-path owner
-- external evaluator cadence is prepared for macOS and Linux but installed on neither
-- no CI; baseline verification is manual
+- external evaluator cadence is prepared for macOS and Linux but enabled on neither
+- baseline verification runs in CI; no UI is implemented
 
 ## Recommended next step
 

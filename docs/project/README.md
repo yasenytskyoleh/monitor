@@ -1,6 +1,6 @@
 # `docs/project/` index
 
-Every document in this directory, so none of them is unreachable. 140 files.
+Index of the project documents.
 
 **Read the canonical status docs in this order.** `next-steps.md` is authoritative for the current
 step; the others restate it.
@@ -11,7 +11,7 @@ step; the others restate it.
 4. [Chat Briefing](chat-briefing.md)
 5. [Decisions Log](decisions-log.md)
 
-Architecture decision records live in `../architecture/adr/` (ADR-001 … ADR-104).
+Architecture decision records live in `../architecture/adr/`.
 
 ## Supporting documents
 

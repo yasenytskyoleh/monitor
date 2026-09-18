@@ -13,7 +13,7 @@ Reason:
 - the bounded pilot proves Postgres, historical ingestion, live ingestion, idempotency, and cleanup
 - evaluation and Telegram delivery are bounded commands with durable cross-process run ownership
 - the six-hour reliability soak completed successfully
-- external evaluator cadence is prepared for macOS and Linux but remains installed on neither
+- external evaluator cadence is prepared for macOS and Linux but is not enabled on either host
 
 ## Recommended near-future sequence
 1. ~~verify two sequential Docker evaluator runs and their durable run history~~ — **done**
@@ -50,9 +50,6 @@ Docker Desktop and the prepared Postgres stack must be running; sleep or power-o
 missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
 
 ## Known gaps to schedule after the cadence work
-- `pattern_notification` is the only persisted entity outside the shared ports-and-adapters
-  composition; it has a direct Prisma repository, no in-memory adapter, and no domain-model tests
-- `review_decision_routing_result` is persisted with no `PRODUCT_WRITE_PATH_OWNERSHIP` entry
 - **the review/execution chain has no composition root.** 15 of the 23 packages have zero workspace
   dependents — `evaluation-aggregation`, `hypothesis-evidence`, `setup-feedback`,
   `research-decision-approval`, `review-packet`, `review-decision`, `review-decision-routing`,
@@ -61,19 +58,16 @@ missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
   covered by its own tests, but nothing composes them into a running workflow; `apps/btc-monitor`
   wires only the market-data path. This is deliberate contract-first sequencing, **not** dead code —
   do not delete these packages. The open question is what application service should assemble them.
-- `apps/btc-monitor/src/{evaluate,notify}.ts` run on import, so they cannot be unit-tested
 - **`pattern_notification` has no foreign keys**, unlike its peers (`setup_revision_activation_record`
   has four). Postgres does not enforce that a notification's candidate, setup, revision, symbol, or
   aggregate exists, so no `P2003` can be raised for that table. The Prisma adapter checks the five
   references explicitly as a stopgap, but the constraints should be added in their own slice, after
   verifying existing rows satisfy them.
 - the shared integration test rebuilds its schema from a **hand-maintained list of migration paths**
-  in `implemented-product-relational-repositories.integration.test.ts`. That list silently omitted
-  both `pattern_notification` migrations, which is why the entity had no real-database coverage.
-  Reading the migrations directory in sorted order would remove the class of bug, but the
-  `runtime_control` migration is not idempotent against an existing schema and needs handling first.
-- ADR-089 and ADR-090 name follow-up ADRs that were never written. The **code** for monitored-symbol
-  and research-run is complete — only the ADR trail is partial. Do not re-open that work.
+  in `implemented-product-relational-repositories.integration.test.ts`. A guard now compares the
+  list with every product-domain migration directory, so an omission fails the test. Sorted
+  discovery could remove the manual list later; `runtime_control` is tested separately because
+  its migration is not idempotent against an existing schema.
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
@@ -98,6 +92,7 @@ pnpm test
 CI runs this same sequence on every pull request to `develop`
 (`.github/workflows/verify.yml`), against a throwaway Postgres service container.
 
-`test:integration` needs Postgres running (`pnpm infra:up`) **and** the disposable integration
-database migrated. Once `PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL` is set the suite connects rather
-than skipping, so an unprepared database fails the run with `ECONNREFUSED` instead of skipping.
+`test:integration` needs Postgres running (`pnpm infra:up`) and the disposable integration
+database to exist. The suite applies its own schema migrations. Once
+`PRODUCT_DOMAIN_INTEGRATION_DATABASE_URL` is set, it connects rather than skipping, so an
+unavailable database fails the run instead of skipping.
