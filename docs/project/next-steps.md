@@ -63,6 +63,11 @@ missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
   do not delete these packages. The open question is what application service should assemble them.
 - `apps/btc-monitor/src/{evaluate,notify}.ts` run on import, so they cannot be unit-tested
 - there is no CI; every baseline verification is manual
+- **`pattern_notification` has no foreign keys**, unlike its peers (`setup_revision_activation_record`
+  has four). Postgres does not enforce that a notification's candidate, setup, revision, symbol, or
+  aggregate exists, so no `P2003` can be raised for that table. The Prisma adapter checks the five
+  references explicitly as a stopgap, but the constraints should be added in their own slice, after
+  verifying existing rows satisfy them.
 - ADR-089 and ADR-090 name follow-up ADRs that were never written. The **code** for monitored-symbol
   and research-run is complete — only the ADR trail is partial. Do not re-open that work.
 

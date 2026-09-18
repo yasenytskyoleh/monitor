@@ -374,6 +374,10 @@ export {
   hydrateSetupDefinitionRevisionFromDurableRecord
 } from "./setup-definition-revision-relational-repository-mappers.js";
 export {
+  dehydratePatternNotificationToDurableRecord,
+  hydratePatternNotificationFromDurableRecord
+} from "./pattern-notification-relational-repository-mappers.js";
+export {
   dehydrateSetupRevisionActivationRecordToDurableRecord,
   hydrateSetupRevisionActivationRecordFromDurableRecord
 } from "./setup-revision-activation-record-relational-repository-mappers.js";
@@ -610,6 +614,12 @@ export type {
 export {
   PrismaSetupDefinitionRevisionRelationalRepositoryAdapter
 } from "./setup-definition-revision-relational-prisma-adapter.js";
+export type {
+  PatternNotificationRelationalPrismaClient
+} from "./pattern-notification-relational-prisma-adapter.js";
+export {
+  PrismaPatternNotificationRelationalRepositoryAdapter
+} from "./pattern-notification-relational-prisma-adapter.js";
 export type {
   SetupRevisionActivationRecordRelationalPrismaClient
 } from "./setup-revision-activation-record-relational-prisma-adapter.js";
@@ -868,6 +878,9 @@ export type {
 export {
   InMemorySetupRevisionActivationRecordRepository
 } from "./setup-revision-activation-record-repository.impl.js";
+export {
+  RelationalPatternNotificationRecordRepository
+} from "./pattern-notification-relational-repository.impl.js";
 export {
   RelationalSetupRevisionActivationRecordRepository
 } from "./setup-revision-activation-record-relational-repository.impl.js";
