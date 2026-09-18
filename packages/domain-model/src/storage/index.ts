@@ -162,6 +162,15 @@ export type {
   SetupDefinitionRevisionRelationalEntityType
 } from "./setup-definition-revision-relational-slice.js";
 export {
+  PATTERN_NOTIFICATION_DURABLE_DELIVERY_FIELDS,
+  PATTERN_NOTIFICATION_DURABLE_EVIDENCE_FIELDS,
+  PATTERN_NOTIFICATION_RELATIONAL_ENTITY_TYPES
+} from "./pattern-notification-relational-slice.js";
+export type {
+  PatternNotificationDurableRecord,
+  PatternNotificationRelationalEntityType
+} from "./pattern-notification-relational-slice.js";
+export {
   SETUP_REVISION_ACTIVATION_RECORD_RELATIONAL_ENTITY_TYPES
 } from "./setup-revision-activation-record-relational-slice.js";
 export type {
