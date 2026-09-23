@@ -16,6 +16,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+    restart: unless-stopped
 
   btc-migrate:
     profiles: ["pilot"]

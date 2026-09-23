@@ -21,8 +21,20 @@ docker compose --profile pilot run --rm --no-deps btc-seed
 docker compose --profile pilot up -d --no-deps btc-monitor
 ```
 
-Once prepared, `pnpm btc-evaluate:docker` or `infra/btc-jobs/run-evaluate.sh` runs one evaluator
-without rebuilding or starting dependencies. A missing database is an error, not a silent skip.
+Once prepared, `pnpm btc-evaluate:docker` runs one evaluator without rebuilding or starting
+dependencies. `infra/btc-jobs/run-evaluate.sh` is the timer entrypoint: before each run it starts
+Postgres if Docker Desktop resumed with the container stopped, waits for the Postgres healthcheck,
+and only then invokes the evaluator. A Docker daemon that is unavailable remains a visible
+startup failure; the wrapper does not hide infrastructure errors.
+
+The Postgres service uses `restart: unless-stopped`. After a host resume, verify both services and
+restart the monitor if it was alive while Postgres was unavailable:
+
+```bash
+docker compose up -d --wait postgres
+docker compose restart btc-monitor
+```
+
 Run the evaluator twice manually before enabling a timer.
 
 This sequence has been validated end to end: sequential runs are idempotent, a concurrent

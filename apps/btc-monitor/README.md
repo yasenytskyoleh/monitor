@@ -44,6 +44,16 @@ that the container has no unexplained restart, the 1m and 5m counters advance, t
 remain contiguous after any recovery event, and no `btc_monitor_processing_failed` event remains.
 Stop with Compose and verify exit code 0. Power loss or sleep invalidates the six-hour window.
 
+After a host resume, restore Postgres before counting the soak again:
+
+```bash
+docker compose up -d --wait postgres
+docker compose restart btc-monitor
+```
+
+The evaluator timer wrapper performs the Postgres start-and-wait step automatically before each
+bounded run, but it does not replace the monitor restart required after a database outage.
+
 ## Evaluate historical outcomes
 
 Run `pnpm btc-evaluate` from the repository root as a bounded job of up to 50 candidates. It only considers candidates

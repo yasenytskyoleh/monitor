@@ -6,4 +6,5 @@ cd "$repo_dir"
 PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:${PATH:-}"
 export PATH
 
+docker compose up --detach --wait postgres
 exec docker compose --profile pilot run --rm --no-deps btc-evaluate
