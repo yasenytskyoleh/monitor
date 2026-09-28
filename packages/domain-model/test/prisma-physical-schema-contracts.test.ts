@@ -12,7 +12,9 @@ import {
   FIRST_DURABLE_RELATIONAL_REQUIRED_COLUMNS,
   FIRST_DURABLE_RELATIONAL_TABLES,
   PATTERN_NOTIFICATION_DELIVERY_LEASE_MIGRATION_SLUG,
+  PATTERN_NOTIFICATION_FOREIGN_KEYS_MIGRATION_SLUG,
   PATTERN_NOTIFICATION_RELATIONAL_CHECK_CONSTRAINTS,
+  PATTERN_NOTIFICATION_RELATIONAL_FOREIGN_KEY_CONSTRAINTS,
   PATTERN_NOTIFICATION_RELATIONAL_INDEXES,
   PATTERN_NOTIFICATION_RELATIONAL_MIGRATION_SLUG,
   PATTERN_NOTIFICATION_RELATIONAL_PRISMA_MODELS,
@@ -177,6 +179,13 @@ const patternNotificationDeliveryLeaseMigrationPath = join(
   "prisma",
   "migrations",
   `20260901103000_${PATTERN_NOTIFICATION_DELIVERY_LEASE_MIGRATION_SLUG}`,
+  "migration.sql"
+);
+const patternNotificationForeignKeysMigrationPath = join(
+  packageRoot,
+  "prisma",
+  "migrations",
+  `20260928165806_${PATTERN_NOTIFICATION_FOREIGN_KEYS_MIGRATION_SLUG}`,
   "migration.sql"
 );
 const setupRevisionActivationRecordMigrationPath = join(
@@ -1383,6 +1392,10 @@ test("exposes pattern-notification physical schema constants", () => {
     "product_domain_pattern_notification_delivery_lease_v1"
   );
   assert.equal(
+    PATTERN_NOTIFICATION_FOREIGN_KEYS_MIGRATION_SLUG,
+    "product_domain_pattern_notification_foreign_keys_v1"
+  );
+  assert.equal(
     PATTERN_NOTIFICATION_RELATIONAL_PRISMA_MODELS.patternNotification,
     "PatternNotificationRecord"
   );
@@ -1398,6 +1411,26 @@ test("prisma schema defines the pattern-notification model with every required c
   assert.match(schema, /model PatternNotificationRecord \{/);
   assert.match(schema, /@@map\("pattern_notification"\)/);
   assert.match(schema, /enum PatternNotificationDeliveryStatus \{/);
+  assert.match(
+    schema,
+    /signalCandidate\s+SignalCandidateRecord\s+@relation\(fields: \[signalCandidateId\], references: \[signalCandidateId\], onDelete: Restrict, onUpdate: Cascade\)/
+  );
+  assert.match(
+    schema,
+    /setupDefinition\s+SetupDefinitionRecord\s+@relation\(fields: \[setupDefinitionId\], references: \[setupDefinitionId\], onDelete: Restrict, onUpdate: Cascade\)/
+  );
+  assert.match(
+    schema,
+    /setupRevision\s+SetupDefinitionRevisionRecord\s+@relation\(fields: \[setupRevisionId\], references: \[setupDefinitionRevisionId\], onDelete: Restrict, onUpdate: Cascade\)/
+  );
+  assert.match(
+    schema,
+    /monitoredSymbol\s+MonitoredSymbolRecord\s+@relation\(fields: \[monitoredSymbolId\], references: \[monitoredSymbolId\], onDelete: Restrict, onUpdate: Cascade\)/
+  );
+  assert.match(
+    schema,
+    /setupAggregateResult\s+SetupAggregateResultRecord\s+@relation\(fields: \[setupAggregateResultId\], references: \[setupAggregateResultId\], onDelete: Restrict, onUpdate: Cascade\)/
+  );
 
   for (const columnName of PATTERN_NOTIFICATION_RELATIONAL_REQUIRED_COLUMNS.pattern_notification) {
     assert.equal(
@@ -1417,11 +1450,12 @@ test("prisma schema defines the pattern-notification model with every required c
 });
 
 test("pattern-notification migrations define every required column, index and constraint", async () => {
-  const [base, deliveryLease] = await Promise.all([
+  const [base, deliveryLease, foreignKeys] = await Promise.all([
     readFile(patternNotificationMigrationPath, "utf8"),
-    readFile(patternNotificationDeliveryLeaseMigrationPath, "utf8")
+    readFile(patternNotificationDeliveryLeaseMigrationPath, "utf8"),
+    readFile(patternNotificationForeignKeysMigrationPath, "utf8")
   ]);
-  const migrations = `${base}\n${deliveryLease}`;
+  const migrations = `${base}\n${deliveryLease}\n${foreignKeys}`;
 
   assert.equal(
     base.includes(`CREATE TABLE "product_domain"."${PATTERN_NOTIFICATION_RELATIONAL_TABLES.patternNotification}"`),
@@ -1459,6 +1493,19 @@ test("pattern-notification migrations define every required column, index and co
       `pattern_notification migrations are missing check constraint ${constraintName}`
     );
   }
+
+  for (const constraintName of PATTERN_NOTIFICATION_RELATIONAL_FOREIGN_KEY_CONSTRAINTS) {
+    assert.equal(
+      foreignKeys.includes(`CONSTRAINT "${constraintName}"`),
+      true,
+      `pattern_notification migrations are missing foreign key ${constraintName}`
+    );
+  }
+
+  assert.equal(
+    foreignKeys.match(/ON DELETE RESTRICT\s+ON UPDATE CASCADE/g)?.length,
+    PATTERN_NOTIFICATION_RELATIONAL_FOREIGN_KEY_CONSTRAINTS.length
+  );
 });
 
 test("the pattern-notification delivery lease is fenced to an attempted delivery", async () => {

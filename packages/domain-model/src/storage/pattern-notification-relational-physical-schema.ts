@@ -63,6 +63,16 @@ export const PATTERN_NOTIFICATION_RELATIONAL_UNIQUE_CONSTRAINTS = [
 export type PatternNotificationRelationalUniqueConstraintName =
   (typeof PATTERN_NOTIFICATION_RELATIONAL_UNIQUE_CONSTRAINTS)[number];
 
+export const PATTERN_NOTIFICATION_RELATIONAL_FOREIGN_KEY_CONSTRAINTS = [
+  "pattern_notification_signal_candidate_id_fkey",
+  "pattern_notification_setup_definition_id_fkey",
+  "pattern_notification_setup_revision_id_fkey",
+  "pattern_notification_monitored_symbol_id_fkey",
+  "pattern_notification_setup_aggregate_result_id_fkey"
+] as const;
+export type PatternNotificationRelationalForeignKeyConstraintName =
+  (typeof PATTERN_NOTIFICATION_RELATIONAL_FOREIGN_KEY_CONSTRAINTS)[number];
+
 /**
  * Unlike its peers, this table depends on CHECK constraints for its core invariants: the
  * evidence snapshot's validity, the delivery state machine, and the at-most-once delivery lease.
@@ -90,3 +100,7 @@ export const PATTERN_NOTIFICATION_RELATIONAL_MIGRATION_SLUG =
 /** The delivery lease columns, their CHECK constraint, and their index arrived separately. */
 export const PATTERN_NOTIFICATION_DELIVERY_LEASE_MIGRATION_SLUG =
   "product_domain_pattern_notification_delivery_lease_v1" as const;
+
+/** Referential integrity arrived after the notification table and delivery lease. */
+export const PATTERN_NOTIFICATION_FOREIGN_KEYS_MIGRATION_SLUG =
+  "product_domain_pattern_notification_foreign_keys_v1" as const;
