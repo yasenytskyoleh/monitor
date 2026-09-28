@@ -56,6 +56,37 @@ importers:
         specifier: ^4.20.6
         version: 4.21.0
 
+  apps/research-workflow-runner:
+    dependencies:
+      '@monitor/activation-envelope-executor':
+        specifier: workspace:*
+        version: link:../../packages/activation-envelope-executor
+      '@monitor/domain-model':
+        specifier: workspace:*
+        version: link:../../packages/domain-model
+      '@monitor/execution-attempt':
+        specifier: workspace:*
+        version: link:../../packages/execution-attempt
+      '@monitor/lifecycle-envelope-executor':
+        specifier: workspace:*
+        version: link:../../packages/lifecycle-envelope-executor
+      '@monitor/refinement-envelope-executor':
+        specifier: workspace:*
+        version: link:../../packages/refinement-envelope-executor
+      '@monitor/review-decision-routing':
+        specifier: workspace:*
+        version: link:../../packages/review-decision-routing
+      '@monitor/routed-action-preparation':
+        specifier: workspace:*
+        version: link:../../packages/routed-action-preparation
+    devDependencies:
+      '@types/node':
+        specifier: ^24.7.2
+        version: 24.12.2
+      tsx:
+        specifier: ^4.20.6
+        version: 4.21.0
+
   packages/activation-envelope-executor:
     dependencies:
       '@monitor/domain-model':

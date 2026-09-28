@@ -1,0 +1,34 @@
+{
+  "name": "@monitor/research-workflow-runner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "build:dependencies": "pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/activation-envelope-executor build && pnpm --filter @monitor/execution-attempt build && pnpm --filter @monitor/lifecycle-envelope-executor build && pnpm --filter @monitor/refinement-envelope-executor build && pnpm --filter @monitor/review-decision-routing build && pnpm --filter @monitor/routed-action-preparation build",
+    "prebuild": "pnpm run build:dependencies",
+    "build": "tsc -p tsconfig.json",
+    "pretypecheck": "pnpm run build:dependencies",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "pnpm run build:dependencies",
+    "test": "node --import tsx --test ./test/**/*.test.ts",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@monitor/activation-envelope-executor": "workspace:*",
+    "@monitor/domain-model": "workspace:*",
+    "@monitor/execution-attempt": "workspace:*",
+    "@monitor/lifecycle-envelope-executor": "workspace:*",
+    "@monitor/refinement-envelope-executor": "workspace:*",
+    "@monitor/review-decision-routing": "workspace:*",
+    "@monitor/routed-action-preparation": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "tsx": "^4.20.6"
+  }
+}

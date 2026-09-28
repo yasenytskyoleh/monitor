@@ -60,12 +60,12 @@ Docker Desktop and the prepared Postgres stack must be running; sleep or power-o
 missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
 
 ## Known gaps to schedule after the cadence work
-- **the review/execution composition root is designed but not implemented.** ADR-111 assigns it to
-  a dedicated `apps/research-workflow-runner`, separate from BTC ingestion and agent orchestration.
-  The first implementation slice is an explicit one-shot post-decision path: route one persisted
-  review decision, prepare one envelope, then execute it through the allowlisted activation,
-  lifecycle, or refinement dispatcher with retained audit evidence. Keep the steps manual; do not
-  add automatic chaining, retries, scheduling, Telegram delivery, or trading behavior.
+- **the first review/execution composition slice is implemented, but operator entrypoints and a
+  real-database proof remain.** `apps/research-workflow-runner` now composes the post-decision
+  routing, envelope preparation, and audited execution runtimes. Its fail-closed dispatcher allows
+  only activation, lifecycle, and refinement executors and rejects the no-action target. Next add
+  explicit one-shot operator commands and one opt-in Postgres integration path; keep the steps
+  manual and do not add automatic chaining, retries, scheduling, Telegram delivery, or trading.
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

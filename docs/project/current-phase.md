@@ -95,6 +95,9 @@ The product side now proves that the repo can:
 - the full human-in-the-loop review chain: feedback decision → manual approval → review packet →
   review decision → routing → routed-action preparation → audited execution attempt, dispatching
   to the activation, lifecycle, and refinement envelope executors
+- a dedicated `apps/research-workflow-runner` post-decision composition factory with a fail-closed
+  three-target executor dispatcher; operator command entrypoints and real-Postgres composition
+  coverage remain pending
 - explainable BTC notification eligibility derived from a fresh signal candidate plus compatible
   historical aggregate evidence, retained immutably under a deduplication key
 - one provider-neutral delivery lifecycle: durable lease, at-most-once send, and no-resend
@@ -107,9 +110,9 @@ The product side now proves that the repo can:
   timer is enabled on the local operator host and under observation, while Linux remains a template
 
 ### Known gaps carried into the next step
-- ADR-111 defines a dedicated `apps/research-workflow-runner` composition root, but its first
-  one-shot post-decision route -> prepare -> audited execution slice is not implemented yet
-  (see `next-steps.md`)
+- ADR-111's dedicated `apps/research-workflow-runner` now composes the post-decision route ->
+  prepare -> audited execution slice. Explicit one-shot operator entrypoints and one opt-in
+  real-Postgres integration proof are still pending (see `next-steps.md`).
 
 ## What this phase is not
 This phase is **not** about building a full crypto trading platform.
