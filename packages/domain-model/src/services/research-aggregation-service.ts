@@ -95,6 +95,21 @@ const parseTimestamp = (value: string, fieldName: string): number => {
 const buildUpdateTimestamp = (metadata: ProductRecordMetadata): string =>
   metadata.sourceObservedAtUtc ?? new Date().toISOString();
 
+const selectLatestTimestamp = (
+  currentTimestamp: string | null,
+  updateTimestamp: string,
+  fieldName: string
+): string => {
+  if (currentTimestamp === null) {
+    return updateTimestamp;
+  }
+
+  return parseTimestamp(currentTimestamp, fieldName) >=
+    parseTimestamp(updateTimestamp, `next ${fieldName}`)
+    ? currentTimestamp
+    : updateTimestamp;
+};
+
 const roundMetric = (value: number): number => Math.round(value * 1_000_000) / 1_000_000;
 
 const validateAggregateShape = (aggregate: SetupAggregateResult): void => {
@@ -487,6 +502,18 @@ export const createResearchAggregationService = (
               }, 0) / usableCompletedResults.length
             );
 
+      const updateTimestamp = buildUpdateTimestamp(request.metadata);
+      const computationTimestamp = evaluationResults.reduce(
+        (latestTimestamp, result) =>
+          result.evaluatedAt === null
+            ? latestTimestamp
+            : selectLatestTimestamp(
+                latestTimestamp,
+                result.evaluatedAt,
+                `evaluation_result ${result.id}.evaluatedAt`
+              ),
+        updateTimestamp
+      );
       const updated: SetupAggregateResult = {
         ...current,
         status: nextStatus,
@@ -499,9 +526,9 @@ export const createResearchAggregationService = (
         averageMaxFavorableExcursion,
         averageMaxAdverseExcursion,
         positiveOutcomeCount,
-        computedAt: buildUpdateTimestamp(request.metadata),
+        computedAt: selectLatestTimestamp(current.computedAt, computationTimestamp, "computedAt"),
         notes: request.notes ?? current.notes,
-        updatedAt: buildUpdateTimestamp(request.metadata)
+        updatedAt: selectLatestTimestamp(current.updatedAt, computationTimestamp, "updatedAt")
       };
       validateAggregateShape(updated);
 

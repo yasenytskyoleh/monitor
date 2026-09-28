@@ -1,8 +1,9 @@
 # BTC bounded-job cadence
 
 The six-hour BTC feed soak passed. The monitor remains a long-running worker; only the bounded
-evaluator is scheduled here. Neither the macOS nor Linux timer is installed by this repository.
-Telegram delivery remains manual and opt-in.
+evaluator is scheduled here. Timers are never installed automatically by this repository. The local
+macOS operator host explicitly enabled its launchd agent on 2026-09-28; the Linux timer remains a
+template. Telegram delivery remains manual and opt-in.
 
 ## Prepare the shared Docker stack
 
@@ -45,7 +46,7 @@ the orphan as `abandoned` / `lease_expired` and takes over. See
 output and exits non-zero on startup or ownership failure; item-level failures remain a completed
 run with `completed_with_item_failures` in Postgres.
 
-## macOS launchd (not installed by default)
+## macOS launchd (explicitly enabled on the local operator host)
 
 `infra/btc-jobs/launchd/com.monitor.btc-evaluate.plist.template` runs every 300 seconds while
 the user session is active and immediately once when loaded. Copy it to

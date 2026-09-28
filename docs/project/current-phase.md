@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.54 — External BTC job cadence preparation**
+**Phase 1.54 — External BTC job cadence validation**
 
 ## What this phase is about
 This phase is focused on:
@@ -48,8 +48,9 @@ The product side now proves that the repo can:
   without coupling the Binance adapter to product-domain handoffs or adding a background scheduler.
 - package the BTC runtime as a non-root Node 24 image with migration, canonical seed, bounded
   real-data smoke, and long-running Compose workflows.
-- prepare external five-minute evaluator cadence for macOS and Linux without enabling timers or
-  scheduled Telegram delivery by default.
+- prepare external five-minute evaluator cadence for macOS and Linux without enabling scheduled
+  Telegram delivery by default, then explicitly enable and observe the macOS timer on the local
+  operator host.
 
 ## Implemented in this phase (current baseline)
 
@@ -102,8 +103,8 @@ The product side now proves that the repo can:
   120-second lease, 30-second heartbeat, owner-fenced renewal and terminal writes
 - containerized runtime (non-root Node 24) with migration, canonical seed, bounded real-data
   smoke, and long-running Compose workflows
-- external five-minute evaluator cadence prepared for macOS launchd and Linux systemd —
-  **not enabled on either host**
+- external five-minute evaluator cadence prepared for macOS launchd and Linux systemd; the macOS
+  timer is enabled on the local operator host and under observation, while Linux remains a template
 
 ### Known gaps carried into the next step
 - the review/execution chain has no composition root: 15 of 23 packages have no workspace consumer
@@ -128,12 +129,13 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-**Validate and explicitly enable the external BTC evaluation cadence.** This is the same step named
-in `docs/project/next-steps.md`, which is authoritative if the two ever disagree.
+**Complete observation of the enabled macOS BTC evaluation cadence.** This is the same step named in
+`docs/project/next-steps.md`, which is authoritative if the two ever disagree.
 
 Sequential runs, concurrent-skip, and expired-lease takeover have been validated. The macOS
-launchd agent is prepared but not loaded; the Linux timer remains a template. Keep Telegram
-delivery manual and opt-in; keep trading out of scope.
+launchd agent was explicitly enabled on the local operator host on 2026-09-28; observe its durable
+run history for at least a day before closing the phase. The Linux timer remains a template. Keep
+Telegram delivery manual and opt-in; keep trading out of scope.
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.

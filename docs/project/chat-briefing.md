@@ -45,12 +45,13 @@ made this file drift in the first place.
 - no automated trading, order placement, or investment advice
 - no scheduler daemon, provider retry, or unbounded queue — cadence is externally owned
 - Telegram delivery is manual and opt-in; alerts are explainable decision support only
-- external evaluator cadence is prepared for macOS and Linux but enabled on neither
+- external evaluator cadence is enabled through launchd on the local macOS operator host and under
+  observation; the Linux systemd timer remains a disabled template
 - baseline verification runs in CI; no UI is implemented
 
 ## Recommended next step
 
-**Validate and explicitly enable the external BTC evaluation cadence** — see
+**Complete observation of the enabled macOS BTC evaluation cadence** — see
 `docs/project/next-steps.md`, which is the authoritative source for this.
 
 ## Behavioral instructions for future assistants
