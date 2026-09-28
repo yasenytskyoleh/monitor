@@ -357,6 +357,7 @@ model MonitoredSymbolRecord {
   createdAtUtc          DateTime                 @map("created_at_utc") @db.Timestamptz(3)
   updatedAtUtc          DateTime                 @map("updated_at_utc") @db.Timestamptz(3)
   archivedAtUtc         DateTime?                @map("archived_at_utc") @db.Timestamptz(3)
+  patternNotifications  PatternNotificationRecord[]
 
   @@index([symbolStatus], map: "idx_monitored_symbol_status")
   @@index([marketScope, symbolStatus], map: "idx_monitored_symbol_market_scope_status")
@@ -429,6 +430,7 @@ model SetupDefinitionRecord {
   previousSetupRevisionActivationRecords SetupRevisionActivationRecordRecord[] @relation("SetupRevisionActivationRecordPreviousSetup")
   setupLifecycleMutationRecords SetupLifecycleMutationRecordRecord[]
   setupRefinementRequests   SetupRefinementRequestRecord[]
+  patternNotifications      PatternNotificationRecord[]
 
   @@index([definitionStatus], map: "idx_setup_definition_definition_status")
   @@index([lifecycleStatus], map: "idx_setup_definition_lifecycle_status")
@@ -507,6 +509,7 @@ model SignalCandidateRecord {
   archivedAtUtc        DateTime?                @map("archived_at_utc") @db.Timestamptz(3)
   setupDefinition      SetupDefinitionRecord    @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
   evaluationResults    EvaluationResultRecord[]
+  patternNotifications PatternNotificationRecord[]
 
   @@index([setupDefinitionId], map: "idx_signal_candidate_setup_definition_id")
   @@index([monitoredSymbolId], map: "idx_signal_candidate_monitored_symbol_id")
@@ -549,6 +552,11 @@ model PatternNotificationRecord {
   createdAtUtc                DateTime                          @map("created_at_utc") @db.Timestamptz(3)
   updatedAtUtc                DateTime                          @map("updated_at_utc") @db.Timestamptz(3)
   archivedAtUtc               DateTime?                         @map("archived_at_utc") @db.Timestamptz(3)
+  signalCandidate             SignalCandidateRecord             @relation(fields: [signalCandidateId], references: [signalCandidateId], onDelete: Restrict, onUpdate: Cascade)
+  setupDefinition             SetupDefinitionRecord             @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
+  setupRevision               SetupDefinitionRevisionRecord     @relation(fields: [setupRevisionId], references: [setupDefinitionRevisionId], onDelete: Restrict, onUpdate: Cascade)
+  monitoredSymbol             MonitoredSymbolRecord             @relation(fields: [monitoredSymbolId], references: [monitoredSymbolId], onDelete: Restrict, onUpdate: Cascade)
+  setupAggregateResult        SetupAggregateResultRecord        @relation(fields: [setupAggregateResultId], references: [setupAggregateResultId], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([deliveryStatus], map: "idx_pattern_notification_delivery_status")
   @@index([deliveryStatus, deliveryLeaseExpiresAtUtc], map: "idx_pattern_notification_delivery_lease_expiry")
@@ -634,6 +642,7 @@ model SetupAggregateResultRecord {
   setupDefinition                SetupDefinitionRecord     @relation(fields: [setupDefinitionId], references: [setupDefinitionId], onDelete: Restrict, onUpdate: Cascade)
   researchHypothesis             ResearchHypothesisRecord? @relation(fields: [researchHypothesisId], references: [researchHypothesisId], onDelete: Restrict, onUpdate: Cascade)
   feedbackDecisions              ResearchFeedbackDecisionRecord[]
+  patternNotifications           PatternNotificationRecord[]
 
   @@unique([setupDefinitionId, scopeKey], map: "uq_setup_aggregate_result_scope_key")
   @@index([setupDefinitionId], map: "idx_setup_aggregate_result_setup_definition_id")
@@ -973,6 +982,7 @@ model SetupDefinitionRevisionRecord {
   sourceResearchFeedbackDecision    ResearchFeedbackDecisionRecord? @relation("SetupDefinitionRevisionFeedback", fields: [sourceResearchFeedbackDecisionId], references: [researchFeedbackDecisionId], onDelete: Restrict, onUpdate: Cascade)
   targetSetupRevisionActivationRecords   SetupRevisionActivationRecordRecord[] @relation("SetupRevisionActivationRecordTargetRevision")
   previousSetupRevisionActivationRecords SetupRevisionActivationRecordRecord[] @relation("SetupRevisionActivationRecordPreviousRevision")
+  patternNotifications                 PatternNotificationRecord[]
 
   @@unique([setupDefinitionId], map: "uq_setup_definition_revision_setup_definition_id")
   @@unique([setupFamilyId, setupVersionNumber], map: "uq_setup_definition_revision_family_version")

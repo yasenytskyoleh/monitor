@@ -120,6 +120,10 @@ const migrationSqlPaths = [
   resolve(
     migrationsDirectory,
     "20260914120000_product_domain_initial_setup_revision_source/migration.sql"
+  ),
+  resolve(
+    migrationsDirectory,
+    "20260928165806_product_domain_pattern_notification_foreign_keys_v1/migration.sql"
   )
 ];
 
@@ -653,6 +657,38 @@ const withIntegrationRepositories = async <T>(
 
 const integrationTest = INTEGRATION_DATABASE_URL ? test : test.skip;
 
+const patternNotificationForeignKeys = [
+  {
+    column: "signal_candidate_id",
+    constraint: "pattern_notification_signal_candidate_id_fkey"
+  },
+  {
+    column: "setup_definition_id",
+    constraint: "pattern_notification_setup_definition_id_fkey"
+  },
+  {
+    column: "setup_revision_id",
+    constraint: "pattern_notification_setup_revision_id_fkey"
+  },
+  {
+    column: "monitored_symbol_id",
+    constraint: "pattern_notification_monitored_symbol_id_fkey"
+  },
+  {
+    column: "setup_aggregate_result_id",
+    constraint: "pattern_notification_setup_aggregate_result_id_fkey"
+  }
+] as const;
+
+const isForeignKeyViolation = (error: unknown, constraint: string): boolean => {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  const postgresError = error as { code?: unknown; constraint?: unknown };
+  return postgresError.code === "23503" && postgresError.constraint === constraint;
+};
+
 const assertTerminalApplicationFlowPersistence = async (
   terminalization: EvaluationTerminalization,
   expectedEvaluationStatus: "expired" | "invalidated"
@@ -911,6 +947,19 @@ integrationTest(
       await repositories.patternNotificationRecordRepository.create({
         notification: buildPatternNotification("notification-001", "candidate-001"),
         metadata
+      });
+      await withPgClient(INTEGRATION_DATABASE_URL, async (client) => {
+        for (const foreignKey of patternNotificationForeignKeys) {
+          await assert.rejects(
+            () =>
+              client.query(
+                `UPDATE "product_domain"."pattern_notification" SET "${foreignKey.column}" = $1 WHERE "notification_id" = $2`,
+                ["missing-evidence", "notification-001"]
+              ),
+            (error: unknown) => isForeignKeyViolation(error, foreignKey.constraint),
+            `${foreignKey.constraint} must reject dangling evidence`
+          );
+        }
       });
       // The deduplication key is a unique constraint: one candidate, at most one alert.
       await assert.rejects(
@@ -1771,7 +1820,7 @@ integrationTest(
         metadata
       });
 
-      // pattern_notification carries no foreign keys, so this has to be caught by the adapter.
+      // The adapter fails fast with the precise missing evidence type before Postgres is reached.
       await assert.rejects(
         async () =>
           repositories.patternNotificationRecordRepository.create({

@@ -163,7 +163,9 @@ export type {
 } from "./setup-definition-revision-relational-slice.js";
 export {
   PATTERN_NOTIFICATION_DELIVERY_LEASE_MIGRATION_SLUG,
+  PATTERN_NOTIFICATION_FOREIGN_KEYS_MIGRATION_SLUG,
   PATTERN_NOTIFICATION_RELATIONAL_CHECK_CONSTRAINTS,
+  PATTERN_NOTIFICATION_RELATIONAL_FOREIGN_KEY_CONSTRAINTS,
   PATTERN_NOTIFICATION_RELATIONAL_INDEXES,
   PATTERN_NOTIFICATION_RELATIONAL_MIGRATION_SLUG,
   PATTERN_NOTIFICATION_RELATIONAL_PRISMA_MODELS,
@@ -173,6 +175,7 @@ export {
 } from "./pattern-notification-relational-physical-schema.js";
 export type {
   PatternNotificationRelationalCheckConstraintName,
+  PatternNotificationRelationalForeignKeyConstraintName,
   PatternNotificationRelationalIndexName,
   PatternNotificationRelationalPrismaModelName,
   PatternNotificationRelationalTableName,

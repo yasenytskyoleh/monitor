@@ -352,9 +352,8 @@ export class PrismaPatternNotificationRelationalRepositoryAdapter
   }
 
   /**
-   * `pattern_notification` carries no foreign keys, unlike its peers, so Postgres will not raise
-   * P2003 for a dangling reference. Check explicitly instead, otherwise this adapter would accept
-   * evidence the in-memory adapter rejects.
+   * Postgres owns final referential integrity. These checks fail earlier with the exact missing
+   * evidence type and keep this adapter aligned with the in-memory repository contract.
    */
   private async assertReferencesExist(
     record: PatternNotificationDurableRecord

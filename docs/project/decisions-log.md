@@ -68,6 +68,8 @@
   first real-data loop
 - evidence-gated, at-most-once decision-support delivery shipped with Telegram as the only adapter
 - durable cross-process run ownership shipped before any external cadence was enabled
+- pattern notifications are protected by database foreign keys for their candidate, setup,
+  revision, symbol, and aggregate evidence; adapter prechecks remain for precise domain errors
 
 ## Current next-step decision
 - the macOS BTC evaluator cadence was explicitly enabled on the local operator host on 2026-09-28;

@@ -165,7 +165,7 @@ test("returns null when no row matches", async () => {
   assert.equal(await adapter.loadPatternNotification("missing"), null);
 });
 
-test("rejects a dangling reference before writing, since the table has no foreign keys", async () => {
+test("rejects a dangling reference before writing with a precise repository error", async () => {
   const { client, calls } = createClient({ missingReference: "aggregate-btc-window-24h" });
   const adapter = new PrismaPatternNotificationRelationalRepositoryAdapter(client);
 
