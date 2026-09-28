@@ -60,14 +60,12 @@ Docker Desktop and the prepared Postgres stack must be running; sleep or power-o
 missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
 
 ## Known gaps to schedule after the cadence work
-- **the review/execution chain has no composition root.** 15 of the 23 packages have zero workspace
-  dependents — `evaluation-aggregation`, `hypothesis-evidence`, `setup-feedback`,
-  `research-decision-approval`, `review-packet`, `review-decision`, `review-decision-routing`,
-  `routed-action-preparation`, `execution-attempt`, the three envelope executors, `setup-revision`,
-  `setup-activation`, `setup-lifecycle`, `setup-refinement`. Each depends on `domain-model` and is
-  covered by its own tests, but nothing composes them into a running workflow; `apps/btc-monitor`
-  wires only the market-data path. This is deliberate contract-first sequencing, **not** dead code —
-  do not delete these packages. The open question is what application service should assemble them.
+- **the review/execution composition root is designed but not implemented.** ADR-111 assigns it to
+  a dedicated `apps/research-workflow-runner`, separate from BTC ingestion and agent orchestration.
+  The first implementation slice is an explicit one-shot post-decision path: route one persisted
+  review decision, prepare one envelope, then execute it through the allowlisted activation,
+  lifecycle, or refinement dispatcher with retained audit evidence. Keep the steps manual; do not
+  add automatic chaining, retries, scheduling, Telegram delivery, or trading behavior.
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
