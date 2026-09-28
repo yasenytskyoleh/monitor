@@ -107,8 +107,9 @@ The product side now proves that the repo can:
   timer is enabled on the local operator host and under observation, while Linux remains a template
 
 ### Known gaps carried into the next step
-- the review/execution chain has no composition root: 15 of 23 packages have no workspace consumer
-  (deliberate contract-first sequencing, not dead code — see `next-steps.md`)
+- ADR-111 defines a dedicated `apps/research-workflow-runner` composition root, but its first
+  one-shot post-decision route -> prepare -> audited execution slice is not implemented yet
+  (see `next-steps.md`)
 
 ## What this phase is not
 This phase is **not** about building a full crypto trading platform.

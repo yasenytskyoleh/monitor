@@ -70,6 +70,8 @@
 - durable cross-process run ownership shipped before any external cadence was enabled
 - pattern notifications are protected by database foreign keys for their candidate, setup,
   revision, symbol, and aggregate evidence; adapter prechecks remain for precise domain errors
+- product review/execution composition belongs in a dedicated one-shot
+  `apps/research-workflow-runner`, not BTC ingestion, agent orchestration, or `domain-model`
 
 ## Current next-step decision
 - the macOS BTC evaluator cadence was explicitly enabled on the local operator host on 2026-09-28;
