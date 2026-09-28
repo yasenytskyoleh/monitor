@@ -68,11 +68,6 @@ missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
   covered by its own tests, but nothing composes them into a running workflow; `apps/btc-monitor`
   wires only the market-data path. This is deliberate contract-first sequencing, **not** dead code —
   do not delete these packages. The open question is what application service should assemble them.
-- the shared integration test rebuilds its schema from a **hand-maintained list of migration paths**
-  in `implemented-product-relational-repositories.integration.test.ts`. A guard now compares the
-  list with every product-domain migration directory, so an omission fails the test. Sorted
-  discovery could remove the manual list later; `runtime_control` is tested separately because
-  its migration is not idempotent against an existing schema.
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

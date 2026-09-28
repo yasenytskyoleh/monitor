@@ -47,94 +47,21 @@ const migrationsDirectory = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../prisma/migrations"
 );
-const migrationSqlPaths = [
-  resolve(migrationsDirectory, "20260512235500_product_domain_relational_v1_init/migration.sql"),
-  resolve(
-    migrationsDirectory,
-    "20260522101500_product_domain_signal_evaluation_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260522153000_product_domain_setup_aggregate_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260523091500_product_domain_research_feedback_decision_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260527103000_product_domain_research_decision_approval_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260630113000_product_domain_research_review_decision_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260702103000_product_domain_routed_action_execution_envelope_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260706113000_product_domain_setup_lifecycle_mutation_record_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260706143000_product_domain_setup_refinement_request_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260708101500_product_domain_setup_definition_revision_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260711103000_product_domain_setup_revision_activation_record_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260723103000_product_domain_review_decision_routing_result_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260724103000_product_domain_monitored_symbol_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260727103000_product_domain_research_run_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260727130000_product_domain_execution_attempt_audit_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260728100000_product_domain_execution_attempt_envelope_single_dispatch_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260809103000_product_domain_pattern_notification_relational_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260901103000_product_domain_pattern_notification_delivery_lease_v1/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260914120000_product_domain_initial_setup_revision_source/migration.sql"
-  ),
-  resolve(
-    migrationsDirectory,
-    "20260928165806_product_domain_pattern_notification_foreign_keys_v1/migration.sql"
-  )
-];
-
-test("shared integration schema includes every product-domain migration", async () => {
+const discoverProductDomainMigrationSqlPaths = async (): Promise<string[]> => {
   const migrations = await readdir(migrationsDirectory, { withFileTypes: true });
-  const productMigrationPaths = migrations
+  return migrations
     .filter((entry) => entry.isDirectory() && entry.name.includes("product_domain"))
-    .map((entry) => resolve(migrationsDirectory, entry.name, "migration.sql"))
-    .sort();
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .map((entry) => resolve(migrationsDirectory, entry.name, "migration.sql"));
+};
 
-  assert.deepEqual([...migrationSqlPaths].sort(), productMigrationPaths);
+test("shared integration schema discovers product-domain migrations in order", async () => {
+  const migrationSqlPaths = await discoverProductDomainMigrationSqlPaths();
+
+  assert.equal(migrationSqlPaths.length > 0, true);
+  assert.deepEqual(migrationSqlPaths, [...migrationSqlPaths].sort());
+  assert.equal(migrationSqlPaths.some((path) => path.includes("runtime_control")), false);
+  await Promise.all(migrationSqlPaths.map((path) => readFile(path, "utf8")));
 });
 
 const metadata: ProductRecordMetadata = {
@@ -601,6 +528,7 @@ const dropProductDomainSchema = async (connectionString: string): Promise<void> 
 };
 
 const resetProductDomainSchema = async (connectionString: string): Promise<void> => {
+  const migrationSqlPaths = await discoverProductDomainMigrationSqlPaths();
   const migrationSqlList = await Promise.all(
     migrationSqlPaths.map((migrationSqlPath) => readFile(migrationSqlPath, "utf8"))
   );
