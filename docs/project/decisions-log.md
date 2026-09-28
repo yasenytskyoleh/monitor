@@ -70,8 +70,11 @@
 - durable cross-process run ownership shipped before any external cadence was enabled
 
 ## Current next-step decision
-- the currently recommended next step is: **validate and explicitly enable the external BTC
-  evaluation cadence**, matching `docs/project/next-steps.md`
+- the macOS BTC evaluator cadence was explicitly enabled on the local operator host on 2026-09-28;
+  the currently recommended next step is to **complete at least one day of run-history observation**,
+  matching `docs/project/next-steps.md`
+- aggregate recomputation timestamps are monotonic and advance to the newest included evaluation;
+  replaying older recovery candidates must never make current aggregate evidence appear stale
 - the previous entry here ("define a provider-specific downstream executor and its authorization
   and retry policy") is **superseded**: those executors shipped, and provider retries are now
   explicitly out of scope

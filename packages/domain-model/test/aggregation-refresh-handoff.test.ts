@@ -269,11 +269,12 @@ test("non-completed evaluation rejected", async () => {
   assert.equal(result.reason?.includes("does not allow aggregation refresh"), true);
 });
 
-test("duplicate refresh policy recomputes existing aggregate", async () => {
+test("duplicate refresh policy recomputes without regressing aggregate freshness", async () => {
   const {
     setupDefinitionRepository,
     evaluationResultRepository,
     signalCandidateRepository,
+    setupAggregateResultRepository,
     refreshHandoff
   } = createFixture();
   await setupDefinitionRepository.create({
@@ -324,6 +325,8 @@ test("duplicate refresh policy recomputes existing aggregate", async () => {
     },
     metadata
   );
+  const aggregateAfterFirst = (await setupAggregateResultRepository
+    .listBySetupDefinitionId("setup-agg-refresh-004"))[0];
   const second = await refreshHandoff.refresh(
     {
       evaluationResultId: "result-agg-refresh-004",
@@ -331,12 +334,19 @@ test("duplicate refresh policy recomputes existing aggregate", async () => {
       setupDefinitionId: "setup-agg-refresh-004",
       triggeredAt: "2026-04-21T12:06:00.000Z"
     },
-    metadata
+    {
+      ...metadata,
+      sourceObservedAtUtc: "2026-04-21T11:00:00.000Z"
+    }
   );
+  const aggregate = (await setupAggregateResultRepository
+    .listBySetupDefinitionId("setup-agg-refresh-004"))[0];
 
   assert.equal(first.status, "created_and_refreshed");
   assert.equal(second.status, "refreshed_existing");
   assert.equal(second.setupAggregateResultId, first.setupAggregateResultId);
+  assert.equal(aggregate?.computedAt, aggregateAfterFirst?.computedAt);
+  assert.equal(aggregate?.updatedAt, aggregateAfterFirst?.updatedAt);
 });
 
 test("refresh result shape stays explicit", async () => {

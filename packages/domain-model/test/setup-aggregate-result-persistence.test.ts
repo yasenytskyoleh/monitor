@@ -273,6 +273,8 @@ test("complete aggregate with valid metrics", async () => {
   assert.equal(recomputed?.totalCandidates, 2);
   assert.equal(recomputed?.completedEvaluations, 2);
   assert.equal(recomputed?.positiveOutcomeCount, 2);
+  assert.equal(recomputed?.computedAt, "2026-04-18T10:30:00.000Z");
+  assert.equal(recomputed?.updatedAt, "2026-04-18T10:30:00.000Z");
 });
 
 test("reject recompute with an evaluation outside the research run", async () => {

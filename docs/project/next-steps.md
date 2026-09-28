@@ -1,7 +1,7 @@
 # Next Steps
 
 ## Current recommended next step
-### Validate and explicitly enable external BTC evaluation cadence
+### Complete observation of the enabled macOS BTC evaluation cadence
 
 This file is **authoritative** for the current step. `current-phase.md`, `project-overview.md`,
 `chat-briefing.md`, and `decisions-log.md` restate it; if they ever disagree, this file wins and the
@@ -13,14 +13,16 @@ Reason:
 - the bounded pilot proves Postgres, historical ingestion, live ingestion, idempotency, and cleanup
 - evaluation and Telegram delivery are bounded commands with durable cross-process run ownership
 - the six-hour reliability soak completed successfully
-- external evaluator cadence is prepared for macOS and Linux but is not enabled on either host
+- the macOS launchd evaluator cadence was explicitly enabled on the local operator host on
+  2026-09-28; the Linux systemd timer remains a disabled template
 
 ## Recommended near-future sequence
 1. ~~verify two sequential Docker evaluator runs and their durable run history~~ — **done**
 2. ~~verify a concurrent invocation skips with `already_running` and still exits zero~~ — **done**
 3. ~~verify an interrupted run is taken over as `abandoned` after its lease expires~~ — **done**
-4. **enable the macOS launchd timer** — the agent is prepared but deliberately not loaded (below)
-5. observe run history for at least a day before any retry policy is considered
+4. ~~enable the macOS launchd timer~~ — **done on the local operator host on 2026-09-28**
+5. **observe run history for at least a day** before closing this phase or considering any retry
+   policy
 6. decide separately whether to enable Telegram delivery; keep trading out of scope
 
 ### Cadence validation results
@@ -32,14 +34,22 @@ All four checks passed against the containerized evaluator:
 | concurrent invocations | one acquired and completed; the other emitted `btc_evaluation_run_skipped` / `already_running` naming the active run ID, and exited zero |
 | run killed mid-flight | the row stayed `running` under a live lease, and a re-run inside that lease skipped instead of duplicating work |
 | lease expiry | the next invocation took over, terminalized the orphan as `abandoned` / `lease_expired`, and completed its own run |
+| aggregate freshness recovery | recovery refreshes can no longer move aggregate timestamps backwards; a live self-healing run restored `computed_at_utc` and `updated_at_utc` to the newest included evaluation (`2026-09-28T12:14:59.999Z`) |
+
+The first observation window exposed and closed one defect: repeatedly refreshing an aggregate from
+older completed evaluations could regress its freshness timestamp and make notification eligibility
+report `setup_aggregate_result_stale`. Aggregate timestamps are now monotonic and derive freshness
+from the newest evaluation included in the recomputation. The deployed evaluator completed a live
+control run with `189/189` evaluations after repairing the stored timestamps.
 
 `infra/btc-jobs/run-evaluate.sh` was also verified under a minimal environment
 (`env -i`) because launchd does not provide a login shell's `PATH`.
 
 ### Enabling the macOS timer
-The agent is written to `~/Library/LaunchAgents/com.monitor.btc-evaluate.plist` (repo path and
-`~/Library/Logs/monitor` substituted, `plutil -lint` clean) but is **deliberately not loaded**.
-Enabling it is an explicit operator action:
+The local operator host has an explicitly loaded
+`~/Library/LaunchAgents/com.monitor.btc-evaluate.plist` (repo path and `~/Library/Logs/monitor`
+substituted, `plutil -lint` clean). It runs every five minutes while the user session is active.
+Other macOS hosts still require an explicit operator action:
 
 ```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.monitor.btc-evaluate.plist

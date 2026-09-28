@@ -62,12 +62,13 @@ test-backed supporting subsystem.
 - Backend live mode stays constrained to allowlisted patch mode: isolated apply, verification,
   rollback, controlled promotion, narrow helper-file creation. No broad refactors, schema or
   architecture changes, or cross-package scope.
-- External evaluator cadence is prepared for macOS and Linux but **enabled on neither host**.
+- External evaluator cadence is enabled through launchd on the local macOS operator host and under
+  observation; the Linux systemd timer remains a disabled template.
 - Baseline verification runs in CI, but there is no UI.
 
-Current recommended next step: **validate and explicitly enable the external BTC evaluation
-cadence** (see `docs/project/next-steps.md`). Keep alerts as explainable human decision support;
-keep automated trading out of the current phase.
+Current recommended next step: **complete observation of the enabled macOS BTC evaluation cadence**
+(see `docs/project/next-steps.md`). Keep alerts as explainable human decision support; keep
+automated trading out of the current phase.
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.
