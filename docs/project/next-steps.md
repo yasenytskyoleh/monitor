@@ -1,28 +1,25 @@
 # Next Steps
 
 ## Current recommended next step
-### Complete observation of the enabled macOS BTC evaluation cadence
+### Add one-shot research-workflow entrypoints and real-Postgres integration coverage
 
 This file is **authoritative** for the current step. `current-phase.md`, `project-overview.md`,
 `chat-briefing.md`, and `decisions-log.md` restate it; if they ever disagree, this file wins and the
 others get corrected.
 
 Reason:
-- Binance REST backfill and WebSocket ingestion are connected to the real product persistence path
-- the canonical BTC setup can be migrated and seeded reproducibly without destructive resets
-- the bounded pilot proves Postgres, historical ingestion, live ingestion, idempotency, and cleanup
-- evaluation and Telegram delivery are bounded commands with durable cross-process run ownership
-- the six-hour reliability soak completed successfully
-- the macOS launchd evaluator cadence was explicitly enabled on the local operator host on
-  2026-09-28; the Linux systemd timer remains a disabled template
+- the macOS BTC evaluator cadence completed its 24-hour validation window successfully
+- `apps/research-workflow-runner` already composes post-decision routing, envelope preparation, and
+  audited execution behind a fail-closed three-target dispatcher
+- explicit operator commands and a real-database proof are the remaining boundaries before this
+  composition is usable as a controlled one-shot application
 
 ## Recommended near-future sequence
 1. ~~verify two sequential Docker evaluator runs and their durable run history~~ — **done**
 2. ~~verify a concurrent invocation skips with `already_running` and still exits zero~~ — **done**
 3. ~~verify an interrupted run is taken over as `abandoned` after its lease expires~~ — **done**
 4. ~~enable the macOS launchd timer~~ — **done on the local operator host on 2026-09-28**
-5. **observe run history for at least a day** before closing this phase or considering any retry
-   policy
+5. ~~observe run history for at least a day~~ — **done on 2026-09-29 after 27.88 hours**
 6. decide separately whether to enable Telegram delivery; keep trading out of scope
 
 ### Cadence validation results
@@ -45,6 +42,20 @@ control run with `189/189` evaluations after repairing the stored timestamps.
 `infra/btc-jobs/run-evaluate.sh` was also verified under a minimal environment
 (`env -i`) because launchd does not provide a login shell's `PATH`.
 
+The full cadence observation window closed successfully on 2026-09-29:
+
+| Evidence | Observed |
+|---|---|
+| durable run history | 114/114 `btc_evaluate` runs completed across 27.88 hours, with no `failed` or `abandoned` runs |
+| controlled exception | `d94cfb37-2544-493e-845b-bf25b74c55a3` was the only `completed_with_item_failures` run and was expected during the intermediate timestamp-fix deployment |
+| launchd | 155 invocations; last exit code `0` |
+| aggregate freshness | aggregate completed with 197 evaluations; `computed_at_utc` was `2026-09-29T00:24:59.999Z`, equal to the newest included evaluation and still fresh |
+| aggregate metrics | 104/197 positive evaluations; average percentage move `+0.702126%` |
+| live ingestion | recent WebSocket errors were transient and recovered; the stream remained active through `2026-09-29T07:59:59.999Z` |
+
+This closes the external BTC cadence validation phase. Cadence remains externally owned; the
+result does not introduce retries, an in-repo scheduler, automatic Telegram delivery, or trading.
+
 ### Enabling the macOS timer
 The local operator host has an explicitly loaded
 `~/Library/LaunchAgents/com.monitor.btc-evaluate.plist` (repo path and `~/Library/Logs/monitor`
@@ -59,13 +70,13 @@ Disable with `launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.monitor.
 Docker Desktop and the prepared Postgres stack must be running; sleep or power-off does not queue
 missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
 
-## Known gaps to schedule after the cadence work
-- **the review/execution composition root is designed but not implemented.** ADR-111 assigns it to
-  a dedicated `apps/research-workflow-runner`, separate from BTC ingestion and agent orchestration.
-  The first implementation slice is an explicit one-shot post-decision path: route one persisted
-  review decision, prepare one envelope, then execute it through the allowlisted activation,
-  lifecycle, or refinement dispatcher with retained audit evidence. Keep the steps manual; do not
-  add automatic chaining, retries, scheduling, Telegram delivery, or trading behavior.
+## Current implementation target
+- **the first review/execution composition slice is implemented, but operator entrypoints and a
+  real-database proof remain.** `apps/research-workflow-runner` now composes the post-decision
+  routing, envelope preparation, and audited execution runtimes. Its fail-closed dispatcher allows
+  only activation, lifecycle, and refinement executors and rejects the no-action target. Next add
+  explicit one-shot operator commands and one opt-in Postgres integration path; keep the steps
+  manual and do not add automatic chaining, retries, scheduling, Telegram delivery, or trading.
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths

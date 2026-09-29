@@ -45,14 +45,16 @@ made this file drift in the first place.
 - no automated trading, order placement, or investment advice
 - no scheduler daemon, provider retry, or unbounded queue — cadence is externally owned
 - Telegram delivery is manual and opt-in; alerts are explainable decision support only
-- external evaluator cadence is enabled through launchd on the local macOS operator host and under
-  observation; the Linux systemd timer remains a disabled template
+- external evaluator cadence completed a 27.88-hour launchd validation on the local macOS operator
+  host with 114/114 durable runs completed and no failed or abandoned runs; the Linux systemd timer
+  remains a disabled template
 - baseline verification runs in CI; no UI is implemented
 
 ## Recommended next step
 
-**Complete observation of the enabled macOS BTC evaluation cadence** — see
-`docs/project/next-steps.md`, which is the authoritative source for this.
+**Add explicit one-shot operator entrypoints and one opt-in real-Postgres integration path for
+`apps/research-workflow-runner`** — see `docs/project/next-steps.md`, which is the authoritative
+source for this.
 
 ## Behavioral instructions for future assistants
 When continuing this project:

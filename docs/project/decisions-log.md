@@ -74,8 +74,11 @@
   `apps/research-workflow-runner`, not BTC ingestion, agent orchestration, or `domain-model`
 
 ## Current next-step decision
-- the macOS BTC evaluator cadence was explicitly enabled on the local operator host on 2026-09-28;
-  the currently recommended next step is to **complete at least one day of run-history observation**,
+- the macOS BTC evaluator cadence completed its acceptance window on 2026-09-29: 114/114 durable
+  runs completed across 27.88 hours with no failed or abandoned runs; the only item-failure run was
+  the expected controlled timestamp-fix deployment run
+- Phase 1.54 is closed; the currently recommended next step is to add explicit one-shot operator
+  entrypoints and one opt-in real-Postgres integration path for `apps/research-workflow-runner`,
   matching `docs/project/next-steps.md`
 - aggregate recomputation timestamps are monotonic and advance to the newest included evaluation;
   replaying older recovery candidates must never make current aggregate evidence appear stale
