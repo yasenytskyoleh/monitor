@@ -52,9 +52,10 @@ made this file drift in the first place.
 
 ## Recommended next step
 
-**Add explicit one-shot operator entrypoints and one opt-in real-Postgres integration path for
+**Add explicit one-shot review-packet and review-decision entrypoints to
 `apps/research-workflow-runner`** — see `docs/project/next-steps.md`, which is the authoritative
-source for this.
+source for this. The post-decision `route`, `prepare`, and `execute` commands and their real-Postgres
+proof are complete.
 
 ## Behavioral instructions for future assistants
 When continuing this project:

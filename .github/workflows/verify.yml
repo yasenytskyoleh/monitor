@@ -65,8 +65,8 @@ jobs:
       - name: domain-model test
         run: pnpm --filter @monitor/domain-model test
 
-      - name: domain-model integration test
-        run: pnpm --filter @monitor/domain-model test:integration
+      - name: integration tests
+        run: pnpm test:integration
 
       - name: workspace typecheck
         run: pnpm typecheck

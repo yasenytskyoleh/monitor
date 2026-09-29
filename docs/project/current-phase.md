@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.55 — Research workflow operator entrypoints and Postgres integration**
+**Phase 1.56 — Research workflow upstream operator composition**
 
 ## What this phase is about
 This phase is focused on:
@@ -98,8 +98,8 @@ The product side now proves that the repo can:
   review decision → routing → routed-action preparation → audited execution attempt, dispatching
   to the activation, lifecycle, and refinement envelope executors
 - a dedicated `apps/research-workflow-runner` post-decision composition factory with a fail-closed
-  three-target executor dispatcher; operator command entrypoints and real-Postgres composition
-  coverage remain pending
+  three-target executor dispatcher, explicit `route`, `prepare`, and `execute` one-shot commands,
+  and opt-in real-Postgres command-path coverage
 - explainable BTC notification eligibility derived from a fresh signal candidate plus compatible
   historical aggregate evidence, retained immutably under a deduplication key
 - one provider-neutral delivery lifecycle: durable lease, at-most-once send, and no-resend
@@ -113,9 +113,17 @@ The product side now proves that the repo can:
   template
 
 ### Known gaps carried into the next step
-- ADR-111's dedicated `apps/research-workflow-runner` now composes the post-decision route ->
-  prepare -> audited execution slice. Explicit one-shot operator entrypoints and one opt-in
-  real-Postgres integration proof are still pending (see `next-steps.md`).
+- ADR-111's dedicated `apps/research-workflow-runner` now operates the post-decision route ->
+  prepare -> audited execution slice. Review-packet creation and review-decision recording remain
+  outside the application entrypoints (see `next-steps.md`).
+
+### Phase 1.55 completion evidence
+- explicit `route`, `prepare`, and `execute` commands invoke one step per process and emit JSON
+  outcomes with non-zero exits for rejected or failed results
+- the production-composed disposable-Postgres test persists the routing result, execution envelope,
+  terminal execution audit, setup activation record, and activated setup state
+- command usage and all explicit operator inputs are documented in the app README
+- root integration verification and CI include the research-workflow integration suite
 
 ### Phase 1.54 completion evidence
 - 114/114 durable `btc_evaluate` runs completed across 27.88 hours with no failed or abandoned runs
@@ -147,7 +155,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-**Add explicit one-shot operator entrypoints and one opt-in real-Postgres integration path for
+**Add explicit one-shot review-packet and review-decision entrypoints to
 `apps/research-workflow-runner`.** This is the same step named in `docs/project/next-steps.md`, which
 is authoritative if the two ever disagree.
 
