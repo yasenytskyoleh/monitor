@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.54 — External BTC job cadence validation**
+**Phase 1.55 — Research workflow operator entrypoints and Postgres integration**
 
 ## What this phase is about
 This phase is focused on:
@@ -48,9 +48,11 @@ The product side now proves that the repo can:
   without coupling the Binance adapter to product-domain handoffs or adding a background scheduler.
 - package the BTC runtime as a non-root Node 24 image with migration, canonical seed, bounded
   real-data smoke, and long-running Compose workflows.
-- prepare external five-minute evaluator cadence for macOS and Linux without enabling scheduled
-  Telegram delivery by default, then explicitly enable and observe the macOS timer on the local
-  operator host.
+- preserve externally owned five-minute evaluator cadence for macOS and Linux without enabling
+  scheduled Telegram delivery by default; the validated macOS timer remains operational and Linux
+  remains a template.
+- expose the post-decision research workflow through explicit one-shot operator commands and prove
+  the composed path against opt-in real Postgres without adding automatic chaining or scheduling.
 
 ## Implemented in this phase (current baseline)
 
@@ -107,12 +109,24 @@ The product side now proves that the repo can:
 - containerized runtime (non-root Node 24) with migration, canonical seed, bounded real-data
   smoke, and long-running Compose workflows
 - external five-minute evaluator cadence prepared for macOS launchd and Linux systemd; the macOS
-  timer is enabled on the local operator host and under observation, while Linux remains a template
+  timer completed a 27.88-hour validation window on the local operator host, while Linux remains a
+  template
 
 ### Known gaps carried into the next step
 - ADR-111's dedicated `apps/research-workflow-runner` now composes the post-decision route ->
   prepare -> audited execution slice. Explicit one-shot operator entrypoints and one opt-in
   real-Postgres integration proof are still pending (see `next-steps.md`).
+
+### Phase 1.54 completion evidence
+- 114/114 durable `btc_evaluate` runs completed across 27.88 hours with no failed or abandoned runs
+- the only item-failure run was the expected controlled deployment run
+  `d94cfb37-2544-493e-845b-bf25b74c55a3`
+- launchd recorded 155 invocations and a last exit code of `0`
+- the completed aggregate covered 197 evaluations; 104 were positive, average movement was
+  `+0.702126%`, and `computed_at_utc` remained monotonic and fresh at
+  `2026-09-29T00:24:59.999Z`
+- transient WebSocket errors recovered and live ingestion remained active through
+  `2026-09-29T07:59:59.999Z`
 
 ## What this phase is not
 This phase is **not** about building a full crypto trading platform.
@@ -133,13 +147,12 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-**Complete observation of the enabled macOS BTC evaluation cadence.** This is the same step named in
-`docs/project/next-steps.md`, which is authoritative if the two ever disagree.
+**Add explicit one-shot operator entrypoints and one opt-in real-Postgres integration path for
+`apps/research-workflow-runner`.** This is the same step named in `docs/project/next-steps.md`, which
+is authoritative if the two ever disagree.
 
-Sequential runs, concurrent-skip, and expired-lease takeover have been validated. The macOS
-launchd agent was explicitly enabled on the local operator host on 2026-09-28; observe its durable
-run history for at least a day before closing the phase. The Linux timer remains a template. Keep
-Telegram delivery manual and opt-in; keep trading out of scope.
+Keep the workflow manually invoked and fail-closed. Do not add automatic chaining, retries,
+scheduling, Telegram delivery, or trading.
 
 ## Why this phase matters
 Even though the larger vision is market-facing, the current Codex-first workflow plus constrained automation focus is still correct.
