@@ -72,7 +72,7 @@ const createExecutorDispatcher = (
   });
 };
 
-const createRoutingRuntime = (
+export const createResearchWorkflowRoutingRuntime = (
   repositories: ResearchWorkflowRepositories,
 ): ReviewDecisionRoutingRuntime =>
   createReviewDecisionRoutingRuntime({
@@ -83,7 +83,7 @@ const createRoutingRuntime = (
     }),
   });
 
-const createPreparationRuntime = (
+export const createResearchWorkflowPreparationRuntime = (
   repositories: ResearchWorkflowRepositories,
 ): RoutedActionPreparationRuntime =>
   createRoutedActionPreparationRuntime({
@@ -94,7 +94,7 @@ const createPreparationRuntime = (
     }),
   });
 
-const createExecutionRuntime = (
+export const createResearchWorkflowExecutionRuntime = (
   repositories: ResearchWorkflowRepositories,
   downstreamActionExecutor: DownstreamActionExecutor,
 ): ReturnType<typeof createPreparedEnvelopeExecutionRuntime> =>
@@ -112,9 +112,9 @@ export const createResearchWorkflowRuntime = (
   const { repositories } = options;
 
   return {
-    reviewDecisionRouting: createRoutingRuntime(repositories),
-    routedActionPreparation: createPreparationRuntime(repositories),
-    preparedEnvelopeExecution: createExecutionRuntime(
+    reviewDecisionRouting: createResearchWorkflowRoutingRuntime(repositories),
+    routedActionPreparation: createResearchWorkflowPreparationRuntime(repositories),
+    preparedEnvelopeExecution: createResearchWorkflowExecutionRuntime(
       repositories,
       createExecutorDispatcher(options),
     ),

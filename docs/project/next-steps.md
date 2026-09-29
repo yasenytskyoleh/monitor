@@ -1,25 +1,28 @@
 # Next Steps
 
 ## Current recommended next step
-### Add one-shot research-workflow entrypoints and real-Postgres integration coverage
+### Extend the one-shot research workflow upstream through review packet and review decision
 
 This file is **authoritative** for the current step. `current-phase.md`, `project-overview.md`,
 `chat-briefing.md`, and `decisions-log.md` restate it; if they ever disagree, this file wins and the
 others get corrected.
 
 Reason:
-- the macOS BTC evaluator cadence completed its 24-hour validation window successfully
-- `apps/research-workflow-runner` already composes post-decision routing, envelope preparation, and
-  audited execution behind a fail-closed three-target dispatcher
-- explicit operator commands and a real-database proof are the remaining boundaries before this
-  composition is usable as a controlled one-shot application
+- `apps/research-workflow-runner` now exposes explicit `route`, `prepare`, and `execute` commands
+- the commands compose the shared Prisma repository bundle and real domain handoffs while keeping
+  every step manually invoked and fail-closed
+- an opt-in disposable-Postgres test proves route -> prepare -> audited activation execution,
+  including durable routing, envelope, audit, and activation records
+- review-packet creation and review-decision recording are the next adjacent manual boundaries that
+  can move into the same application without bypassing approval gates
 
 ## Recommended near-future sequence
-1. ~~verify two sequential Docker evaluator runs and their durable run history~~ — **done**
-2. ~~verify a concurrent invocation skips with `already_running` and still exits zero~~ — **done**
-3. ~~verify an interrupted run is taken over as `abandoned` after its lease expires~~ — **done**
-4. ~~enable the macOS launchd timer~~ — **done on the local operator host on 2026-09-28**
-5. ~~observe run history for at least a day~~ — **done on 2026-09-29 after 27.88 hours**
+1. ~~compose the post-decision route -> prepare -> audited execution runtime~~ — **done**
+2. ~~add explicit one-shot `route`, `prepare`, and `execute` operator commands~~ — **done**
+3. ~~prove the command path against disposable real Postgres~~ — **done**
+4. add explicit one-shot review-packet and review-decision commands
+5. add earlier feedback-decision and manual-approval entrypoints separately, preserving every human
+   gate
 6. decide separately whether to enable Telegram delivery; keep trading out of scope
 
 ### Cadence validation results
@@ -71,12 +74,21 @@ Docker Desktop and the prepared Postgres stack must be running; sleep or power-o
 missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
 
 ## Current implementation target
-- **the first review/execution composition slice is implemented, but operator entrypoints and a
-  real-database proof remain.** `apps/research-workflow-runner` now composes the post-decision
-  routing, envelope preparation, and audited execution runtimes. Its fail-closed dispatcher allows
-  only activation, lifecycle, and refinement executors and rejects the no-action target. Next add
-  explicit one-shot operator commands and one opt-in Postgres integration path; keep the steps
-  manual and do not add automatic chaining, retries, scheduling, Telegram delivery, or trading.
+- **extend the existing one-shot application upstream through review packet and review decision.**
+  Keep packet creation and decision recording as separate commands with explicit identifiers,
+  reviewer identity, and timestamps. Reuse the existing runtime packages and shared Prisma bundle;
+  do not add automatic chaining, retries, scheduling, Telegram delivery, or trading.
+
+### Phase 1.55 completion evidence
+- root command `pnpm research-workflow <route|prepare|execute>` exposes three explicit one-shot
+  steps and emits JSON outcomes with non-zero exits for rejected or failed results
+- `apps/research-workflow-runner/README.md` documents required database configuration, target
+  references, refinement inputs, and identifier handoff between commands
+- the opt-in integration test executes the production command composition against disposable real
+  Postgres and verifies durable routing, preparation envelope, execution audit, activation record,
+  and activated setup state
+- root `pnpm test:integration` and CI now include both domain-model and research-workflow integration
+  suites
 
 ## Things to avoid while moving forward
 - direct product writes from orchestrator runtime paths
