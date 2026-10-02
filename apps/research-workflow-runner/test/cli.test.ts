@@ -92,7 +92,64 @@ test("parses explicit route, prepare, and execute commands", () => {
   );
 });
 
+test("parses separate review packet and reviewer decision commands", () => {
+  assert.deepEqual(
+    parseResearchWorkflowCommand([
+      "review-packet",
+      "--setup-family-id", "family-001",
+      "--setup-revision-id", "revision-001",
+      "--research-decision-approval-id", "approval-001",
+      "--impact-summary-file", "/tmp/impact-summary.json",
+      "--built-at", "2026-09-30T10:00:00.000Z",
+      "--output-file", "packet.json",
+    ]),
+    {
+      name: "review-packet",
+      setupFamilyId: "family-001",
+      setupRevisionId: "revision-001",
+      researchDecisionApprovalId: "approval-001",
+      impactSummaryFile: "/tmp/impact-summary.json",
+      builtAt: "2026-09-30T10:00:00.000Z",
+      outputFile: "packet.json",
+    },
+  );
+  assert.deepEqual(
+    parseResearchWorkflowCommand([
+      "review-decision",
+      "--packet-file", "packet.json",
+      "--packet-id", "packet-001",
+      "--setup-family-id", "family-001",
+      "--reviewed-by", "reviewer-001",
+      "--reviewed-at", "2026-09-30T10:01:00.000Z",
+      "--outcome", "revise",
+      "--authorized-next-action", "prepare_refinement_follow_up",
+    ]),
+    {
+      name: "review-decision",
+      packetFile: "packet.json",
+      researchReviewPacketId: "packet-001",
+      setupFamilyId: "family-001",
+      reviewedBy: "reviewer-001",
+      reviewedAt: "2026-09-30T10:01:00.000Z",
+      decisionOutcome: "revise",
+      authorizedNextAction: "prepare_refinement_follow_up",
+    },
+  );
+});
+
 test("rejects missing values, unknown options, and partial refinement input", () => {
+  assert.throws(
+    () => parseResearchWorkflowCommand(["review-packet", "--setup-family-id", "family-001"]),
+    /--built-at is required/,
+  );
+  assert.throws(
+    () => parseResearchWorkflowCommand([
+      "review-decision", "--packet-file", "packet.json", "--packet-id", "packet-001",
+      "--setup-family-id", "family-001", "--reviewed-by", "reviewer-001",
+      "--reviewed-at", "2026-09-30T10:01:00.000Z", "--outcome", "approve",
+    ]),
+    /Invalid --outcome/,
+  );
   assert.throws(
     () => parseResearchWorkflowCommand(["route", "--decision-id", "decision-001"]),
     /--routed-at is required/,

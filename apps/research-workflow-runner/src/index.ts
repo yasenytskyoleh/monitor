@@ -7,8 +7,10 @@ import { runResearchWorkflowCli } from "./runner.js";
 
 export {
   parseResearchWorkflowCommand,
+  type BuildReviewPacketCommand,
   type ExecutePreparedEnvelopeCommand,
   type PrepareRoutedActionCommand,
+  type RecordReviewDecisionCommand,
   type ResearchWorkflowCommand,
   type RouteResearchDecisionCommand,
 } from "./cli.js";
@@ -38,7 +40,7 @@ if (isDirectExecution) {
   void runResearchWorkflowCli()
     .then((result) => {
       if (
-        ["failed", "rejected", "rejected_lifecycle", "rejected_validation"].includes(
+        ["failed", "rejected", "rejected_lifecycle", "rejected_linkage", "rejected_validation"].includes(
           result.status,
         )
       ) {

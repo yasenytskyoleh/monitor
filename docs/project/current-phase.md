@@ -1,7 +1,7 @@
 # Current Phase
 
 ## Phase
-**Phase 1.56 — Research workflow upstream operator composition**
+**Phase 1.57 — Research workflow feedback and approval entrypoints**
 
 ## What this phase is about
 This phase is focused on:
@@ -97,9 +97,9 @@ The product side now proves that the repo can:
 - the full human-in-the-loop review chain: feedback decision → manual approval → review packet →
   review decision → routing → routed-action preparation → audited execution attempt, dispatching
   to the activation, lifecycle, and refinement envelope executors
-- a dedicated `apps/research-workflow-runner` post-decision composition factory with a fail-closed
-  three-target executor dispatcher, explicit `route`, `prepare`, and `execute` one-shot commands,
-  and opt-in real-Postgres command-path coverage
+- a dedicated `apps/research-workflow-runner` composition factory with a fail-closed three-target
+  executor dispatcher, explicit `review-packet`, `review-decision`, `route`, `prepare`, and `execute`
+  one-shot commands, and opt-in real-Postgres command-path coverage
 - explainable BTC notification eligibility derived from a fresh signal candidate plus compatible
   historical aggregate evidence, retained immutably under a deduplication key
 - one provider-neutral delivery lifecycle: durable lease, at-most-once send, and no-resend
@@ -113,9 +113,14 @@ The product side now proves that the repo can:
   template
 
 ### Known gaps carried into the next step
-- ADR-111's dedicated `apps/research-workflow-runner` now operates the post-decision route ->
-  prepare -> audited execution slice. Review-packet creation and review-decision recording remain
-  outside the application entrypoints (see `next-steps.md`).
+- feedback-decision and manual-approval recording remain outside the application entrypoints (see
+  `next-steps.md`).
+
+### Phase 1.56 completion evidence
+- review packet creation writes a new, inspectable local JSON artifact; review decision recording
+  consumes that explicit artifact and persists the decision through the shared Prisma bundle
+- disposable-Postgres coverage checks packet creation, fail-closed decision validation, and durable
+  decision recording
 
 ### Phase 1.55 completion evidence
 - explicit `route`, `prepare`, and `execute` commands invoke one step per process and emit JSON
@@ -155,7 +160,7 @@ Explicitly out of scope:
 This scope was chosen to keep the domain simple while the orchestration layer is being built.
 
 ## Current recommended next step
-**Add explicit one-shot review-packet and review-decision entrypoints to
+**Add explicit one-shot feedback-decision and manual-approval entrypoints to
 `apps/research-workflow-runner`.** This is the same step named in `docs/project/next-steps.md`, which
 is authoritative if the two ever disagree.
 

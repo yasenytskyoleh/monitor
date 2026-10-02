@@ -67,10 +67,10 @@ test-backed supporting subsystem.
   remains a disabled template.
 - Baseline verification runs in CI, but there is no UI.
 
-Current recommended next step: **add explicit one-shot review-packet and review-decision entrypoints
-to `apps/research-workflow-runner`** (see `docs/project/next-steps.md`). The post-decision commands
-and real-Postgres proof are complete. Keep alerts as explainable human decision support; keep
-automated trading out of the current phase.
+Current recommended next step: **add explicit one-shot feedback-decision and manual-approval
+entrypoints to `apps/research-workflow-runner`** (see `docs/project/next-steps.md`). The packet,
+decision, and post-decision commands have real-Postgres coverage. Keep alerts as explainable human
+decision support; keep automated trading out of the current phase.
 
 ## Core philosophy
 The project is intentionally built as a **controlled orchestration system**, not as a collection of freeform AI prompts.

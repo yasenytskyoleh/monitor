@@ -1,4 +1,22 @@
-import type { RefinementExecutionInput, RoutedActionTargetEntityRefs } from "@monitor/domain-model";
+import {
+  RESEARCH_REVIEW_AUTHORIZED_NEXT_ACTIONS,
+  RESEARCH_REVIEW_DECISION_OUTCOMES,
+  type ApplyResearchReviewDecisionCommand,
+  type BuildResearchReviewPacketCommand,
+  type RefinementExecutionInput,
+  type RoutedActionTargetEntityRefs,
+} from "@monitor/domain-model";
+
+export type BuildReviewPacketCommand = BuildResearchReviewPacketCommand & {
+  name: "review-packet";
+  outputFile: string;
+  impactSummaryFile?: string;
+};
+
+export type RecordReviewDecisionCommand = ApplyResearchReviewDecisionCommand & {
+  name: "review-decision";
+  packetFile: string;
+};
 
 export type RouteResearchDecisionCommand = {
   name: "route";
@@ -28,6 +46,8 @@ export type ExecutePreparedEnvelopeCommand = {
 };
 
 export type ResearchWorkflowCommand =
+  | BuildReviewPacketCommand
+  | RecordReviewDecisionCommand
   | RouteResearchDecisionCommand
   | PrepareRoutedActionCommand
   | ExecutePreparedEnvelopeCommand;
@@ -35,6 +55,30 @@ export type ResearchWorkflowCommand =
 type ParsedOptions = ReadonlyMap<string, readonly string[]>;
 
 const COMMON_OPTIONS = ["--origin-run-id"] as const;
+const REVIEW_PACKET_OPTIONS = [
+  "--setup-family-id",
+  "--setup-revision-id",
+  "--research-hypothesis-id",
+  "--research-feedback-decision-id",
+  "--research-decision-approval-id",
+  "--impact-summary-file",
+  "--built-at",
+  "--output-file",
+  ...COMMON_OPTIONS,
+] as const;
+const REVIEW_DECISION_OPTIONS = [
+  "--packet-file",
+  "--packet-id",
+  "--setup-family-id",
+  "--setup-revision-id",
+  "--research-hypothesis-id",
+  "--reviewed-by",
+  "--reviewed-at",
+  "--outcome",
+  "--reviewer-notes",
+  "--authorized-next-action",
+  ...COMMON_OPTIONS,
+] as const;
 const ROUTE_OPTIONS = ["--decision-id", "--routed-at"] as const;
 const PREPARE_OPTIONS = [
   "--routing-id",
@@ -88,6 +132,79 @@ const requireOption = (options: ParsedOptions, name: string): string => {
 
 const optionalOption = (options: ParsedOptions, name: string): string | undefined =>
   options.get(name)?.at(-1);
+
+const parseChoice = <T extends string>(value: string, values: readonly T[], name: string): T => {
+  const choice = values.find((candidate) => candidate === value);
+  if (!choice) {
+    throw new Error(`Invalid ${name}: ${value}`);
+  }
+  return choice;
+};
+
+const parseReviewPacketCommand = (argv: string[]): BuildReviewPacketCommand => {
+  const options = parseOptions(argv, REVIEW_PACKET_OPTIONS);
+  return {
+    name: "review-packet",
+    setupFamilyId: requireOption(options, "--setup-family-id"),
+    builtAt: requireOption(options, "--built-at"),
+    outputFile: requireOption(options, "--output-file"),
+    ...(optionalOption(options, "--impact-summary-file") && {
+      impactSummaryFile: optionalOption(options, "--impact-summary-file"),
+    }),
+    ...(optionalOption(options, "--setup-revision-id") && {
+      setupRevisionId: optionalOption(options, "--setup-revision-id"),
+    }),
+    ...(optionalOption(options, "--research-hypothesis-id") && {
+      researchHypothesisId: optionalOption(options, "--research-hypothesis-id"),
+    }),
+    ...(optionalOption(options, "--research-feedback-decision-id") && {
+      researchFeedbackDecisionId: optionalOption(options, "--research-feedback-decision-id"),
+    }),
+    ...(optionalOption(options, "--research-decision-approval-id") && {
+      researchDecisionApprovalId: optionalOption(options, "--research-decision-approval-id"),
+    }),
+    ...(optionalOption(options, "--origin-run-id") && {
+      originRunId: optionalOption(options, "--origin-run-id"),
+    }),
+  };
+};
+
+const parseReviewDecisionCommand = (argv: string[]): RecordReviewDecisionCommand => {
+  const options = parseOptions(argv, REVIEW_DECISION_OPTIONS);
+  const authorizedNextAction = optionalOption(options, "--authorized-next-action");
+  return {
+    name: "review-decision",
+    packetFile: requireOption(options, "--packet-file"),
+    researchReviewPacketId: requireOption(options, "--packet-id"),
+    setupFamilyId: requireOption(options, "--setup-family-id"),
+    reviewedBy: requireOption(options, "--reviewed-by"),
+    reviewedAt: requireOption(options, "--reviewed-at"),
+    decisionOutcome: parseChoice(
+      requireOption(options, "--outcome"),
+      RESEARCH_REVIEW_DECISION_OUTCOMES,
+      "--outcome",
+    ),
+    ...(optionalOption(options, "--setup-revision-id") && {
+      setupRevisionId: optionalOption(options, "--setup-revision-id"),
+    }),
+    ...(optionalOption(options, "--research-hypothesis-id") && {
+      researchHypothesisId: optionalOption(options, "--research-hypothesis-id"),
+    }),
+    ...(optionalOption(options, "--reviewer-notes") && {
+      reviewerNotes: optionalOption(options, "--reviewer-notes"),
+    }),
+    ...(authorizedNextAction && {
+      authorizedNextAction: parseChoice(
+        authorizedNextAction,
+        RESEARCH_REVIEW_AUTHORIZED_NEXT_ACTIONS,
+        "--authorized-next-action",
+      ),
+    }),
+    ...(optionalOption(options, "--origin-run-id") && {
+      originRunId: optionalOption(options, "--origin-run-id"),
+    }),
+  };
+};
 
 const parseRouteCommand = (argv: string[]): RouteResearchDecisionCommand => {
   const options = parseOptions(argv, ROUTE_OPTIONS);
@@ -176,6 +293,12 @@ const parseExecuteCommand = (argv: string[]): ExecutePreparedEnvelopeCommand => 
 
 export const parseResearchWorkflowCommand = (argv: string[]): ResearchWorkflowCommand => {
   const [commandName, ...commandArguments] = argv;
+  if (commandName === "review-packet") {
+    return parseReviewPacketCommand(commandArguments);
+  }
+  if (commandName === "review-decision") {
+    return parseReviewDecisionCommand(commandArguments);
+  }
   if (commandName === "route") {
     return parseRouteCommand(commandArguments);
   }
@@ -185,5 +308,5 @@ export const parseResearchWorkflowCommand = (argv: string[]): ResearchWorkflowCo
   if (commandName === "execute") {
     return parseExecuteCommand(commandArguments);
   }
-  throw new Error("Expected one command: route, prepare, or execute");
+  throw new Error("Expected one command: review-packet, review-decision, route, prepare, or execute");
 };

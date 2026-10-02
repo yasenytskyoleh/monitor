@@ -73,9 +73,15 @@ importers:
       '@monitor/refinement-envelope-executor':
         specifier: workspace:*
         version: link:../../packages/refinement-envelope-executor
+      '@monitor/review-decision':
+        specifier: workspace:*
+        version: link:../../packages/review-decision
       '@monitor/review-decision-routing':
         specifier: workspace:*
         version: link:../../packages/review-decision-routing
+      '@monitor/review-packet':
+        specifier: workspace:*
+        version: link:../../packages/review-packet
       '@monitor/routed-action-preparation':
         specifier: workspace:*
         version: link:../../packages/routed-action-preparation
