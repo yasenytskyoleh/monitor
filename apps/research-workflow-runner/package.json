@@ -9,7 +9,7 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
-    "build:dependencies": "pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/activation-envelope-executor build && pnpm --filter @monitor/execution-attempt build && pnpm --filter @monitor/lifecycle-envelope-executor build && pnpm --filter @monitor/refinement-envelope-executor build && pnpm --filter @monitor/review-decision-routing build && pnpm --filter @monitor/routed-action-preparation build",
+    "build:dependencies": "pnpm --filter @monitor/domain-model build && pnpm --filter @monitor/activation-envelope-executor build && pnpm --filter @monitor/execution-attempt build && pnpm --filter @monitor/lifecycle-envelope-executor build && pnpm --filter @monitor/refinement-envelope-executor build && pnpm --filter @monitor/review-decision build && pnpm --filter @monitor/review-decision-routing build && pnpm --filter @monitor/review-packet build && pnpm --filter @monitor/routed-action-preparation build",
     "prestart": "pnpm run build:dependencies",
     "start": "node --env-file=../../.env --import tsx ./src/index.ts",
     "prebuild": "pnpm run build:dependencies",
@@ -28,7 +28,9 @@
     "@monitor/execution-attempt": "workspace:*",
     "@monitor/lifecycle-envelope-executor": "workspace:*",
     "@monitor/refinement-envelope-executor": "workspace:*",
+    "@monitor/review-decision": "workspace:*",
     "@monitor/review-decision-routing": "workspace:*",
+    "@monitor/review-packet": "workspace:*",
     "@monitor/routed-action-preparation": "workspace:*"
   },
   "devDependencies": {

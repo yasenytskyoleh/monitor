@@ -52,10 +52,10 @@ made this file drift in the first place.
 
 ## Recommended next step
 
-**Add explicit one-shot review-packet and review-decision entrypoints to
+**Add explicit one-shot feedback-decision and manual-approval entrypoints to
 `apps/research-workflow-runner`** — see `docs/project/next-steps.md`, which is the authoritative
-source for this. The post-decision `route`, `prepare`, and `execute` commands and their real-Postgres
-proof are complete.
+source for this. Review-packet, review-decision, and post-decision commands have real-Postgres
+coverage.
 
 ## Behavioral instructions for future assistants
 When continuing this project:

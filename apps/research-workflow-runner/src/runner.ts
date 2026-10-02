@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import process from "node:process";
 
 import {
@@ -5,16 +6,22 @@ import {
   createApprovedSetupLifecycleMutationHandoff,
   createImplementedProductRelationalPrismaRepositories,
   createResearchService,
+  createResearchReviewDecisionService,
+  createRevisionHistoryQueryService,
   createSetupDefinitionService,
   createSetupRevisionActivationHandoff,
   type ImplementedProductRelationalPrismaRepositories,
 } from "@monitor/domain-model";
+import { createReviewDecisionRuntime } from "@monitor/review-decision";
+import { createReviewPacketRuntime } from "@monitor/review-packet";
 
 import {
   type ExecutePreparedEnvelopeCommand,
   parseResearchWorkflowCommand,
   type ResearchWorkflowCommand,
 } from "./cli.js";
+import { readImpactSummaryFile } from "./impact-summary-file.js";
+import { readReviewPacketFile } from "./review-packet-file.js";
 import {
   createResearchWorkflowExecutionRuntime,
   createResearchWorkflowPreparationRuntime,
@@ -27,6 +34,8 @@ export type ResearchWorkflowCommandResult = Awaited<
     | ReturnType<typeof createResearchWorkflowRoutingRuntime>["route"]
     | ReturnType<typeof createResearchWorkflowPreparationRuntime>["prepare"]
     | ReturnType<typeof createResearchWorkflowExecutionRuntime>["execute"]
+    | ReturnType<typeof createReviewPacketRuntime>["build"]
+    | ReturnType<typeof createReviewDecisionRuntime>["record"]
   >
 >;
 
@@ -70,6 +79,43 @@ export const executeResearchWorkflowCommand = async (
   command: ResearchWorkflowCommand,
   repositories: ImplementedProductRelationalPrismaRepositories,
 ): Promise<ResearchWorkflowCommandResult> => {
+  if (command.name === "review-packet") {
+    const { name: _name, outputFile, impactSummaryFile, ...request } = command;
+    const impactSummarySnapshot = impactSummaryFile
+      ? await readImpactSummaryFile(impactSummaryFile)
+      : undefined;
+    const reviewPacketService = createRevisionHistoryQueryService({
+      setupDefinitionRevisionRepository: repositories.setupDefinitionRevisionRepository,
+      setupDefinitionRepository: repositories.setupDefinitionRepository,
+      signalCandidateRepository: repositories.signalCandidateRepository,
+      evaluationResultRepository: repositories.evaluationResultRepository,
+      setupAggregateResultRepository: repositories.setupAggregateResultRepository,
+      researchHypothesisRepository: repositories.researchHypothesisRepository,
+      researchFeedbackDecisionRepository: repositories.researchFeedbackDecisionRepository,
+      researchDecisionApprovalRepository: repositories.researchDecisionApprovalRepository,
+    });
+    const result = await createReviewPacketRuntime({ reviewPacketService }).build({
+      ...request,
+      ...(impactSummarySnapshot ? { impactSummarySnapshot } : {}),
+    });
+    if (result.packet) {
+      await writeFile(outputFile, `${JSON.stringify(result)}\n`, { flag: "wx", mode: 0o600 });
+    }
+    return result;
+  }
+  if (command.name === "review-decision") {
+    const { name: _name, packetFile, ...decision } = command;
+    const packet = await readReviewPacketFile(packetFile);
+    const reviewDecisionService = createResearchReviewDecisionService({
+      reviewPacketLookup: {
+        async getById(packetId) {
+          return packet.id === packetId ? packet : null;
+        },
+      },
+      researchReviewDecisionRepository: repositories.researchReviewDecisionRepository,
+    });
+    return createReviewDecisionRuntime({ reviewDecisionService }).record(decision);
+  }
   if (command.name === "route") {
     return createResearchWorkflowRoutingRuntime(repositories).route({
       researchReviewDecisionId: command.researchReviewDecisionId,

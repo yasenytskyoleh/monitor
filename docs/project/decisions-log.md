@@ -80,8 +80,10 @@
 - Phase 1.55 is closed: `apps/research-workflow-runner` exposes explicit post-decision `route`,
   `prepare`, and `execute` commands, and the production composition is proven against disposable
   real Postgres
-- the currently recommended next step is to add separate one-shot review-packet and review-decision
-  entrypoints, matching `docs/project/next-steps.md` and preserving every manual approval gate
+- Phase 1.56 is closed: separate review-packet and review-decision commands use an explicit packet
+  JSON artifact and record the human decision durably through the shared Prisma bundle
+- the currently recommended next step is to add separate feedback-decision and manual-approval
+  entrypoints, matching `docs/project/next-steps.md` and preserving every human gate
 - aggregate recomputation timestamps are monotonic and advance to the newest included evaluation;
   replaying older recovery candidates must never make current aggregate evidence appear stale
 - the previous entry here ("define a provider-specific downstream executor and its authorization

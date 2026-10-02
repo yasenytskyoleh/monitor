@@ -1,7 +1,7 @@
 # Next Steps
 
 ## Current recommended next step
-### Extend the one-shot research workflow upstream through review packet and review decision
+### Extend the one-shot research workflow upstream through feedback decision and manual approval
 
 This file is **authoritative** for the current step. `current-phase.md`, `project-overview.md`,
 `chat-briefing.md`, and `decisions-log.md` restate it; if they ever disagree, this file wins and the
@@ -13,14 +13,15 @@ Reason:
   every step manually invoked and fail-closed
 - an opt-in disposable-Postgres test proves route -> prepare -> audited activation execution,
   including durable routing, envelope, audit, and activation records
-- review-packet creation and review-decision recording are the next adjacent manual boundaries that
-  can move into the same application without bypassing approval gates
+- `review-packet` and `review-decision` now operate as separate manual commands; the packet is an
+  explicit local JSON artifact and the recorded decision is durable
+- feedback-decision and manual-approval recording are the next upstream human gates
 
 ## Recommended near-future sequence
 1. ~~compose the post-decision route -> prepare -> audited execution runtime~~ — **done**
 2. ~~add explicit one-shot `route`, `prepare`, and `execute` operator commands~~ — **done**
 3. ~~prove the command path against disposable real Postgres~~ — **done**
-4. add explicit one-shot review-packet and review-decision commands
+4. ~~add explicit one-shot review-packet and review-decision commands~~ — **done**
 5. add earlier feedback-decision and manual-approval entrypoints separately, preserving every human
    gate
 6. decide separately whether to enable Telegram delivery; keep trading out of scope
@@ -74,10 +75,17 @@ Docker Desktop and the prepared Postgres stack must be running; sleep or power-o
 missed runs. Inspect both JSONL log files in `~/Library/Logs/monitor`.
 
 ## Current implementation target
-- **extend the existing one-shot application upstream through review packet and review decision.**
-  Keep packet creation and decision recording as separate commands with explicit identifiers,
-  reviewer identity, and timestamps. Reuse the existing runtime packages and shared Prisma bundle;
-  do not add automatic chaining, retries, scheduling, Telegram delivery, or trading.
+- **extend the one-shot application upstream through feedback decision and manual approval.**
+  Keep each human gate separately invoked with explicit reviewer identity, timestamps, and target
+  references. Reuse existing domain services and the shared Prisma bundle.
+
+### Phase 1.56 completion evidence
+- `review-packet` builds a query artifact through the existing runtime and writes it to a new local
+  JSON file; `review-decision` reads that explicit snapshot and records the reviewer-supplied outcome
+- the decision command rejects missing packet linkage and ineligible acceptance through existing
+  domain rules; all rejected outcomes return a non-zero process exit code
+- disposable-Postgres integration covers packet creation, rejected linkage and lifecycle cases,
+  and durable review-decision recording
 
 ### Phase 1.55 completion evidence
 - root command `pnpm research-workflow <route|prepare|execute>` exposes three explicit one-shot
